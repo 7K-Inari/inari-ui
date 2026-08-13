@@ -6,18 +6,38 @@ export const keycloak = new Keycloak({
   clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID ?? "inari-ui",
 });
 
-export async function initKeycloak(): Promise<boolean> {
-  const authenticated = await keycloak.init({
-    onLoad: "login-required",
-    scope: "openid organization",
-    checkLoginIframe: false,
-  });
+let refreshInterval: ReturnType<typeof setInterval> | undefined;
+let initPromise: Promise<boolean> | undefined;
 
-  setInterval(() => {
-    keycloak.updateToken(30).catch(() => {
-      keycloak.login();
-    });
-  }, 10_000);
+export async function initKeycloak(): Promise<boolean> {
+  if (!initPromise) {
+    initPromise = keycloak
+      .init({
+        onLoad: "login-required",
+        scope: "openid organization",
+        checkLoginIframe: false,
+      })
+      .catch((err) => {
+        initPromise = undefined;
+        throw err;
+      });
+  }
+  const authenticated = await initPromise;
+
+  if (!refreshInterval) {
+    refreshInterval = setInterval(() => {
+      keycloak.updateToken(30).catch(() => {
+        keycloak.login();
+      });
+    }, 10_000);
+  }
 
   return authenticated;
+}
+
+export function stopTokenRefresh(): void {
+  if (refreshInterval) {
+    clearInterval(refreshInterval);
+    refreshInterval = undefined;
+  }
 }

@@ -34,9 +34,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function ModeToggle() {
-  const [dark, setDark] = React.useState(() =>
-    document.documentElement.classList.contains("dark"),
-  );
+  const [dark, setDark] = React.useState(false);
+
+  React.useEffect(() => {
+    const sync = () =>
+      setDark(document.documentElement.classList.contains("dark"));
+    sync();
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
 
   const toggle = () => {
     const next = !dark;

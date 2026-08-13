@@ -5,11 +5,11 @@ import { tenantLink } from "@/tenant/tenant-link";
 import { useTenant } from "@/tenant/tenant-context";
 import { cn } from "@/lib/utils";
 
-export function Sidebar() {
+export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
   const { tenant } = useTenant();
 
   return (
-    <aside className="hidden w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex">
+    <>
       <div className="flex h-14 items-center border-b border-sidebar-border px-4">
         <span className="text-lg font-semibold tracking-tight">Inari</span>
       </div>
@@ -26,6 +26,7 @@ export function Sidebar() {
                 <li key={item.path}>
                   <NavLink
                     to={tenantLink(tenant, item.path)}
+                    onClick={onNavigate}
                     className={({ isActive }) =>
                       cn(
                         "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
@@ -43,6 +44,14 @@ export function Sidebar() {
           </div>
         ))}
       </nav>
+    </>
+  );
+}
+
+export function Sidebar() {
+  return (
+    <aside className="hidden w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex">
+      <SidebarNav />
     </aside>
   );
 }

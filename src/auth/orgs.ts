@@ -12,8 +12,13 @@ export function parseOrganizations(
   token: Record<string, unknown> | undefined,
 ): Organization[] {
   const claim = token?.["organization"];
-  if (!claim || typeof claim !== "object" || Array.isArray(claim)) {
+  if (!claim || typeof claim !== "object") {
     return [];
+  }
+  if (Array.isArray(claim)) {
+    return claim
+      .filter((alias): alias is string => typeof alias === "string")
+      .map((alias) => ({ id: alias, name: alias }));
   }
   return Object.entries(claim as Record<string, OrganizationClaimValue>).map(
     ([id, value]) => {

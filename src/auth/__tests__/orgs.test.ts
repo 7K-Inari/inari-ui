@@ -29,6 +29,15 @@ describe("parseOrganizations", () => {
 
   it("returns an empty list for malformed claims", () => {
     expect(parseOrganizations({ organization: "acme" })).toEqual([]);
-    expect(parseOrganizations({ organization: ["acme"] })).toEqual([]);
+    expect(parseOrganizations({ organization: null })).toEqual([]);
+  });
+
+  it("parses an array-shaped claim (mapper without organization attributes)", () => {
+    expect(
+      parseOrganizations({ organization: ["acme", "globex"] }),
+    ).toEqual([
+      { id: "acme", name: "acme" },
+      { id: "globex", name: "globex" },
+    ]);
   });
 });
