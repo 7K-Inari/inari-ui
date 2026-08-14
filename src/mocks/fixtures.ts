@@ -193,8 +193,17 @@ export const mockControl = {
 };
 
 function toSummary(c: ClusterDetail): ClusterSummary {
-  const { description: _description, agentVersion: _agentVersion, ...summary } = c;
-  return summary;
+  return {
+    id: c.id,
+    name: c.name,
+    tenant: c.tenant,
+    status: c.status,
+    k8sVersion: c.k8sVersion,
+    labels: c.labels,
+    capabilityCount: c.capabilityCount,
+    lastSeenAt: c.lastSeenAt,
+    createdAt: c.createdAt,
+  };
 }
 
 export function listForTenant(tenant: string | null): ClusterSummary[] {

@@ -3,7 +3,7 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 
 import { getCapabilities, getCluster } from "@/api/clusters";
 import { useAsyncResource } from "@/api/hooks";
-import type { Capability, CapabilityKind, ManagementMode } from "@/api/types";
+import type { CapabilityKind, ManagementMode } from "@/api/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
