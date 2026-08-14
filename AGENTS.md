@@ -13,7 +13,11 @@ Stack: React, TypeScript, Vite, Tailwind, shadcn/ui, RJSF, Module Federation
 - IA/navigation and v1 screen build order: plan §8.2–8.3; extension slots: §8.4.
 
 ## Conventions
-- Conventional Commits; SemVer releases; container images/artifacts cosign-signed (once CI exists).
+- Conventional Commits; SemVer releases; console bundle OCI artifacts cosign-signed.
+- Release flow (release-please, PR-only mode):
+  1. `fix:`/`feat:` merges to `main` → `.github/workflows/release-please.yml` opens/updates a Release PR (package.json bump + CHANGELOG.md). Nothing else happens — no tags, Releases, or publishes.
+  2. A maintainer manually merges the Release PR (human gate). CI lint/test/build checks must pass on the PR.
+  3. `.github/workflows/release.yml` detects the release merge, creates+pushes tag `vX.Y.Z`, creates the GitHub Release, and invokes the reusable publish pipeline (`.github/workflows/publish.yml`, `workflow_call`): console bundle pushed as OCI artifact `ghcr.io/7k-inari/inari-ui-bundle` (consumed by `inari-server` when building its image), cosign keyless sign, SBOM + SLSA provenance. The tag is pushed with GITHUB_TOKEN, so publish must not rely on tag-push triggers.
 - Write tests for new behavior; keep changes minimal and focused.
 - Canonical architecture & development plan: https://github.com/7K-Inari/inari-docs/blob/main/docs/architecture/inari-platform-plan.md (section references below point into it).
 
