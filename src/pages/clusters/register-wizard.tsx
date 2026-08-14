@@ -5,7 +5,7 @@ import { CheckCircle2, Copy, Loader2 } from "lucide-react";
 import { createCluster, getCluster } from "@/api/clusters";
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
-import type { CreateClusterResponse } from "@/api/types";
+import type { ClusterStatus, CreateClusterResponse } from "@/api/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -93,7 +93,7 @@ function TokenCountdown({ expiresAt }: { expiresAt: string }) {
 function WaitingForConnection({ clusterId }: { clusterId: string }) {
   const { token } = useAuth();
   const [cluster, setCluster] = React.useState<{
-    status: string;
+    status: ClusterStatus;
     k8sVersion: string | null;
   } | null>(null);
   const [timedOut, setTimedOut] = React.useState(false);
@@ -173,7 +173,7 @@ function WaitingForConnection({ clusterId }: { clusterId: string }) {
         Apply the manifest above to your cluster. This page updates automatically once the agent
         dials home.
       </p>
-      {cluster && <ClusterStatusBadge status={cluster.status as never} />}
+      {cluster && <ClusterStatusBadge status={cluster.status} />}
     </div>
   );
 }
