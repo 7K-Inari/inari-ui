@@ -3,6 +3,9 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { RequireAuth } from "@/auth/require-auth";
 import { AppShell } from "@/layout/app-shell";
 import { AllTenantsHome, PlaceholderPage } from "@/pages/placeholder";
+import { ClusterDetailPage } from "@/pages/clusters/cluster-detail";
+import { ClusterListPage } from "@/pages/clusters/cluster-list";
+import { RegisterWizardPage } from "@/pages/clusters/register-wizard";
 import { TenantProvider, useTenant } from "@/tenant/tenant-context";
 import { ALL_TENANTS } from "@/tenant/tenant-link";
 
@@ -54,15 +57,9 @@ export function AppRoutes() {
               />
             }
           />
-          <Route
-            path="clusters"
-            element={
-              <PlaceholderPage
-                title="Clusters"
-                description="Kubernetes clusters registered with the platform."
-              />
-            }
-          />
+          <Route path="clusters" element={<ClusterListPage />} />
+          <Route path="clusters/new" element={<RegisterWizardPage />} />
+          <Route path="clusters/:clusterId" element={<ClusterDetailPage />} />
           <Route
             path="fleet"
             element={
