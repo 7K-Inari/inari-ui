@@ -48,16 +48,9 @@ function StepIndicator({ current }: { current: number }) {
 }
 
 function DeployStatus({ deployId }: { deployId: string }) {
-  const [done, setDone] = React.useState(false);
-  const { data: deploy } = useAsyncResource(
-    async (token) => {
-      const d = await getDeploy(token, deployId);
-      if (d.phase === "healthy" || d.phase === "failed") setDone(true);
-      return d;
-    },
-    [deployId],
-    { refetchIntervalMs: 1_500, enabled: !done },
-  );
+  const { data: deploy } = useAsyncResource((token) => getDeploy(token, deployId), [deployId], {
+    refetchIntervalMs: 1_500,
+  });
 
   if (!deploy) {
     return (
