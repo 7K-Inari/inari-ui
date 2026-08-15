@@ -41,10 +41,11 @@ export function CatalogBrowsePage() {
     [tenant, source, category, clusterId],
   );
   const clusters = useAsyncResource((token) => listClusters(token, tenant), [tenant]);
+  const allItems = useAsyncResource((token) => listCatalogItems(token, tenant), [tenant]);
 
   const categories = React.useMemo(
-    () => Array.from(new Set((items.data ?? []).map((i) => i.category))).sort(),
-    [items.data],
+    () => Array.from(new Set((allItems.data ?? []).map((i) => i.category))).sort(),
+    [allItems.data],
   );
 
   return (
