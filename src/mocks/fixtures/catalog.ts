@@ -279,8 +279,9 @@ export function createDeployMock(tenant: string, body: CreateDeployRequest): Dep
     polls: 0,
   };
   state.deploys.push(deploy);
-  const { polls: _polls, ...rest } = deploy;
-  return rest;
+  const rest = { ...deploy } as Partial<DeployState>;
+  delete rest.polls;
+  return rest as Deploy;
 }
 
 export function pollDeployMock(id: string): Deploy | undefined {
@@ -315,8 +316,9 @@ export function pollDeployMock(id: string): Deploy | undefined {
       argocdUrl: null,
     });
   }
-  const { polls: _polls, ...rest } = deploy;
-  return rest;
+  const rest = { ...deploy } as Partial<DeployState>;
+  delete rest.polls;
+  return rest as Deploy;
 }
 
 export function listResourcesForTenant(tenant: string | null): ResourceInstanceDetail[] {
@@ -372,6 +374,7 @@ export function upgradeResourceMock(id: string, to: string): Deploy | undefined 
   };
   state.deploys.push(deploy);
   resource.updateAvailable = null;
-  const { polls: _polls, ...rest } = deploy;
-  return rest;
+  const rest = { ...deploy } as Partial<DeployState>;
+  delete rest.polls;
+  return rest as Deploy;
 }
