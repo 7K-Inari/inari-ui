@@ -138,6 +138,7 @@ export interface SchemaFormProps {
   uiSchema?: UiSchema;
   formData: Record<string, unknown>;
   onChange: (data: Record<string, unknown>) => void;
+  disabled?: boolean;
   className?: string;
 }
 
@@ -146,7 +147,7 @@ export interface SchemaFormHandle {
 }
 
 export const SchemaForm = React.forwardRef<SchemaFormHandle, SchemaFormProps>(
-  function SchemaForm({ schema, uiSchema, formData, onChange, className }, ref) {
+  function SchemaForm({ schema, uiSchema, formData, onChange, disabled, className }, ref) {
     const formRef = React.useRef<Form>(null);
 
     React.useImperativeHandle(ref, () => ({
@@ -164,6 +165,7 @@ export const SchemaForm = React.forwardRef<SchemaFormHandle, SchemaFormProps>(
           schema={schema as RJSFSchema}
           uiSchema={uiSchema}
           formData={formData}
+          disabled={disabled}
           validator={validator}
           widgets={{
             TextWidget,
