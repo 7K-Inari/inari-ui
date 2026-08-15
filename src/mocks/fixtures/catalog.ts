@@ -108,7 +108,7 @@ const keycloakRealmDetail: CatalogItemDetail = {
   source: "platform",
   category: "identity",
   latestVersion: "0.9.0",
-  compatibleClusterIds: null,
+  compatibleClusterIds: [],
   docs: "# Keycloak Realm\n\nSelf-service workload SSO realm for your tenant.",
   versions: [
     { version: "0.9.0", channel: "stable", deprecated: false, releasedAt: iso(now - 10 * 86_400_000) },
