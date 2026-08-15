@@ -6,6 +6,11 @@ import { AllTenantsHome, PlaceholderPage } from "@/pages/placeholder";
 import { ClusterDetailPage } from "@/pages/clusters/cluster-detail";
 import { ClusterListPage } from "@/pages/clusters/cluster-list";
 import { RegisterWizardPage } from "@/pages/clusters/register-wizard";
+import { CatalogBrowsePage } from "@/pages/catalog/catalog-browse";
+import { CatalogItemDetailPage } from "@/pages/catalog/catalog-item-detail";
+import { DeployWizardPage } from "@/pages/catalog/deploy-wizard";
+import { ResourceDetailPage } from "@/pages/resources/resource-detail";
+import { ResourceListPage } from "@/pages/resources/resource-list";
 import { TenantProvider, useTenant } from "@/tenant/tenant-context";
 import { ALL_TENANTS } from "@/tenant/tenant-link";
 
@@ -30,33 +35,11 @@ export function AppRoutes() {
               <OverviewOrHome />
             }
           />
-          <Route
-            path="catalog"
-            element={
-              <PlaceholderPage
-                title="Catalog"
-                description="Browse discovered capabilities and services."
-              />
-            }
-          />
-          <Route
-            path="catalog/:itemId"
-            element={
-              <PlaceholderPage
-                title="Catalog item"
-                description="Capability detail, schema-driven deploy actions arrive in M2."
-              />
-            }
-          />
-          <Route
-            path="deploys"
-            element={
-              <PlaceholderPage
-                title="Deploys"
-                description="Deployments and resources in the active scope."
-              />
-            }
-          />
+          <Route path="catalog" element={<CatalogBrowsePage />} />
+          <Route path="catalog/:itemId" element={<CatalogItemDetailPage />} />
+          <Route path="catalog/:itemId/deploy" element={<DeployWizardPage />} />
+          <Route path="deploys" element={<ResourceListPage />} />
+          <Route path="deploys/:instanceId" element={<ResourceDetailPage />} />
           <Route path="clusters" element={<ClusterListPage />} />
           <Route path="clusters/new" element={<RegisterWizardPage />} />
           <Route path="clusters/:clusterId" element={<ClusterDetailPage />} />
