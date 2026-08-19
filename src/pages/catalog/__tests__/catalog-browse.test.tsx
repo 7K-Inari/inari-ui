@@ -90,7 +90,7 @@ describe("CatalogBrowsePage", () => {
   it("renders an error message when the API fails", async () => {
     const { http, HttpResponse } = await import("msw");
     mockServer.use(
-      http.get("*/api/v1/catalog/items", () =>
+      http.get("*/api/v1/tenants/acme/catalog", () =>
         HttpResponse.json({ message: "boom" }, { status: 500 }),
       ),
     );

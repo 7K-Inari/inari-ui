@@ -52,11 +52,10 @@ describe("ResourceListPage", () => {
     expect(screen.getAllByText(/healthy|progressing/i).length).toBeGreaterThan(0);
   });
 
-  it("shows a tenant column in the all-tenants view", async () => {
+  it("asks for a tenant selection in the all-tenants view (server endpoints are tenant-scoped)", async () => {
     mockTenant = "all";
     renderPage();
-    expect(await screen.findByText("globex-apps")).toBeInTheDocument();
-    expect(screen.getByRole("columnheader", { name: "Tenant" })).toBeInTheDocument();
+    expect(await screen.findByText(/select a specific tenant/i)).toBeInTheDocument();
   });
 
   it("shows an update-available badge", async () => {

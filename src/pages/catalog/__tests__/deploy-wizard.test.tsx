@@ -63,40 +63,36 @@ describe("DeployWizardPage", () => {
     let submittedBody: unknown = null;
     const { http, HttpResponse } = await import("msw");
     mockServer.use(
-      http.post("*/api/v1/deploys", async ({ request }) => {
+      http.post("*/api/v1/tenants/acme/deploys", async ({ request }) => {
         submittedBody = await request.json();
         return HttpResponse.json(
           {
-            id: "dep-test",
-            tenant: "acme",
-            itemId: "cat-postgresql-aws",
-            version: "1.4.0",
-            clusterId: "cl-eks-prod",
-            name: "orders-db-2",
-            phase: "pending",
-            gitopsMode: "pull-request",
-            prUrl: null,
-            instanceId: null,
-            message: null,
-            createdAt: new Date().toISOString(),
+            deploy: {
+              instanceId: "dep-test",
+              version: "1.4.0",
+              status: "deploying",
+              commitSha: "",
+              prUrl: "https://github.com/acme/acme-inari-state/pull/101",
+            },
           },
           { status: 201 },
         );
       }),
-      http.get("*/api/v1/deploys/dep-test", () =>
+      http.get("*/api/v1/tenants/acme/instances/dep-test", () =>
         HttpResponse.json({
-          id: "dep-test",
-          tenant: "acme",
-          itemId: "cat-postgresql-aws",
-          version: "1.4.0",
-          clusterId: "cl-eks-prod",
-          name: "orders-db-2",
-          phase: "healthy",
-          gitopsMode: "pull-request",
-          prUrl: "https://github.com/acme/acme-inari-state/pull/101",
-          instanceId: "ri-orders-db-2",
-          message: null,
-          createdAt: new Date().toISOString(),
+          instance: {
+            id: "ri-orders-db-2",
+            orgId: "acme",
+            clusterId: "cl-eks-prod",
+            catalogItemId: "cat-postgresql-aws",
+            version: "1.4.0",
+            resourceRef: { name: "orders-db-2" },
+            health: "healthy",
+            state: "healthy",
+            statusMessage: "",
+            prUrl: "https://github.com/acme/acme-inari-state/pull/101",
+            createdAt: new Date().toISOString(),
+          },
         }),
       ),
     );

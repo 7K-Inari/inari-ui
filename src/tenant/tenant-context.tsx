@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "@/auth/auth-context";
 import { parseOrganizations, type Organization } from "@/auth/orgs";
 import { ALL_TENANTS, isValidTenant } from "@/tenant/tenant-link";
+import { setCurrentTenant } from "@/tenant/current";
 
 const RECENTS_KEY = "inari-tenant-recents";
 const MAX_RECENTS = 5;
@@ -64,6 +65,10 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
       });
     }
   }, [tenant, valid]);
+
+  React.useEffect(() => {
+    setCurrentTenant(tenant);
+  }, [tenant]);
 
   React.useEffect(() => {
     setTeam(null);
