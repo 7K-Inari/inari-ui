@@ -48,12 +48,10 @@ describe("ClusterListPage", () => {
     expect(screen.queryByRole("columnheader", { name: "Tenant" })).not.toBeInTheDocument();
   });
 
-  it("shows a tenant column in the all-tenants view", async () => {
+  it("asks for a tenant selection in the all-tenants view (server endpoints are tenant-scoped)", async () => {
     mockTenant = "all";
     renderList();
-    expect(await screen.findByText("gke-staging")).toBeInTheDocument();
-    expect(screen.getByRole("columnheader", { name: "Tenant" })).toBeInTheDocument();
-    expect(screen.getByText("globex")).toBeInTheDocument();
+    expect(await screen.findByText(/select a specific tenant/i)).toBeInTheDocument();
   });
 
   it("filters clusters by status", async () => {
@@ -85,7 +83,7 @@ describe("ClusterListPage", () => {
   it("renders an error message when the API fails", async () => {
     const { http, HttpResponse } = await import("msw");
     mockServer.use(
-      http.get("*/api/v1/clusters", () =>
+      http.get("*/api/v1/tenants/acme/clusters", () =>
         HttpResponse.json({ message: "boom" }, { status: 500 }),
       ),
     );

@@ -10,8 +10,12 @@ import {
 } from "@/api/clusters";
 import { mockControl } from "@/mocks/fixtures";
 import { mockServer } from "@/mocks/server";
+import { setCurrentTenant } from "@/tenant/current";
 
-beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
+beforeAll(() => {
+  setCurrentTenant("acme"); // detail helpers fall back to the active tenant
+  mockServer.listen({ onUnhandledRequest: "error" });
+});
 afterEach(() => {
   mockServer.resetHandlers();
   mockControl.reset();
@@ -24,21 +28,20 @@ describe("clusters api", () => {
     expect(clusters.map((c) => c.tenant)).toEqual(["acme", "acme"]);
   });
 
-  it("lists all clusters for the all-tenants view", async () => {
-    const clusters = await listClusters("tok", "all");
-    expect(clusters).toHaveLength(3);
+  it("rejects the all-tenants scope (server endpoints are tenant-scoped)", async () => {
+    await expect(listClusters("tok", "all")).rejects.toThrow(/tenant/i);
   });
 
   it("sends the bearer token", async () => {
     let seen: string | null = null;
     const { http, HttpResponse } = await import("msw");
     mockServer.use(
-      http.get("*/api/v1/clusters", ({ request }) => {
+      http.get("*/api/v1/tenants/acme/clusters", ({ request }) => {
         seen = request.headers.get("authorization");
-        return HttpResponse.json([]);
+        return HttpResponse.json({ clusters: [] });
       }),
     );
-    await listClusters("my-token", "all");
+    await listClusters("my-token", "acme");
     expect(seen).toBe("Bearer my-token");
   });
 
@@ -51,8 +54,8 @@ describe("clusters api", () => {
     expect(res.cluster.tenant).toBe("acme");
     expect(res.registrationToken).toMatch(/^inari-reg-/);
     expect(new Date(res.tokenExpiresAt).getTime()).toBeGreaterThan(Date.now());
-    expect(res.install.manifestYaml).toContain(res.registrationToken);
-    expect(res.install.helmCommand).toContain("kind-m1");
+    const manifest = await getInstallManifest("tok", res.cluster.id, "acme");
+    expect(manifest).toContain(res.registrationToken);
   });
 
   it("surfaces server validation errors as ApiError", async () => {

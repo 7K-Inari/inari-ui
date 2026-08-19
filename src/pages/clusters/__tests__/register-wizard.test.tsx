@@ -117,7 +117,7 @@ describe("RegisterWizardPage", () => {
     await user.type(screen.getByLabelText("Name"), "ok-name");
     const { http, HttpResponse } = await import("msw");
     mockServer.use(
-      http.post("*/api/v1/clusters", () =>
+      http.post("*/api/v1/tenants/acme/clusters", () =>
         HttpResponse.json({ message: "quota exceeded" }, { status: 403 }),
       ),
     );

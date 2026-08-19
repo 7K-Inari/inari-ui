@@ -36,8 +36,17 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
   if (!res.ok) {
     let message = `Request failed with status ${res.status}`;
     try {
-      const data = (await res.json()) as { message?: string };
-      if (data.message) message = data.message;
+      // Huma ErrorModel: { title, status, detail, errors?: [{message}] }
+      const data = (await res.json()) as {
+        message?: string;
+        detail?: string;
+        errors?: { message?: string }[];
+      };
+      if (data.detail) message = data.detail;
+      else if (data.message) message = data.message;
+      if (data.errors?.length && data.errors[0].message) {
+        message = `${message} (${data.errors[0].message})`;
+      }
     } catch {
       // keep default message
     }
