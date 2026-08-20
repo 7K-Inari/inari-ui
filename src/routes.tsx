@@ -12,6 +12,7 @@ import { RegisterWizardPage } from "@/pages/clusters/register-wizard";
 import { CatalogBrowsePage } from "@/pages/catalog/catalog-browse";
 import { CatalogItemDetailPage } from "@/pages/catalog/catalog-item-detail";
 import { DeployWizardPage } from "@/pages/catalog/deploy-wizard";
+import { ExtensionsPage } from "@/pages/extensions/extensions-page";
 import { ResourceDetailPage } from "@/pages/resources/resource-detail";
 import { ResourceListPage } from "@/pages/resources/resource-list";
 import { CloudAccountDetailPage } from "@/pages/cloud-accounts/cloud-account-detail";
@@ -94,15 +95,7 @@ export function AppRoutes() {
           <Route path="audit-log" element={<AuditLogPage />} />
           <Route path="rbac" element={<RbacMatrixPage />} />
           <Route path="ext/*" element={<ExtensionPageRoute />} />
-          <Route
-            path="extensions"
-            element={
-              <PlaceholderPage
-                title="Extensions"
-                description="Installed UI and platform extensions."
-              />
-            }
-          />
+          <Route path="extensions" element={<ExtensionsPage />} />
           <Route
             path="settings/*"
             element={
