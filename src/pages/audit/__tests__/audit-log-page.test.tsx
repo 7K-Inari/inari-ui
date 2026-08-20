@@ -93,4 +93,61 @@ describe("AuditLogPage", () => {
     renderPage();
     expect(await screen.findByText(/Failed to load audit events: boom/)).toBeInTheDocument();
   });
+
+  it("exports a CSV of the filtered events", async () => {
+    const user = userEvent.setup();
+    const createObjectURL = vi.fn((..._args: unknown[]) => "blob:mock");
+    const revokeObjectURL = vi.fn();
+    const originalCreate = URL.createObjectURL;
+    const originalRevoke = URL.revokeObjectURL;
+    URL.createObjectURL = createObjectURL as unknown as typeof URL.createObjectURL;
+    URL.revokeObjectURL = revokeObjectURL;
+    const clicks: HTMLAnchorElement[] = [];
+    const originalClick = HTMLAnchorElement.prototype.click;
+    HTMLAnchorElement.prototype.click = function (this: HTMLAnchorElement) {
+      clicks.push(this);
+    };
+    try {
+      renderPage();
+      await screen.findByText("deploy.create");
+      await user.type(screen.getByLabelText("Actor"), "platform-admin");
+      await user.click(screen.getByRole("button", { name: "Apply" }));
+      await waitFor(() => {
+        expect(screen.queryByText("deploy.create")).not.toBeInTheDocument();
+      });
+      await user.click(screen.getByRole("button", { name: /Export CSV/ }));
+      await waitFor(() => expect(createObjectURL).toHaveBeenCalled());
+      expect(clicks).toHaveLength(1);
+      expect(clicks[0].download).toBe("audit-acme.csv");
+      expect(clicks[0].href).toBe("blob:mock");
+      const blob = createObjectURL.mock.calls[0][0] as unknown as Blob;
+      const csv = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsText(blob);
+      });
+      expect(csv).toContain("at,tenant,actor,action,objectType,objectName,detail");
+      expect(csv).toContain("approval.decide");
+      expect(csv).not.toContain("deploy.create");
+    } finally {
+      HTMLAnchorElement.prototype.click = originalClick;
+      URL.createObjectURL = originalCreate;
+      URL.revokeObjectURL = originalRevoke;
+    }
+  });
+
+  it("surfaces an error when the export fails", async () => {
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.get("*/api/v1/tenants/acme/audit/export", () =>
+        HttpResponse.json({ message: "export boom" }, { status: 500 }),
+      ),
+    );
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("deploy.create");
+    await user.click(screen.getByRole("button", { name: /Export CSV/ }));
+    expect(await screen.findByText(/export boom/)).toBeInTheDocument();
+  });
 });

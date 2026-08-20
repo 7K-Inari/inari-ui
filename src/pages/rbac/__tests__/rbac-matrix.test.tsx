@@ -90,4 +90,20 @@ describe("RbacMatrixPage", () => {
     renderPage();
     expect(await screen.findByText(/Failed to load RBAC matrix: boom/)).toBeInTheDocument();
   });
+
+  it("surfaces an error when saving a mapping fails", async () => {
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.put("*/api/v1/tenants/acme/rbac/mappings", () =>
+        HttpResponse.json({ detail: "mapping rejected" }, { status: 400 }),
+      ),
+    );
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("tenant-acme/data");
+    await user.click(
+      screen.getByRole("button", { name: "Map tenant-acme/data to tenant-acme-viewer" }),
+    );
+    expect(await screen.findByText("mapping rejected")).toBeInTheDocument();
+  });
 });
