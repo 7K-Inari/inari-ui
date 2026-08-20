@@ -2,6 +2,8 @@ import * as React from "react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import {
+  createClusterSet,
+  deleteClusterSet,
   listAgentChannels,
   listClusterSets,
   listDrift,
@@ -9,11 +11,14 @@ import {
   setAgentChannel,
   type AgentChannel,
 } from "@/api/fleet";
+import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
@@ -35,51 +40,148 @@ const ROLLOUT_STATE_VARIANT: Record<string, "success" | "warning" | "destructive
   "rolled-back": "muted",
 };
 
+function parseLabels(input: string): Record<string, string> {
+  const labels: Record<string, string> = {};
+  for (const pair of input.split(",")) {
+    const [k, v] = pair.split("=", 2).map((s) => s.trim());
+    if (k && v) labels[k] = v;
+  }
+  return labels;
+}
+
+function CreateClusterSetForm({ onCreated }: { onCreated: () => void }) {
+  const { tenant } = useTenant();
+  const { token } = useAuth();
+  const [name, setName] = React.useState("");
+  const [labels, setLabels] = React.useState("");
+  const [error, setError] = React.useState<string | null>(null);
+  const [submitting, setSubmitting] = React.useState(false);
+
+  return (
+    <form
+      className="flex flex-wrap items-end gap-3"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        setSubmitting(true);
+        setError(null);
+        try {
+          await createClusterSet(token, tenant, { name, labels: parseLabels(labels) });
+          setName("");
+          setLabels("");
+          onCreated();
+        } catch (err) {
+          setError(
+            err instanceof ApiError ? err.message : "Failed to create ClusterSet",
+          );
+        } finally {
+          setSubmitting(false);
+        }
+      }}
+    >
+      <div className="space-y-1.5">
+        <Label htmlFor="cs-name">Name</Label>
+        <Input
+          id="cs-name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="prod-us"
+          required
+        />
+      </div>
+      <div className="min-w-64 space-y-1.5">
+        <Label htmlFor="cs-labels">Targeting labels</Label>
+        <Input
+          id="cs-labels"
+          value={labels}
+          onChange={(e) => setLabels(e.target.value)}
+          placeholder="region=us, env=prod"
+        />
+      </div>
+      <Button type="submit" disabled={submitting}>
+        {submitting ? "Creating…" : "Create ClusterSet"}
+      </Button>
+      {error && (
+        <p className="w-full text-sm text-destructive" role="alert">
+          {error}
+        </p>
+      )}
+    </form>
+  );
+}
+
 function ClusterSetsTab() {
   const { tenant } = useTenant();
+  const { token } = useAuth();
   const sets = useAsyncResource((token) => listClusterSets(token, tenant), [tenant]);
+  const [actionError, setActionError] = React.useState<string | null>(null);
 
   if (sets.loading && !sets.data) {
     return <p className="text-sm text-muted-foreground">Loading cluster sets…</p>;
   }
-  if ((sets.data ?? []).length === 0) {
-    return (
-      <Card>
-        <CardContent className="py-10 text-center text-sm text-muted-foreground">
-          No ClusterSets defined yet.
-        </CardContent>
-      </Card>
-    );
-  }
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-      {(sets.data ?? []).map((set) => (
-        <Card key={set.id}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-base">
-              <Link
-                to={tenantLink(tenant, `fleet/clustersets/${set.id}`)}
-                className="hover:underline"
-              >
-                {set.name}
-              </Link>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 pt-0 text-sm">
-            <div className="flex flex-wrap gap-1">
-              {Object.entries(set.labels).map(([k, v]) => (
-                <Badge key={k} variant="outline" className="font-mono">
-                  {k}={v}
-                </Badge>
-              ))}
-            </div>
-            <p className="text-muted-foreground">
-              {set.memberClusterIds.length} member cluster
-              {set.memberClusterIds.length === 1 ? "" : "s"}
-            </p>
+    <div className="space-y-4">
+      {(sets.data ?? []).length === 0 ? (
+        <Card>
+          <CardContent className="py-10 text-center text-sm text-muted-foreground">
+            No ClusterSets defined yet.
           </CardContent>
         </Card>
-      ))}
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {(sets.data ?? []).map((set) => (
+            <Card key={set.id}>
+              <CardHeader className="pb-2">
+                <CardTitle className="flex items-center justify-between gap-2 text-base">
+                  <Link
+                    to={tenantLink(tenant, `fleet/clustersets/${set.id}`)}
+                    className="hover:underline"
+                  >
+                    {set.name}
+                  </Link>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      setActionError(null);
+                      try {
+                        await deleteClusterSet(token, tenant, set.id);
+                        sets.refetch();
+                      } catch (err) {
+                        setActionError(
+                          err instanceof ApiError
+                            ? err.message
+                            : "Failed to delete ClusterSet",
+                        );
+                      }
+                    }}
+                  >
+                    Delete
+                  </Button>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2 pt-0 text-sm">
+                <div className="flex flex-wrap gap-1">
+                  {Object.entries(set.labels).map(([k, v]) => (
+                    <Badge key={k} variant="outline" className="font-mono">
+                      {k}={v}
+                    </Badge>
+                  ))}
+                </div>
+                <p className="text-muted-foreground">
+                  {set.memberClusterIds.length} member cluster
+                  {set.memberClusterIds.length === 1 ? "" : "s"}
+                </p>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+      {actionError && (
+        <p className="text-sm text-destructive" role="alert">
+          {actionError}
+        </p>
+      )}
+      <CreateClusterSetForm onCreated={sets.refetch} />
     </div>
   );
 }

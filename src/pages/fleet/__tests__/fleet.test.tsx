@@ -43,6 +43,29 @@ describe("FleetOverviewPage", () => {
     expect(screen.getByText("2 member clusters")).toBeInTheDocument();
   });
 
+  it("creates a ClusterSet via the form", async () => {
+    const user = userEvent.setup();
+    renderFleet();
+    await screen.findByText("prod-eu");
+    await user.type(screen.getByLabelText("Name"), "prod-us");
+    await user.type(screen.getByLabelText("Targeting labels"), "region=us, env=prod");
+    await user.click(screen.getByRole("button", { name: "Create ClusterSet" }));
+    expect(await screen.findByText("prod-us")).toBeInTheDocument();
+    expect(screen.getByText("region=us")).toBeInTheDocument();
+  });
+
+  it("deletes a ClusterSet", async () => {
+    const user = userEvent.setup();
+    renderFleet();
+    await screen.findByText("canary");
+    const deletes = screen.getAllByRole("button", { name: "Delete" });
+    await user.click(deletes[0]);
+    await screen.findByText(/No ClusterSets defined yet|prod-eu/);
+    // canary (first card) is gone; prod-eu remains.
+    expect(screen.queryByText("canary")).not.toBeInTheDocument();
+    expect(screen.getByText("prod-eu")).toBeInTheDocument();
+  });
+
   it("shows active rollouts with state badges", async () => {
     renderFleet("/acme/fleet?tab=rollouts");
     expect(await screen.findByText("cert-manager 1.16 rollout")).toBeInTheDocument();

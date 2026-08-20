@@ -123,11 +123,20 @@ export function RolloutDetailPage() {
   const { rolloutId } = useParams<{ rolloutId: string }>();
   const [actionError, setActionError] = React.useState<string | null>(null);
 
+  const [terminal, setTerminal] = React.useState(false);
   const rollout = useAsyncResource(
     (t) => getRollout(t, tenant, rolloutId!),
     [rolloutId, tenant],
-    { refetchIntervalMs: 1_000, enabled: Boolean(rolloutId) },
+    { refetchIntervalMs: 1_000, enabled: Boolean(rolloutId) && !terminal },
   );
+
+  // Stop live polling once the rollout reaches a terminal state.
+  const state = rollout.data?.state;
+  React.useEffect(() => {
+    if (state === "completed" || state === "failed" || state === "rolled-back") {
+      setTerminal(true);
+    }
+  }, [state]);
 
   if (rollout.error) {
     const notFound = rollout.error instanceof ApiError && rollout.error.status === 404;
