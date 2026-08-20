@@ -11,6 +11,16 @@ import { CatalogItemDetailPage } from "@/pages/catalog/catalog-item-detail";
 import { DeployWizardPage } from "@/pages/catalog/deploy-wizard";
 import { ResourceDetailPage } from "@/pages/resources/resource-detail";
 import { ResourceListPage } from "@/pages/resources/resource-list";
+import { CloudAccountDetailPage } from "@/pages/cloud-accounts/cloud-account-detail";
+import { CloudAccountListPage } from "@/pages/cloud-accounts/cloud-account-list";
+import { ConnectAccountWizardPage } from "@/pages/cloud-accounts/connect-wizard";
+import { RbacMatrixPage } from "@/pages/rbac/rbac-matrix";
+import { ApprovalsPage } from "@/pages/approvals/approvals-page";
+import { AuditLogPage } from "@/pages/audit/audit-log-page";
+import { PlatformPage } from "@/pages/platform/platform-page";
+import { VendZoneWizardPage } from "@/pages/zones/vend-wizard";
+import { ZoneDetailPage } from "@/pages/zones/zone-detail";
+import { ZoneListPage } from "@/pages/zones/zone-list";
 import { TenantProvider, useTenant } from "@/tenant/tenant-context";
 import { ALL_TENANTS } from "@/tenant/tenant-link";
 
@@ -52,33 +62,13 @@ export function AppRoutes() {
               />
             }
           />
-          <Route
-            path="cloud-accounts"
-            element={
-              <PlaceholderPage
-                title="Cloud Accounts"
-                description="Cloud provider accounts and their discovered capabilities."
-              />
-            }
-          />
-          <Route
-            path="platform"
-            element={
-              <PlaceholderPage
-                title="Platform"
-                description="Platform health, versions, and operators."
-              />
-            }
-          />
-          <Route
-            path="tenant-zones"
-            element={
-              <PlaceholderPage
-                title="Tenant Zones"
-                description="Isolation zones carved out for tenants."
-              />
-            }
-          />
+          <Route path="cloud-accounts" element={<CloudAccountListPage />} />
+          <Route path="cloud-accounts/new" element={<ConnectAccountWizardPage />} />
+          <Route path="cloud-accounts/:accountId" element={<CloudAccountDetailPage />} />
+          <Route path="platform" element={<PlatformPage />} />
+          <Route path="tenant-zones" element={<ZoneListPage />} />
+          <Route path="tenant-zones/new" element={<VendZoneWizardPage />} />
+          <Route path="tenant-zones/:zoneId" element={<ZoneDetailPage />} />
           <Route
             path="templates"
             element={
@@ -88,24 +78,9 @@ export function AppRoutes() {
               />
             }
           />
-          <Route
-            path="approvals"
-            element={
-              <PlaceholderPage
-                title="Approvals"
-                description="Pending and historical approval requests."
-              />
-            }
-          />
-          <Route
-            path="audit-log"
-            element={
-              <PlaceholderPage
-                title="Audit Log"
-                description="Tenant-scoped audit trail."
-              />
-            }
-          />
+          <Route path="approvals" element={<ApprovalsPage />} />
+          <Route path="audit-log" element={<AuditLogPage />} />
+          <Route path="rbac" element={<RbacMatrixPage />} />
           <Route
             path="extensions"
             element={

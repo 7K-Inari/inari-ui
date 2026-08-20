@@ -3,11 +3,19 @@ export const API_BASE_URL: string =
 
 export class ApiError extends Error {
   status: number;
+  remediation?: string;
 
-  constructor(status: number, message: string) {
+  constructor(status: number, message: string, remediation?: string) {
     super(message);
     this.name = "ApiError";
     this.status = status;
+    this.remediation = remediation;
+  }
+
+  // Request-time OPA denials are surfaced as 422/403 with a policy detail and
+  // optional remediation guidance (§5.11).
+  get isPolicyDenial(): boolean {
+    return (this.status === 422 || this.status === 403) && this.remediation !== undefined;
   }
 }
 
@@ -35,11 +43,13 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
 
   if (!res.ok) {
     let message = `Request failed with status ${res.status}`;
+    let remediation: string | undefined;
     try {
       // Huma ErrorModel: { title, status, detail, errors?: [{message}] }
       const data = (await res.json()) as {
         message?: string;
         detail?: string;
+        remediation?: string;
         errors?: { message?: string }[];
       };
       if (data.detail) message = data.detail;
@@ -47,10 +57,11 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
       if (data.errors?.length && data.errors[0].message) {
         message = `${message} (${data.errors[0].message})`;
       }
+      if (typeof data.remediation === "string") remediation = data.remediation;
     } catch {
       // keep default message
     }
-    throw new ApiError(res.status, message);
+    throw new ApiError(res.status, message, remediation);
   }
 
   const contentType = res.headers.get("content-type") ?? "";

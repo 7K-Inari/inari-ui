@@ -5,6 +5,7 @@ import {
   Cloud,
   FileClock,
   Grid2X2,
+  KeyRound,
   LayoutDashboard,
   Layers,
   Puzzle,
@@ -51,6 +52,7 @@ export const NAV_SECTIONS: NavSection[] = [
     title: "Govern",
     items: [
       { label: "Platform", path: "platform", icon: Workflow },
+      { label: "RBAC", path: "rbac", icon: KeyRound },
       { label: "Audit Log", path: "audit-log", icon: FileClock },
       { label: "Extensions", path: "extensions", icon: Puzzle },
       { label: "Settings", path: "settings", icon: Settings },
