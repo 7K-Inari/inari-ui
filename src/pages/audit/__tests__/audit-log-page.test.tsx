@@ -96,7 +96,7 @@ describe("AuditLogPage", () => {
 
   it("exports a CSV of the filtered events", async () => {
     const user = userEvent.setup();
-    const createObjectURL = vi.fn((..._args: unknown[]) => "blob:mock");
+    const createObjectURL = vi.fn<(blob: Blob) => string>(() => "blob:mock");
     const revokeObjectURL = vi.fn();
     const originalCreate = URL.createObjectURL;
     const originalRevoke = URL.revokeObjectURL;
