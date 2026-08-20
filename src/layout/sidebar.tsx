@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
 
+import { ExtensionNavItems } from "@/ext/slots";
 import { NAV_SECTIONS } from "@/layout/nav";
 import { tenantLink } from "@/tenant/tenant-link";
 import { useTenant } from "@/tenant/tenant-context";
@@ -43,6 +44,7 @@ export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
             </ul>
           </div>
         ))}
+        <ExtensionNavItems tenant={tenant} onNavigate={onNavigate} />
       </nav>
     </>
   );

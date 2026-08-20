@@ -5,13 +5,15 @@ import { ExternalLink } from "lucide-react";
 import { getResource } from "@/api/resources";
 import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
+import type { ResourceInstanceDetail } from "@/api/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { InstanceActionButtons } from "@/ext/slots";
 import { HealthBadge } from "@/pages/resources/resource-list";
 import { UpgradeCard } from "@/pages/resources/upgrade-flow";
 
-function ActionsMenu() {
+function ActionsMenu({ resource }: { resource: ResourceInstanceDetail }) {
   const [open, setOpen] = React.useState(false);
   return (
     <div className="relative">
@@ -19,8 +21,8 @@ function ActionsMenu() {
         Actions
       </Button>
       {open && (
-        <div className="absolute right-0 z-10 mt-1 w-64 rounded-md border bg-popover p-2 text-sm text-muted-foreground shadow-md">
-          Extension actions will appear here (ArgoCD sync, rollback, custom actions).
+        <div className="absolute right-0 z-10 mt-1 w-64 rounded-md border bg-popover p-2 text-sm shadow-md">
+          <InstanceActionButtons instance={resource} />
         </div>
       )}
     </div>
@@ -72,7 +74,7 @@ export function ResourceDetailPage() {
               </a>
             </Button>
           )}
-          <ActionsMenu />
+          <ActionsMenu resource={resource} />
         </div>
       </div>
 

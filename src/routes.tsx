@@ -1,6 +1,9 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import { RequireAuth } from "@/auth/require-auth";
+import { ExtensionHostProviders, useSdkSlotContext } from "@/ext/host-context";
+import { ExtensionsProvider } from "@/ext/registry";
+import { ExtensionPageHost } from "@/ext/slots";
 import { AppShell } from "@/layout/app-shell";
 import { AllTenantsHome, PlaceholderPage } from "@/pages/placeholder";
 import { ClusterDetailPage } from "@/pages/clusters/cluster-detail";
@@ -9,6 +12,12 @@ import { RegisterWizardPage } from "@/pages/clusters/register-wizard";
 import { CatalogBrowsePage } from "@/pages/catalog/catalog-browse";
 import { CatalogItemDetailPage } from "@/pages/catalog/catalog-item-detail";
 import { DeployWizardPage } from "@/pages/catalog/deploy-wizard";
+import { ExtensionsPage } from "@/pages/extensions/extensions-page";
+import { ClusterSetDetailPage } from "@/pages/fleet/clusterset-detail";
+import { FleetOverviewPage } from "@/pages/fleet/fleet-overview";
+import { RolloutDetailPage } from "@/pages/fleet/rollout-detail";
+import { ScaffoldWizardPage } from "@/pages/templates/scaffold-wizard";
+import { TemplateListPage } from "@/pages/templates/template-list";
 import { ResourceDetailPage } from "@/pages/resources/resource-detail";
 import { ResourceListPage } from "@/pages/resources/resource-list";
 import { CloudAccountDetailPage } from "@/pages/cloud-accounts/cloud-account-detail";
@@ -27,9 +36,18 @@ import { ALL_TENANTS } from "@/tenant/tenant-link";
 function TenantRoutes() {
   return (
     <TenantProvider>
-      <AppShell />
+      <ExtensionHostProviders>
+        <ExtensionsProvider>
+          <AppShell />
+        </ExtensionsProvider>
+      </ExtensionHostProviders>
     </TenantProvider>
   );
+}
+
+function ExtensionPageRoute() {
+  const context = useSdkSlotContext();
+  return <ExtensionPageHost context={context} />;
 }
 
 export function AppRoutes() {
@@ -53,15 +71,9 @@ export function AppRoutes() {
           <Route path="clusters" element={<ClusterListPage />} />
           <Route path="clusters/new" element={<RegisterWizardPage />} />
           <Route path="clusters/:clusterId" element={<ClusterDetailPage />} />
-          <Route
-            path="fleet"
-            element={
-              <PlaceholderPage
-                title="Fleet"
-                description="Cross-cluster fleet view."
-              />
-            }
-          />
+          <Route path="fleet" element={<FleetOverviewPage />} />
+          <Route path="fleet/clustersets/:clusterSetId" element={<ClusterSetDetailPage />} />
+          <Route path="fleet/rollouts/:rolloutId" element={<RolloutDetailPage />} />
           <Route path="cloud-accounts" element={<CloudAccountListPage />} />
           <Route path="cloud-accounts/new" element={<ConnectAccountWizardPage />} />
           <Route path="cloud-accounts/:accountId" element={<CloudAccountDetailPage />} />
@@ -69,27 +81,13 @@ export function AppRoutes() {
           <Route path="tenant-zones" element={<ZoneListPage />} />
           <Route path="tenant-zones/new" element={<VendZoneWizardPage />} />
           <Route path="tenant-zones/:zoneId" element={<ZoneDetailPage />} />
-          <Route
-            path="templates"
-            element={
-              <PlaceholderPage
-                title="Templates"
-                description="Scaffolds and golden-path templates."
-              />
-            }
-          />
+          <Route path="templates" element={<TemplateListPage />} />
+          <Route path="templates/:templateId/scaffold" element={<ScaffoldWizardPage />} />
           <Route path="approvals" element={<ApprovalsPage />} />
           <Route path="audit-log" element={<AuditLogPage />} />
           <Route path="rbac" element={<RbacMatrixPage />} />
-          <Route
-            path="extensions"
-            element={
-              <PlaceholderPage
-                title="Extensions"
-                description="Installed UI and platform extensions."
-              />
-            }
-          />
+          <Route path="ext/*" element={<ExtensionPageRoute />} />
+          <Route path="extensions" element={<ExtensionsPage />} />
           <Route
             path="settings/*"
             element={

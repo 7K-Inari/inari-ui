@@ -44,6 +44,29 @@ import {
   validateAccount,
 } from "@/mocks/fixtures/m3";
 
+import {
+  addUiExtensionMock,
+  createClusterSetMock,
+  createScaffoldMock,
+  decideGateMock,
+  deleteClusterSetMock,
+  findTemplateMock,
+  getClusterSetMock,
+  listAgentChannelMocks,
+  listBackendExtensionMocks,
+  listClusterSetMocks,
+  listDriftMocks,
+  listRolloutMocks,
+  listTemplateMocks,
+  listUiExtensionMocks,
+  pollRolloutMock,
+  pollScaffoldMock,
+  removeUiExtensionMock,
+  rollbackRolloutMock,
+  selfExtensionPermissions,
+  setAgentChannelMock,
+} from "@/mocks/fixtures/m4";
+
 // Handlers mirror the real inari-server REST surface: tenant slug in the
 // path (/api/v1/tenants/{org}/...) and wrapped response envelopes
 // ({cluster}, {clusters}, {items}, {instances}, {deploy}, ...).
@@ -444,6 +467,159 @@ export const handlers = [
     const zone = requestDecommissionMock(params.id as string, body.reason);
     if (!zone) return humaError(409, "zone not found or not active");
     return HttpResponse.json({ zone });
+  }),
+
+  // ---- extensions (M4) ----
+  http.get(`${BASE}/extensions/ui`, () => {
+    return HttpResponse.json({ extensions: listUiExtensionMocks() });
+  }),
+
+  http.post(`${BASE}/extensions/ui`, async ({ request }) => {
+    const body = (await request.json()) as { name?: string; remoteEntryUrl?: string };
+    if (!body.name || !/^[a-z0-9][a-z0-9-]*$/.test(body.name)) {
+      return humaError(400, "name must be lowercase alphanumeric with dashes");
+    }
+    if (!body.remoteEntryUrl || !/^(https?:\/\/|\/)/.test(body.remoteEntryUrl)) {
+      return humaError(400, "remoteEntryUrl must be a URL or absolute path");
+    }
+    if (listUiExtensionMocks().some((e) => e.name === body.name)) {
+      return humaError(409, "extension already installed");
+    }
+    const extension = addUiExtensionMock({ name: body.name, remoteEntryUrl: body.remoteEntryUrl });
+    return HttpResponse.json({ extension }, { status: 201 });
+  }),
+
+  http.delete(`${BASE}/extensions/ui/:name`, ({ params }) => {
+    if (!removeUiExtensionMock(params.name as string)) {
+      return humaError(404, "extension not found");
+    }
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.get(`${BASE}/extensions`, () => {
+    return HttpResponse.json({ extensions: listBackendExtensionMocks() });
+  }),
+
+  http.get(`${BASE}/authz/self/extensions`, () => {
+    return HttpResponse.json({ permissions: selfExtensionPermissions });
+  }),
+
+  // ---- templates / scaffolds (M4) ----
+  http.get(`${BASE}/templates`, () => {
+    return HttpResponse.json({ templates: listTemplateMocks() });
+  }),
+
+  http.get(`${BASE}/templates/:id`, ({ params }) => {
+    const template = findTemplateMock(params.id as string);
+    if (!template) return humaError(404, "template not found");
+    return HttpResponse.json({ template });
+  }),
+
+  http.post(`${BASE}/scaffolds`, async ({ params, request }) => {
+    const body = (await request.json()) as {
+      templateId?: string;
+      name?: string;
+      parameters?: Record<string, unknown>;
+    };
+    if (!body.templateId || !findTemplateMock(body.templateId)) {
+      return humaError(400, "unknown template");
+    }
+    if (!body.name || !/^[a-z0-9][a-z0-9-]*$/.test(body.name)) {
+      return humaError(400, "name must be lowercase alphanumeric with dashes");
+    }
+    const scaffold = createScaffoldMock(params.org as string, {
+      templateId: body.templateId,
+      name: body.name,
+      parameters: body.parameters ?? {},
+    });
+    return HttpResponse.json({ scaffold }, { status: 201 });
+  }),
+
+  http.get(`${BASE}/scaffolds/:id`, ({ params }) => {
+    const scaffold = pollScaffoldMock(params.id as string);
+    if (!scaffold) return humaError(404, "scaffold run not found");
+    return HttpResponse.json({ scaffold });
+  }),
+
+  // ---- fleet (M4) ----
+  http.get(`${BASE}/clustersets`, ({ params }) => {
+    return HttpResponse.json({ clusterSets: listClusterSetMocks(params.org as string) });
+  }),
+
+  http.post(`${BASE}/clustersets`, async ({ params, request }) => {
+    const body = (await request.json()) as {
+      name?: string;
+      labels?: Record<string, string>;
+    };
+    if (!body.name || !/^[a-z0-9][a-z0-9-]*$/.test(body.name)) {
+      return humaError(400, "name must be lowercase alphanumeric with dashes");
+    }
+    const clusterSet = createClusterSetMock(params.org as string, {
+      name: body.name,
+      labels: body.labels ?? {},
+    });
+    return HttpResponse.json({ clusterSet }, { status: 201 });
+  }),
+
+  http.get(`${BASE}/clustersets/:id`, ({ params }) => {
+    const clusterSet = getClusterSetMock(params.id as string);
+    if (!clusterSet) return humaError(404, "cluster set not found");
+    return HttpResponse.json({ clusterSet });
+  }),
+
+  http.delete(`${BASE}/clustersets/:id`, ({ params }) => {
+    if (!deleteClusterSetMock(params.id as string)) {
+      return humaError(404, "cluster set not found");
+    }
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.get(`${BASE}/fleet/rollouts`, ({ params }) => {
+    return HttpResponse.json({ rollouts: listRolloutMocks(params.org as string) });
+  }),
+
+  http.get(`${BASE}/fleet/rollouts/:id`, ({ params }) => {
+    const rollout = pollRolloutMock(params.id as string);
+    if (!rollout) return humaError(404, "rollout not found");
+    return HttpResponse.json({ rollout });
+  }),
+
+  http.post(`${BASE}/fleet/rollouts/:id/gates/:stage/:decision`, ({ params }) => {
+    const decision = params.decision as string;
+    if (decision !== "approve" && decision !== "reject") {
+      return humaError(404, "unknown decision");
+    }
+    const rollout = decideGateMock(
+      params.id as string,
+      params.stage as string,
+      decision,
+    );
+    if (!rollout) return humaError(409, "rollout or gate not found, or gate not open");
+    return HttpResponse.json({ rollout });
+  }),
+
+  http.post(`${BASE}/fleet/rollouts/:id/rollback`, ({ params }) => {
+    const rollout = rollbackRolloutMock(params.id as string);
+    if (!rollout) return humaError(404, "rollout not found");
+    return HttpResponse.json({ rollout });
+  }),
+
+  http.get(`${BASE}/fleet/drift`, () => {
+    return HttpResponse.json({ drift: listDriftMocks() });
+  }),
+
+  http.get(`${BASE}/fleet/agent-channels`, () => {
+    return HttpResponse.json({ channels: listAgentChannelMocks() });
+  }),
+
+  http.put(`${BASE}/fleet/agent-channels/:clusterSetId`, async ({ params, request }) => {
+    const body = (await request.json()) as { channel?: string };
+    if (body.channel !== "stable" && body.channel !== "canary") {
+      return humaError(400, "channel must be stable or canary");
+    }
+    const channel = setAgentChannelMock(params.clusterSetId as string, body.channel);
+    if (!channel) return humaError(404, "cluster set not found");
+    return HttpResponse.json({ channel });
   }),
 ];
 

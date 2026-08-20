@@ -17,7 +17,8 @@
     "noFallthroughCasesInSwitch": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["src/*"]
+      "@/*": ["src/*"],
+      "@inari/ui-plugin-sdk": ["vendor/ui-plugin-sdk/src/index.ts"]
     },
     "types": ["vitest/globals", "@testing-library/jest-dom"]
   },
