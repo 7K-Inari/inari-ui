@@ -24,6 +24,25 @@ import type {
   Deploy,
   ResourceInstanceDetail,
 } from "@/api/types";
+import {
+  auditCsv,
+  createAccount,
+  createZoneMock,
+  decideApprovalMock,
+  findAccount,
+  listAccounts,
+  listApprovalsFor,
+  listAuditFor,
+  listPlatformResources,
+  listProviderConfigs,
+  listZonesFor,
+  pollZoneMock,
+  rbacMatrixFor,
+  requestDecommissionMock,
+  setRbacMappingMock,
+  trustSnippetFor,
+  validateAccount,
+} from "@/mocks/fixtures/m3";
 
 // Handlers mirror the real inari-server REST surface: tenant slug in the
 // path (/api/v1/tenants/{org}/...) and wrapped response envelopes
@@ -142,6 +161,19 @@ export const handlers = [
     }
     if (body.name && !/^[a-z0-9][a-z0-9-]*$/.test(body.name)) {
       return humaError(400, "name must be lowercase alphanumeric with dashes");
+    }
+    // Deterministic request-time OPA denial for exercising policy UX (§5.11).
+    if (body.name === "policy-denied") {
+      return HttpResponse.json(
+        {
+          title: "Error",
+          status: 422,
+          detail: "denied by policy inari.storage/max-size: storage.size 500Gi exceeds tenant quota of 100Gi",
+          remediation:
+            "Reduce spec.storage.size to 100Gi or less, or request a quota increase via Approvals.",
+        },
+        { status: 422 },
+      );
     }
     const deploy = createDeployMock("acme", body);
     return HttpResponse.json({ deploy: toServerDeployResult(deploy) }, { status: 201 });
@@ -263,4 +295,162 @@ export const handlers = [
       { headers: { "content-type": "text/yaml" } },
     );
   }),
+
+  // ---- cloud accounts (M3) ----
+  http.get(`${BASE}/cloud-accounts`, ({ params }) => {
+    return HttpResponse.json({ accounts: listAccounts(params.org as string) });
+  }),
+
+  http.get(`${BASE}/cloud-accounts/:id`, ({ params }) => {
+    const account = findAccount(params.id as string);
+    if (!account) return humaError(404, "cloud account not found");
+    return HttpResponse.json({ account });
+  }),
+
+  http.post(`${BASE}/cloud-accounts`, async ({ params, request }) => {
+    const body = (await request.json()) as {
+      name?: string;
+      accountId?: string;
+      regions?: string[];
+    };
+    if (!body.name || !/^[a-z0-9][a-z0-9-]*$/.test(body.name)) {
+      return humaError(400, "name must be lowercase alphanumeric with dashes");
+    }
+    if (!body.accountId || !/^\d{12}$/.test(body.accountId)) {
+      return humaError(400, "accountId must be a 12-digit AWS account ID");
+    }
+    const account = createAccount(params.org as string, {
+      name: body.name,
+      accountId: body.accountId,
+      regions: body.regions ?? [],
+    });
+    return HttpResponse.json(
+      { account, trust: trustSnippetFor(account) },
+      { status: 201 },
+    );
+  }),
+
+  http.get(`${BASE}/cloud-accounts/:id/trust-snippet`, ({ params }) => {
+    const account = findAccount(params.id as string);
+    if (!account) return humaError(404, "cloud account not found");
+    return HttpResponse.json({ trust: trustSnippetFor(account) });
+  }),
+
+  http.post(`${BASE}/cloud-accounts/:id/validate`, ({ params }) => {
+    const result = validateAccount(params.id as string);
+    if (!result) return humaError(404, "cloud account not found");
+    return HttpResponse.json({ validation: result });
+  }),
+
+  http.get(`${BASE}/provider-configs`, ({ params }) => {
+    return HttpResponse.json({ providerConfigs: listProviderConfigs(params.org as string) });
+  }),
+
+  // ---- rbac (M3) ----
+  http.get(`${BASE}/rbac`, ({ params }) => {
+    return HttpResponse.json({ rbac: rbacMatrixFor(params.org as string) });
+  }),
+
+  http.put(`${BASE}/rbac/mappings`, async ({ params, request }) => {
+    const body = (await request.json()) as {
+      groupPath?: string;
+      clusterRole?: string;
+      mapped?: boolean;
+    };
+    if (!body.groupPath || !body.clusterRole) {
+      return humaError(400, "groupPath and clusterRole are required");
+    }
+    setRbacMappingMock(params.org as string, body.groupPath, body.clusterRole, Boolean(body.mapped));
+    return HttpResponse.json({ ok: true });
+  }),
+
+  // ---- approvals (M3) ----
+  http.get(`${BASE}/approvals`, ({ params, request }) => {
+    const url = new URL(request.url);
+    const view = url.searchParams.get("view") === "requested" ? "requested" : "inbox";
+    return HttpResponse.json({ approvals: listApprovalsFor(params.org as string, view) });
+  }),
+
+  http.post(`${BASE}/approvals/:id/:decision`, async ({ params, request }) => {
+    const decision = params.decision as string;
+    if (decision !== "approve" && decision !== "reject") {
+      return humaError(404, "unknown decision");
+    }
+    const body = (await request.json()) as { reason?: string };
+    if (!body.reason?.trim()) return humaError(400, "a decision reason is required");
+    const approval = decideApprovalMock(params.id as string, decision, body.reason);
+    if (!approval) return humaError(409, "approval not found or already decided");
+    return HttpResponse.json({ approval });
+  }),
+
+  // ---- audit (M3) ----
+  http.get(`${BASE}/audit`, ({ params, request }) => {
+    const url = new URL(request.url);
+    const events = listAuditFor(params.org as string, {
+      actor: url.searchParams.get("actor") ?? undefined,
+      action: url.searchParams.get("action") ?? undefined,
+      objectType: url.searchParams.get("objectType") ?? undefined,
+      from: url.searchParams.get("from") ?? undefined,
+      to: url.searchParams.get("to") ?? undefined,
+    });
+    return HttpResponse.json({ events });
+  }),
+
+  http.get(`${BASE}/audit/export`, ({ params, request }) => {
+    const url = new URL(request.url);
+    const events = listAuditFor(params.org as string, {
+      actor: url.searchParams.get("actor") ?? undefined,
+      action: url.searchParams.get("action") ?? undefined,
+      objectType: url.searchParams.get("objectType") ?? undefined,
+      from: url.searchParams.get("from") ?? undefined,
+      to: url.searchParams.get("to") ?? undefined,
+    });
+    return new HttpResponse(auditCsv(events), {
+      headers: { "content-type": "text/csv" },
+    });
+  }),
+
+  // ---- platform resources (M3) ----
+  http.get(`${BASE}/platform-resources`, ({ params }) => {
+    return HttpResponse.json({ resources: listPlatformResources(params.org as string) });
+  }),
+
+  // ---- tenant zones (M3) ----
+  http.get(`${BASE}/zones`, ({ params }) => {
+    return HttpResponse.json({ zones: listZonesFor(params.org as string) });
+  }),
+
+  http.get(`${BASE}/zones/:id`, ({ params }) => {
+    const zone = pollZoneMock(params.id as string);
+    if (!zone) return humaError(404, "zone not found");
+    return HttpResponse.json({ zone });
+  }),
+
+  http.post(`${BASE}/zones`, async ({ params, request }) => {
+    const body = (await request.json()) as Partial<CreateZoneRequestBody>;
+    if (!body.name || !body.slug || !/^[a-z0-9][a-z0-9-]*$/.test(body.slug)) {
+      return humaError(400, "name and a lowercase dashed slug are required");
+    }
+    if (body.tier !== "starter") {
+      return humaError(400, "only the starter tier is available at this time");
+    }
+    const zone = createZoneMock(params.org as string, body as CreateZoneRequestBody);
+    return HttpResponse.json({ zone }, { status: 201 });
+  }),
+
+  http.post(`${BASE}/zones/:id/decommission`, async ({ params, request }) => {
+    const body = (await request.json()) as { reason?: string };
+    if (!body.reason?.trim()) return humaError(400, "a decommission reason is required");
+    const zone = requestDecommissionMock(params.id as string, body.reason);
+    if (!zone) return humaError(409, "zone not found or not active");
+    return HttpResponse.json({ zone });
+  }),
 ];
+
+interface CreateZoneRequestBody {
+  name: string;
+  slug: string;
+  orgUnit: string;
+  region: string;
+  tier: "starter";
+}
