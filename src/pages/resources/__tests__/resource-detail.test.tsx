@@ -48,12 +48,12 @@ describe("ResourceDetailPage", () => {
     );
   });
 
-  it("shows an actions placeholder menu", async () => {
+  it("shows an empty actions menu when no extensions contribute actions", async () => {
     const user = userEvent.setup();
     renderPage();
     await screen.findByRole("heading", { name: "orders-db" });
     await user.click(screen.getByRole("button", { name: "Actions" }));
-    expect(await screen.findByText(/Extension actions will appear here/)).toBeInTheDocument();
+    expect(await screen.findByText(/No extension actions available/)).toBeInTheDocument();
   });
 
   it("shows a not-found message for unknown instances", async () => {

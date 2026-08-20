@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { CatalogCardSlots } from "@/ext/slots";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
 
@@ -143,9 +144,10 @@ export function CatalogBrowsePage() {
               </div>
               <CardDescription>{item.description}</CardDescription>
             </CardHeader>
-            <CardContent className="mt-auto flex items-center gap-2 pt-0 text-xs text-muted-foreground">
+            <CardContent className="mt-auto flex flex-wrap items-center gap-2 pt-0 text-xs text-muted-foreground">
               <Badge variant="muted">{item.category}</Badge>
               <span>v{item.latestVersion}</span>
+              <CatalogCardSlots item={item} />
             </CardContent>
           </Card>
         ))}

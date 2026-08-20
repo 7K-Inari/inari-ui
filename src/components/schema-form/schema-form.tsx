@@ -10,6 +10,7 @@ import * as React from "react";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useExtensionFormWidgets } from "@/ext/slots";
 import { cn } from "@/lib/utils";
 
 function FieldTemplate({
@@ -149,6 +150,7 @@ export interface SchemaFormHandle {
 export const SchemaForm = React.forwardRef<SchemaFormHandle, SchemaFormProps>(
   function SchemaForm({ schema, uiSchema, formData, onChange, disabled, className }, ref) {
     const formRef = React.useRef<Form>(null);
+    const extensionWidgets = useExtensionFormWidgets();
 
     React.useImperativeHandle(ref, () => ({
       validate: () => {
@@ -173,6 +175,7 @@ export const SchemaForm = React.forwardRef<SchemaFormHandle, SchemaFormProps>(
             CheckboxWidget,
             TextareaWidget,
             SelectWidget,
+            ...extensionWidgets,
           }}
           templates={{
             FieldTemplate,

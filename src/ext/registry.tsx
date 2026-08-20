@@ -143,6 +143,13 @@ export function useExtensions(): ExtensionsContextValue {
   return ctx;
 }
 
+// Returns null outside an ExtensionsProvider so shared components (e.g.
+// SchemaForm, used in standalone tests) degrade to "no extensions".
+export function useExtensionsOptional(): ExtensionsContextValue | null {
+  return React.useContext(ExtensionsContext);
+}
+
 export function useSlots(kind: SlotKind): SlotBinding[] {
-  return useExtensions().slotsOf(kind);
+  const ctx = React.useContext(ExtensionsContext);
+  return React.useMemo(() => (ctx ? ctx.slotsOf(kind) : []), [ctx, kind]);
 }

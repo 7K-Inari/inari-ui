@@ -2,7 +2,10 @@ import * as React from "react";
 import {
   AuthProvider as SdkAuthProvider,
   TenantProvider as SdkTenantProvider,
+  useAuth as useSdkAuth,
+  useTenant as useSdkTenant,
   type AuthState as SdkAuthState,
+  type SlotContext,
   type TenantState as SdkTenantState,
   type TenantRef,
 } from "@inari/ui-plugin-sdk";
@@ -10,6 +13,13 @@ import {
 import { useAuth } from "@/auth/auth-context";
 import { useTenant } from "@/tenant/tenant-context";
 import { ALL_TENANTS } from "@/tenant/tenant-link";
+
+// Builds the SlotContext passed to Page slot components.
+export function useSdkSlotContext(): SlotContext {
+  const auth = useSdkAuth();
+  const tenant = useSdkTenant();
+  return React.useMemo(() => ({ auth, tenant }), [auth, tenant]);
+}
 
 // Bridges the shell's auth/tenant state into the SDK host contexts so
 // extension components can use the SDK's useAuth()/useTenant() hooks and

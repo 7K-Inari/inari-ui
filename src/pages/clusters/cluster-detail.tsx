@@ -8,6 +8,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { SlotBoundary } from "@/ext/slot-boundary";
+import { toSdkCluster } from "@/ext/mappers";
+import { useClusterTabSlots } from "@/ext/slots";
 import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
@@ -178,18 +181,22 @@ function OverviewTab({ clusterId }: { clusterId: string }) {
   );
 }
 
-const TABS = [
+const BUILTIN_TABS = [
   { id: "capabilities", label: "Capabilities" },
   { id: "overview", label: "Overview" },
 ] as const;
-
-type TabId = (typeof TABS)[number]["id"];
 
 export function ClusterDetailPage() {
   const { tenant } = useTenant();
   const { clusterId } = useParams<{ clusterId: string }>();
   const [searchParams, setSearchParams] = useSearchParams();
-  const tab: TabId = searchParams.get("tab") === "overview" ? "overview" : "capabilities";
+  const extensionTabs = useClusterTabSlots();
+  const allTabs = [
+    ...BUILTIN_TABS.map((t) => ({ id: t.id, label: t.label })),
+    ...extensionTabs.map((t) => ({ id: t.id, label: t.title })),
+  ];
+  const requestedTab = searchParams.get("tab") ?? "capabilities";
+  const tab = allTabs.some((t) => t.id === requestedTab) ? requestedTab : "capabilities";
 
   const {
     data: cluster,
@@ -232,7 +239,7 @@ export function ClusterDetailPage() {
       </div>
 
       <div className="flex gap-1 border-b" role="tablist" aria-label="Cluster sections">
-        {TABS.map((t) => (
+        {allTabs.map((t) => (
           <button
             key={t.id}
             role="tab"
@@ -251,6 +258,13 @@ export function ClusterDetailPage() {
 
       {tab === "capabilities" && <CapabilitiesTab clusterId={cluster.id} />}
       {tab === "overview" && <OverviewTab clusterId={cluster.id} />}
+      {extensionTabs
+        .filter((t) => t.id === tab)
+        .map((t) => (
+          <SlotBoundary key={t.id} extensionName={t.extensionName}>
+            <t.component cluster={toSdkCluster(cluster)} />
+          </SlotBoundary>
+        ))}
     </div>
   );
 }

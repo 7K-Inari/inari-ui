@@ -1,6 +1,9 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import { RequireAuth } from "@/auth/require-auth";
+import { ExtensionHostProviders, useSdkSlotContext } from "@/ext/host-context";
+import { ExtensionsProvider } from "@/ext/registry";
+import { ExtensionPageHost } from "@/ext/slots";
 import { AppShell } from "@/layout/app-shell";
 import { AllTenantsHome, PlaceholderPage } from "@/pages/placeholder";
 import { ClusterDetailPage } from "@/pages/clusters/cluster-detail";
@@ -27,9 +30,18 @@ import { ALL_TENANTS } from "@/tenant/tenant-link";
 function TenantRoutes() {
   return (
     <TenantProvider>
-      <AppShell />
+      <ExtensionHostProviders>
+        <ExtensionsProvider>
+          <AppShell />
+        </ExtensionsProvider>
+      </ExtensionHostProviders>
     </TenantProvider>
   );
+}
+
+function ExtensionPageRoute() {
+  const context = useSdkSlotContext();
+  return <ExtensionPageHost context={context} />;
 }
 
 export function AppRoutes() {
@@ -81,6 +93,7 @@ export function AppRoutes() {
           <Route path="approvals" element={<ApprovalsPage />} />
           <Route path="audit-log" element={<AuditLogPage />} />
           <Route path="rbac" element={<RbacMatrixPage />} />
+          <Route path="ext/*" element={<ExtensionPageRoute />} />
           <Route
             path="extensions"
             element={
