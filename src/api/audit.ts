@@ -43,10 +43,6 @@ export async function listAuditEvents(
   return res.events ?? [];
 }
 
-export function auditExportUrl(tenant: string, filters: AuditFilters = {}): string {
-  return `/api/v1/tenants/${encodeURIComponent(resolveTenant(tenant))}/audit/export${query(filters)}`;
-}
-
 export async function exportAuditEvents(
   token: string | undefined,
   tenant: string,

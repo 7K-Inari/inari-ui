@@ -55,7 +55,7 @@ export interface ProviderConfig {
   createdAt: string;
 }
 
-function tenantPath(tenant: string): string {
+function tenantPath(tenant?: string): string {
   return `/tenants/${encodeURIComponent(resolveTenant(tenant))}`;
 }
 
@@ -76,7 +76,7 @@ export async function getCloudAccount(
   tenant?: string,
 ): Promise<CloudAccount> {
   const res = await apiFetch<{ account: CloudAccount }>(
-    `${tenantPath(resolveTenant(tenant))}/cloud-accounts/${encodeURIComponent(id)}`,
+    `${tenantPath(tenant)}/cloud-accounts/${encodeURIComponent(id)}`,
     { token },
   );
   return res.account;
@@ -99,7 +99,7 @@ export async function getTrustSnippet(
   tenant?: string,
 ): Promise<TrustSnippet> {
   const res = await apiFetch<{ trust: TrustSnippet }>(
-    `${tenantPath(resolveTenant(tenant))}/cloud-accounts/${encodeURIComponent(id)}/trust-snippet`,
+    `${tenantPath(tenant)}/cloud-accounts/${encodeURIComponent(id)}/trust-snippet`,
     { token },
   );
   return res.trust;
@@ -111,7 +111,7 @@ export async function validateCloudAccount(
   tenant?: string,
 ): Promise<ValidationResult> {
   const res = await apiFetch<{ validation: ValidationResult }>(
-    `${tenantPath(resolveTenant(tenant))}/cloud-accounts/${encodeURIComponent(id)}/validate`,
+    `${tenantPath(tenant)}/cloud-accounts/${encodeURIComponent(id)}/validate`,
     { token, method: "POST" },
   );
   return res.validation;

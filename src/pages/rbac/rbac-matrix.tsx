@@ -17,6 +17,7 @@ export function RbacMatrixPage() {
     [tenant],
   );
   const [pendingCell, setPendingCell] = React.useState<string | null>(null);
+  const [saveError, setSaveError] = React.useState<string | null>(null);
 
   const mappings = React.useMemo(
     () => new Set((matrix?.mappings ?? []).map((m) => `${m.groupPath}::${m.clusterRole}`)),
@@ -26,9 +27,12 @@ export function RbacMatrixPage() {
   async function toggle(groupPath: string, clusterRole: string) {
     const key = `${groupPath}::${clusterRole}`;
     setPendingCell(key);
+    setSaveError(null);
     try {
       await setRbacMapping(token, tenant, groupPath, clusterRole, !mappings.has(key));
       refetch();
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Failed to save mapping");
     } finally {
       setPendingCell(null);
     }
@@ -60,6 +64,8 @@ export function RbacMatrixPage() {
           </CardContent>
         </Card>
       )}
+
+      {saveError && <p className="text-sm text-destructive">{saveError}</p>}
 
       {!error && loading && !matrix && (
         <p className="text-sm text-muted-foreground">Loading RBAC matrix…</p>
