@@ -4,10 +4,12 @@ import { CheckCircle2, Loader2 } from "lucide-react";
 
 import { getCatalogItem } from "@/api/catalog";
 import { listClusters } from "@/api/clusters";
+import { ApiError } from "@/api/client";
 import { createDeploy, getDeploy } from "@/api/deploys";
 import { useAsyncResource } from "@/api/hooks";
 import type { Deploy } from "@/api/types";
 import { useAuth } from "@/auth/auth-context";
+import { PolicyDenialNotice } from "@/components/policy-denial";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -131,6 +133,10 @@ export function DeployWizardPage() {
   const [clusterId, setClusterId] = React.useState("");
   const [nameError, setNameError] = React.useState<string | null>(null);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
+  const [policyDenial, setPolicyDenial] = React.useState<{
+    reason: string;
+    remediation?: string;
+  } | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
   const [deployId, setDeployId] = React.useState<string | null>(null);
   const formRef = React.useRef<SchemaFormHandle>(null);
@@ -197,6 +203,7 @@ export function DeployWizardPage() {
   const submit = async () => {
     setSubmitting(true);
     setSubmitError(null);
+    setPolicyDenial(null);
     try {
       const deploy = await createDeploy(token, tenant, {
         itemId: itemData.id,
@@ -208,7 +215,11 @@ export function DeployWizardPage() {
       setDeployId(deploy.id);
       setStep(2);
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : "Failed to create deploy");
+      if (err instanceof ApiError && err.isPolicyDenial) {
+        setPolicyDenial({ reason: err.message, remediation: err.remediation });
+      } else {
+        setSubmitError(err instanceof Error ? err.message : "Failed to create deploy");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -310,6 +321,12 @@ export function DeployWizardPage() {
             <pre className="max-h-72 overflow-auto rounded-md bg-muted p-3 font-mono text-xs">
               {JSON.stringify(reviewSpec, null, 2)}
             </pre>
+            {policyDenial && (
+              <PolicyDenialNotice
+                reason={policyDenial.reason}
+                remediation={policyDenial.remediation}
+              />
+            )}
             {submitError && <p className="text-sm text-destructive">{submitError}</p>}
             <div className="flex justify-end gap-2">
               <Button variant="ghost" onClick={() => setStep(0)}>

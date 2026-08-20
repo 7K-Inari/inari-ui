@@ -136,4 +136,24 @@ describe("DeployWizardPage", () => {
       "/acme/deploys/ri-orders-db-2",
     );
   }, 15000);
+
+  it("shows policy denial reason and remediation when OPA blocks the deploy", async () => {
+    const user = userEvent.setup();
+    renderWizard();
+    await screen.findByLabelText(/PostgreSQL engine version/);
+    await user.type(screen.getByLabelText("Instance name"), "policy-denied");
+    await user.selectOptions(screen.getByLabelText("Target cluster"), "cl-eks-prod");
+    await user.click(screen.getByRole("button", { name: "Next" }));
+    expect(await screen.findByRole("heading", { name: "Review" })).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Deploy" }));
+
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Blocked by platform policy");
+    expect(alert).toHaveTextContent(/denied by policy inari\.storage\/max-size/);
+    expect(alert).toHaveTextContent(/Remediation:/);
+    expect(alert).toHaveTextContent(/Reduce spec\.storage\.size to 100Gi or less/);
+    // Stays on the review step so the user can adjust the spec.
+    expect(screen.getByRole("heading", { name: "Review" })).toBeInTheDocument();
+  });
 });
