@@ -1,0 +1,26 @@
+:root {
+  --inari-bg: #faf9f7;
+  --inari-fg: #1c1917;
+  --inari-primary: #c2410c;
+  --inari-primary-fg: #fff7ed;
+  --inari-muted: #e7e5e4;
+  --inari-muted-fg: #57534e;
+  --inari-border: #d6d3d1;
+  --inari-destructive: #b91c1c;
+  --inari-radius-sm: 0.25rem;
+  --inari-radius-md: 0.5rem;
+  --inari-radius-lg: 0.75rem;
+  --inari-font: ui-sans-serif, system-ui, sans-serif;
+  --inari-font-mono: ui-monospace, SFMono-Regular, monospace;
+}
+
+[data-theme='dark'] {
+  --inari-bg: #1c1917;
+  --inari-fg: #fafaf9;
+  --inari-primary: #ea580c;
+  --inari-primary-fg: #fff7ed;
+  --inari-muted: #292524;
+  --inari-muted-fg: #a8a29e;
+  --inari-border: #44403c;
+  --inari-destructive: #ef4444;
+}
