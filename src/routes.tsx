@@ -13,6 +13,9 @@ import { CatalogBrowsePage } from "@/pages/catalog/catalog-browse";
 import { CatalogItemDetailPage } from "@/pages/catalog/catalog-item-detail";
 import { DeployWizardPage } from "@/pages/catalog/deploy-wizard";
 import { ExtensionsPage } from "@/pages/extensions/extensions-page";
+import { ClusterSetDetailPage } from "@/pages/fleet/clusterset-detail";
+import { FleetOverviewPage } from "@/pages/fleet/fleet-overview";
+import { RolloutDetailPage } from "@/pages/fleet/rollout-detail";
 import { ScaffoldWizardPage } from "@/pages/templates/scaffold-wizard";
 import { TemplateListPage } from "@/pages/templates/template-list";
 import { ResourceDetailPage } from "@/pages/resources/resource-detail";
@@ -68,15 +71,9 @@ export function AppRoutes() {
           <Route path="clusters" element={<ClusterListPage />} />
           <Route path="clusters/new" element={<RegisterWizardPage />} />
           <Route path="clusters/:clusterId" element={<ClusterDetailPage />} />
-          <Route
-            path="fleet"
-            element={
-              <PlaceholderPage
-                title="Fleet"
-                description="Cross-cluster fleet view."
-              />
-            }
-          />
+          <Route path="fleet" element={<FleetOverviewPage />} />
+          <Route path="fleet/clustersets/:clusterSetId" element={<ClusterSetDetailPage />} />
+          <Route path="fleet/rollouts/:rolloutId" element={<RolloutDetailPage />} />
           <Route path="cloud-accounts" element={<CloudAccountListPage />} />
           <Route path="cloud-accounts/new" element={<ConnectAccountWizardPage />} />
           <Route path="cloud-accounts/:accountId" element={<CloudAccountDetailPage />} />
