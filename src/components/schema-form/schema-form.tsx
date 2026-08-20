@@ -10,6 +10,7 @@ import * as React from "react";
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SlotBoundary } from "@/ext/slot-boundary";
 import { useExtensionFormWidgets } from "@/ext/slots";
 import { cn } from "@/lib/utils";
 
@@ -160,9 +161,16 @@ export const SchemaForm = React.forwardRef<SchemaFormHandle, SchemaFormProps>(
       },
     }));
 
+    // Extension widgets load asynchronously; RJSF throws when a ui:widget name
+    // is unknown, so wrap the form in a boundary keyed on the widget map — a
+    // crash remounts and retries once the extension widgets arrive instead of
+    // taking down the page.
+    const widgetKey = Object.keys(extensionWidgets).sort().join(",");
+
     return (
       <div className={cn("schema-form", className)}>
-        <Form
+        <SlotBoundary key={widgetKey}>
+          <Form
           ref={formRef}
           schema={schema as RJSFSchema}
           uiSchema={uiSchema}
@@ -189,6 +197,7 @@ export const SchemaForm = React.forwardRef<SchemaFormHandle, SchemaFormProps>(
         >
           <span />
         </Form>
+        </SlotBoundary>
       </div>
     );
   },
