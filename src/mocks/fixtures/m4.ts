@@ -236,8 +236,9 @@ export function createScaffoldMock(tenant: string, body: CreateScaffoldRequest):
     polls: 0,
   };
   state.scaffoldRuns.push(run);
-  const { polls: _polls, ...rest } = run;
-  return rest;
+  const rest = { ...run } as Partial<ScaffoldState>;
+  delete rest.polls;
+  return rest as ScaffoldRun;
 }
 
 export function pollScaffoldMock(id: string): ScaffoldRun | undefined {
@@ -246,8 +247,9 @@ export function pollScaffoldMock(id: string): ScaffoldRun | undefined {
   run.polls += 1;
   run.phase = SCAFFOLD_PHASES[Math.min(run.polls, SCAFFOLD_PHASES.length - 1)];
   run.outputs = scaffoldOutputs(run);
-  const { polls: _polls, ...rest } = run;
-  return rest;
+  const rest = { ...run } as Partial<ScaffoldState>;
+  delete rest.polls;
+  return rest as ScaffoldRun;
 }
 
 /* ---- fleet: ClusterSets ---- */
@@ -315,7 +317,11 @@ function makeStages(): Rollout["stages"] {
 export function listRolloutMocks(tenant: string): Rollout[] {
   return state.rollouts
     .filter((r) => r.tenant === tenant)
-    .map(({ polls: _polls, ...rest }) => structuredClone(rest));
+    .map((r) => {
+      const rest = { ...r } as Partial<RolloutStateInternal>;
+      delete rest.polls;
+      return structuredClone(rest) as Rollout;
+    });
 }
 
 // Each read advances cluster states so rollout progress is visible live.
@@ -338,8 +344,9 @@ export function pollRolloutMock(id: string): Rollout | undefined {
       rollout.state = "completed";
     }
   }
-  const { polls: _polls, ...rest } = rollout;
-  return structuredClone(rest);
+  const rest = { ...rollout } as Partial<RolloutStateInternal>;
+  delete rest.polls;
+  return structuredClone(rest) as Rollout;
 }
 
 export function decideGateMock(
@@ -357,8 +364,9 @@ export function decideGateMock(
     stage.clusters.forEach((c) => (c.state = "healthy"));
     rollout.state = "completed";
   }
-  const { polls: _polls, ...rest } = rollout;
-  return structuredClone(rest);
+  const rest = { ...rollout } as Partial<RolloutStateInternal>;
+  delete rest.polls;
+  return structuredClone(rest) as Rollout;
 }
 
 export function rollbackRolloutMock(id: string): Rollout | undefined {
@@ -370,8 +378,9 @@ export function rollbackRolloutMock(id: string): Rollout | undefined {
       if (c.state !== "pending") c.state = "pending";
     }),
   );
-  const { polls: _polls, ...rest } = rollout;
-  return structuredClone(rest);
+  const rest = { ...rollout } as Partial<RolloutStateInternal>;
+  delete rest.polls;
+  return structuredClone(rest) as Rollout;
 }
 
 /* ---- fleet: drift (report-only) ---- */
