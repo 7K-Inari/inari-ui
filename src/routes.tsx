@@ -13,6 +13,8 @@ import { CatalogBrowsePage } from "@/pages/catalog/catalog-browse";
 import { CatalogItemDetailPage } from "@/pages/catalog/catalog-item-detail";
 import { DeployWizardPage } from "@/pages/catalog/deploy-wizard";
 import { ExtensionsPage } from "@/pages/extensions/extensions-page";
+import { ScaffoldWizardPage } from "@/pages/templates/scaffold-wizard";
+import { TemplateListPage } from "@/pages/templates/template-list";
 import { ResourceDetailPage } from "@/pages/resources/resource-detail";
 import { ResourceListPage } from "@/pages/resources/resource-list";
 import { CloudAccountDetailPage } from "@/pages/cloud-accounts/cloud-account-detail";
@@ -82,15 +84,8 @@ export function AppRoutes() {
           <Route path="tenant-zones" element={<ZoneListPage />} />
           <Route path="tenant-zones/new" element={<VendZoneWizardPage />} />
           <Route path="tenant-zones/:zoneId" element={<ZoneDetailPage />} />
-          <Route
-            path="templates"
-            element={
-              <PlaceholderPage
-                title="Templates"
-                description="Scaffolds and golden-path templates."
-              />
-            }
-          />
+          <Route path="templates" element={<TemplateListPage />} />
+          <Route path="templates/:templateId/scaffold" element={<ScaffoldWizardPage />} />
           <Route path="approvals" element={<ApprovalsPage />} />
           <Route path="audit-log" element={<AuditLogPage />} />
           <Route path="rbac" element={<RbacMatrixPage />} />
