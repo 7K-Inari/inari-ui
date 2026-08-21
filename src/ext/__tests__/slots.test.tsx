@@ -6,7 +6,7 @@ import {
   NavItemBlueprint,
   PageBlueprint,
   createExtension,
-} from "@inari/ui-plugin-sdk";
+} from "@7k-inari/ui-plugin-sdk";
 
 import type {
   CatalogItemSummary,

@@ -2,7 +2,7 @@ import type {
   CatalogItem as SdkCatalogItem,
   Cluster as SdkCluster,
   ResourceInstance as SdkResourceInstance,
-} from "@inari/ui-plugin-sdk";
+} from "@7k-inari/ui-plugin-sdk";
 
 import type {
   CatalogItemSummary,

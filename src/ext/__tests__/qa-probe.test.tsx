@@ -2,7 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
-import { FormWidgetBlueprint, PageBlueprint, createExtension } from "@inari/ui-plugin-sdk";
+import { FormWidgetBlueprint, PageBlueprint, createExtension } from "@7k-inari/ui-plugin-sdk";
 
 import { SchemaForm } from "@/components/schema-form/schema-form";
 import { ExtensionsProvider } from "@/ext/registry";

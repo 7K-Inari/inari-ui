@@ -9,7 +9,7 @@ import type {
   PageOptions,
   PageSlotProps,
   SlotContext,
-} from "@inari/ui-plugin-sdk";
+} from "@7k-inari/ui-plugin-sdk";
 
 import type { CatalogItemSummary, ResourceInstanceSummary } from "@/api/types";
 import { Button } from "@/components/ui/button";

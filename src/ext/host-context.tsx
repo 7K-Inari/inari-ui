@@ -8,7 +8,7 @@ import {
   type SlotContext,
   type TenantState as SdkTenantState,
   type TenantRef,
-} from "@inari/ui-plugin-sdk";
+} from "@7k-inari/ui-plugin-sdk";
 
 import { useAuth } from "@/auth/auth-context";
 import { useTenant } from "@/tenant/tenant-context";
