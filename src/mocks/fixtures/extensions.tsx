@@ -4,7 +4,7 @@ import {
   createExtension,
   type ClusterTabSlotProps,
   type InariExtension,
-} from "@inari/ui-plugin-sdk";
+} from "@7k-inari/ui-plugin-sdk";
 
 import type { BackendExtension, UiExtensionRemote } from "@/api/extensions";
 

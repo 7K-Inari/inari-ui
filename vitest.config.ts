@@ -7,14 +7,6 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
-      "@inari/ui-plugin-sdk": path.resolve(
-        __dirname,
-        "vendor/ui-plugin-sdk/src/index.ts",
-      ),
-      "@inari/ui-plugin-sdk/tokens.css": path.resolve(
-        __dirname,
-        "vendor/ui-plugin-sdk/src/tokens/tokens.css",
-      ),
     },
   },
   test: {

@@ -1,4 +1,4 @@
-import { parseExtensionManifest, type InariExtension } from "@inari/ui-plugin-sdk";
+import { parseExtensionManifest, type InariExtension } from "@7k-inari/ui-plugin-sdk";
 
 import type { UiExtensionRemote } from "@/api/extensions";
 import { getHostRuntime } from "@/ext/host-runtime";

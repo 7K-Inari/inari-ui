@@ -1,5 +1,5 @@
 import * as React from "react";
-import type { AnySlotContribution, InariExtension } from "@inari/ui-plugin-sdk";
+import type { AnySlotContribution, InariExtension } from "@7k-inari/ui-plugin-sdk";
 
 import {
   listUiExtensions,
