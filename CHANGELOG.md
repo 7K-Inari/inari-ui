@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.3.0](https://github.com/7K-Inari/inari-ui/compare/v1.2.0...v1.3.0) (2026-08-21)
+
+
+### Features
+
+* runtime console configuration via config.js ([ea68b1e](https://github.com/7K-Inari/inari-ui/commit/ea68b1e65177471b79af563c8a7989e5061b87d3))
+* runtime console configuration via config.js ([2e57dc3](https://github.com/7K-Inari/inari-ui/commit/2e57dc35f0690eb7c57148c229ecdf6431c37790))
+
 ## [1.2.0](https://github.com/7K-Inari/inari-ui/compare/v1.1.0...v1.2.0) (2026-08-21)
 
 
