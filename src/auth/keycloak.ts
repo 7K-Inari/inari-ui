@@ -1,9 +1,11 @@
 import Keycloak from "keycloak-js";
 
+import { config } from "@/config";
+
 export const keycloak = new Keycloak({
-  url: import.meta.env.VITE_KEYCLOAK_URL ?? "http://localhost:8080",
-  realm: import.meta.env.VITE_KEYCLOAK_REALM ?? "inari",
-  clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID ?? "inari-ui",
+  url: config.keycloakUrl,
+  realm: config.keycloakRealm,
+  clientId: config.keycloakClientId,
 });
 
 let refreshInterval: ReturnType<typeof setInterval> | undefined;
