@@ -1,5 +1,6 @@
-export const API_BASE_URL: string =
-  (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? "/api/v1";
+import { config } from "@/config";
+
+export const API_BASE_URL: string = config.apiBaseUrl;
 
 export class ApiError extends Error {
   status: number;
