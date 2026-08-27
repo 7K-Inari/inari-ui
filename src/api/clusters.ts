@@ -1,4 +1,5 @@
 import { apiFetch } from "@/api/client";
+import { config } from "@/config";
 import type {
   Capability,
   CapabilityKind,
@@ -144,9 +145,21 @@ export async function createCluster(
     tokenExpiresAt: tok.expiresAt,
     install: {
       manifestYaml,
-      helmCommand: `helm install inari-agent oci://ghcr.io/7k-inari/charts/inari-agent --set registrationToken=${tok.token}`,
+      helmCommand: buildHelmCommand(org, tok.token),
     },
   };
+}
+
+// The inari-agent chart requires the tenant slug, the control-plane agent
+// gateway URL, and the one-time registration token. The gateway comes from
+// runtime config (per-deployment), not a hardcoded URL.
+export function buildHelmCommand(tenant: string, registrationToken: string): string {
+  return [
+    "helm install inari-agent oci://ghcr.io/7k-inari/charts/inari-agent \\",
+    `  --set tenant.slug=${tenant} \\`,
+    `  --set agent.gatewayUrl=${config.agentGatewayUrl} \\`,
+    `  --set registration.token=${registrationToken}`,
+  ].join("\n");
 }
 
 // The server renders a fresh manifest (with a fresh embedded token) per call
