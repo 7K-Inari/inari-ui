@@ -58,7 +58,7 @@ export function CreateOrganizationPage() {
       // Best-effort: the organization claim only lists the new org after the
       // token refreshes; navigation still lands safely via the all-tenants
       // fallback if the claim lags behind.
-      await keycloak.updateToken(0).catch(() => false);
+      await keycloak.updateToken(-1).catch(() => false);
       navigate(`/${tenant.slug}/overview`);
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
