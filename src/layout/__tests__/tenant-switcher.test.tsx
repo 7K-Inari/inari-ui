@@ -6,6 +6,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TenantSwitcher } from "@/layout/tenant-switcher";
 import { TenantProvider } from "@/tenant/tenant-context";
 
+const kcMocks = vi.hoisted(() => ({
+  switchOrganization: vi.fn<(alias: string) => boolean>(() => true),
+  consumePendingOrg: vi.fn<() => string | null>(() => null),
+}));
+
+vi.mock("@/auth/keycloak", () => ({
+  switchOrganization: kcMocks.switchOrganization,
+  consumePendingOrg: kcMocks.consumePendingOrg,
+}));
+
 vi.mock("@/auth/auth-context", () => ({
   useAuth: () => ({
     parsedToken: {
@@ -40,18 +50,19 @@ function renderAt(path: string) {
 describe("TenantSwitcher", () => {
   beforeEach(() => {
     localStorage.clear();
+    sessionStorage.clear();
+    kcMocks.switchOrganization.mockClear().mockReturnValue(true);
+    kcMocks.consumePendingOrg.mockClear().mockReturnValue(null);
   });
 
-  it("lists the user's organizations and navigates on select", async () => {
+  it("lists the user's organizations and re-authenticates on select", async () => {
     const user = userEvent.setup();
     renderAt("/all/overview");
     await user.click(screen.getByRole("button", { name: /tenant context/i }));
     expect(screen.getByText("Acme")).toBeInTheDocument();
     expect(screen.getByText("Globex")).toBeInTheDocument();
     await user.click(screen.getByText("Globex"));
-    expect(await screen.findByTestId("path")).toHaveTextContent(
-      "/globex/overview",
-    );
+    expect(kcMocks.switchOrganization).toHaveBeenCalledWith("globex");
   });
 
   it("shows the active org name in the trigger", () => {
