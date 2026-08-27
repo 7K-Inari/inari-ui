@@ -1,5 +1,8 @@
-import { Building2, Check, ChevronsUpDown, Globe } from "lucide-react";
+import { Building2, Check, ChevronsUpDown, Globe, Plus } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
+import { useAuth } from "@/auth/auth-context";
+import { canCreateOrganizations } from "@/auth/roles";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,6 +19,8 @@ const PLACEHOLDER_TEAMS = ["platform", "apps", "data"];
 
 export function TenantSwitcher() {
   const { tenant, team, orgs, recents, setTenant, setTeam } = useTenant();
+  const { parsedToken } = useAuth();
+  const navigate = useNavigate();
 
   const activeOrg = orgs.find((o) => o.id === tenant);
   const label =
@@ -72,6 +77,15 @@ export function TenantSwitcher() {
         ))}
         {orgs.length === 0 && (
           <DropdownMenuItem disabled>No organizations</DropdownMenuItem>
+        )}
+        {canCreateOrganizations(parsedToken) && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onSelect={() => navigate("/create-organization")}>
+              <Plus />
+              Create organization
+            </DropdownMenuItem>
+          </>
         )}
         {tenant !== ALL_TENANTS && (
           <>

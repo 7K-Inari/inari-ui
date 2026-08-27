@@ -6,12 +6,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { TenantSwitcher } from "@/layout/tenant-switcher";
 import { TenantProvider } from "@/tenant/tenant-context";
 
+let mockParsedToken: Record<string, unknown> | undefined;
 vi.mock("@/auth/auth-context", () => ({
-  useAuth: () => ({
-    parsedToken: {
-      organization: { acme: { name: "Acme" }, globex: { name: "Globex" } },
-    },
-  }),
+  useAuth: () => ({ parsedToken: mockParsedToken }),
 }));
 
 function LocationProbe() {
@@ -23,6 +20,7 @@ function renderAt(path: string) {
   return render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
+        <Route path="/create-organization" element={<LocationProbe />} />
         <Route
           path="/:tenant/*"
           element={
@@ -40,6 +38,9 @@ function renderAt(path: string) {
 describe("TenantSwitcher", () => {
   beforeEach(() => {
     localStorage.clear();
+    mockParsedToken = {
+      organization: { acme: { name: "Acme" }, globex: { name: "Globex" } },
+    };
   });
 
   it("lists the user's organizations and navigates on select", async () => {
@@ -66,5 +67,26 @@ describe("TenantSwitcher", () => {
     renderAt("/acme/overview");
     await user.click(screen.getByRole("button", { name: /tenant context/i }));
     expect(screen.getByText("Team scope")).toBeInTheDocument();
+  });
+
+  it("hides the create organization CTA without the platform-admin role", async () => {
+    const user = userEvent.setup();
+    renderAt("/all/overview");
+    await user.click(screen.getByRole("button", { name: /tenant context/i }));
+    expect(screen.queryByText("Create organization")).not.toBeInTheDocument();
+  });
+
+  it("shows the create organization CTA to platform admins and navigates", async () => {
+    mockParsedToken = {
+      organization: { acme: { name: "Acme" } },
+      realm_access: { roles: ["platform-admin"] },
+    };
+    const user = userEvent.setup();
+    renderAt("/all/overview");
+    await user.click(screen.getByRole("button", { name: /tenant context/i }));
+    await user.click(screen.getByText("Create organization"));
+    expect(await screen.findByTestId("path")).toHaveTextContent(
+      "/create-organization",
+    );
   });
 });
