@@ -12,6 +12,7 @@ declare global {
       keycloakRealm?: string;
       keycloakClientId?: string;
       apiBaseUrl?: string;
+      agentGatewayUrl?: string;
     };
   }
 }
@@ -21,6 +22,7 @@ export interface ConsoleConfig {
   keycloakRealm: string;
   keycloakClientId: string;
   apiBaseUrl: string;
+  agentGatewayUrl: string;
 }
 
 export const config: ConsoleConfig = {
@@ -40,4 +42,8 @@ export const config: ConsoleConfig = {
     window.__INARI_CONFIG__?.apiBaseUrl ??
     import.meta.env.VITE_API_BASE_URL ??
     "/api/v1",
+  agentGatewayUrl:
+    window.__INARI_CONFIG__?.agentGatewayUrl ??
+    import.meta.env.VITE_AGENT_GATEWAY_URL ??
+    "wss://localhost:8081/connect",
 };

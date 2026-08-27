@@ -11,6 +11,7 @@ import {
 import { mockControl } from "@/mocks/fixtures";
 import { mockServer } from "@/mocks/server";
 import { setCurrentTenant } from "@/tenant/current";
+import { config } from "@/config";
 
 beforeAll(() => {
   setCurrentTenant("acme"); // detail helpers fall back to the active tenant
@@ -56,6 +57,12 @@ describe("clusters api", () => {
     expect(new Date(res.tokenExpiresAt).getTime()).toBeGreaterThan(Date.now());
     const manifest = await getInstallManifest("tok", res.cluster.id, "acme");
     expect(manifest).toContain(res.registrationToken);
+
+    const helm = res.install.helmCommand!;
+    expect(helm).toContain("helm install inari-agent oci://ghcr.io/7k-inari/charts/inari-agent");
+    expect(helm).toContain(`--set registration.token=${res.registrationToken}`);
+    expect(helm).toContain("--set tenant.slug=acme");
+    expect(helm).toContain(`--set agent.gatewayUrl=${config.agentGatewayUrl}`);
   });
 
   it("surfaces server validation errors as ApiError", async () => {
