@@ -43,3 +43,30 @@ export function hasOrganization(
 ): boolean {
   return parseOrganizations(token).some((org) => org.id === alias);
 }
+
+const ORGS_CACHE_KEY = "inari-orgs";
+
+export function readCachedOrganizations(): Organization[] {
+  try {
+    const raw = sessionStorage.getItem(ORGS_CACHE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (o): o is Organization =>
+        o !== null &&
+        typeof o === "object" &&
+        typeof (o as Organization).id === "string" &&
+        typeof (o as Organization).name === "string",
+    );
+  } catch {
+    return [];
+  }
+}
+
+export function cacheOrganizations(orgs: Organization[]): void {
+  try {
+    sessionStorage.setItem(ORGS_CACHE_KEY, JSON.stringify(orgs));
+  } catch {
+    // sessionStorage unavailable; keep in-memory list only
+  }
+}

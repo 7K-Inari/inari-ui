@@ -3,13 +3,17 @@ import { useNavigate, useParams } from "react-router-dom";
 
 import { useAuth } from "@/auth/auth-context";
 import { consumePendingOrg, switchOrganization } from "@/auth/keycloak";
-import { parseOrganizations, type Organization } from "@/auth/orgs";
+import {
+  cacheOrganizations,
+  parseOrganizations,
+  readCachedOrganizations,
+  type Organization,
+} from "@/auth/orgs";
 import { ALL_TENANTS, isValidTenant } from "@/tenant/tenant-link";
 import { setCurrentTenant } from "@/tenant/current";
 
 const RECENTS_KEY = "inari-tenant-recents";
 const MAX_RECENTS = 5;
-const ORGS_CACHE_KEY = "inari-orgs";
 
 export interface TenantState {
   tenant: string;
@@ -37,34 +41,13 @@ function pushRecent(recents: string[], tenant: string): string[] {
   return [tenant, ...recents.filter((r) => r !== tenant)].slice(0, MAX_RECENTS);
 }
 
-function readCachedOrgs(): Organization[] {
-  try {
-    const raw = sessionStorage.getItem(ORGS_CACHE_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (o): o is Organization =>
-        o !== null &&
-        typeof o === "object" &&
-        typeof (o as Organization).id === "string" &&
-        typeof (o as Organization).name === "string",
-    );
-  } catch {
-    return [];
-  }
-}
-
 function resolveOrgs(parsed: Organization[]): Organization[] {
   if (parsed.length > 1) {
-    try {
-      sessionStorage.setItem(ORGS_CACHE_KEY, JSON.stringify(parsed));
-    } catch {
-      // sessionStorage unavailable; keep in-memory list only
-    }
+    cacheOrganizations(parsed);
     return parsed;
   }
   const merged = [...parsed];
-  for (const cached of readCachedOrgs()) {
+  for (const cached of readCachedOrganizations()) {
     if (!merged.some((o) => o.id === cached.id)) merged.push(cached);
   }
   return merged;

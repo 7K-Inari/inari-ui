@@ -1,6 +1,6 @@
 import Keycloak from "keycloak-js";
 
-import { hasOrganization } from "@/auth/orgs";
+import { hasOrganization, readCachedOrganizations } from "@/auth/orgs";
 import { config } from "@/config";
 
 const PENDING_ORG_KEY = "inari-pending-org";
@@ -72,7 +72,10 @@ export function consumePendingOrg(): string | null {
 }
 
 export function switchOrganization(alias: string): boolean {
-  if (!hasOrganization(keycloak.tokenParsed, alias)) {
+  if (
+    !hasOrganization(keycloak.tokenParsed, alias) &&
+    !readCachedOrganizations().some((org) => org.id === alias)
+  ) {
     return false;
   }
   try {

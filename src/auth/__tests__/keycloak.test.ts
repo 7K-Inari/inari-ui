@@ -14,9 +14,18 @@ vi.mock("keycloak-js", () => ({
 import {
   consumePendingOrg,
   handleAuthInitFailure,
+  keycloak,
   peekPendingOrg,
   switchOrganization,
 } from "@/auth/keycloak";
+
+const fullToken = {
+  organization: { acme: { name: "Acme" }, globex: {} },
+};
+
+beforeEach(() => {
+  keycloak.tokenParsed = fullToken;
+});
 
 describe("switchOrganization", () => {
   beforeEach(() => {
@@ -37,6 +46,22 @@ describe("switchOrganization", () => {
     expect(switchOrganization("evilcorp")).toBe(false);
     expect(loginMock).not.toHaveBeenCalled();
     expect(peekPendingOrg()).toBeNull();
+  });
+
+  it("allows switching to an org from the cached list when the token is org-scoped", () => {
+    keycloak.tokenParsed = { organization: { globex: {} } };
+    sessionStorage.setItem(
+      "inari-orgs",
+      JSON.stringify([
+        { id: "acme", name: "Acme" },
+        { id: "globex", name: "Globex" },
+      ]),
+    );
+    expect(switchOrganization("acme")).toBe(true);
+    expect(loginMock).toHaveBeenCalledWith({
+      prompt: "none",
+      scope: "openid organization:acme",
+    });
   });
 });
 
