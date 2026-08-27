@@ -50,11 +50,13 @@ export function CreateOrganizationPage() {
       setSlugError("Use lowercase letters, numbers, and dashes (e.g. acme-analytics).");
       return;
     }
+    const displayName = name.trim();
+    if (!displayName) return;
     setSlugError(null);
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const tenant = await createTenant(token, { slug, name });
+      const tenant = await createTenant(token, { slug, name: displayName });
       // Best-effort: the organization claim only lists the new org after the
       // token refreshes; navigation still lands safely via the all-tenants
       // fallback if the claim lags behind.
@@ -117,7 +119,7 @@ export function CreateOrganizationPage() {
                 <Button variant="ghost" type="button" onClick={() => navigate(-1)}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={submitting || !name || !slug}>
+                <Button type="submit" disabled={submitting || !name.trim() || !slug}>
                   {submitting ? "Creating…" : "Create organization"}
                 </Button>
               </div>
