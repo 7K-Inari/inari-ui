@@ -99,4 +99,67 @@ describe("ClusterListPage", () => {
       within(header.parentElement!).getAllByRole("link", { name: "Register cluster" })[0],
     ).toHaveAttribute("href", "/acme/clusters/new");
   });
+
+  it("shows resume and cancel actions only for pending clusters", async () => {
+    mockControl.setClusterStatus("cl-eks-prod", "pending");
+    renderList();
+    const pendingRow = (await screen.findByText("eks-prod-eu")).closest("tr")!;
+    expect(
+      within(pendingRow).getByRole("link", { name: "Resume registration" }),
+    ).toHaveAttribute("href", "/acme/clusters/new?cluster=cl-eks-prod");
+    expect(
+      within(pendingRow).getByRole("button", { name: "Cancel registration" }),
+    ).toBeInTheDocument();
+
+    const connectedRow = screen.getByText("kind-dev").closest("tr")!;
+    expect(
+      within(connectedRow).queryByRole("link", { name: "Resume registration" }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(connectedRow).queryByRole("button", { name: "Cancel registration" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("cancels a pending registration after confirmation and removes the row", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    mockControl.setClusterStatus("cl-eks-prod", "pending");
+    renderList();
+    const pendingRow = (await screen.findByText("eks-prod-eu")).closest("tr")!;
+    await user.click(within(pendingRow).getByRole("button", { name: "Cancel registration" }));
+    expect(window.confirm).toHaveBeenCalled();
+    await vi.waitFor(() => {
+      expect(screen.queryByText("eks-prod-eu")).not.toBeInTheDocument();
+    });
+    expect(mockControl.getState().clusters.map((c) => c.id)).not.toContain("cl-eks-prod");
+    vi.restoreAllMocks();
+  });
+
+  it("keeps the row when the confirmation is declined", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(window, "confirm").mockReturnValue(false);
+    mockControl.setClusterStatus("cl-eks-prod", "pending");
+    renderList();
+    const pendingRow = (await screen.findByText("eks-prod-eu")).closest("tr")!;
+    await user.click(within(pendingRow).getByRole("button", { name: "Cancel registration" }));
+    expect(screen.getByText("eks-prod-eu")).toBeInTheDocument();
+    vi.restoreAllMocks();
+  });
+
+  it("surfaces API errors when cancelling fails", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.delete("*/api/v1/tenants/acme/clusters/:id", () =>
+        HttpResponse.json({ detail: "forbidden" }, { status: 403 }),
+      ),
+    );
+    mockControl.setClusterStatus("cl-eks-prod", "pending");
+    renderList();
+    const pendingRow = (await screen.findByText("eks-prod-eu")).closest("tr")!;
+    await user.click(within(pendingRow).getByRole("button", { name: "Cancel registration" }));
+    expect(await screen.findByText(/forbidden/)).toBeInTheDocument();
+    vi.restoreAllMocks();
+  });
 });
