@@ -48,6 +48,13 @@ describe("switchOrganization", () => {
     expect(peekPendingOrg()).toBeNull();
   });
 
+  it("refuses empty or whitespace-containing aliases", () => {
+    expect(switchOrganization("")).toBe(false);
+    expect(switchOrganization("acme admin")).toBe(false);
+    expect(loginMock).not.toHaveBeenCalled();
+    expect(peekPendingOrg()).toBeNull();
+  });
+
   it("allows switching to an org from the cached list when the token is org-scoped", () => {
     keycloak.tokenParsed = { organization: { globex: {} } };
     sessionStorage.setItem(

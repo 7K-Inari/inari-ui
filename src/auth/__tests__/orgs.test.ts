@@ -55,6 +55,15 @@ describe("parseOrganizations", () => {
       parseOrganizations({ organization: { acme: { name: 42 } } }),
     ).toEqual([{ id: "acme", name: "acme" }]);
   });
+
+  it("ignores empty or blank aliases in both claim shapes", () => {
+    expect(parseOrganizations({ organization: ["", "  ", "acme"] })).toEqual([
+      { id: "acme", name: "acme" },
+    ]);
+    expect(parseOrganizations({ organization: { "": {}, acme: {} } })).toEqual(
+      [{ id: "acme", name: "acme" }],
+    );
+  });
 });
 
 describe("hasOrganization", () => {

@@ -17,10 +17,14 @@ export function parseOrganizations(
   }
   const orgs = Array.isArray(claim)
     ? claim
-        .filter((alias): alias is string => typeof alias === "string")
+        .filter(
+          (alias): alias is string =>
+            typeof alias === "string" && alias.trim() !== "",
+        )
         .map((alias) => ({ id: alias, name: alias }))
-    : Object.entries(claim as Record<string, OrganizationClaimValue>).map(
-        ([id, value]) => {
+    : Object.entries(claim as Record<string, OrganizationClaimValue>)
+        .filter(([id]) => id.trim() !== "")
+        .map(([id, value]) => {
           const rawName =
             value && typeof value === "object" && "name" in value
               ? (value as { name?: unknown }).name

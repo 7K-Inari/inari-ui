@@ -72,6 +72,9 @@ export function consumePendingOrg(): string | null {
 }
 
 export function switchOrganization(alias: string): boolean {
+  if (!alias || /\s/.test(alias)) {
+    return false;
+  }
   if (
     !hasOrganization(keycloak.tokenParsed, alias) &&
     !readCachedOrganizations().some((org) => org.id === alias)
