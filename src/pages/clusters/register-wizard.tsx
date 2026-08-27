@@ -220,7 +220,8 @@ function ResumedManifest({ clusterId }: { clusterId: string }) {
   );
 }
 
-export function RegisterWizardPage() {  const { tenant } = useTenant();
+export function RegisterWizardPage() {
+  const { tenant } = useTenant();
   const { token } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
