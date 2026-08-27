@@ -161,3 +161,17 @@ export function getInstallManifest(
     { token, method: "POST" },
   );
 }
+
+// Cancels a pending registration. The server rejects deletes for clusters
+// that already connected (409), so callers should only offer this for
+// pending clusters and surface API errors.
+export function deleteCluster(
+  token: string | undefined,
+  id: string,
+  tenant?: string,
+): Promise<void> {
+  return apiFetch<void>(
+    `${tenantPath(resolveTenant(tenant))}/clusters/${encodeURIComponent(id)}`,
+    { token, method: "DELETE" },
+  );
+}

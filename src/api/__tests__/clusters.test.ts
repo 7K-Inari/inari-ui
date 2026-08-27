@@ -3,6 +3,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 import { ApiError } from "@/api/client";
 import {
   createCluster,
+  deleteCluster,
   getCapabilities,
   getCluster,
   getInstallManifest,
@@ -86,5 +87,24 @@ describe("clusters api", () => {
   it("fetches the install manifest as text", async () => {
     const manifest = await getInstallManifest("tok", "cl-kind-dev");
     expect(manifest).toContain("kind: Namespace");
+  });
+
+  it("deletes a pending cluster", async () => {
+    mockControl.setClusterStatus("cl-eks-prod", "pending");
+    await deleteCluster("tok", "cl-eks-prod", "acme");
+    const clusters = await listClusters("tok", "acme");
+    expect(clusters.map((c) => c.id)).not.toContain("cl-eks-prod");
+  });
+
+  it("rejects deleting a cluster that is not pending", async () => {
+    const err = await deleteCluster("tok", "cl-kind-dev", "acme").catch((e) => e);
+    expect(err).toBeInstanceOf(ApiError);
+    expect(err.status).toBe(409);
+  });
+
+  it("surfaces 404 when deleting an unknown cluster", async () => {
+    const err = await deleteCluster("tok", "cl-nope", "acme").catch((e) => e);
+    expect(err).toBeInstanceOf(ApiError);
+    expect(err.status).toBe(404);
   });
 });
