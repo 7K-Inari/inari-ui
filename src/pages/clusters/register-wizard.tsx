@@ -2,7 +2,7 @@ import * as React from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, Copy, Loader2 } from "lucide-react";
 
-import { createCluster, getCluster } from "@/api/clusters";
+import { createCluster, getCluster, getInstallManifest } from "@/api/clusters";
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
 import type { ClusterStatus, CreateClusterResponse } from "@/api/types";
@@ -178,8 +178,49 @@ function WaitingForConnection({ clusterId }: { clusterId: string }) {
   );
 }
 
-export function RegisterWizardPage() {
-  const { tenant } = useTenant();
+// On a resumed registration the one-time token from step 1 is gone, but the
+// server renders a fresh manifest (fresh token embedded) per call, so the
+// user can still install the agent after coming back.
+function ResumedManifest({ clusterId }: { clusterId: string }) {
+  const { token } = useAuth();
+  const [manifest, setManifest] = React.useState<string | null>(null);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const load = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      setManifest(await getInstallManifest(token, clusterId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to load install manifest");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (manifest) {
+    return (
+      <div className="space-y-2">
+        <pre className="max-h-72 overflow-auto rounded-md bg-muted p-3 font-mono text-xs">
+          {manifest}
+        </pre>
+        <CopyButton value={manifest} label="Copy manifest" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-2">
+      {error && <p className="text-sm text-destructive">{error}</p>}
+      <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+        {loading ? "Loading manifest…" : "Show install manifest"}
+      </Button>
+    </div>
+  );
+}
+
+export function RegisterWizardPage() {  const { tenant } = useTenant();
   const { token } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -373,6 +414,7 @@ export function RegisterWizardPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             <WaitingForConnection clusterId={clusterId} />
+            {!created && <ResumedManifest clusterId={clusterId} />}
             <div className="flex justify-end">
               <Button asChild variant="outline">
                 <Link to={tenantLink(tenant, `clusters/${clusterId}`)}>Open cluster detail</Link>
