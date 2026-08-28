@@ -1,5 +1,35 @@
 # Changelog
 
+## [1.4.0](https://github.com/7K-Inari/inari-ui/compare/v1.3.0...v1.4.0) (2026-08-28)
+
+
+### Features
+
+* **api:** add createTenant helper and MSW POST /tenants mock ([fc035c5](https://github.com/7K-Inari/inari-ui/commit/fc035c55f3c725d3c58fd4b2662b53c69225ae38))
+* **auth:** add realm role helpers for platform-admin checks ([4520915](https://github.com/7K-Inari/inari-ui/commit/4520915fcce9e34c42b53f0ecfbb087d5288380b))
+* **auth:** add silent org switching via prompt=none re-auth with interactive fallback ([cb3fb56](https://github.com/7K-Inari/inari-ui/commit/cb3fb56ae18da35b5c79f2d939f74d965e144f50))
+* **auth:** fall back to interactive login when silent org re-auth fails ([b4caee5](https://github.com/7K-Inari/inari-ui/commit/b4caee5726ae50f79ae9233a09440bbf907de663))
+* **auth:** harden organization claim parsing and add hasOrganization helper ([8b25444](https://github.com/7K-Inari/inari-ui/commit/8b25444ad83b51581a5ebd02bce7941f211dd3e7))
+* **auth:** multi-organization tenant switching via silent re-authentication ([efaea04](https://github.com/7K-Inari/inari-ui/commit/efaea04066912240fe38160410c0abc537d666ce))
+* **clusters:** add deleteCluster API and mock DELETE endpoint for pending registrations ([264e821](https://github.com/7K-Inari/inari-ui/commit/264e82158be99f0f2748a5e0be41abe134b0bfd8))
+* **clusters:** add resume and cancel actions for pending clusters on detail page ([30e99c6](https://github.com/7K-Inari/inari-ui/commit/30e99c6cf9466cb723b855effe63093a47653bd4))
+* **clusters:** add resume and cancel actions for pending registrations in cluster list ([fc1a188](https://github.com/7K-Inari/inari-ui/commit/fc1a188d79637112a048613c0e12b1ae36bedd63))
+* **clusters:** allow fetching a fresh install manifest when resuming registration ([aad6e26](https://github.com/7K-Inari/inari-ui/commit/aad6e263a8bb953271f3c530fa40061f7544446f))
+* **clusters:** resume and cancel pending cluster registrations ([ad424cf](https://github.com/7K-Inari/inari-ui/commit/ad424cf173fbd8613fd9468187b683a3cb3e3b55))
+* **organizations:** add /create-organization route and platform-admin CTA in tenant switcher ([6324fab](https://github.com/7K-Inari/inari-ui/commit/6324fab22d8ed94f6040f9195c65ab7c6b5722a4))
+* **organizations:** add create organization page and platform-admin CTA ([3765467](https://github.com/7K-Inari/inari-ui/commit/3765467667c2b7da84a462517557c5fa99b74aaf))
+* **organizations:** add create organization page with slug validation and conflict handling ([20762b4](https://github.com/7K-Inari/inari-ui/commit/20762b499535adc96b8c482e72a47ccbdaaa05a5))
+* **tenant:** switch organizations via silent re-authentication ([3e4cb2c](https://github.com/7K-Inari/inari-ui/commit/3e4cb2c75ba89e5753a32fa718142a3884ed843c))
+
+
+### Bug Fixes
+
+* **auth:** reject empty or whitespace org aliases in parsing and switching ([2330f30](https://github.com/7K-Inari/inari-ui/commit/2330f30ba4f108d637f8d5160796a56e7a2fab6f))
+* **clusters:** prefill mandatory chart values in helm install command ([cdd7110](https://github.com/7K-Inari/inari-ui/commit/cdd71102d1b6dcaadc5b527fb4baa53946b482ee))
+* **clusters:** prefill mandatory chart values in helm install command ([72ecadb](https://github.com/7K-Inari/inari-ui/commit/72ecadb38fcbd0264895088d916d6c47bd79f735))
+* **clusters:** surface error when resuming a registration that no longer exists ([085562d](https://github.com/7K-Inari/inari-ui/commit/085562d84c26d85959fb67261d55ac412c0935d7))
+* **organizations:** reject whitespace-only display names, trim before submit ([df8027d](https://github.com/7K-Inari/inari-ui/commit/df8027dca7c8cda266e79d73b8bc4843677c088d))
+
 ## [1.3.0](https://github.com/7K-Inari/inari-ui/compare/v1.2.0...v1.3.0) (2026-08-21)
 
 
