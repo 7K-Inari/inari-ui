@@ -33,6 +33,7 @@ async function renderGuarded() {
 describe("AuthProvider", () => {
   beforeEach(() => {
     vi.resetModules();
+    sessionStorage.clear();
     mocks.login.mockClear();
     mocks.init.mockReset();
   });
@@ -57,5 +58,26 @@ describe("AuthProvider", () => {
     renderGuarded();
     await user.click(await screen.findByRole("button", { name: /try again/i }));
     await waitFor(() => expect(mocks.init).toHaveBeenCalledTimes(2));
+  });
+
+  it("falls back to interactive login when a silent org switch fails", async () => {
+    sessionStorage.setItem("inari-pending-org", "globex");
+    mocks.init.mockRejectedValue(new Error("login_required"));
+    renderGuarded();
+    await waitFor(() =>
+      expect(mocks.login).toHaveBeenCalledWith({
+        scope: "openid organization:globex",
+      }),
+    );
+  });
+
+  it("shows the error state when the interactive fallback was already attempted", async () => {
+    sessionStorage.setItem("inari-pending-org", "globex");
+    sessionStorage.setItem("inari-org-fallback-attempted", "1");
+    mocks.init.mockRejectedValue(new Error("access_denied"));
+    renderGuarded();
+    expect(await screen.findByText("Unable to sign in")).toBeInTheDocument();
+    expect(mocks.login).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem("inari-pending-org")).toBeNull();
   });
 });

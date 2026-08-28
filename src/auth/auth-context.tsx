@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { initKeycloak, keycloak, stopTokenRefresh } from "@/auth/keycloak";
+import { handleAuthInitFailure, initKeycloak, keycloak, stopTokenRefresh } from "@/auth/keycloak";
 
 export interface AuthState {
   initialized: boolean;
@@ -27,6 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     let cancelled = false;
+    let redirectingForOrgSwitch = false;
     initKeycloak()
       .then((auth) => {
         if (cancelled) return;
@@ -39,6 +40,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       .catch((err: unknown) => {
         if (cancelled) return;
+        if (handleAuthInitFailure()) {
+          redirectingForOrgSwitch = true;
+          return;
+        }
         setError(
           err instanceof Error
             ? err
@@ -46,7 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         );
       })
       .finally(() => {
-        if (!cancelled) setInitialized(true);
+        if (!cancelled && !redirectingForOrgSwitch) setInitialized(true);
       });
     keycloak.onAuthRefreshSuccess = () => {
       setToken(keycloak.token);

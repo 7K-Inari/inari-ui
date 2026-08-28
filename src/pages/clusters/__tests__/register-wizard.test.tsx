@@ -70,13 +70,17 @@ describe("RegisterWizardPage", () => {
     expect(manifest.textContent).toContain(tokenEl.textContent!);
   });
 
-  it("offers a Helm install tab from the server response", async () => {
+  it("offers a Helm install tab with all mandatory chart values prefilled", async () => {
     const user = userEvent.setup();
     renderWizard();
     await fillDetails(user);
-    await screen.findByTestId("registration-token");
+    const tokenEl = await screen.findByTestId("registration-token");
     await user.click(screen.getByRole("tab", { name: "Helm" }));
-    expect(screen.getByText(/helm install inari-agent/)).toBeInTheDocument();
+    const command = screen.getByText(/helm install inari-agent/);
+    expect(command).toBeInTheDocument();
+    expect(command.textContent).toContain(`--set registration.token=${tokenEl.textContent}`);
+    expect(command.textContent).toContain("--set tenant.slug=acme");
+    expect(command.textContent).toContain("--set agent.gatewayUrl=");
   });
 
   it("waits for the agent and celebrates when the cluster comes online", async () => {
@@ -134,5 +138,29 @@ describe("RegisterWizardPage", () => {
     await waitFor(() =>
       expect(screen.getByText(/Cluster "kind-dev"/)).toBeInTheDocument(),
     );
+  });
+
+  it("lets a resumed user fetch a fresh install manifest", async () => {
+    const user = userEvent.setup();
+    mockControl.setClusterStatus("cl-kind-dev", "pending");
+    renderWizard("/acme/clusters/new?cluster=cl-kind-dev");
+    await screen.findByText("Waiting for the agent to connect…");
+    await user.click(screen.getByRole("button", { name: "Show install manifest" }));
+    expect(await screen.findByText(/kind: Namespace/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Copy manifest" }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows an error instead of hanging when the resumed cluster no longer exists", async () => {
+    renderWizard("/acme/clusters/new?cluster=cl-deleted");
+    expect(
+      await screen.findByText(/could not be restored/),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Start a new registration" })).toHaveAttribute(
+      "href",
+      "/acme/clusters/new",
+    );
+    expect(screen.queryByText("Restoring registration…")).not.toBeInTheDocument();
   });
 });

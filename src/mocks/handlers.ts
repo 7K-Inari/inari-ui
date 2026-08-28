@@ -5,6 +5,7 @@ import {
   findCluster,
   listForTenant,
   registerCluster,
+  removeCluster,
 } from "@/mocks/fixtures";
 import {
   createDeployMock,
@@ -313,6 +314,17 @@ export const handlers = [
     const cluster = findCluster(params.id as string);
     if (!cluster) return humaError(404, "cluster not found");
     return HttpResponse.json({ cluster: toServerCluster(cluster) });
+  }),
+
+  // Only pending registrations can be cancelled; anything else is a conflict.
+  http.delete(`${BASE}/clusters/:id`, ({ params }) => {
+    const cluster = findCluster(params.id as string);
+    if (!cluster) return humaError(404, "cluster not found");
+    if (cluster.status !== "pending") {
+      return humaError(409, "only pending registrations can be cancelled");
+    }
+    removeCluster(cluster.id);
+    return new HttpResponse(null, { status: 204 });
   }),
 
   http.get(`${BASE}/clusters/:id/capabilities`, ({ params }) => {
