@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/7K-Inari/inari-ui/compare/v1.4.0...v1.5.0) (2026-08-28)
+
+
+### Features
+
+* move inari-console chart from inari-helm-charts ([#23](https://github.com/7K-Inari/inari-ui/issues/23)) ([25a2409](https://github.com/7K-Inari/inari-ui/commit/25a240942a93e4f19eba0b1e1c3ab002675e5b6d))
+
 ## [1.4.0](https://github.com/7K-Inari/inari-ui/compare/v1.3.0...v1.4.0) (2026-08-28)
 
 
