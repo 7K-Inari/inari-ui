@@ -160,6 +160,28 @@ function humaError(status: number, detail: string) {
 }
 
 export const handlers = [
+  // ---- tenants (platform-scoped, not under /tenants/:org) ----
+  http.post("*/api/v1/tenants", async ({ request }) => {
+    const body = (await request.json()) as { slug?: string; name?: string };
+    if (!body.slug || !body.name) {
+      return humaError(400, "slug and name are required");
+    }
+    if (body.slug === "taken") {
+      return humaError(409, `tenant slug "${body.slug}" already exists`);
+    }
+    return HttpResponse.json(
+      {
+        tenant: {
+          id: `t-${body.slug}`,
+          slug: body.slug,
+          name: body.name,
+          createdAt: new Date().toISOString(),
+        },
+      },
+      { status: 201 },
+    );
+  }),
+
   // ---- catalog ----
   http.get(`${BASE}/catalog`, ({ request }) => {
     const url = new URL(request.url);

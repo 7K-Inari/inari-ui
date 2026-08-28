@@ -6,6 +6,7 @@ import { ExtensionsProvider } from "@/ext/registry";
 import { ExtensionPageHost } from "@/ext/slots";
 import { AppShell } from "@/layout/app-shell";
 import { AllTenantsHome, PlaceholderPage } from "@/pages/placeholder";
+import { CreateOrganizationPage } from "@/pages/organizations/create-organization";
 import { ClusterDetailPage } from "@/pages/clusters/cluster-detail";
 import { ClusterListPage } from "@/pages/clusters/cluster-list";
 import { RegisterWizardPage } from "@/pages/clusters/register-wizard";
@@ -55,6 +56,7 @@ export function AppRoutes() {
     <RequireAuth>
       <Routes>
         <Route path="/" element={<Navigate to={`/${ALL_TENANTS}/overview`} replace />} />
+        <Route path="/create-organization" element={<CreateOrganizationPage />} />
         <Route path="/:tenant" element={<TenantRoutes />}>
           <Route index element={<Navigate to="overview" replace />} />
           <Route
