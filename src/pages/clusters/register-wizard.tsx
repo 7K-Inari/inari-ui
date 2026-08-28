@@ -408,19 +408,35 @@ export function RegisterWizardPage() {
             <CardDescription>
               {created
                 ? `Cluster "${created.cluster.name}" was registered.`
-                : resumed.data
-                  ? `Cluster "${resumed.data.name}".`
-                  : "Restoring registration…"}
+                : resumed.error
+                  ? "Could not restore this registration."
+                  : resumed.data
+                    ? `Cluster "${resumed.data.name}".`
+                    : "Restoring registration…"}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <WaitingForConnection clusterId={clusterId} />
-            {!created && <ResumedManifest clusterId={clusterId} />}
-            <div className="flex justify-end">
-              <Button asChild variant="outline">
-                <Link to={tenantLink(tenant, `clusters/${clusterId}`)}>Open cluster detail</Link>
-              </Button>
-            </div>
+            {!created && resumed.error ? (
+              <div className="space-y-3">
+                <p className="text-sm text-destructive">
+                  This registration could not be restored — it may have been cancelled or belongs
+                  to another tenant.
+                </p>
+                <Button asChild variant="outline" size="sm">
+                  <Link to={tenantLink(tenant, "clusters/new")}>Start a new registration</Link>
+                </Button>
+              </div>
+            ) : (
+              <>
+                <WaitingForConnection clusterId={clusterId} />
+                {!created && <ResumedManifest clusterId={clusterId} />}
+                <div className="flex justify-end">
+                  <Button asChild variant="outline">
+                    <Link to={tenantLink(tenant, `clusters/${clusterId}`)}>Open cluster detail</Link>
+                  </Button>
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
       )}

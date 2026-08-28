@@ -147,4 +147,16 @@ describe("RegisterWizardPage", () => {
       screen.getByRole("button", { name: "Copy manifest" }),
     ).toBeInTheDocument();
   });
+
+  it("shows an error instead of hanging when the resumed cluster no longer exists", async () => {
+    renderWizard("/acme/clusters/new?cluster=cl-deleted");
+    expect(
+      await screen.findByText(/could not be restored/),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Start a new registration" })).toHaveAttribute(
+      "href",
+      "/acme/clusters/new",
+    );
+    expect(screen.queryByText("Restoring registration…")).not.toBeInTheDocument();
+  });
 });
