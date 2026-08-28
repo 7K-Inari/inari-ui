@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import * as React from "react";
 
-import { listClusters } from "@/api/clusters";
+import { deleteCluster, listClusters } from "@/api/clusters";
+import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
+import { useAuth } from "@/auth/auth-context";
 import type { ClusterStatus } from "@/api/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,12 +24,36 @@ const STATUS_FILTERS: Array<{ value: ClusterStatus | "all"; label: string }> = [
 
 export function ClusterListPage() {
   const { tenant } = useTenant();
+  const { token } = useAuth();
   const [statusFilter, setStatusFilter] = React.useState<ClusterStatus | "all">("all");
-  const { data: clusters, loading, error } = useAsyncResource(
-    (token) => listClusters(token, tenant),
-    [tenant],
-    { refetchIntervalMs: 15_000 },
-  );
+  const [actionError, setActionError] = React.useState<string | null>(null);
+  const {
+    data: clusters,
+    loading,
+    error,
+    refetch,
+  } = useAsyncResource((token) => listClusters(token, tenant), [tenant], {
+    refetchIntervalMs: 15_000,
+  });
+
+  const cancelRegistration = async (id: string, name: string) => {
+    if (
+      !window.confirm(
+        `Cancel the pending registration for "${name}"? This deletes the cluster record.`,
+      )
+    ) {
+      return;
+    }
+    setActionError(null);
+    try {
+      await deleteCluster(token, id, tenant);
+      refetch();
+    } catch (err) {
+      setActionError(
+        err instanceof ApiError ? err.message : "Failed to cancel registration",
+      );
+    }
+  };
 
   const visible = (clusters ?? []).filter(
     (c) => statusFilter === "all" || c.status === statusFilter,
@@ -89,6 +115,12 @@ export function ClusterListPage() {
         </Card>
       )}
 
+      {actionError && (
+        <Card>
+          <CardContent className="py-3 text-sm text-destructive">{actionError}</CardContent>
+        </Card>
+      )}
+
       {visible.length > 0 && (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
@@ -101,6 +133,7 @@ export function ClusterListPage() {
                 <th className="px-4 py-2 font-medium">Labels</th>
                 <th className="px-4 py-2 font-medium">Capabilities</th>
                 <th className="px-4 py-2 font-medium">Last seen</th>
+                <th className="px-4 py-2 font-medium">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -135,6 +168,26 @@ export function ClusterListPage() {
                   <td className="px-4 py-2">{cluster.capabilityCount}</td>
                   <td className="px-4 py-2 text-muted-foreground">
                     {formatRelative(cluster.lastSeenAt)}
+                  </td>
+                  <td className="px-4 py-2">
+                    {cluster.status === "pending" && (
+                      <div className="flex gap-2">
+                        <Button asChild variant="outline" size="sm">
+                          <Link
+                            to={tenantLink(tenant, `clusters/new?cluster=${cluster.id}`)}
+                          >
+                            Resume registration
+                          </Link>
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => cancelRegistration(cluster.id, cluster.name)}
+                        >
+                          Cancel registration
+                        </Button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}

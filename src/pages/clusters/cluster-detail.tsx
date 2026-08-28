@@ -1,8 +1,10 @@
 import * as React from "react";
-import { Link, useParams, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
-import { getCapabilities, getCluster } from "@/api/clusters";
+import { deleteCluster, getCapabilities, getCluster } from "@/api/clusters";
+import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
+import { useAuth } from "@/auth/auth-context";
 import type { CapabilityKind, ManagementMode } from "@/api/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -188,7 +190,10 @@ const BUILTIN_TABS = [
 
 export function ClusterDetailPage() {
   const { tenant } = useTenant();
+  const { token } = useAuth();
+  const navigate = useNavigate();
   const { clusterId } = useParams<{ clusterId: string }>();
+  const [actionError, setActionError] = React.useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const extensionTabs = useClusterTabSlots();
   const allTabs = [
@@ -224,6 +229,25 @@ export function ClusterDetailPage() {
 
   if (!cluster) return null;
 
+  const cancelRegistration = async () => {
+    if (
+      !window.confirm(
+        `Cancel the pending registration for "${cluster.name}"? This deletes the cluster record.`,
+      )
+    ) {
+      return;
+    }
+    setActionError(null);
+    try {
+      await deleteCluster(token, cluster.id, tenant);
+      navigate(tenantLink(tenant, "clusters"));
+    } catch (err) {
+      setActionError(
+        err instanceof ApiError ? err.message : "Failed to cancel registration",
+      );
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
@@ -236,7 +260,21 @@ export function ClusterDetailPage() {
             </Badge>
           ))}
         </div>
+        {cluster.status === "pending" && (
+          <div className="flex gap-2">
+            <Button asChild variant="outline" size="sm">
+              <Link to={tenantLink(tenant, `clusters/new?cluster=${cluster.id}`)}>
+                Resume registration
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" onClick={cancelRegistration}>
+              Cancel registration
+            </Button>
+          </div>
+        )}
       </div>
+
+      {actionError && <p className="text-sm text-destructive">{actionError}</p>}
 
       <div className="flex gap-1 border-b" role="tablist" aria-label="Cluster sections">
         {allTabs.map((t) => (

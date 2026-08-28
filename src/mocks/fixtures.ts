@@ -221,6 +221,14 @@ export function capabilitiesFor(id: string): Capability[] | undefined {
   return state.capabilities[id] ?? [];
 }
 
+export function removeCluster(id: string): ClusterDetail | undefined {
+  const idx = state.clusters.findIndex((c) => c.id === id);
+  if (idx === -1) return undefined;
+  const [removed] = state.clusters.splice(idx, 1);
+  delete state.capabilities[id];
+  return removed;
+}
+
 export function registerCluster(
   tenant: string,
   body: CreateClusterRequest,

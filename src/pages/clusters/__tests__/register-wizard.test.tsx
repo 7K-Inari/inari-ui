@@ -139,4 +139,28 @@ describe("RegisterWizardPage", () => {
       expect(screen.getByText(/Cluster "kind-dev"/)).toBeInTheDocument(),
     );
   });
+
+  it("lets a resumed user fetch a fresh install manifest", async () => {
+    const user = userEvent.setup();
+    mockControl.setClusterStatus("cl-kind-dev", "pending");
+    renderWizard("/acme/clusters/new?cluster=cl-kind-dev");
+    await screen.findByText("Waiting for the agent to connect…");
+    await user.click(screen.getByRole("button", { name: "Show install manifest" }));
+    expect(await screen.findByText(/kind: Namespace/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Copy manifest" }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows an error instead of hanging when the resumed cluster no longer exists", async () => {
+    renderWizard("/acme/clusters/new?cluster=cl-deleted");
+    expect(
+      await screen.findByText(/could not be restored/),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Start a new registration" })).toHaveAttribute(
+      "href",
+      "/acme/clusters/new",
+    );
+    expect(screen.queryByText("Restoring registration…")).not.toBeInTheDocument();
+  });
 });

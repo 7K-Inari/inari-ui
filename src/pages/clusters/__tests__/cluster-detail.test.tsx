@@ -25,6 +25,7 @@ function renderDetail(id = "cl-kind-dev", query = "") {
     <MemoryRouter initialEntries={[`/acme/clusters/${id}${query}`]}>
       <Routes>
         <Route path="/:tenant/clusters/:clusterId" element={<ClusterDetailPage />} />
+        <Route path="/:tenant/clusters" element={<p>cluster list</p>} />
       </Routes>
     </MemoryRouter>,
   );
@@ -103,5 +104,56 @@ describe("ClusterDetailPage", () => {
       "href",
       "/acme/clusters",
     );
+  });
+
+  it("shows resume and cancel actions for pending clusters", async () => {
+    mockControl.setClusterStatus("cl-eks-prod", "pending");
+    renderDetail("cl-eks-prod");
+    await screen.findByRole("heading", { name: "eks-prod-eu" });
+    expect(screen.getByRole("link", { name: "Resume registration" })).toHaveAttribute(
+      "href",
+      "/acme/clusters/new?cluster=cl-eks-prod",
+    );
+    expect(screen.getByRole("button", { name: "Cancel registration" })).toBeInTheDocument();
+  });
+
+  it("hides registration actions for connected clusters", async () => {
+    renderDetail();
+    await screen.findByRole("heading", { name: "kind-dev" });
+    expect(
+      screen.queryByRole("link", { name: "Resume registration" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Cancel registration" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("cancels a pending registration and navigates back to the list", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    mockControl.setClusterStatus("cl-eks-prod", "pending");
+    renderDetail("cl-eks-prod");
+    await screen.findByRole("heading", { name: "eks-prod-eu" });
+    await user.click(screen.getByRole("button", { name: "Cancel registration" }));
+    expect(await screen.findByText("cluster list")).toBeInTheDocument();
+    expect(mockControl.getState().clusters.map((c) => c.id)).not.toContain("cl-eks-prod");
+    vi.restoreAllMocks();
+  });
+
+  it("surfaces API errors when cancelling fails", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.delete("*/api/v1/tenants/acme/clusters/:id", () =>
+        HttpResponse.json({ detail: "forbidden" }, { status: 403 }),
+      ),
+    );
+    mockControl.setClusterStatus("cl-eks-prod", "pending");
+    renderDetail("cl-eks-prod");
+    await screen.findByRole("heading", { name: "eks-prod-eu" });
+    await user.click(screen.getByRole("button", { name: "Cancel registration" }));
+    expect(await screen.findByText(/forbidden/)).toBeInTheDocument();
+    vi.restoreAllMocks();
   });
 });
