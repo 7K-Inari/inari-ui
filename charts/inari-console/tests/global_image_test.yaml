@@ -1,0 +1,63 @@
+suite: global image registry and pull secrets
+templates:
+  - deployment.yaml
+tests:
+  - it: renders default image references without a registry prefix
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: ghcr.io/oras-project/oras:v1.3.0
+      - contains:
+          path: spec.template.spec.initContainers[0].env
+          content:
+            name: BUNDLE
+            value: ghcr.io/7k-inari/inari-ui-bundle:1.4.0
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: nginx:1.27-alpine
+      - notExists:
+          path: spec.template.spec.imagePullSecrets
+
+  - it: prepends global.imageRegistry to every image and the bundle artifact
+    set:
+      global.imageRegistry: registry.example.com:5000
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: registry.example.com:5000/ghcr.io/oras-project/oras:v1.3.0
+      - contains:
+          path: spec.template.spec.initContainers[0].env
+          content:
+            name: BUNDLE
+            value: registry.example.com:5000/ghcr.io/7k-inari/inari-ui-bundle:1.4.0
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: registry.example.com:5000/nginx:1.27-alpine
+
+  - it: prefers digest over tag for every image
+    set:
+      oras.image.digest: sha256:aaa
+      bundle.digest: sha256:bbb
+      nginx.image.digest: sha256:ccc
+    asserts:
+      - equal:
+          path: spec.template.spec.initContainers[0].image
+          value: ghcr.io/oras-project/oras@sha256:aaa
+      - contains:
+          path: spec.template.spec.initContainers[0].env
+          content:
+            name: BUNDLE
+            value: ghcr.io/7k-inari/inari-ui-bundle@sha256:bbb
+      - equal:
+          path: spec.template.spec.containers[0].image
+          value: nginx@sha256:ccc
+
+  - it: renders global.imagePullSecrets into the pod spec (covers the oras init container)
+    set:
+      global.imagePullSecrets:
+        - mirror-pull
+    asserts:
+      - equal:
+          path: spec.template.spec.imagePullSecrets
+          value:
+            - name: mirror-pull

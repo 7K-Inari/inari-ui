@@ -1,9 +1,21 @@
 replicaCount: 1
 
+global:
+  # Registry prefix prepended to every image/artifact repository rendered by
+  # this chart (e.g. "registry.example.com:5000" for mirrored/air-gapped
+  # installs). Empty = pull from the per-image upstream registries.
+  imageRegistry: ""
+  # Names of pre-created pull secrets (e.g. synced via ESO). Rendered into
+  # the pod spec (covers the oras init container too). Create the secrets
+  # out-of-band.
+  imagePullSecrets: []
+
 bundle:
   # OCI artifact carrying the built console (oras layout).
   repository: ghcr.io/7k-inari/inari-ui-bundle
   tag: "1.4.0"
+  # Digest wins over tag when set (e.g. "sha256:...").
+  digest: ""
 
 # Runtime config rendered into config.js (window.__INARI_CONFIG__).
 keycloakUrl: "http://localhost:8080"
@@ -11,17 +23,21 @@ keycloakRealm: "inari"
 keycloakClientId: "inari-ui"
 apiBaseUrl: "/api/v1"
 
+# oras CLI used by the init container to pull the bundle.
+oras:
+  image:
+    repository: ghcr.io/oras-project/oras
+    tag: v1.3.0
+    digest: ""
+
 nginx:
+  image:
+    repository: nginx
+    tag: 1.27-alpine
+    digest: ""
   corsOrigins:
     - "https://example.org"
     - "https://auth.example.org"
-
-image:
-  # oras CLI used by the init container to pull the bundle
-  orasRepository: ghcr.io/oras-project/oras
-  orasTag: v1.3.0
-  nginxRepository: nginx
-  nginxTag: 1.27-alpine
 
 resources:
   requests:

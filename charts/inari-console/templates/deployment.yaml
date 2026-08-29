@@ -14,12 +14,13 @@ spec:
       labels:
         {{- include "inari-console.selectorLabels" . | nindent 8 }}
     spec:
+      {{- include "inari-console.imagePullSecrets" . | nindent 6 }}
       initContainers:
         - name: bundle
-          image: "{{ .Values.image.orasRepository }}:{{ .Values.image.orasTag }}"
+          image: {{ include "inari-console.image" (dict "root" . "image" .Values.oras.image) | quote }}
           env:
             - name: BUNDLE
-              value: "{{ .Values.bundle.repository }}:{{ .Values.bundle.tag }}"
+              value: {{ include "inari-console.image" (dict "root" . "image" .Values.bundle) | quote }}
             - name: KEYCLOAK_URL
               value: {{ .Values.keycloakUrl | quote }}
             - name: KEYCLOAK_REALM
@@ -45,7 +46,7 @@ spec:
               mountPath: /work
       containers:
         - name: nginx
-          image: "{{ .Values.image.nginxRepository }}:{{ .Values.image.nginxTag }}"
+          image: {{ include "inari-console.image" (dict "root" . "image" .Values.nginx.image) | quote }}
           ports:
             - name: http
               containerPort: 8080
