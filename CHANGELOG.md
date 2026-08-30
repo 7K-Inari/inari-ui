@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.1](https://github.com/7K-Inari/inari-ui/compare/v1.5.0...v1.5.1) (2026-08-30)
+
+
+### Bug Fixes
+
+* **ci:** publish chart to repo-scoped GHCR path and make package public ([#26](https://github.com/7K-Inari/inari-ui/issues/26)) ([0fb9925](https://github.com/7K-Inari/inari-ui/commit/0fb992536d1284ecf77cd8b6f1d430ce0d11feb1))
+
 ## [1.5.0](https://github.com/7K-Inari/inari-ui/compare/v1.4.0...v1.5.0) (2026-08-28)
 
 
