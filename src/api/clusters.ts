@@ -155,7 +155,7 @@ export async function createCluster(
 // runtime config (per-deployment), not a hardcoded URL.
 export function buildHelmCommand(tenant: string, registrationToken: string): string {
   return [
-    "helm install inari-agent oci://ghcr.io/7k-inari/charts/inari-agent \\",
+    "helm install inari-agent oci://ghcr.io/7k-inari/inari-agent/charts/inari-agent \\",
     `  --set tenant.slug=${tenant} \\`,
     `  --set agent.gatewayUrl=${config.agentGatewayUrl} \\`,
     `  --set registration.token=${registrationToken}`,

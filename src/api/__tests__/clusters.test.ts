@@ -60,7 +60,7 @@ describe("clusters api", () => {
     expect(manifest).toContain(res.registrationToken);
 
     const helm = res.install.helmCommand!;
-    expect(helm).toContain("helm install inari-agent oci://ghcr.io/7k-inari/charts/inari-agent");
+    expect(helm).toContain("helm install inari-agent oci://ghcr.io/7k-inari/inari-agent/charts/inari-agent");
     expect(helm).toContain(`--set registration.token=${res.registrationToken}`);
     expect(helm).toContain("--set tenant.slug=acme");
     expect(helm).toContain(`--set agent.gatewayUrl=${config.agentGatewayUrl}`);
