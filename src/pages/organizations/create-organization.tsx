@@ -5,7 +5,7 @@ import { ApiError } from "@/api/client";
 import { createTenant } from "@/api/tenants";
 import { useAuth } from "@/auth/auth-context";
 import { keycloak } from "@/auth/keycloak";
-import { canCreateOrganizations } from "@/auth/roles";
+import { usePermissions } from "@/auth/permissions-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,8 @@ import { Label } from "@/components/ui/label";
 const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 
 export function CreateOrganizationPage() {
-  const { token, parsedToken } = useAuth();
+  const { token } = useAuth();
+  const { canCreateOrganizations } = usePermissions();
   const navigate = useNavigate();
 
   const [name, setName] = React.useState("");
@@ -23,7 +24,7 @@ export function CreateOrganizationPage() {
   const [submitError, setSubmitError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
 
-  if (!canCreateOrganizations(parsedToken)) {
+  if (!canCreateOrganizations) {
     return (
       <div className="flex min-h-screen items-center justify-center p-6">
         <Card className="w-full max-w-md">

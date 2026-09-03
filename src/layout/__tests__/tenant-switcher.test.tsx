@@ -1,9 +1,12 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { PermissionsProvider } from "@/auth/permissions-context";
 import { TenantSwitcher } from "@/layout/tenant-switcher";
+import { mockServer } from "@/mocks/server";
 import { TenantProvider } from "@/tenant/tenant-context";
 
 const kcMocks = vi.hoisted(() => ({
@@ -18,8 +21,20 @@ vi.mock("@/auth/keycloak", () => ({
 
 let mockParsedToken: Record<string, unknown> | undefined;
 vi.mock("@/auth/auth-context", () => ({
-  useAuth: () => ({ parsedToken: mockParsedToken }),
+  useAuth: () => ({ token: "test-token", authenticated: true, parsedToken: mockParsedToken }),
 }));
+
+beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
+afterEach(() => mockServer.resetHandlers());
+afterAll(() => mockServer.close());
+
+function allowOrgCreation(canCreateOrganizations: boolean) {
+  mockServer.use(
+    http.get("*/api/v1/me/permissions", () =>
+      HttpResponse.json({ canCreateOrganizations }),
+    ),
+  );
+}
 
 function LocationProbe() {
   const { pathname } = useLocation();
@@ -34,10 +49,12 @@ function renderAt(path: string) {
         <Route
           path="/:tenant/*"
           element={
-            <TenantProvider>
-              <TenantSwitcher />
-              <LocationProbe />
-            </TenantProvider>
+            <PermissionsProvider>
+              <TenantProvider>
+                <TenantSwitcher />
+                <LocationProbe />
+              </TenantProvider>
+            </PermissionsProvider>
           }
         />
       </Routes>
@@ -80,22 +97,37 @@ describe("TenantSwitcher", () => {
     expect(screen.getByText("Team scope")).toBeInTheDocument();
   });
 
-  it("hides the create organization CTA without the platform-admin role", async () => {
+  it("hides the create organization CTA when the endpoint denies it", async () => {
+    allowOrgCreation(false);
     const user = userEvent.setup();
     renderAt("/all/overview");
     await user.click(screen.getByRole("button", { name: /tenant context/i }));
+    expect(screen.getByText("Acme")).toBeInTheDocument();
+    await new Promise((r) => setTimeout(r, 50));
     expect(screen.queryByText("Create organization")).not.toBeInTheDocument();
   });
 
-  it("shows the create organization CTA to platform admins and navigates", async () => {
-    mockParsedToken = {
-      organization: { acme: { name: "Acme" } },
-      realm_access: { roles: ["platform-admin"] },
-    };
+  it("hides the create organization CTA when the permissions fetch fails", async () => {
+    mockServer.use(
+      http.get("*/api/v1/me/permissions", () =>
+        HttpResponse.json({ title: "Error", status: 500, detail: "boom" }, { status: 500 }),
+      ),
+    );
     const user = userEvent.setup();
     renderAt("/all/overview");
     await user.click(screen.getByRole("button", { name: /tenant context/i }));
-    await user.click(screen.getByText("Create organization"));
+    expect(screen.getByText("Acme")).toBeInTheDocument();
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.queryByText("Create organization")).not.toBeInTheDocument();
+  });
+
+  it("shows the create organization CTA when the endpoint allows it and navigates", async () => {
+    allowOrgCreation(true);
+    mockParsedToken = { organization: { acme: { name: "Acme" } } };
+    const user = userEvent.setup();
+    renderAt("/all/overview");
+    await user.click(screen.getByRole("button", { name: /tenant context/i }));
+    await user.click(await screen.findByText("Create organization"));
     expect(await screen.findByTestId("path")).toHaveTextContent(
       "/create-organization",
     );

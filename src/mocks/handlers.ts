@@ -160,6 +160,11 @@ function humaError(status: number, detail: string) {
 }
 
 export const handlers = [
+  // ---- global permissions (OpenFGA projection, M1.W2) ----
+  http.get("*/api/v1/me/permissions", () =>
+    HttpResponse.json({ canCreateOrganizations: true }),
+  ),
+
   // ---- tenants (platform-scoped, not under /tenants/:org) ----
   http.post("*/api/v1/tenants", async ({ request }) => {
     const body = (await request.json()) as { slug?: string; name?: string };
