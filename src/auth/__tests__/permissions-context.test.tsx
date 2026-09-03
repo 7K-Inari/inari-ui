@@ -5,12 +5,18 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest
 import { PermissionsProvider, usePermissions } from "@/auth/permissions-context";
 import { mockServer } from "@/mocks/server";
 
+let mockToken: string | undefined = "test-token";
+let mockAuthenticated = true;
 vi.mock("@/auth/auth-context", () => ({
-  useAuth: () => ({ token: "test-token", authenticated: true }),
+  useAuth: () => ({ token: mockToken, authenticated: mockAuthenticated }),
 }));
 
 beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
-afterEach(() => mockServer.resetHandlers());
+afterEach(() => {
+  mockServer.resetHandlers();
+  mockToken = "test-token";
+  mockAuthenticated = true;
+});
 afterAll(() => mockServer.close());
 
 function Probe() {
@@ -78,5 +84,59 @@ describe("PermissionsProvider", () => {
     renderProvider();
     await new Promise((r) => setTimeout(r, 50));
     expect(screen.getByTestId("can-create")).toHaveTextContent("false");
+  });
+
+  it("refetches permissions when the token changes (token refresh)", async () => {
+    let allowed = false;
+    mockServer.use(
+      http.get("*/api/v1/me/permissions", () =>
+        HttpResponse.json({ canCreateOrganizations: allowed }),
+      ),
+    );
+    const { rerender } = render(
+      <PermissionsProvider>
+        <Probe />
+      </PermissionsProvider>,
+    );
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.getByTestId("can-create")).toHaveTextContent("false");
+
+    allowed = true;
+    mockToken = "refreshed-token";
+    rerender(
+      <PermissionsProvider>
+        <Probe />
+      </PermissionsProvider>,
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId("can-create")).toHaveTextContent("true"),
+    );
+  });
+
+  it("resets to the conservative default on logout", async () => {
+    mockServer.use(
+      http.get("*/api/v1/me/permissions", () =>
+        HttpResponse.json({ canCreateOrganizations: true }),
+      ),
+    );
+    const { rerender } = render(
+      <PermissionsProvider>
+        <Probe />
+      </PermissionsProvider>,
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId("can-create")).toHaveTextContent("true"),
+    );
+
+    mockAuthenticated = false;
+    mockToken = undefined;
+    rerender(
+      <PermissionsProvider>
+        <Probe />
+      </PermissionsProvider>,
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId("can-create")).toHaveTextContent("false"),
+    );
   });
 });
