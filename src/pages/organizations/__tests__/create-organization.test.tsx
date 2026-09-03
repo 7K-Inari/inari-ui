@@ -1,14 +1,15 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
 import { MemoryRouter, Route, Routes, useParams } from "react-router-dom";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
-import { CreateOrganizationPage } from "@/pages/organizations/create-organization";
+import { PermissionsProvider } from "@/auth/permissions-context";
 import { mockServer } from "@/mocks/server";
+import { CreateOrganizationPage } from "@/pages/organizations/create-organization";
 
-let mockParsedToken: Record<string, unknown> | undefined;
 vi.mock("@/auth/auth-context", () => ({
-  useAuth: () => ({ token: "test-token", parsedToken: mockParsedToken }),
+  useAuth: () => ({ token: "test-token", authenticated: true }),
 }));
 
 const updateToken = vi.fn().mockResolvedValue(true);
@@ -20,10 +21,13 @@ beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
 afterEach(() => mockServer.resetHandlers());
 afterAll(() => mockServer.close());
 
-beforeEach(() => {
-  mockParsedToken = { realm_access: { roles: ["platform-admin"] } };
-  updateToken.mockClear();
-});
+function allowOrgCreation(canCreateOrganizations: boolean) {
+  mockServer.use(
+    http.get("*/api/v1/me/permissions", () =>
+      HttpResponse.json({ canCreateOrganizations }),
+    ),
+  );
+}
 
 function OverviewStub() {
   const { tenant } = useParams();
@@ -33,26 +37,42 @@ function OverviewStub() {
 function renderPage() {
   return render(
     <MemoryRouter initialEntries={["/create-organization"]}>
-      <Routes>
-        <Route path="/create-organization" element={<CreateOrganizationPage />} />
-        <Route path="/:tenant/overview" element={<OverviewStub />} />
-      </Routes>
+      <PermissionsProvider>
+        <Routes>
+          <Route path="/create-organization" element={<CreateOrganizationPage />} />
+          <Route path="/:tenant/overview" element={<OverviewStub />} />
+        </Routes>
+      </PermissionsProvider>
     </MemoryRouter>,
   );
 }
 
 describe("CreateOrganizationPage", () => {
-  it("denies access to non platform admins", () => {
-    mockParsedToken = { realm_access: { roles: ["developer"] } };
+  it("denies access when the permissions endpoint denies it", async () => {
+    allowOrgCreation(false);
     renderPage();
     expect(screen.getByRole("heading", { name: /not authorized/i })).toBeInTheDocument();
+    await new Promise((r) => setTimeout(r, 50));
+    expect(screen.queryByLabelText("Slug")).not.toBeInTheDocument();
+  });
+
+  it("denies access when the permissions fetch fails", async () => {
+    mockServer.use(
+      http.get("*/api/v1/me/permissions", () =>
+        HttpResponse.json({ title: "Error", status: 500, detail: "boom" }, { status: 500 }),
+      ),
+    );
+    renderPage();
+    expect(screen.getByRole("heading", { name: /not authorized/i })).toBeInTheDocument();
+    await new Promise((r) => setTimeout(r, 50));
     expect(screen.queryByLabelText("Slug")).not.toBeInTheDocument();
   });
 
   it("validates the slug format client-side and does not call the API", async () => {
+    allowOrgCreation(true);
     const user = userEvent.setup();
     renderPage();
-    await user.type(screen.getByLabelText("Display name"), "Bad Org");
+    await user.type(await screen.findByLabelText("Display name"), "Bad Org");
     await user.type(screen.getByLabelText("Slug"), "Bad_Slug");
     await user.click(screen.getByRole("button", { name: /create organization/i }));
     expect(
@@ -62,9 +82,11 @@ describe("CreateOrganizationPage", () => {
   });
 
   it("creates the organization and navigates to its overview", async () => {
+    allowOrgCreation(true);
+    updateToken.mockClear();
     const user = userEvent.setup();
     renderPage();
-    await user.type(screen.getByLabelText("Display name"), "Initech");
+    await user.type(await screen.findByLabelText("Display name"), "Initech");
     await user.type(screen.getByLabelText("Slug"), "initech");
     await user.click(screen.getByRole("button", { name: /create organization/i }));
     expect(await screen.findByText("overview initech")).toBeInTheDocument();
@@ -72,9 +94,10 @@ describe("CreateOrganizationPage", () => {
   });
 
   it("shows a conflict message when the slug already exists and re-enables the form", async () => {
+    allowOrgCreation(true);
     const user = userEvent.setup();
     renderPage();
-    await user.type(screen.getByLabelText("Display name"), "Taken Inc");
+    await user.type(await screen.findByLabelText("Display name"), "Taken Inc");
     await user.type(screen.getByLabelText("Slug"), "taken");
     await user.click(screen.getByRole("button", { name: /create organization/i }));
     expect(await screen.findByText(/already exists/i)).toBeInTheDocument();
@@ -83,7 +106,7 @@ describe("CreateOrganizationPage", () => {
   });
 
   it("shows a generic error and loading state on failure", async () => {
-    const { http, HttpResponse } = await import("msw");
+    allowOrgCreation(true);
     mockServer.use(
       http.post("*/api/v1/tenants", () =>
         HttpResponse.json({ title: "Error", status: 500, detail: "boom" }, { status: 500 }),
@@ -91,7 +114,7 @@ describe("CreateOrganizationPage", () => {
     );
     const user = userEvent.setup();
     renderPage();
-    await user.type(screen.getByLabelText("Display name"), "Initech");
+    await user.type(await screen.findByLabelText("Display name"), "Initech");
     await user.type(screen.getByLabelText("Slug"), "initech");
     const submit = screen.getByRole("button", { name: /create organization/i });
     await user.click(submit);

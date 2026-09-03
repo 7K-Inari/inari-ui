@@ -1,14 +1,15 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
-import { CreateOrganizationPage } from "@/pages/organizations/create-organization";
+import { PermissionsProvider } from "@/auth/permissions-context";
 import { mockServer } from "@/mocks/server";
+import { CreateOrganizationPage } from "@/pages/organizations/create-organization";
 
-let mockParsedToken: Record<string, unknown> | undefined;
 vi.mock("@/auth/auth-context", () => ({
-  useAuth: () => ({ token: "test-token", parsedToken: mockParsedToken }),
+  useAuth: () => ({ token: "test-token", authenticated: true }),
 }));
 
 vi.mock("@/auth/keycloak", () => ({
@@ -19,17 +20,15 @@ beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
 afterEach(() => mockServer.resetHandlers());
 afterAll(() => mockServer.close());
 
-beforeEach(() => {
-  mockParsedToken = { realm_access: { roles: ["platform-admin"] } };
-});
-
 function renderPage() {
   return render(
     <MemoryRouter initialEntries={["/create-organization"]}>
-      <Routes>
-        <Route path="/create-organization" element={<CreateOrganizationPage />} />
-        <Route path="/:tenant/overview" element={<div>overview</div>} />
-      </Routes>
+      <PermissionsProvider>
+        <Routes>
+          <Route path="/create-organization" element={<CreateOrganizationPage />} />
+          <Route path="/:tenant/overview" element={<div>overview</div>} />
+        </Routes>
+      </PermissionsProvider>
     </MemoryRouter>,
   );
 }
@@ -38,7 +37,7 @@ describe("QA probes", () => {
   it("keeps the submit button disabled for a whitespace-only display name", async () => {
     const user = userEvent.setup();
     renderPage();
-    await user.type(screen.getByLabelText("Display name"), "   ");
+    await user.type(await screen.findByLabelText("Display name"), "   ");
     await user.type(screen.getByLabelText("Slug"), "probe");
     expect(screen.getByRole("button", { name: /create organization/i })).toBeDisabled();
   });
@@ -46,14 +45,13 @@ describe("QA probes", () => {
   it("accepts slug with trailing dash (regex-permitted)", async () => {
     const user = userEvent.setup();
     renderPage();
-    await user.type(screen.getByLabelText("Display name"), "Probe");
+    await user.type(await screen.findByLabelText("Display name"), "Probe");
     await user.type(screen.getByLabelText("Slug"), "acme-");
     await user.click(screen.getByRole("button", { name: /create organization/i }));
     expect(await screen.findByText("overview")).toBeInTheDocument();
   });
 
   it("clears a previous generic error on retry", async () => {
-    const { http, HttpResponse } = await import("msw");
     let calls = 0;
     mockServer.use(
       http.post("*/api/v1/tenants", () => {
@@ -69,7 +67,7 @@ describe("QA probes", () => {
     );
     const user = userEvent.setup();
     renderPage();
-    await user.type(screen.getByLabelText("Display name"), "Probe");
+    await user.type(await screen.findByLabelText("Display name"), "Probe");
     await user.type(screen.getByLabelText("Slug"), "probe");
     const submit = screen.getByRole("button", { name: /create organization/i });
     await user.click(submit);
