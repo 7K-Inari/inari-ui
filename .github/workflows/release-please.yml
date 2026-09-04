@@ -40,5 +40,13 @@ jobs:
       - if: steps.gate.outputs.skip != 'true'
         uses: googleapis/release-please-action@v4
         with:
-          release-type: node
+          # Manifest mode is required: the defaults load release-please-config.json,
+          # which carries the per-package config (chart component, extra-files).
+          # Passing `release-type` instead would put the action in single-package
+          # mode, silently ignoring the config — extra-files (chart appVersion,
+          # values.yaml bundle.tag) would never reach the Release PR.
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+          # Create/update the Release PR only; tags + GitHub Releases are
+          # created by release.yml when the PR merges.
           skip-github-release: true
