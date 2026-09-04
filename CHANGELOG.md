@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.6.0](https://github.com/7K-Inari/inari-ui/compare/v1.5.1...v1.6.0) (2026-09-03)
+
+
+### Features
+
+* **auth:** drive create-organization visibility from /me/permissions ([38ea9f3](https://github.com/7K-Inari/inari-ui/commit/38ea9f39876f44e4eeca6f220c30c87382939935))
+* **auth:** drive create-organization visibility from /me/permissions ([a0f3b59](https://github.com/7K-Inari/inari-ui/commit/a0f3b59992eb5236775b31e0462fedef577b9928))
+
 ## [1.5.1](https://github.com/7K-Inari/inari-ui/compare/v1.5.0...v1.5.1) (2026-08-30)
 
 
