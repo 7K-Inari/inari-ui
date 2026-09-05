@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.6.1](https://github.com/7K-Inari/inari-ui/compare/v1.6.0...v1.6.1) (2026-09-05)
+
+
+### Bug Fixes
+
+* **ci:** stop publish race and sync chart extra-files in release PRs ([13ccde5](https://github.com/7K-Inari/inari-ui/commit/13ccde5d00977f635416237e5c4730ae78a89736))
+* **ci:** stop publish race and sync chart extra-files in release PRs ([0dbad11](https://github.com/7K-Inari/inari-ui/commit/0dbad116bae1ef634e24967bae45562221c51553))
+
 ## [1.6.0](https://github.com/7K-Inari/inari-ui/compare/v1.5.1...v1.6.0) (2026-09-03)
 
 
