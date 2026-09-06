@@ -9,29 +9,41 @@ import { useAuth } from "@/auth/auth-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
 import { ZoneStatusBadge } from "@/pages/zones/zone-list";
 
-const STEP_LABELS: Record<ZoneStep["name"], string> = {
-  account: "Cloud account",
-  trust: "Trust setup",
-  eks: "EKS cluster",
-  wiring: "Platform wiring",
+const STEP_LABELS: Record<string, string> = {
+  preflight: "Preflight checks",
+  account_vend: "Cloud account",
+  trust_bootstrap: "Trust setup",
+  eks_provision: "EKS cluster",
+  inari_wiring: "Platform wiring",
+  cordon: "Cordon workloads",
+  drain: "Drain workloads",
+  eks_delete: "Delete EKS cluster",
+  account_close: "Close cloud account",
+  identity_revoke: "Revoke platform access",
+  audit_archive: "Archive audit trail",
 };
+
+function stepLabel(name: string): string {
+  return STEP_LABELS[name] ?? name;
+}
 
 function StepIcon({ status }: { status: ZoneStepStatus }) {
   switch (status) {
-    case "done":
+    case "succeeded":
       return <CheckCircle2 className="h-5 w-5 text-emerald-600" aria-hidden />;
-    case "in_progress":
+    case "running":
+    case "waiting":
       return <Loader2 className="h-5 w-5 animate-spin text-primary" aria-hidden />;
     case "failed":
       return <XCircle className="h-5 w-5 text-destructive" aria-hidden />;
+    case "skipped":
+      return <CheckCircle2 className="h-5 w-5 text-muted-foreground/50" aria-hidden />;
     default:
       return <Circle className="h-5 w-5 text-muted-foreground/50" aria-hidden />;
   }
@@ -45,10 +57,10 @@ function LifecycleSteps({ steps }: { steps: ZoneStep[] }) {
           <StepIcon status={step.status} />
           <div>
             <p className={step.status === "pending" ? "text-muted-foreground" : "font-medium"}>
-              {STEP_LABELS[step.name]}
+              {stepLabel(step.name)}
               <span className="ml-2 text-xs text-muted-foreground">{step.status}</span>
             </p>
-            {step.message && <p className="text-xs text-muted-foreground">{step.message}</p>}
+            {step.detail && <p className="text-xs text-muted-foreground">{step.detail}</p>}
           </div>
         </li>
       ))}
@@ -62,7 +74,7 @@ export function ZoneDetailPage() {
   const { zoneId } = useParams<{ zoneId: string }>();
 
   const [polling, setPolling] = React.useState(true);
-  const { data: zone, loading, error } = useAsyncResource(
+  const { data: zone, loading, error, refetch } = useAsyncResource(
     (t) => getZone(t, zoneId!, tenant),
     [zoneId, tenant],
     { refetchIntervalMs: 3_000, enabled: polling },
@@ -73,19 +85,23 @@ export function ZoneDetailPage() {
     setPolling(zone.status === "provisioning" || zone.status === "decommissioning");
   }, [zone]);
 
-  const [reason, setReason] = React.useState("");
   const [decomError, setDecomError] = React.useState<string | null>(null);
   const [decomSubmitting, setDecomSubmitting] = React.useState(false);
-  const [decomRequested, setDecomRequested] = React.useState(false);
+  const [decomApprovalId, setDecomApprovalId] = React.useState<string | null | undefined>(
+    undefined,
+  );
 
   const submitDecommission = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reason.trim()) return;
     setDecomSubmitting(true);
     setDecomError(null);
     try {
-      await requestZoneDecommission(token, tenant, zone!.id, reason.trim());
-      setDecomRequested(true);
+      const result = await requestZoneDecommission(token, tenant, zone!.id);
+      setDecomApprovalId(result.approvalId);
+      // Re-enable fetching (it is paused for non-transitional zones) so the
+      // zone reflects its new decommission_pending_approval state.
+      setPolling(true);
+      refetch();
     } catch (err) {
       setDecomError(err instanceof Error ? err.message : "Failed to request decommission");
     } finally {
@@ -110,7 +126,11 @@ export function ZoneDetailPage() {
     );
   }
 
-  const requested = decomRequested || zone.status === "decommission_requested";
+  const requested =
+    decomApprovalId !== undefined ||
+    zone.status === "decommission_pending_approval" ||
+    zone.status === "cordoning" ||
+    zone.status === "draining";
 
   return (
     <div className="space-y-6">
@@ -137,7 +157,7 @@ export function ZoneDetailPage() {
           <CardDescription>
             {zone.status === "decommissioning"
               ? "Teardown in progress — steps roll back in reverse order."
-              : "Provisioning pipeline: account, trust, EKS cluster, then platform wiring."}
+              : "Provisioning pipeline: preflight, cloud account, trust, EKS cluster, then platform wiring."}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -174,23 +194,9 @@ export function ZoneDetailPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={submitDecommission} className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="decommission-reason">Reason</Label>
-                <Input
-                  id="decommission-reason"
-                  value={reason}
-                  onChange={(e) => setReason(e.target.value)}
-                  placeholder="Why is this zone being decommissioned?"
-                  required
-                />
-              </div>
               {decomError && <p className="text-sm text-destructive">{decomError}</p>}
               <div className="flex justify-end">
-                <Button
-                  type="submit"
-                  variant="destructive"
-                  disabled={decomSubmitting || !reason.trim()}
-                >
+                <Button type="submit" variant="destructive" disabled={decomSubmitting}>
                   {decomSubmitting ? "Requesting…" : "Request decommission"}
                 </Button>
               </div>
@@ -199,11 +205,17 @@ export function ZoneDetailPage() {
         </Card>
       )}
 
-      {requested && zone.status !== "decommissioning" && zone.status !== "decommissioned" && (
+      {requested && zone.status !== "decommissioning" && zone.status !== "closed" && (
         <Card>
           <CardContent className="py-6 text-sm text-muted-foreground">
-            Decommission requested. Teardown is gated on approval: a request has been added to the
-            Approvals inbox, and the operator tears the zone down once it is approved.
+            {decomApprovalId === null ? (
+              <>Decommission requested. Teardown has started.</>
+            ) : (
+              <>
+                Decommission requested. Teardown is gated on approval: a request has been added to
+                the Approvals inbox, and the operator tears the zone down once it is approved.
+              </>
+            )}
           </CardContent>
         </Card>
       )}

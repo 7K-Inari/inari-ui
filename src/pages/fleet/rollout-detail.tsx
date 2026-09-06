@@ -3,10 +3,11 @@ import { Link, useParams } from "react-router-dom";
 
 import { ApiError } from "@/api/client";
 import {
-  decideRolloutGate,
   getRollout,
+  listRolloutTargets,
   rollbackRollout,
-  type RolloutStage,
+  type Rollout,
+  type RolloutTarget,
 } from "@/api/fleet";
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
@@ -16,100 +17,87 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
 
-const CLUSTER_STATE_VARIANT: Record<string, "success" | "warning" | "destructive" | "muted"> = {
+const TARGET_STATUS_VARIANT: Record<string, "success" | "warning" | "destructive" | "muted"> = {
   healthy: "success",
+  deployed: "success",
   deploying: "warning",
+  running: "warning",
   failed: "destructive",
   pending: "muted",
 };
 
 const GATE_VARIANT: Record<string, "success" | "warning" | "destructive" | "muted"> = {
-  approved: "success",
-  open: "warning",
-  rejected: "destructive",
-  closed: "muted",
+  approval: "warning",
+  auto: "muted",
 };
 
-function StageCard({
-  rolloutId,
-  stage,
-  onDecided,
-}: {
-  rolloutId: string;
-  stage: RolloutStage;
-  onDecided: () => void;
-}) {
-  const { tenant } = useTenant();
-  const { token } = useAuth();
-  const [busy, setBusy] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
+interface RolloutWithTargets {
+  rollout: Rollout;
+  targets: RolloutTarget[];
+}
 
-  const decide = async (decision: "approve" | "reject") => {
-    setBusy(true);
-    setError(null);
-    try {
-      await decideRolloutGate(token, tenant, rolloutId, stage.name, decision);
-      onDecided();
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Gate decision failed");
-    } finally {
-      setBusy(false);
-    }
-  };
+function StageCard({
+  index,
+  stage,
+  targets,
+}: {
+  index: number;
+  stage: Rollout["stages"][number];
+  targets: RolloutTarget[];
+}) {
+  const stageTargets = targets.filter((t) => t.stage === index);
 
   return (
     <Card>
       <CardHeader className="pb-2">
         <div className="flex items-center justify-between gap-2">
           <CardTitle className="text-base">
-            {stage.name} <span className="text-xs text-muted-foreground">({stage.kind})</span>
+            {stage.name}{" "}
+            <span className="text-xs text-muted-foreground">
+              max {stage.maxConcurrency} concurrent
+            </span>
           </CardTitle>
           <div className="flex items-center gap-2">
-            <Badge variant={GATE_VARIANT[stage.gate.state]}>
-              {stage.gate.type === "approval" ? `approval gate: ${stage.gate.state}` : `auto gate: ${stage.gate.state}`}
-            </Badge>
-            {stage.gate.type === "approval" && stage.gate.state === "open" && (
-              <>
-                <Button size="sm" disabled={busy} onClick={() => decide("approve")}>
-                  Approve
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  disabled={busy}
-                  onClick={() => decide("reject")}
-                >
-                  Reject
-                </Button>
-              </>
-            )}
+            {stage.gates.map((gate) => (
+              <Badge key={gate.when} variant={GATE_VARIANT[gate.type] ?? "muted"}>
+                {gate.type} gate ({gate.when}
+                {gate.waitSeconds != null ? `, ${gate.waitSeconds}s` : ""})
+              </Badge>
+            ))}
           </div>
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        {error && (
-          <p className="pb-2 text-sm text-destructive" role="alert">
-            {error}
-          </p>
-        )}
         <table className="w-full text-sm">
           <thead className="text-left text-xs text-muted-foreground">
             <tr>
               <th className="py-1 pr-4 font-medium">Cluster</th>
-              <th className="py-1 font-medium">State</th>
+              <th className="py-1 pr-4 font-medium">Status</th>
+              <th className="py-1 font-medium">Observed health</th>
             </tr>
           </thead>
           <tbody>
-            {stage.clusters.map((cluster) => (
-              <tr key={cluster.clusterId} className="border-t">
-                <td className="py-1.5 pr-4">{cluster.clusterName}</td>
-                <td className="py-1.5">
-                  <Badge variant={CLUSTER_STATE_VARIANT[cluster.state] ?? "muted"}>
-                    {cluster.state}
-                  </Badge>
+            {stageTargets.length === 0 ? (
+              <tr>
+                <td className="py-1.5 text-muted-foreground" colSpan={3}>
+                  No targets assigned to this stage yet.
                 </td>
               </tr>
-            ))}
+            ) : (
+              stageTargets.map((target) => (
+                <tr key={target.clusterId} className="border-t">
+                  <td className="py-1.5 pr-4 font-mono text-xs">{target.clusterId}</td>
+                  <td className="py-1.5 pr-4">
+                    <Badge variant={TARGET_STATUS_VARIANT[target.status] ?? "muted"}>
+                      {target.status}
+                    </Badge>
+                  </td>
+                  <td className="py-1.5 text-muted-foreground">
+                    {target.observedHealth ?? "—"}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </CardContent>
@@ -124,26 +112,32 @@ export function RolloutDetailPage() {
   const [actionError, setActionError] = React.useState<string | null>(null);
 
   const [terminal, setTerminal] = React.useState(false);
-  const rollout = useAsyncResource(
-    (t) => getRollout(t, tenant, rolloutId!),
+  const resource = useAsyncResource<RolloutWithTargets>(
+    async (t) => {
+      const [rollout, targets] = await Promise.all([
+        getRollout(t, tenant, rolloutId!),
+        listRolloutTargets(t, tenant, rolloutId!),
+      ]);
+      return { rollout, targets };
+    },
     [rolloutId, tenant],
     { refetchIntervalMs: 1_000, enabled: Boolean(rolloutId) && !terminal },
   );
 
   // Stop live polling once the rollout reaches a terminal state.
-  const state = rollout.data?.state;
+  const state = resource.data?.rollout.state;
   React.useEffect(() => {
     if (state === "completed" || state === "failed" || state === "rolled-back") {
       setTerminal(true);
     }
   }, [state]);
 
-  if (rollout.error) {
-    const notFound = rollout.error instanceof ApiError && rollout.error.status === 404;
+  if (resource.error) {
+    const notFound = resource.error instanceof ApiError && resource.error.status === 404;
     return (
       <div className="space-y-3">
         <p className="text-sm text-destructive">
-          {notFound ? "Rollout not found." : `Failed to load rollout: ${rollout.error.message}`}
+          {notFound ? "Rollout not found." : `Failed to load rollout: ${resource.error.message}`}
         </p>
         <Button asChild variant="outline">
           <Link to={tenantLink(tenant, "fleet")}>Back to fleet</Link>
@@ -152,14 +146,14 @@ export function RolloutDetailPage() {
     );
   }
 
-  if (rollout.loading && !rollout.data) {
+  if (resource.loading && !resource.data) {
     return <p className="text-sm text-muted-foreground">Loading rollout…</p>;
   }
-  if (!rollout.data) return null;
-  const data = rollout.data;
+  if (!resource.data) return null;
+  const data = resource.data.rollout;
+  const targets = resource.data.targets;
 
-  const total = data.stages.flatMap((s) => s.clusters).length;
-  const healthy = data.stages.flatMap((s) => s.clusters).filter((c) => c.state === "healthy").length;
+  const healthy = targets.filter((t) => t.status === "healthy").length;
 
   return (
     <div className="space-y-4">
@@ -168,7 +162,7 @@ export function RolloutDetailPage() {
           <h1 className="text-2xl font-semibold tracking-tight">{data.name}</h1>
           <p className="text-sm text-muted-foreground">
             {data.target.kind} <span className="font-mono text-xs">{data.target.name}@{data.target.version}</span>{" "}
-            · ClusterSet {data.clusterSetName}
+            · stage {Math.min(data.currentStage + 1, data.stages.length)}/{data.stages.length}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -176,7 +170,7 @@ export function RolloutDetailPage() {
             {data.state}
           </Badge>
           <span className="text-sm text-muted-foreground">
-            {healthy}/{total} clusters healthy
+            {healthy}/{targets.length} clusters healthy
           </span>
           {(data.state === "running" || data.state === "waiting-approval" || data.state === "failed") && (
             <Button
@@ -186,7 +180,7 @@ export function RolloutDetailPage() {
                 setActionError(null);
                 try {
                   await rollbackRollout(token, tenant, data.id);
-                  rollout.refetch();
+                  resource.refetch();
                 } catch (err) {
                   setActionError(
                     err instanceof ApiError ? err.message : "Rollback failed",
@@ -205,14 +199,16 @@ export function RolloutDetailPage() {
         </p>
       )}
 
+      {data.state === "waiting-approval" && (
+        <p className="text-sm text-muted-foreground">
+          This rollout is waiting on an approval gate — decide the linked approval request in
+          the Approvals inbox to continue.
+        </p>
+      )}
+
       <div className="space-y-3">
-        {data.stages.map((stage) => (
-          <StageCard
-            key={stage.name}
-            rolloutId={data.id}
-            stage={stage}
-            onDecided={rollout.refetch}
-          />
+        {data.stages.map((stage, index) => (
+          <StageCard key={stage.name} index={index} stage={stage} targets={targets} />
         ))}
       </div>
     </div>

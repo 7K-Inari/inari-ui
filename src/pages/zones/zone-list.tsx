@@ -14,16 +14,25 @@ const STATUS_CONFIG: Record<
   ZoneStatus,
   { label: string; variant: "success" | "warning" | "destructive" | "muted" }
 > = {
-  active: { label: "Active", variant: "success" },
+  requested: { label: "Requested", variant: "warning" },
+  pending_approval: { label: "Pending approval", variant: "warning" },
   provisioning: { label: "Provisioning", variant: "warning" },
-  decommission_requested: { label: "Decommission requested", variant: "warning" },
-  decommissioning: { label: "Decommissioning", variant: "warning" },
-  decommissioned: { label: "Decommissioned", variant: "muted" },
+  wiring: { label: "Wiring", variant: "warning" },
+  active: { label: "Active", variant: "success" },
   failed: { label: "Failed", variant: "destructive" },
+  manual_intervention: { label: "Manual intervention", variant: "destructive" },
+  decommission_pending_approval: {
+    label: "Decommission pending approval",
+    variant: "warning",
+  },
+  cordoning: { label: "Cordoning", variant: "warning" },
+  draining: { label: "Draining", variant: "warning" },
+  decommissioning: { label: "Decommissioning", variant: "warning" },
+  closed: { label: "Closed", variant: "muted" },
 };
 
 export function ZoneStatusBadge({ status }: { status: ZoneStatus }) {
-  const config = STATUS_CONFIG[status];
+  const config = STATUS_CONFIG[status] ?? { label: status, variant: "muted" as const };
   return (
     <Badge variant={config.variant} data-testid={`zone-status-${status}`}>
       {config.label}
@@ -90,43 +99,36 @@ export function ZoneListPage() {
                 <th className="px-4 py-2 font-medium">Region</th>
                 <th className="px-4 py-2 font-medium">Tier</th>
                 <th className="px-4 py-2 font-medium">Status</th>
-                <th className="px-4 py-2 font-medium">Progress</th>
                 <th className="px-4 py-2 font-medium">Created</th>
               </tr>
             </thead>
             <tbody>
-              {zones.map((zone) => {
-                const done = zone.steps.filter((s) => s.status === "done").length;
-                return (
-                  <tr key={zone.id} className="border-t hover:bg-muted/30">
-                    <td className="px-4 py-2">
-                      <Link
-                        to={tenantLink(tenant, `tenant-zones/${zone.id}`)}
-                        className="font-medium text-primary hover:underline"
-                      >
-                        {zone.name}
-                      </Link>
-                      <span className="ml-2 font-mono text-xs text-muted-foreground">
-                        {zone.slug}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2">{zone.orgUnit}</td>
-                    <td className="px-4 py-2 font-mono text-xs">{zone.region}</td>
-                    <td className="px-4 py-2">
-                      <Badge variant="outline">{zone.tier}</Badge>
-                    </td>
-                    <td className="px-4 py-2">
-                      <ZoneStatusBadge status={zone.status} />
-                    </td>
-                    <td className="px-4 py-2 text-muted-foreground">
-                      {done}/{zone.steps.length} steps
-                    </td>
-                    <td className="px-4 py-2 text-muted-foreground">
-                      {formatRelative(zone.createdAt)}
-                    </td>
-                  </tr>
-                );
-              })}
+              {zones.map((zone) => (
+                <tr key={zone.id} className="border-t hover:bg-muted/30">
+                  <td className="px-4 py-2">
+                    <Link
+                      to={tenantLink(tenant, `tenant-zones/${zone.id}`)}
+                      className="font-medium text-primary hover:underline"
+                    >
+                      {zone.name}
+                    </Link>
+                    <span className="ml-2 font-mono text-xs text-muted-foreground">
+                      {zone.slug}
+                    </span>
+                  </td>
+                  <td className="px-4 py-2">{zone.orgUnit}</td>
+                  <td className="px-4 py-2 font-mono text-xs">{zone.region}</td>
+                  <td className="px-4 py-2">
+                    <Badge variant="outline">{zone.tier}</Badge>
+                  </td>
+                  <td className="px-4 py-2">
+                    <ZoneStatusBadge status={zone.status} />
+                  </td>
+                  <td className="px-4 py-2 text-muted-foreground">
+                    {formatRelative(zone.createdAt)}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>

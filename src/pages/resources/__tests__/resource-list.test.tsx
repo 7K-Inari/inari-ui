@@ -46,7 +46,8 @@ describe("ResourceListPage", () => {
     expect(await screen.findByText("orders-db")).toBeInTheDocument();
     expect(screen.getByText("payments-db")).toBeInTheDocument();
     expect(screen.queryByText("globex-apps")).not.toBeInTheDocument();
-    expect(screen.getByText("eks-prod-eu")).toBeInTheDocument();
+    // The server contract exposes the cluster ID, not a display name.
+    expect(screen.getByText("cl-eks-prod")).toBeInTheDocument();
     expect(screen.getByText("orders-team")).toBeInTheDocument();
     expect(screen.getByText("Synced")).toBeInTheDocument();
     expect(screen.getAllByText(/healthy|progressing/i).length).toBeGreaterThan(0);

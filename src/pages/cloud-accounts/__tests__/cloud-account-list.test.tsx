@@ -36,31 +36,25 @@ function renderList() {
 }
 
 describe("CloudAccountListPage", () => {
-  it("lists seeded accounts with account IDs, regions and status badges", async () => {
+  it("lists seeded accounts with account IDs and status badges", async () => {
     renderList();
-    expect(await screen.findByText("acme-prod")).toBeInTheDocument();
-    expect(screen.getByText("acme-sandbox")).toBeInTheDocument();
-    expect(screen.getAllByText("123456789012").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("eu-west-1").length).toBeGreaterThan(0);
+    expect(await screen.findByText("123456789012")).toBeInTheDocument();
+    expect(screen.getByText("210987654321")).toBeInTheDocument();
+    expect(screen.getByText("arn:aws:iam::123456789012:role/inari-platform-access"))
+      .toBeInTheDocument();
     expect(screen.getByTestId("status-connected")).toBeInTheDocument();
     expect(screen.getByTestId("status-pending_trust")).toBeInTheDocument();
   });
 
-  it("links account names to detail pages", async () => {
+  it("links account IDs to detail pages", async () => {
     renderList();
-    const link = await screen.findByRole("link", { name: "acme-prod" });
+    const link = await screen.findByRole("link", { name: "123456789012" });
     expect(link).toHaveAttribute("href", "/acme/cloud-accounts/ca-acme-prod");
-  });
-
-  it("shows the ProviderConfigs section for validated accounts", async () => {
-    renderList();
-    expect(await screen.findByText("ProviderConfigs")).toBeInTheDocument();
-    expect(screen.getAllByText("aws-acme-prod").length).toBeGreaterThan(0);
   });
 
   it("has a connect wizard link in the header", async () => {
     renderList();
-    await screen.findByText("acme-prod");
+    await screen.findByText("123456789012");
     expect(
       screen.getByRole("link", { name: "Connect AWS account" }),
     ).toHaveAttribute("href", "/acme/cloud-accounts/new");

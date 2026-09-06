@@ -37,14 +37,13 @@ function renderList() {
 }
 
 describe("ZoneListPage", () => {
-  it("lists seeded zones with status badges and step progress", async () => {
+  it("lists seeded zones with status badges", async () => {
     renderList();
     expect(await screen.findByRole("link", { name: "acme-core" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "acme-analytics" })).toBeInTheDocument();
     expect(screen.getByTestId("zone-status-active")).toBeInTheDocument();
     expect(screen.getByTestId("zone-status-provisioning")).toBeInTheDocument();
-    expect(screen.getByText("4/4 steps")).toBeInTheDocument();
-    expect(screen.getByText("3/4 steps")).toBeInTheDocument();
+    expect(screen.getByText("acme-workloads")).toBeInTheDocument();
     expect(screen.getAllByText("starter").length).toBeGreaterThan(0);
     expect(screen.getAllByText("eu-west-1").length).toBeGreaterThan(0);
   });

@@ -1,12 +1,12 @@
 import { apiFetch } from "@/api/client";
 import { config } from "@/config";
+import type { components } from "@/api/__generated__/schema";
 import type {
   Capability,
   CapabilityKind,
   ClusterDetail,
   ClusterStatus,
   ClusterSummary,
-  CreateClusterRequest,
   CreateClusterResponse,
   ManagementMode,
 } from "@/api/types";
@@ -15,22 +15,14 @@ import { resolveTenant } from "@/tenant/current";
 // Server REST surface (inari-server, Huma): tenant slug in the path —
 // /api/v1/tenants/{org}/clusters/... Detail helpers fall back to the active
 // tenant context when no explicit tenant is passed.
+// Server shapes come from the huma-generated OpenAPI contract (pinned
+// snapshot in openapi/openapi.yaml); UI view models stay in @/api/types.
 function tenantPath(tenant: string): string {
   return `/tenants/${encodeURIComponent(tenant)}`;
 }
 
-interface ServerCluster {
-  id: string;
-  orgId: string;
-  name: string;
-  kubernetesVersion?: string | null;
-  labels?: Record<string, string> | null;
-  state: string;
-  agentVersion?: string | null;
-  connectedAt?: string | null;
-  lastSeenAt?: string | null;
-  createdAt: string;
-}
+type ServerCluster = components["schemas"]["Cluster"];
+export type CreateClusterRequest = components["schemas"]["CreateClusterInputBody"];
 
 function mapStatus(state: string): ClusterStatus {
   switch (state) {
@@ -56,7 +48,6 @@ function mapCluster(c: ServerCluster): ClusterDetail {
     capabilityCount: 0, // not part of the list payload; the detail page loads capabilities
     lastSeenAt: c.lastSeenAt ?? null,
     createdAt: c.createdAt,
-    agentVersion: c.agentVersion ?? null,
   };
 }
 

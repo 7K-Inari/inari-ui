@@ -9,9 +9,12 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "NODE_ENV=test vitest run"
+    "test": "NODE_ENV=test vitest run",
+    "codegen": "openapi-typescript openapi/openapi.yaml -o src/api/__generated__/schema.ts",
+    "sync:api": "./scripts/sync-api.sh"
   },
   "dependencies": {
+    "@7k-inari/ui-plugin-sdk": "^0.1.5",
     "@module-federation/runtime": "^2.8.2",
     "@radix-ui/react-avatar": "^1.1.1",
     "@radix-ui/react-dialog": "^1.1.23",
@@ -29,8 +32,7 @@
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2",
     "tailwind-merge": "^2.5.3",
-    "zod": "^3.25.76",
-    "@7k-inari/ui-plugin-sdk": "^0.1.5"
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@eslint/js": "^9.11.1",
@@ -49,6 +51,7 @@
     "globals": "^15.9.0",
     "jsdom": "^25.0.1",
     "msw": "^2.15.0",
+    "openapi-typescript": "^7.13.0",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.13",
     "tailwindcss-animate": "^1.0.7",
@@ -60,5 +63,6 @@
     "workerDirectory": [
       "public"
     ]
-  }
+  },
+  "inariServerSpecVersion": "1.3.1"
 }

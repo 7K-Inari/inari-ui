@@ -35,12 +35,12 @@ function renderFleet(initialEntry = "/acme/fleet") {
 }
 
 describe("FleetOverviewPage", () => {
-  it("lists ClusterSets with labels and member counts", async () => {
+  it("lists ClusterSets with their label selectors", async () => {
     renderFleet();
     expect(await screen.findByText("prod-eu")).toBeInTheDocument();
     expect(screen.getByText("canary")).toBeInTheDocument();
     expect(screen.getByText("region=eu")).toBeInTheDocument();
-    expect(screen.getByText("2 member clusters")).toBeInTheDocument();
+    expect(screen.getByText("env=prod")).toBeInTheDocument();
   });
 
   it("creates a ClusterSet via the form", async () => {
@@ -72,16 +72,21 @@ describe("FleetOverviewPage", () => {
     expect(screen.getByText("cert-manager@1.16.2")).toBeInTheDocument();
   });
 
-  it("shows drift entries as desired vs reported (report-only)", async () => {
+  it("shows drift entries as desired vs reported hashes (report-only)", async () => {
     renderFleet("/acme/fleet?tab=drift");
-    expect(await screen.findByText("spec.replicas")).toBeInTheDocument();
-    expect(screen.getByText("Deployment/payments-api")).toBeInTheDocument();
+    expect(await screen.findByText("Deployment/payments-api")).toBeInTheDocument();
+    // The wire contract carries hashes, not field paths (spec.replicas was
+    // mock-only fiction).
+    expect(screen.getByText("sha256:3fa1desired")).toBeInTheDocument();
+    expect(screen.getByText("sha256:9bcdreported")).toBeInTheDocument();
     expect(screen.getByText(/report-only in v1/)).toBeInTheDocument();
   });
 
   it("switches an agent channel", async () => {
     const user = userEvent.setup();
     renderFleet("/acme/fleet?tab=channels");
+    // Channel pins carry no ClusterSet name; the tab resolves it from the
+    // ClusterSets list loaded in-page.
     expect(await screen.findByText("prod-eu")).toBeInTheDocument();
     const switches = screen.getAllByRole("button", { name: /Switch to/ });
     await user.click(switches[1]);
@@ -92,8 +97,7 @@ describe("FleetOverviewPage", () => {
 });
 
 describe("RolloutDetailPage", () => {
-  it("shows stage progress live and completes after gate approval", async () => {
-    const user = userEvent.setup();
+  it("shows live per-cluster stage status from targets and completes", async () => {
     renderFleet("/acme/fleet/rollouts/ro-1");
 
     expect(
@@ -101,11 +105,20 @@ describe("RolloutDetailPage", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("canary")).toBeInTheDocument();
 
-    // Live polling advances the canary stage and opens the wave-1 approval gate.
-    const approve = await screen.findByRole("button", { name: "Approve" }, { timeout: 10_000 });
-    expect(screen.getByText(/waiting-approval/)).toBeInTheDocument();
+    // Live polling: the canary target is deploying, wave-1 clusters pending.
+    expect(await screen.findByText("c-edge-1")).toBeInTheDocument();
+    expect(screen.getAllByText("deploying").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("pending")).toHaveLength(2);
+    expect(screen.getByText("running")).toBeInTheDocument();
 
-    await user.click(approve);
+    // Gate configuration comes from the stage payload, not a gate-decision API.
+    expect(screen.getByText("approval gate (before)")).toBeInTheDocument();
+    expect(screen.getByText("auto gate (after)")).toBeInTheDocument();
+
+    // No gate-decision endpoint exists: the page must not offer gate buttons.
+    expect(screen.queryByRole("button", { name: "Approve" })).not.toBeInTheDocument();
+
+    // Polling advances targets until the rollout completes.
     expect(await screen.findByText("completed", {}, { timeout: 10_000 })).toBeInTheDocument();
     expect(screen.getByText("3/3 clusters healthy")).toBeInTheDocument();
   }, 20_000);

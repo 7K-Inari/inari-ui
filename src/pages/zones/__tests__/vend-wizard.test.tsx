@@ -50,6 +50,7 @@ describe("VendZoneWizardPage", () => {
     await user.type(screen.getByLabelText("Name"), "Bad Zone");
     await user.type(screen.getByLabelText("Slug"), "Bad_Slug");
     await user.type(screen.getByLabelText("Org unit"), "acme-data");
+    await user.type(screen.getByLabelText("Management account ID"), "ma-platform-prod");
     await user.click(screen.getByRole("button", { name: "Vend zone" }));
     expect(await screen.findByText(/lowercase letters, numbers, and dashes/)).toBeInTheDocument();
     expect(screen.queryByText(/^zone detail /)).not.toBeInTheDocument();
@@ -69,6 +70,7 @@ describe("VendZoneWizardPage", () => {
     await user.type(screen.getByLabelText("Name"), "acme-ml");
     await user.type(screen.getByLabelText("Slug"), "acme-ml");
     await user.type(screen.getByLabelText("Org unit"), "acme-data");
+    await user.type(screen.getByLabelText("Management account ID"), "ma-platform-prod");
     await user.selectOptions(screen.getByLabelText("Region"), "eu-central-1");
     await user.click(screen.getByRole("button", { name: "Vend zone" }));
     expect(await screen.findByText("zone detail zn-acme-acme-ml")).toBeInTheDocument();

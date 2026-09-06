@@ -42,25 +42,26 @@ function renderDetail(accountId: string) {
 describe("CloudAccountDetailPage", () => {
   it("shows account fields, status and ProviderConfig for a connected account", async () => {
     renderDetail("ca-acme-prod");
-    expect(await screen.findByRole("heading", { name: "acme-prod" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "123456789012" })).toBeInTheDocument();
     expect(screen.getByTestId("status-connected")).toBeInTheDocument();
-    expect(
-      screen.getByText("arn:aws:iam::123456789012:role/inari-platform-access"),
-    ).toBeInTheDocument();
-    expect(screen.getByTestId("provider-config-name")).toHaveTextContent("aws-acme-prod");
-  });
-
-  it("shows the trust snippet for the account", async () => {
-    renderDetail("ca-acme-sandbox");
-    expect(
-      await screen.findByText(/sts:AssumeRoleWithWebIdentity/),
-    ).toBeInTheDocument();
+    expect(screen.getAllByText("arn:aws:iam::123456789012:role/inari-platform-access").length)
+      .toBeGreaterThan(0);
+    expect(screen.getAllByText("inari-acme-123456789012").length).toBeGreaterThan(0);
+    // The ProviderConfig card renders the manifest returned by the server.
+    expect(await screen.findByTestId("provider-config-manifest")).toHaveTextContent(
+      "name: aws-acme-123456789012",
+    );
+    expect(screen.getByTestId("provider-config-manifest")).toHaveTextContent(
+      "roleARN: arn:aws:iam::123456789012:role/inari-platform-access",
+    );
   });
 
   it("validates on demand: first attempt fails, retry connects the account", async () => {
     const user = userEvent.setup();
     renderDetail("ca-acme-sandbox");
     expect(await screen.findByTestId("status-pending_trust")).toBeInTheDocument();
+    // Pending accounts have no ProviderConfig card yet.
+    expect(screen.queryByText("ProviderConfig")).not.toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "Validate now" }));
     expect(await screen.findByText("Validation failed")).toBeInTheDocument();
@@ -68,9 +69,9 @@ describe("CloudAccountDetailPage", () => {
 
     await user.click(screen.getByRole("button", { name: "Retry validation" }));
     expect(await screen.findByText("Account connected")).toBeInTheDocument();
-    expect(screen.getAllByText("aws-acme-acme-sandbox").length).toBeGreaterThan(0);
-    expect(await screen.findByTestId("provider-config-name")).toHaveTextContent(
-      "aws-acme-acme-sandbox",
+    // Once connected, the server-rendered ProviderConfig manifest appears.
+    expect(await screen.findByTestId("provider-config-manifest")).toHaveTextContent(
+      "name: aws-acme-210987654321",
     );
   });
 });

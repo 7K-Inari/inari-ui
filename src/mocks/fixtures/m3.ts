@@ -1,9 +1,9 @@
-import type { CloudAccount, ProviderConfig, TrustSnippet, ValidationResult } from "@/api/cloud-accounts";
+import type { CloudAccount } from "@/api/cloud-accounts";
 import type { ApprovalRequest } from "@/api/approvals";
 import type { AuditEvent } from "@/api/audit";
 import type { RbacMatrix } from "@/api/rbac";
 import type { TenantPlatformResource } from "@/api/platform";
-import type { CreateZoneRequest, TenantZone, ZoneStep } from "@/api/zones";
+import type { CreateZoneRequest, TenantZone, ZoneStep, ZoneStepName } from "@/api/zones";
 
 const now = Date.now();
 const iso = (ms: number) => new Date(ms).toISOString();
@@ -26,21 +26,30 @@ function seedRbac(tenant: string) {
 }
 
 function zoneSteps(done: number, failedStep?: string): ZoneStep[] {
-  const names: ZoneStep["name"][] = ["account", "trust", "eks", "wiring"];
+  const names: ZoneStepName[] = [
+    "preflight",
+    "account_vend",
+    "trust_bootstrap",
+    "eks_provision",
+    "inari_wiring",
+  ];
   return names.map((name, i) => ({
     name,
     status:
       name === failedStep
         ? "failed"
         : i < done
-          ? "done"
+          ? "succeeded"
           : i === done
-            ? "in_progress"
+            ? "running"
             : "pending",
-    message:
+    attempts: name === failedStep ? 3 : 1,
+    detail:
       name === failedStep
         ? "EKS cluster creation hit service quota; requesting increase"
         : null,
+    externalRef: null,
+    updatedAt: iso(now),
   }));
 }
 
@@ -51,14 +60,12 @@ function seedState(): M3State {
         id: "ca-acme-prod",
         tenant: "acme",
         provider: "aws",
-        name: "acme-prod",
         accountId: "123456789012",
         roleArn: "arn:aws:iam::123456789012:role/inari-platform-access",
-        externalId: "inari-acme-ca-acme-prod",
-        regions: ["eu-west-1", "eu-central-1"],
+        externalId: "inari-acme-123456789012",
+        issuerUrl: "https://oidc.eks.eu-west-1.amazonaws.com/id/PLATFORMCLUSTER",
         status: "connected",
         statusMessage: null,
-        providerConfigName: "aws-acme-prod",
         lastValidatedAt: iso(now - 3_600_000),
         createdAt: iso(now - 14 * 86_400_000),
       },
@@ -66,14 +73,12 @@ function seedState(): M3State {
         id: "ca-acme-sandbox",
         tenant: "acme",
         provider: "aws",
-        name: "acme-sandbox",
         accountId: "210987654321",
         roleArn: "arn:aws:iam::210987654321:role/inari-platform-access",
-        externalId: "inari-acme-ca-acme-sandbox",
-        regions: ["eu-west-1"],
+        externalId: "inari-acme-210987654321",
+        issuerUrl: "https://oidc.eks.eu-west-1.amazonaws.com/id/PLATFORMCLUSTER",
         status: "pending_trust",
         statusMessage: null,
-        providerConfigName: null,
         lastValidatedAt: null,
         createdAt: iso(now - 86_400_000),
       },
@@ -84,7 +89,6 @@ function seedState(): M3State {
         tenant: "acme",
         kind: "deploy",
         title: "Deploy postgresql-aws 16.3 to eks-prod-eu",
-        description: "Requested by team developers; item requires platform-admin approval.",
         requestedBy: "jane@acme.example",
         requestedAt: iso(now - 7_200_000),
         status: "pending",
@@ -97,7 +101,6 @@ function seedState(): M3State {
         tenant: "acme",
         kind: "zone-vend",
         title: "Vend tenant zone acme-analytics",
-        description: "Starter tier zone in eu-west-1 under OU acme-data.",
         requestedBy: "me@inari.dev",
         requestedAt: iso(now - 2 * 86_400_000),
         status: "approved",
@@ -110,7 +113,6 @@ function seedState(): M3State {
         tenant: "acme",
         kind: "deploy",
         title: "Deploy nginx-ingress to kind-dev",
-        description: "Requested by me.",
         requestedBy: "me@inari.dev",
         requestedAt: iso(now - 3 * 86_400_000),
         status: "rejected",
@@ -213,7 +215,7 @@ function seedState(): M3State {
         region: "eu-west-1",
         tier: "starter",
         status: "active",
-        steps: zoneSteps(4),
+        steps: zoneSteps(5),
         cloudAccountId: "ca-acme-prod",
         clusterId: "cl-eks-prod",
         createdAt: iso(now - 30 * 86_400_000),
@@ -259,20 +261,18 @@ export function findAccount(id: string): CloudAccount | undefined {
 
 export function createAccount(
   tenant: string,
-  body: { name: string; accountId: string; regions: string[] },
+  body: { accountId: string; roleArn: string; externalId?: string },
 ): CloudAccount {
   const account: CloudAccount = {
-    id: `ca-${tenant}-${body.name}`,
+    id: `ca-${tenant}-${body.accountId}`,
     tenant,
     provider: "aws",
-    name: body.name,
     accountId: body.accountId,
-    roleArn: `arn:aws:iam::${body.accountId}:role/inari-platform-access`,
-    externalId: `inari-${tenant}-ca-${tenant}-${body.name}`,
-    regions: body.regions,
+    roleArn: body.roleArn,
+    externalId: body.externalId ?? `inari-${tenant}-${body.accountId}`,
+    issuerUrl: "https://oidc.eks.eu-west-1.amazonaws.com/id/PLATFORMCLUSTER",
     status: "pending_trust",
     statusMessage: null,
-    providerConfigName: null,
     lastValidatedAt: null,
     createdAt: new Date().toISOString(),
   };
@@ -280,72 +280,7 @@ export function createAccount(
   return account;
 }
 
-export function trustSnippetFor(account: CloudAccount): TrustSnippet {
-  const issuerUrl = "https://oidc.eks.eu-west-1.amazonaws.com/id/PLATFORMCLUSTER";
-  const sub = `system:serviceaccount:inari-system:crossplane-provider-aws`;
-  const trustPolicy = JSON.stringify(
-    {
-      Version: "2012-10-17",
-      Statement: [
-        {
-          Effect: "Allow",
-          Principal: { Federated: "arn:aws:iam::999988887777:oidc-provider/oidc.eks.eu-west-1.amazonaws.com/id/PLATFORMCLUSTER" },
-          Action: "sts:AssumeRoleWithWebIdentity",
-          Condition: {
-            StringEquals: {
-              "oidc.eks.eu-west-1.amazonaws.com/id/PLATFORMCLUSTER:sub": sub,
-              "oidc.eks.eu-west-1.amazonaws.com/id/PLATFORMCLUSTER:aud": "sts.amazonaws.com",
-            },
-          },
-        },
-        {
-          Effect: "Allow",
-          Principal: { AWS: "arn:aws:iam::999988887777:role/inari-control-plane" },
-          Action: "sts:AssumeRole",
-          Condition: { StringEquals: { "sts:ExternalId": account.externalId } },
-        },
-      ],
-    },
-    null,
-    2,
-  );
-  return {
-    oidcProviderArn:
-      "arn:aws:iam::999988887777:oidc-provider/oidc.eks.eu-west-1.amazonaws.com/id/PLATFORMCLUSTER",
-    issuerUrl,
-    audience: "sts.amazonaws.com",
-    subject: sub,
-    externalId: account.externalId,
-    cloudformation: [
-      "AWSTemplateFormatVersion: '2010-09-09'",
-      "Description: One-time trust setup for Inari platform access",
-      "Resources:",
-      "  InariPlatformAccessRole:",
-      "    Type: AWS::IAM::Role",
-      "    Properties:",
-      "      RoleName: inari-platform-access",
-      "      AssumeRolePolicyDocument: |",
-      ...trustPolicy.split("\n").map((l) => `        ${l}`),
-      "      ManagedPolicyArns:",
-      "        - arn:aws:iam::aws:policy/PowerUserAccess",
-      "Outputs:",
-      "  RoleArn:",
-      "    Value: !GetAtt InariPlatformAccessRole.Arn",
-      "",
-    ].join("\n"),
-    terraform: [
-      'resource "aws_iam_role" "inari_platform_access" {',
-      '  name = "inari-platform-access"',
-      "  assume_role_policy = jsonencode(",
-      ...trustPolicy.split("\n").map((l) => `    ${l}`),
-      "  )",
-      "}",
-      "",
-    ].join("\n"),
-  };
-}
-
-export function validateAccount(id: string): ValidationResult | undefined {
+export function validateAccount(id: string): CloudAccount | undefined {
   const account = findAccount(id);
   if (!account) return undefined;
   const count = (state.validateCount[id] = (state.validateCount[id] ?? 0) + 1);
@@ -354,36 +289,33 @@ export function validateAccount(id: string): ValidationResult | undefined {
   if (count === 1) {
     account.status = "failed";
     account.statusMessage =
-      "AssumeRole denied: role arn:aws:iam::*:role/inari-platform-access not found or trust policy missing";
-    return {
-      status: "failed",
-      message: account.statusMessage,
-      providerConfigName: null,
-      checkedAt: new Date().toISOString(),
-    };
+      "AssumeRole denied: role not found or trust policy missing ExternalId condition";
+    return account;
   }
   account.status = "connected";
   account.statusMessage = null;
-  account.providerConfigName = `aws-${account.tenant}-${account.name}`;
   account.lastValidatedAt = new Date().toISOString();
-  return {
-    status: "ok",
-    message: "Dry-run AssumeRole succeeded; ProviderConfig created",
-    providerConfigName: account.providerConfigName,
-    checkedAt: account.lastValidatedAt,
-  };
+  return account;
 }
 
-export function listProviderConfigs(tenant: string): ProviderConfig[] {
-  return state.accounts
-    .filter((a) => a.providerConfigName && (a.tenant === tenant || tenant === "all"))
-    .map((a) => ({
-      name: a.providerConfigName!,
-      kind: "ProviderConfig (provider-aws)",
-      health: a.status === "connected" ? "healthy" : "unknown",
-      accountId: a.accountId,
-      createdAt: a.createdAt,
-    }));
+// Renders the Crossplane ProviderConfig manifest for a cluster, mirroring
+// GET /tenants/{org}/cloud-accounts/{id}/providerconfig (plain-text body).
+export function providerConfigManifestFor(account: CloudAccount, clusterId: string): string {
+  const name = `aws-${account.tenant}-${account.accountId}`;
+  return [
+    "apiVersion: aws.upbound.io/v1beta1",
+    "kind: ProviderConfig",
+    "metadata:",
+    `  name: ${name}`,
+    "spec:",
+    "  credentials:",
+    "    source: WebIdentity",
+    "    webIdentity:",
+    `      roleARN: ${account.roleArn}`,
+    `      clusterID: ${clusterId}`,
+    ...(account.externalId ? [`      externalID: ${account.externalId}`] : []),
+    "",
+  ].join("\n");
 }
 
 // ---- rbac ----
@@ -427,12 +359,18 @@ export function setRbacMappingMock(
 
 export function listApprovalsFor(
   tenant: string,
-  view: "inbox" | "requested",
+  q: { requester?: string | null; state?: string | null },
 ): ApprovalRequest[] {
   return state.approvals.filter((a) => {
     if (a.tenant !== tenant && tenant !== "all") return false;
-    if (view === "requested") return a.requestedBy === "me@inari.dev";
-    return a.requestedBy !== "me@inari.dev" || a.status !== "pending";
+    // requester=me returns the caller's own requests ("requested" tab).
+    if (q.requester === "me") return a.requestedBy === "me@inari.dev";
+    // Default (no filter) and state=pending both mean the inbox: pending
+    // requests awaiting someone else's decision.
+    if (!q.state || q.state === "pending") {
+      return a.status === "pending" && a.requestedBy !== "me@inari.dev";
+    }
+    return a.status === q.state;
   });
 }
 
@@ -491,19 +429,43 @@ export function listZonesFor(tenant: string): TenantZone[] {
   return state.zones.filter((z) => z.tenant === tenant || tenant === "all");
 }
 
-export function findZone(id: string): TenantZone | undefined {
+function findZoneState(id: string): TenantZone | undefined {
   return state.zones.find((z) => z.id === id);
+}
+
+// Huma server wire aliases layered onto the view-model zone. Tests can pin a
+// handler that serves findZone() directly as the {zone: ...} envelope (bypass
+// toServerZone), so the returned object must already speak the wire shape.
+type ServerZoneAliases = {
+  orgId: string;
+  ownerOrgId: string;
+  displayName: string;
+  ouId: string;
+  state: string;
+};
+
+export function findZone(id: string): (TenantZone & ServerZoneAliases) | undefined {
+  const z = findZoneState(id);
+  if (!z) return undefined;
+  return {
+    ...z,
+    orgId: z.tenant,
+    ownerOrgId: z.tenant,
+    displayName: z.name,
+    ouId: z.orgUnit,
+    state: z.status,
+  };
 }
 
 export function createZoneMock(tenant: string, body: CreateZoneRequest): TenantZone {
   const zone: TenantZone = {
     id: `zn-${tenant}-${body.slug}`,
     tenant,
-    name: body.name,
+    name: body.displayName,
     slug: body.slug,
-    orgUnit: body.orgUnit,
+    orgUnit: body.ouId,
     region: body.region,
-    tier: "starter",
+    tier: body.tier,
     status: "provisioning",
     steps: zoneSteps(0),
     cloudAccountId: null,
@@ -518,28 +480,28 @@ export function createZoneMock(tenant: string, body: CreateZoneRequest): TenantZ
 // Poll-driven progression: each poll advances the pipeline one step so the
 // lifecycle view animates in dev/mock mode.
 export function pollZoneMock(id: string): TenantZone | undefined {
-  const zone = findZone(id);
+  const zone = findZoneState(id);
   if (!zone) return undefined;
   zone.updatedAt = new Date().toISOString();
   if (zone.status === "provisioning") {
-    const idx = zone.steps.findIndex((s) => s.status === "in_progress");
+    const idx = zone.steps.findIndex((s) => s.status === "running");
     if (idx === -1) {
       const first = zone.steps.find((s) => s.status === "pending");
-      if (first) first.status = "in_progress";
+      if (first) first.status = "running";
     } else {
-      zone.steps[idx].status = "done";
+      zone.steps[idx].status = "succeeded";
       const next = zone.steps[idx + 1];
-      if (next) next.status = "in_progress";
+      if (next) next.status = "running";
     }
-    if (zone.steps.every((s) => s.status === "done")) {
+    if (zone.steps.every((s) => s.status === "succeeded")) {
       zone.status = "active";
       zone.cloudAccountId = `ca-${zone.tenant}-${zone.slug}`;
       zone.clusterId = `cl-${zone.slug}`;
     }
   } else if (zone.status === "decommissioning") {
-    const lastDone = zone.steps.map((s) => s.status).lastIndexOf("done");
+    const lastDone = zone.steps.map((s) => s.status).lastIndexOf("succeeded");
     if (lastDone === -1) {
-      zone.status = "decommissioned";
+      zone.status = "closed";
     } else {
       zone.steps[lastDone].status = "pending";
     }
@@ -547,17 +509,18 @@ export function pollZoneMock(id: string): TenantZone | undefined {
   return zone;
 }
 
-export function requestDecommissionMock(id: string, reason: string): TenantZone | undefined {
-  const zone = findZone(id);
+export function requestDecommissionMock(id: string): ApprovalRequest | undefined {
+  const zone = findZoneState(id);
   if (!zone || zone.status !== "active") return undefined;
-  zone.status = "decommission_requested";
+  // Server transitions the zone to decommission_pending_approval and returns
+  // the approval id; the approval record itself carries the operator context.
+  zone.status = "decommission_pending_approval";
   zone.updatedAt = new Date().toISOString();
   const approval: ApprovalRequest = {
     id: `ap-decom-${zone.id}`,
     tenant: zone.tenant,
     kind: "zone-decommission",
     title: `Decommission tenant zone ${zone.slug}`,
-    description: reason,
     requestedBy: "me@inari.dev",
     requestedAt: new Date().toISOString(),
     status: "pending",
@@ -566,5 +529,5 @@ export function requestDecommissionMock(id: string, reason: string): TenantZone 
     decisionReason: null,
   };
   state.approvals.push(approval);
-  return zone;
+  return approval;
 }

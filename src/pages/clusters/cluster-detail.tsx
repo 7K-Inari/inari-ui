@@ -153,10 +153,6 @@ function OverviewTab({ clusterId }: { clusterId: string }) {
           <p className="font-mono">{cluster.k8sVersion ?? "unknown"}</p>
         </div>
         <div>
-          <p className="text-xs text-muted-foreground">Agent version</p>
-          <p className="font-mono">{cluster.agentVersion ?? "—"}</p>
-        </div>
-        <div>
           <p className="text-xs text-muted-foreground">Tenant</p>
           <p className="font-mono">{cluster.tenant}</p>
         </div>

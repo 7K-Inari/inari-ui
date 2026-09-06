@@ -2,9 +2,8 @@ import * as React from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { CheckCircle2, Loader2 } from "lucide-react";
 
-import type { TrustSnippet, ValidationResult } from "@/api/cloud-accounts";
-import { createCloudAccount, validateCloudAccount } from "@/api/cloud-accounts";
 import type { CloudAccount } from "@/api/cloud-accounts";
+import { createCloudAccount, validateCloudAccount } from "@/api/cloud-accounts";
 import { useAuth } from "@/auth/auth-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,8 +13,8 @@ import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
 import { CopyButton } from "@/pages/cloud-accounts/copy-button";
 
-const NAME_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 const ACCOUNT_ID_PATTERN = /^\d{12}$/;
+const ROLE_ARN_PATTERN = /^arn:aws:iam::\d{12}:role\/.+$/;
 
 const STEPS = ["Account details", "Create the trust role", "Validate"] as const;
 
@@ -42,46 +41,13 @@ function StepIndicator({ current }: { current: number }) {
   );
 }
 
-export function TrustSnippetTabs({ trust }: { trust: TrustSnippet }) {
-  const [tab, setTab] = React.useState<"cloudformation" | "terraform">("cloudformation");
-  const snippet = tab === "cloudformation" ? trust.cloudformation : trust.terraform;
-  return (
-    <div className="space-y-2">
-      <div className="flex gap-1" role="tablist" aria-label="Trust setup method">
-        <Button
-          role="tab"
-          aria-selected={tab === "cloudformation"}
-          variant={tab === "cloudformation" ? "secondary" : "ghost"}
-          size="sm"
-          onClick={() => setTab("cloudformation")}
-        >
-          CloudFormation
-        </Button>
-        <Button
-          role="tab"
-          aria-selected={tab === "terraform"}
-          variant={tab === "terraform" ? "secondary" : "ghost"}
-          size="sm"
-          onClick={() => setTab("terraform")}
-        >
-          Terraform
-        </Button>
-      </div>
-      <pre className="max-h-72 overflow-auto rounded-md bg-muted p-3 font-mono text-xs">
-        {snippet}
-      </pre>
-      <CopyButton value={snippet} label={`Copy ${tab === "cloudformation" ? "template" : "config"}`} />
-    </div>
-  );
-}
-
-export function TrustFacts({ trust }: { trust: TrustSnippet }) {
+// The trust role values the tenant must wire into their IAM role. The platform
+// cluster OIDC provider must be trusted with these exact conditions.
+export function TrustRoleFacts({ account }: { account: CloudAccount }) {
   const facts: Array<{ label: string; value: string }> = [
-    { label: "OIDC provider ARN", value: trust.oidcProviderArn },
-    { label: "Issuer URL", value: trust.issuerUrl },
-    { label: "Required sub condition", value: trust.subject },
-    { label: "Required aud condition", value: trust.audience },
-    { label: "ExternalId", value: trust.externalId },
+    { label: "Issuer URL", value: account.issuerUrl ?? "—" },
+    { label: "Role ARN", value: account.roleArn },
+    { label: "ExternalId", value: account.externalId },
   ];
   return (
     <dl className="space-y-2 rounded-md border bg-muted/40 p-3 text-xs">
@@ -95,29 +61,24 @@ export function TrustFacts({ trust }: { trust: TrustSnippet }) {
   );
 }
 
-export function ValidationResultView({
-  result,
+// Renders the outcome of an on-demand validation. The server returns the
+// updated account envelope; the outcome is derived from its state fields.
+export function ValidationStateView({
+  account,
   accountId,
   tenant,
 }: {
-  result: ValidationResult;
+  account: CloudAccount;
   accountId: string;
   tenant: string;
 }) {
-  if (result.status === "ok") {
+  if (account.status === "connected") {
     return (
       <div className="flex flex-col items-center gap-3 py-6 text-center">
         <CheckCircle2 className="h-10 w-10 text-emerald-600" aria-hidden />
         <p className="text-lg font-semibold">Account connected</p>
         <p className="text-sm text-muted-foreground">
-          {result.message}
-          {result.providerConfigName ? (
-            <>
-              {" "}
-              ProviderConfig <code className="font-mono text-xs">{result.providerConfigName}</code>{" "}
-              is ready.
-            </>
-          ) : null}
+          Dry-run AssumeRole succeeded; the account is ready for managed resources.
         </p>
         <Button asChild variant="outline">
           <Link to={tenantLink(tenant, `cloud-accounts/${accountId}`)}>Open account detail</Link>
@@ -129,10 +90,10 @@ export function ValidationResultView({
     <div className="space-y-3 rounded-md border border-destructive/40 bg-destructive/10 p-4">
       <p className="text-sm font-medium text-destructive">Validation failed</p>
       <p className="text-sm text-destructive" data-testid="validation-error">
-        {result.message}
+        {account.statusMessage ?? "The trust role could not be assumed."}
       </p>
       <p className="text-xs text-muted-foreground">
-        Re-check the trust policy: the sub and aud conditions must match the values above exactly,
+        Re-check the trust policy: the OIDC issuer and subject must match the platform cluster,
         and the ExternalId condition must be present on the AssumeRole statement.
       </p>
     </div>
@@ -145,50 +106,46 @@ export function ConnectAccountWizardPage() {
   const navigate = useNavigate();
 
   const [step, setStep] = React.useState(0);
-  const [name, setName] = React.useState("");
   const [accountIdInput, setAccountIdInput] = React.useState("");
-  const [regionsInput, setRegionsInput] = React.useState("eu-west-1");
-  const [nameError, setNameError] = React.useState<string | null>(null);
+  const [roleArnInput, setRoleArnInput] = React.useState("");
+  const [externalIdInput, setExternalIdInput] = React.useState("");
   const [accountIdError, setAccountIdError] = React.useState<string | null>(null);
+  const [roleArnError, setRoleArnError] = React.useState<string | null>(null);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
-  const [created, setCreated] = React.useState<{
-    account: CloudAccount;
-    trust: TrustSnippet;
-  } | null>(null);
-  const [validation, setValidation] = React.useState<ValidationResult | null>(null);
+  const [created, setCreated] = React.useState<CloudAccount | null>(null);
+  const [validation, setValidation] = React.useState<CloudAccount | null>(null);
   const [validating, setValidating] = React.useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     let valid = true;
-    if (!NAME_PATTERN.test(name)) {
-      setNameError("Use lowercase letters, numbers, and dashes (e.g. acme-prod).");
-      valid = false;
-    } else {
-      setNameError(null);
-    }
     if (!ACCOUNT_ID_PATTERN.test(accountIdInput)) {
       setAccountIdError("Enter the 12-digit AWS account ID (numbers only).");
       valid = false;
     } else {
       setAccountIdError(null);
     }
+    if (!ROLE_ARN_PATTERN.test(roleArnInput.trim())) {
+      setRoleArnError(
+        "Enter the role ARN (arn:aws:iam::<12-digit account>:role/<name>).",
+      );
+      valid = false;
+    } else {
+      setRoleArnError(null);
+    }
     if (!valid) return;
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const regions = regionsInput
-        .split(",")
-        .map((r) => r.trim())
-        .filter(Boolean);
       const res = await createCloudAccount(token, tenant, {
-        provider: "aws",
-        name,
         accountId: accountIdInput,
-        regions,
+        roleArn: roleArnInput.trim(),
+        externalId: externalIdInput.trim() || undefined,
+        provider: "aws",
+        runContext: "tenant",
       });
-      setCreated(res);
+      setCreated(res.account);
       setStep(1);
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Failed to connect account");
@@ -202,14 +159,13 @@ export function ConnectAccountWizardPage() {
     setValidating(true);
     setValidation(null);
     try {
-      const result = await validateCloudAccount(token, created.account.id, tenant);
-      setValidation(result);
+      const account = await validateCloudAccount(token, created.id, tenant);
+      setValidation(account);
     } catch (err) {
       setValidation({
+        ...created,
         status: "failed",
-        message: err instanceof Error ? err.message : "Validation request failed",
-        providerConfigName: null,
-        checkedAt: new Date().toISOString(),
+        statusMessage: err instanceof Error ? err.message : "Validation request failed",
       });
     } finally {
       setValidating(false);
@@ -232,23 +188,12 @@ export function ConnectAccountWizardPage() {
           <CardHeader>
             <CardTitle>Account details</CardTitle>
             <CardDescription>
-              This creates a cloud account record and generates the trust policy you will apply in
-              your account.
+              This registers the cloud account record. You will then create the trust role in your
+              AWS account and validate the connection.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <form onSubmit={submit} className="space-y-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="account-name">Name</Label>
-                <Input
-                  id="account-name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="acme-prod"
-                  required
-                />
-                {nameError && <p className="text-xs text-destructive">{nameError}</p>}
-              </div>
               <div className="space-y-1.5">
                 <Label htmlFor="aws-account-id">AWS account ID</Label>
                 <Input
@@ -261,15 +206,29 @@ export function ConnectAccountWizardPage() {
                 {accountIdError && <p className="text-xs text-destructive">{accountIdError}</p>}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="account-regions">Regions</Label>
+                <Label htmlFor="role-arn">Role ARN</Label>
                 <Input
-                  id="account-regions"
-                  value={regionsInput}
-                  onChange={(e) => setRegionsInput(e.target.value)}
-                  placeholder="eu-west-1, eu-central-1"
+                  id="role-arn"
+                  value={roleArnInput}
+                  onChange={(e) => setRoleArnInput(e.target.value)}
+                  placeholder="arn:aws:iam::123456789012:role/inari-platform-access"
+                  required
+                />
+                {roleArnError && <p className="text-xs text-destructive">{roleArnError}</p>}
+                <p className="text-xs text-muted-foreground">
+                  The ARN of the IAM role the platform will assume in this account.
+                </p>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="external-id">External ID (optional)</Label>
+                <Input
+                  id="external-id"
+                  value={externalIdInput}
+                  onChange={(e) => setExternalIdInput(e.target.value)}
+                  placeholder="Generated if left empty"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Comma-separated; managed resources are provisioned in these regions.
+                  The ExternalId condition for the AssumeRole statement in the trust policy.
                 </p>
               </div>
               {submitError && <p className="text-sm text-destructive">{submitError}</p>}
@@ -277,7 +236,7 @@ export function ConnectAccountWizardPage() {
                 <Button variant="ghost" type="button" onClick={() => navigate(-1)}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={submitting || !name || !accountIdInput}>
+                <Button type="submit" disabled={submitting || !accountIdInput || !roleArnInput}>
                   {submitting ? "Creating…" : "Create account record"}
                 </Button>
               </div>
@@ -292,15 +251,16 @@ export function ConnectAccountWizardPage() {
             <CardTitle>Create the trust role</CardTitle>
             <CardDescription>
               No credentials are stored on the platform. In your AWS account{" "}
-              <code className="font-mono text-xs">{created.account.accountId}</code>, create the
-              role <code className="font-mono text-xs">inari-platform-access</code> trusting the
-              platform cluster&apos;s OIDC provider. This is a one-time setup.
+              <code className="font-mono text-xs">{created.accountId}</code>, create the trust role
+              so the platform can assume{" "}
+              <code className="font-mono text-xs">{created.roleArn}</code>. This is a one-time
+              setup.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <TrustFacts trust={created.trust} />
-            <TrustSnippetTabs trust={created.trust} />
-            <div className="flex justify-end">
+            <TrustRoleFacts account={created} />
+            <div className="flex items-center justify-between gap-2">
+              <CopyButton value={created.externalId} label="Copy ExternalId" />
               <Button
                 onClick={() => {
                   setStep(2);
@@ -320,7 +280,7 @@ export function ConnectAccountWizardPage() {
             <CardTitle>Validate the connection</CardTitle>
             <CardDescription>
               The platform performs a dry-run AssumeRole against{" "}
-              <code className="font-mono text-xs">{created.account.roleArn}</code>.
+              <code className="font-mono text-xs">{created.roleArn}</code>.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -331,9 +291,9 @@ export function ConnectAccountWizardPage() {
               </div>
             )}
             {!validating && validation && (
-              <ValidationResultView
-                result={validation}
-                accountId={created.account.id}
+              <ValidationStateView
+                account={validation}
+                accountId={created.id}
                 tenant={tenant}
               />
             )}

@@ -17,6 +17,7 @@ const STATUS_VARIANTS: Record<ApprovalStatus, "warning" | "success" | "destructi
   pending: "warning",
   approved: "success",
   rejected: "destructive",
+  cancelled: "muted",
   expired: "muted",
 };
 
@@ -189,7 +190,6 @@ function ApprovalRow({
         </td>
         <td className="px-4 py-2">
           <div className="font-medium">{approval.title}</div>
-          <div className="text-xs text-muted-foreground">{approval.description}</div>
         </td>
         <td className="px-4 py-2 font-mono text-xs">{approval.requestedBy}</td>
         <td className="px-4 py-2 text-muted-foreground">

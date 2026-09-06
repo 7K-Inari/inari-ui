@@ -18,9 +18,10 @@ export function VendZoneWizardPage() {
   const { token } = useAuth();
   const navigate = useNavigate();
 
-  const [name, setName] = React.useState("");
   const [slug, setSlug] = React.useState("");
-  const [orgUnit, setOrgUnit] = React.useState("");
+  const [displayName, setDisplayName] = React.useState("");
+  const [ouId, setOuId] = React.useState("");
+  const [managementAccountId, setManagementAccountId] = React.useState("");
   const [region, setRegion] = React.useState<string>(REGIONS[0]);
   const [slugError, setSlugError] = React.useState<string | null>(null);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
@@ -37,9 +38,10 @@ export function VendZoneWizardPage() {
     setSubmitError(null);
     try {
       const zone = await createZone(token, tenant, {
-        name,
         slug,
-        orgUnit,
+        displayName,
+        ouId,
+        managementAccountId,
         region,
         tier: "starter",
       });
@@ -72,8 +74,8 @@ export function VendZoneWizardPage() {
               <Label htmlFor="zone-name">Name</Label>
               <Input
                 id="zone-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
                 placeholder="acme-analytics"
                 required
               />
@@ -93,11 +95,24 @@ export function VendZoneWizardPage() {
               <Label htmlFor="zone-org-unit">Org unit</Label>
               <Input
                 id="zone-org-unit"
-                value={orgUnit}
-                onChange={(e) => setOrgUnit(e.target.value)}
+                value={ouId}
+                onChange={(e) => setOuId(e.target.value)}
                 placeholder="acme-data"
                 required
               />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="zone-management-account">Management account ID</Label>
+              <Input
+                id="zone-management-account"
+                value={managementAccountId}
+                onChange={(e) => setManagementAccountId(e.target.value)}
+                placeholder="ma-platform-prod"
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                The platform management account the new cloud account is vended under.
+              </p>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="zone-region">Region</Label>
@@ -131,7 +146,10 @@ export function VendZoneWizardPage() {
               <Button variant="ghost" type="button" onClick={() => navigate(-1)}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={submitting || !name || !slug || !orgUnit}>
+              <Button
+                type="submit"
+                disabled={submitting || !displayName || !slug || !ouId || !managementAccountId}
+              >
                 {submitting ? "Vending…" : "Vend zone"}
               </Button>
             </div>

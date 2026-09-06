@@ -2,13 +2,11 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 
 import { listCatalogItems } from "@/api/catalog";
-import { listClusters } from "@/api/clusters";
 import { useAsyncResource } from "@/api/hooks";
 import type { CatalogSource } from "@/api/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
 import { CatalogCardSlots } from "@/ext/slots";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
@@ -29,24 +27,13 @@ const SOURCE_BADGE: Record<CatalogSource, { label: string; variant: "default" | 
 export function CatalogBrowsePage() {
   const { tenant } = useTenant();
   const [source, setSource] = React.useState<CatalogSource | "all">("all");
-  const [category, setCategory] = React.useState("");
-  const [clusterId, setClusterId] = React.useState("");
 
   const items = useAsyncResource(
     (token) =>
       listCatalogItems(token, tenant, {
         source: source === "all" ? undefined : source,
-        category: category || undefined,
-        clusterId: clusterId || undefined,
       }),
-    [tenant, source, category, clusterId],
-  );
-  const clusters = useAsyncResource((token) => listClusters(token, tenant), [tenant]);
-  const allItems = useAsyncResource((token) => listCatalogItems(token, tenant), [tenant]);
-
-  const categories = React.useMemo(
-    () => Array.from(new Set((allItems.data ?? []).map((i) => i.category))).sort(),
-    [allItems.data],
+    [tenant, source],
   );
 
   return (
@@ -70,38 +57,6 @@ export function CatalogBrowsePage() {
               {f.label}
             </Button>
           ))}
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="catalog-category">Category</Label>
-          <select
-            id="catalog-category"
-            className="flex h-9 rounded-md border border-input bg-background px-3 text-sm"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-          >
-            <option value="">All categories</option>
-            {categories.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="space-y-1">
-          <Label htmlFor="catalog-cluster">Cluster compatibility</Label>
-          <select
-            id="catalog-cluster"
-            className="flex h-9 rounded-md border border-input bg-background px-3 text-sm"
-            value={clusterId}
-            onChange={(e) => setClusterId(e.target.value)}
-          >
-            <option value="">Any cluster</option>
-            {(clusters.data ?? []).map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name}
-              </option>
-            ))}
-          </select>
         </div>
       </div>
 
@@ -145,7 +100,7 @@ export function CatalogBrowsePage() {
               <CardDescription>{item.description}</CardDescription>
             </CardHeader>
             <CardContent className="mt-auto flex flex-wrap items-center gap-2 pt-0 text-xs text-muted-foreground">
-              <Badge variant="muted">{item.category}</Badge>
+              <Badge variant="muted">{item.source}</Badge>
               <span>v{item.latestVersion}</span>
               <CatalogCardSlots item={item} />
             </CardContent>

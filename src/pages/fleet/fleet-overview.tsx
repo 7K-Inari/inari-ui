@@ -168,8 +168,7 @@ function ClusterSetsTab() {
                   ))}
                 </div>
                 <p className="text-muted-foreground">
-                  {set.memberClusterIds.length} member cluster
-                  {set.memberClusterIds.length === 1 ? "" : "s"}
+                  Members resolve from the label selector server-side.
                 </p>
               </CardContent>
             </Card>
@@ -212,7 +211,7 @@ function RolloutsTab() {
             <tr>
               <th className="px-4 py-2 font-medium">Rollout</th>
               <th className="px-4 py-2 font-medium">Target</th>
-              <th className="px-4 py-2 font-medium">ClusterSet</th>
+              <th className="px-4 py-2 font-medium">Stages</th>
               <th className="px-4 py-2 font-medium">State</th>
               <th className="px-4 py-2 font-medium">Started</th>
             </tr>
@@ -231,7 +230,9 @@ function RolloutsTab() {
                 <td className="px-4 py-2 font-mono text-xs">
                   {rollout.target.name}@{rollout.target.version}
                 </td>
-                <td className="px-4 py-2">{rollout.clusterSetName}</td>
+                <td className="px-4 py-2 text-muted-foreground">
+                  {rollout.stages.map((s) => s.name).join(" → ")}
+                </td>
                 <td className="px-4 py-2">
                   <Badge variant={ROLLOUT_STATE_VARIANT[rollout.state] ?? "muted"}>
                     {rollout.state}
@@ -279,24 +280,25 @@ function DriftTab() {
               <tr>
                 <th className="px-4 py-2 font-medium">Cluster</th>
                 <th className="px-4 py-2 font-medium">Resource</th>
-                <th className="px-4 py-2 font-medium">Field</th>
-                <th className="px-4 py-2 font-medium">Desired</th>
-                <th className="px-4 py-2 font-medium">Reported</th>
+                <th className="px-4 py-2 font-medium">Detail</th>
+                <th className="px-4 py-2 font-medium">Desired hash</th>
+                <th className="px-4 py-2 font-medium">Reported hash</th>
                 <th className="px-4 py-2 font-medium">Detected</th>
               </tr>
             </thead>
             <tbody>
               {(drift.data ?? []).map((entry) => (
                 <tr key={entry.id} className="border-t">
-                  <td className="px-4 py-2">{entry.clusterName}</td>
+                  <td className="px-4 py-2 font-mono text-xs">{entry.clusterId}</td>
                   <td className="px-4 py-2 font-mono text-xs">
-                    {entry.resourceKind}/{entry.name}
-                    <span className="text-muted-foreground"> · {entry.namespace}</span>
+                    {entry.kind}/{entry.resourceRef ?? "unknown"}
                   </td>
-                  <td className="px-4 py-2 font-mono text-xs">{entry.field}</td>
-                  <td className="px-4 py-2 font-mono text-xs">{entry.desired}</td>
+                  <td className="px-4 py-2 text-xs text-muted-foreground">
+                    {entry.detail ?? "—"}
+                  </td>
+                  <td className="px-4 py-2 font-mono text-xs">{entry.desiredHash}</td>
                   <td className="px-4 py-2 font-mono text-xs text-amber-700 dark:text-amber-400">
-                    {entry.reported}
+                    {entry.reportedHash}
                   </td>
                   <td className="px-4 py-2 text-muted-foreground">
                     {formatRelative(entry.detectedAt)}
@@ -315,9 +317,14 @@ function AgentChannelsTab() {
   const { tenant } = useTenant();
   const { token } = useAuth();
   const channels = useAsyncResource((token) => listAgentChannels(token, tenant), [tenant]);
+  const clusterSets = useAsyncResource((token) => listClusterSets(token, tenant), [tenant]);
   const [error, setError] = React.useState<string | null>(null);
 
-  if (channels.loading && !channels.data) {
+  // Channel pins carry no ClusterSet name; resolve it from the ClusterSets
+  // list loaded in-page.
+  const setNameById = new Map((clusterSets.data ?? []).map((s) => [s.id, s.name]));
+
+  if ((channels.loading && !channels.data) || (clusterSets.loading && !clusterSets.data)) {
     return <p className="text-sm text-muted-foreground">Loading agent channels…</p>;
   }
   return (
@@ -328,31 +335,23 @@ function AgentChannelsTab() {
             <tr>
               <th className="px-4 py-2 font-medium">ClusterSet</th>
               <th className="px-4 py-2 font-medium">Channel</th>
-              <th className="px-4 py-2 font-medium">Agent version</th>
-              <th className="px-4 py-2 font-medium">Min supported (N−1)</th>
+              <th className="px-4 py-2 font-medium">Desired agent version</th>
               <th className="px-4 py-2 font-medium" />
             </tr>
           </thead>
           <tbody>
             {(channels.data ?? []).map((assignment) => (
               <tr key={assignment.clusterSetId} className="border-t">
-                <td className="px-4 py-2">{assignment.clusterSetName}</td>
+                <td className="px-4 py-2">
+                  {setNameById.get(assignment.clusterSetId) ?? assignment.clusterSetId}
+                </td>
                 <td className="px-4 py-2">
                   <Badge variant={assignment.channel === "canary" ? "warning" : "secondary"}>
                     {assignment.channel}
                   </Badge>
                 </td>
                 <td className="px-4 py-2 font-mono text-xs">
-                  {assignment.currentVersion}
-                  {assignment.currentVersion !== assignment.latestVersion && (
-                    <span className="text-muted-foreground">
-                      {" "}
-                      → {assignment.latestVersion} available
-                    </span>
-                  )}
-                </td>
-                <td className="px-4 py-2 font-mono text-xs text-muted-foreground">
-                  {assignment.minSupportedVersion}
+                  {assignment.desiredAgentVersion}
                 </td>
                 <td className="px-4 py-2 text-right">
                   <Button
@@ -363,7 +362,13 @@ function AgentChannelsTab() {
                       const next: AgentChannel =
                         assignment.channel === "stable" ? "canary" : "stable";
                       try {
-                        await setAgentChannel(token, tenant, assignment.clusterSetId, next);
+                        await setAgentChannel(
+                          token,
+                          tenant,
+                          assignment.clusterSetId,
+                          next,
+                          assignment.desiredAgentVersion,
+                        );
                         channels.refetch();
                       } catch (err) {
                         setError(

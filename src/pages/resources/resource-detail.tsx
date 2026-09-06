@@ -1,6 +1,5 @@
 import * as React from "react";
 import { useParams } from "react-router-dom";
-import { ExternalLink } from "lucide-react";
 
 import { getResource } from "@/api/resources";
 import { ApiError } from "@/api/client";
@@ -62,63 +61,16 @@ export function ResourceDetailPage() {
             <Badge variant="muted">{resource.status}</Badge>
           </div>
           <p className="text-sm text-muted-foreground">
-            {resource.catalogItemName} v{resource.version} · {resource.clusterName} · owned by{" "}
+            {resource.catalogItemName} v{resource.version} · cluster {resource.clusterId} · owned by{" "}
             {resource.ownerTeam}
           </p>
         </div>
-        <div className="flex gap-2">
-          {resource.argocdUrl && (
-            <Button asChild variant="outline">
-              <a href={resource.argocdUrl} target="_blank" rel="noreferrer">
-                <ExternalLink className="mr-1" /> Open in ArgoCD
-              </a>
-            </Button>
-          )}
-          <ActionsMenu resource={resource} />
-        </div>
+        <ActionsMenu resource={resource} />
       </div>
 
       <UpgradeCard resource={resource} />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Composed resources</CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {resource.composedResources.length === 0 ? (
-              <p className="px-6 pb-6 text-sm text-muted-foreground">
-                No composed resources reported yet.
-              </p>
-            ) : (
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b text-left text-muted-foreground">
-                    <th className="px-4 py-2 font-medium">Kind</th>
-                    <th className="px-4 py-2 font-medium">Name</th>
-                    <th className="px-4 py-2 font-medium">Namespace</th>
-                    <th className="px-4 py-2 font-medium">Health</th>
-                    <th className="px-4 py-2 font-medium">Status</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {resource.composedResources.map((c) => (
-                    <tr key={`${c.kind}/${c.name}`} className="border-b last:border-0">
-                      <td className="px-4 py-2">{c.kind}</td>
-                      <td className="px-4 py-2">{c.name}</td>
-                      <td className="px-4 py-2">{c.namespace}</td>
-                      <td className="px-4 py-2">
-                        <HealthBadge health={c.health} />
-                      </td>
-                      <td className="px-4 py-2">{c.status}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </CardContent>
-        </Card>
-
         <Card>
           <CardHeader>
             <CardTitle className="text-base">Spec</CardTitle>

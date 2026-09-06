@@ -23,6 +23,11 @@ Stack: React, TypeScript, Vite, Tailwind, shadcn/ui, RJSF, Module Federation
      - Only one workflow may run release-please detection per push: two detectors race (the second sees the release already created and gets empty outputs), which silently skips publishes.
      - Repair path: `release.yml` accepts a `workflow_dispatch` with a version to re-publish an already-tagged release whose publishes failed/skipped.
 - Write tests for new behavior; keep changes minimal and focused.
+- **API contract is generated, never hand-written.** The server (huma) publishes its OpenAPI schema as a cosign-signed OCI artifact `ghcr.io/7k-inari/inari-server-openapi:<version>` (see inari-server `publish.yml`). This repo pins a snapshot at `openapi/openapi.yaml` (`inariServerSpecVersion` in package.json records which server version it came from) and generates TypeScript types into `src/api/__generated__/schema.ts`.
+  - Bump the contract: `npm run sync:api -- <server-version>` (oras pull + regenerate).
+  - Regenerate only: `npm run codegen`.
+  - **Never edit `src/api/__generated__/schema.ts` by hand**; never hand-write server-facing request/response shapes in `src/api/*` — import from `@/api/__generated__/schema` (`components["schemas"][...]`) and keep UI view models separate (in `@/api/types` or per-module). Huma rejects unknown/extra properties at runtime, so drift that compiles still 422s in production.
+  - CI job `contract` regenerates from the snapshot and fails on diff.
 - Helm chart `charts/inari-console` (moved from inari-helm-charts): independent release-please `simple` component (tags `inari-console-vX.Y.Z`), published to `oci://ghcr.io/7k-inari/inari-ui/charts` by `chart-publish.yml` (invoked from `release.yml`; `chart-release.yaml` is the manual `workflow_dispatch` repair path). Never bump `version:` by hand; `appVersion` and `values.yaml` `bundle.tag` are auto-synced to the UI release via the root component's `extra-files`. CI lints (`helm lint`, `ct lint`) and runs helm-unittest.
 - Canonical architecture & development plan: https://github.com/7K-Inari/inari-docs/blob/main/docs/architecture/inari-platform-plan.md (section references below point into it).
 

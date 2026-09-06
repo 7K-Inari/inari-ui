@@ -16,7 +16,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SchemaForm, type SchemaFormHandle } from "@/components/schema-form/schema-form";
-import { applyPolicy, injectLockedValues } from "@/components/schema-form/policy";
 import { applyHintsToSchema, hintsToUiSchema } from "@/components/schema-form/ui-hints";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
@@ -141,27 +140,16 @@ export function DeployWizardPage() {
   const [deployId, setDeployId] = React.useState<string | null>(null);
   const formRef = React.useRef<SchemaFormHandle>(null);
 
-  const policy = item.data?.policy;
-  const policyApp = React.useMemo(
-    () => (item.data ? applyPolicy(item.data.schema, item.data.policy) : null),
-    [item.data],
-  );
   const [formData, setFormData] = React.useState<Record<string, unknown>>({});
-
-  React.useEffect(() => {
-    if (policyApp) {
-      setFormData((prev) => ({ ...policyApp.formDefaults, ...prev }));
-    }
-  }, [policyApp]);
 
   const schema = React.useMemo(
     () => (item.data ? applyHintsToSchema(item.data.schema, item.data.uiHints) : null),
     [item.data],
   );
-  const uiSchema = React.useMemo(() => {
-    if (!item.data || !policyApp) return {};
-    return { ...hintsToUiSchema(item.data.uiHints), ...policyApp.uiSchema };
-  }, [item.data, policyApp]);
+  const uiSchema = React.useMemo(
+    () => (item.data ? hintsToUiSchema(item.data.uiHints) : {}),
+    [item.data],
+  );
 
   if (item.error) {
     return (
@@ -172,7 +160,7 @@ export function DeployWizardPage() {
       </Card>
     );
   }
-  if (!item.data || !schema || !policy) {
+  if (!item.data || !schema) {
     return <p className="text-sm text-muted-foreground">Loading deploy wizard…</p>;
   }
   const itemData = item.data;
@@ -210,7 +198,7 @@ export function DeployWizardPage() {
         version: pinned,
         clusterId,
         name,
-        spec: injectLockedValues(formData, policy.lockedFields),
+        spec: formData,
       });
       setDeployId(deploy.id);
       setStep(2);
@@ -225,7 +213,7 @@ export function DeployWizardPage() {
     }
   };
 
-  const reviewSpec = injectLockedValues(formData, policy.lockedFields);
+  const reviewSpec = formData;
   const clusterName =
     (clusters.data ?? []).find((c) => c.id === clusterId)?.name ?? clusterId;
 
@@ -235,9 +223,7 @@ export function DeployWizardPage() {
         <h1 className="text-2xl font-semibold tracking-tight">
           Deploy {itemData.displayName}
         </h1>
-        <p className="text-sm text-muted-foreground">
-          Version {pinned} · {policy.gitopsMode === "pull-request" ? "GitOps pull request" : "GitOps direct commit"}
-        </p>
+        <p className="text-sm text-muted-foreground">Version {pinned}</p>
       </div>
       <StepIndicator current={step} />
 
@@ -246,7 +232,7 @@ export function DeployWizardPage() {
           <CardHeader>
             <CardTitle>Configure</CardTitle>
             <CardDescription>
-              Fields marked as locked are pinned by platform policy.
+              Fill in the desired state for this instance.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -312,10 +298,8 @@ export function DeployWizardPage() {
               <dd>{pinned}</dd>
               <dt className="text-muted-foreground">Target cluster</dt>
               <dd>{clusterName}</dd>
-              <dt className="text-muted-foreground">GitOps mode</dt>
-              <dd>{policy.gitopsMode === "pull-request" ? "pull request" : "direct commit"}</dd>
             </dl>
-            {policy.approvalRequired && (
+            {itemData.approvalPolicy !== "auto" && (
               <Badge variant="warning">This deploy requires approval before it is applied</Badge>
             )}
             <pre className="max-h-72 overflow-auto rounded-md bg-muted p-3 font-mono text-xs">

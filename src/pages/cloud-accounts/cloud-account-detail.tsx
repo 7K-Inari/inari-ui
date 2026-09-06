@@ -2,20 +2,25 @@ import * as React from "react";
 import { Link, useParams } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 
-import type { ValidationResult } from "@/api/cloud-accounts";
-import { getCloudAccount, getTrustSnippet, validateCloudAccount } from "@/api/cloud-accounts";
+import type { CloudAccount } from "@/api/cloud-accounts";
+import {
+  getCloudAccount,
+  renderCloudAccountProviderConfig,
+  validateCloudAccount,
+} from "@/api/cloud-accounts";
+import { listClusters } from "@/api/clusters";
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
 import {
-  TrustSnippetTabs,
-  ValidationResultView,
+  TrustRoleFacts,
+  ValidationStateView,
 } from "@/pages/cloud-accounts/connect-wizard";
+import { CopyButton } from "@/pages/cloud-accounts/copy-button";
 import { CloudAccountStatusBadge } from "@/pages/cloud-accounts/status-badge";
 
 export function CloudAccountDetailPage() {
@@ -33,32 +38,38 @@ export function CloudAccountDetailPage() {
     [accountId, tenant],
     { enabled: !!accountId },
   );
-  const trust = useAsyncResource(
-    (t) => getTrustSnippet(t, accountId!, tenant),
-    [accountId, tenant],
-    { enabled: !!accountId },
+  const { data: clusters } = useAsyncResource(
+    (t) => listClusters(t, tenant),
+    [tenant],
   );
 
-  const [validation, setValidation] = React.useState<ValidationResult | null>(null);
+  const [clusterId, setClusterId] = React.useState("");
+  const effectiveClusterId = clusterId || clusters?.[0]?.id || "";
+  const providerConfig = useAsyncResource(
+    (t) => renderCloudAccountProviderConfig(t, accountId!, effectiveClusterId, tenant),
+    [accountId, tenant, effectiveClusterId],
+    { enabled: !!accountId && !!effectiveClusterId && account?.status === "connected" },
+  );
+
+  const [validation, setValidation] = React.useState<CloudAccount | null>(null);
   const [validating, setValidating] = React.useState(false);
 
   const runValidation = async () => {
-    if (!accountId) return;
+    if (!accountId || !account) return;
     setValidating(true);
     setValidation(null);
     try {
       const result = await validateCloudAccount(token, accountId, tenant);
       setValidation(result);
-      refetch();
     } catch (err) {
       setValidation({
+        ...account,
         status: "failed",
-        message: err instanceof Error ? err.message : "Validation request failed",
-        providerConfigName: null,
-        checkedAt: new Date().toISOString(),
+        statusMessage: err instanceof Error ? err.message : "Validation request failed",
       });
     } finally {
       setValidating(false);
+      refetch();
     }
   };
 
@@ -84,12 +95,13 @@ export function CloudAccountDetailPage() {
             <Link to={tenantLink(tenant, "cloud-accounts")} className="hover:underline">
               Cloud Accounts
             </Link>{" "}
-            / {account.name}
+            / <span className="font-mono">{account.accountId}</span>
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight">{account.name}</h1>
+          <h1 className="text-2xl font-semibold tracking-tight font-mono">
+            {account.accountId}
+          </h1>
           <p className="text-sm text-muted-foreground">
-            AWS account <code className="font-mono text-xs">{account.accountId}</code> connected via
-            a trust role.
+            AWS account connected via a trust role — no credentials are stored on the platform.
           </p>
         </div>
         <CloudAccountStatusBadge status={account.status} />
@@ -122,16 +134,12 @@ export function CloudAccountDetailPage() {
               <dt className="text-muted-foreground">ExternalId</dt>
               <dd className="font-mono text-xs">{account.externalId}</dd>
             </div>
-            <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Regions</dt>
-              <dd className="flex flex-wrap justify-end gap-1">
-                {account.regions.map((region) => (
-                  <Badge key={region} variant="outline" className="font-mono">
-                    {region}
-                  </Badge>
-                ))}
-              </dd>
-            </div>
+            {account.issuerUrl && (
+              <div className="flex justify-between gap-4">
+                <dt className="text-muted-foreground">OIDC issuer</dt>
+                <dd className="break-all text-right font-mono text-xs">{account.issuerUrl}</dd>
+              </div>
+            )}
             <div className="flex justify-between gap-4">
               <dt className="text-muted-foreground">Last validated</dt>
               <dd>{formatRelative(account.lastValidatedAt)}</dd>
@@ -170,23 +178,56 @@ export function CloudAccountDetailPage() {
             )}
           </Button>
           {validation && (
-            <ValidationResultView result={validation} accountId={account.id} tenant={tenant} />
+            <ValidationStateView account={validation} accountId={account.id} tenant={tenant} />
           )}
         </CardContent>
       </Card>
 
-      {account.providerConfigName && (
+      {account.status === "connected" && (
         <Card>
           <CardHeader>
             <CardTitle>ProviderConfig</CardTitle>
             <CardDescription>
-              Crossplane ProviderConfig created for this account.
+              Crossplane ProviderConfig manifest rendered by the server for a cluster.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <code className="font-mono text-xs" data-testid="provider-config-name">
-              {account.providerConfigName}
-            </code>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-2">
+              <label htmlFor="provider-config-cluster" className="text-sm text-muted-foreground">
+                Cluster
+              </label>
+              <select
+                id="provider-config-cluster"
+                className="rounded-md border bg-background px-2 py-1 text-sm"
+                value={effectiveClusterId}
+                onChange={(e) => setClusterId(e.target.value)}
+              >
+                {(clusters ?? []).map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            {providerConfig.error && (
+              <p className="text-sm text-destructive">
+                Failed to render ProviderConfig: {providerConfig.error.message}
+              </p>
+            )}
+            {!providerConfig.error && providerConfig.loading && !providerConfig.data && (
+              <p className="text-sm text-muted-foreground">Rendering ProviderConfig…</p>
+            )}
+            {providerConfig.data && (
+              <>
+                <pre
+                  className="max-h-72 overflow-auto rounded-md bg-muted p-3 font-mono text-xs"
+                  data-testid="provider-config-manifest"
+                >
+                  {providerConfig.data}
+                </pre>
+                <CopyButton value={providerConfig.data} label="Copy manifest" />
+              </>
+            )}
           </CardContent>
         </Card>
       )}
@@ -199,16 +240,9 @@ export function CloudAccountDetailPage() {
             <code className="font-mono text-xs">{account.accountId}</code>.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          {trust.error && (
-            <p className="text-sm text-destructive">
-              Failed to load trust snippet: {trust.error.message}
-            </p>
-          )}
-          {!trust.error && trust.loading && !trust.data && (
-            <p className="text-sm text-muted-foreground">Loading trust snippet…</p>
-          )}
-          {trust.data && <TrustSnippetTabs trust={trust.data} />}
+        <CardContent className="space-y-4">
+          <TrustRoleFacts account={account} />
+          <CopyButton value={account.externalId} label="Copy ExternalId" />
         </CardContent>
       </Card>
     </div>
