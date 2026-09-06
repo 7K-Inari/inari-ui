@@ -7,7 +7,15 @@ import path from "node:path";
 // registered from the backend extension registry, not statically, so the
 // @module-federation/vite plugin is intentionally not used.
 export default defineConfig({
-  base: "./",
+  // Absolute base is required: the console is an SPA served behind a
+  // catch-all fallback, and deep routes (/all/overview, /{org}/catalog, …)
+  // get fully reloaded on refresh and after Keycloak org-switch redirects.
+  // A relative base ("./") makes the browser resolve ./assets/... and
+  // ./config.js against the current path, so deep loads request
+  // /all/assets/index-<hash>.js — which 404s into the HTML fallback and
+  // white-screens the app. If a pathPrefix deployment is ever needed,
+  // build with base set to that prefix ("/console/"), never "./".
+  base: "/",
   plugins: [react()],
   resolve: {
     alias: {
