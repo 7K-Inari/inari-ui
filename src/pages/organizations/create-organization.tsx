@@ -57,7 +57,7 @@ export function CreateOrganizationPage() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const tenant = await createTenant(token, { slug, name: displayName });
+      const tenant = await createTenant(token, { slug, displayName });
       // Best-effort: the organization claim only lists the new org after the
       // token refreshes; navigation still lands safely via the all-tenants
       // fallback if the claim lags behind.

@@ -13,16 +13,16 @@ afterEach(() => {
 afterAll(() => mockServer.close());
 
 describe("tenants api", () => {
-  it("creates a tenant and returns it", async () => {
+  it("creates a tenant and returns its organization", async () => {
     const tenant = await createTenant("tok", {
       slug: "initech",
-      name: "Initech",
+      displayName: "Initech",
     });
     expect(tenant.slug).toBe("initech");
-    expect(tenant.name).toBe("Initech");
+    expect(tenant.displayName).toBe("Initech");
   });
 
-  it("sends the bearer token and JSON body", async () => {
+  it("sends the bearer token and the server-shaped JSON body", async () => {
     let seenAuth: string | null = null;
     let seenBody: unknown = null;
     const { http, HttpResponse } = await import("msw");
@@ -31,20 +31,23 @@ describe("tenants api", () => {
         seenAuth = request.headers.get("authorization");
         seenBody = await request.json();
         return HttpResponse.json(
-          { tenant: { id: "t-1", slug: "x", name: "X" } },
+          {
+            organization: { id: "t-1", slug: "x", displayName: "X" },
+            teams: [],
+          },
           { status: 201 },
         );
       }),
     );
-    await createTenant("my-token", { slug: "x", name: "X" });
+    await createTenant("my-token", { slug: "x", displayName: "X" });
     expect(seenAuth).toBe("Bearer my-token");
-    expect(seenBody).toEqual({ slug: "x", name: "X" });
+    expect(seenBody).toEqual({ slug: "x", displayName: "X" });
   });
 
   it("surfaces slug conflicts as ApiError 409", async () => {
     const err = await createTenant("tok", {
       slug: "taken",
-      name: "Taken",
+      displayName: "Taken",
     }).catch((e) => e);
     expect(err).toBeInstanceOf(ApiError);
     expect(err.status).toBe(409);
