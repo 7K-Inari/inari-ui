@@ -66,6 +66,41 @@ describe("clusters api", () => {
     expect(helm).toContain(`--set agent.gatewayUrl=${config.agentGatewayUrl}`);
   });
 
+  it("sends only huma-accepted properties on create (name+labels)", async () => {
+    let seenBody: unknown = null;
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.post("*/api/v1/tenants/acme/clusters", async ({ request }) => {
+        seenBody = await request.json();
+        return HttpResponse.json(
+          {
+            cluster: {
+              id: "cl-stub",
+              orgId: "acme",
+              name: "kind-m1",
+              state: "pending_registration",
+              createdAt: new Date().toISOString(),
+            },
+          },
+          { status: 201 },
+        );
+      }),
+      http.post("*/api/v1/tenants/acme/clusters/cl-stub/tokens", () =>
+        HttpResponse.json({
+          token: "inari-reg-stub-token",
+          expiresAt: new Date(Date.now() + 15 * 60_000).toISOString(),
+        }),
+      ),
+      http.post("*/api/v1/tenants/acme/clusters/cl-stub/install-manifest", () =>
+        HttpResponse.text("kind: Namespace"),
+      ),
+    );
+    await createCluster("tok", "acme", { name: "kind-m1", labels: { env: "dev" } });
+    // The cluster-registry huma schema rejects any other property with
+    // 422 "validation failed (unexpected property …)" — keep this exact.
+    expect(seenBody).toEqual({ name: "kind-m1", labels: { env: "dev" } });
+  });
+
   it("surfaces server validation errors as ApiError", async () => {
     await expect(
       createCluster("tok", "acme", { name: "Bad_Name", labels: {} }),

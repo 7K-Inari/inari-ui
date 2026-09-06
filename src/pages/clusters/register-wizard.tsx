@@ -228,7 +228,6 @@ export function RegisterWizardPage() {
 
   const [step, setStep] = React.useState(() => (searchParams.get("cluster") ? 2 : 0));
   const [name, setName] = React.useState("");
-  const [description, setDescription] = React.useState("");
   const [labelsInput, setLabelsInput] = React.useState("env=dev");
   const [nameError, setNameError] = React.useState<string | null>(null);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
@@ -257,7 +256,6 @@ export function RegisterWizardPage() {
     try {
       const res = await createCluster(token, tenant, {
         name,
-        description: description || undefined,
         labels: parseLabels(labelsInput),
       });
       setCreated(res);
@@ -300,14 +298,6 @@ export function RegisterWizardPage() {
                   required
                 />
                 {nameError && <p className="text-xs text-destructive">{nameError}</p>}
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="cluster-description">Description (optional)</Label>
-                <Input
-                  id="cluster-description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="cluster-labels">Labels</Label>

@@ -300,7 +300,12 @@ export const handlers = [
   }),
 
   http.post(`${BASE}/clusters`, async ({ params, request }) => {
-    const body = (await request.json()) as CreateClusterRequest;
+    const body = (await request.json()) as CreateClusterRequest & Record<string, unknown>;
+    // Mirror the cluster-registry huma schema: strict properties.
+    const extra = Object.keys(body).filter((k) => k !== "name" && k !== "labels");
+    if (extra.length > 0) {
+      return humaError(422, `validation failed (unexpected property ${extra[0]})`);
+    }
     if (!body.name || !/^[a-z0-9][a-z0-9-]*$/.test(body.name)) {
       return humaError(400, "name must be lowercase alphanumeric with dashes");
     }

@@ -15,7 +15,6 @@ export interface ClusterSummary {
 }
 
 export interface ClusterDetail extends ClusterSummary {
-  description?: string;
   agentVersion: string | null;
 }
 
@@ -162,7 +161,8 @@ export interface UpgradeDiff {
 
 export interface CreateClusterRequest {
   name: string;
-  description?: string;
+  // No description: the cluster-registry API (inari-server huma schema)
+  // accepts only name+labels; extra properties are rejected with 422.
   labels: Record<string, string>;
 }
 
