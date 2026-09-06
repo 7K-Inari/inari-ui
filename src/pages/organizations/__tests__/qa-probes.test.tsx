@@ -60,7 +60,7 @@ describe("QA probes", () => {
           return HttpResponse.json({ title: "Error", status: 500, detail: "boom" }, { status: 500 });
         }
         return HttpResponse.json(
-          { tenant: { id: "t-1", slug: "probe", name: "Probe" } },
+          { organization: { id: "t-1", slug: "probe", displayName: "Probe" }, teams: [] },
           { status: 201 },
         );
       }),

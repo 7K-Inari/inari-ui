@@ -167,21 +167,23 @@ export const handlers = [
 
   // ---- tenants (platform-scoped, not under /tenants/:org) ----
   http.post("*/api/v1/tenants", async ({ request }) => {
-    const body = (await request.json()) as { slug?: string; name?: string };
-    if (!body.slug || !body.name) {
-      return humaError(400, "slug and name are required");
+    const body = (await request.json()) as { slug?: string; displayName?: string };
+    if (!body.slug || !body.displayName) {
+      return humaError(422, "validation failed (expected required property displayName to be present)");
     }
     if (body.slug === "taken") {
       return humaError(409, `tenant slug "${body.slug}" already exists`);
     }
     return HttpResponse.json(
       {
-        tenant: {
+        organization: {
           id: `t-${body.slug}`,
           slug: body.slug,
-          name: body.name,
+          displayName: body.displayName,
+          keycloakOrgId: `kc-${body.slug}`,
           createdAt: new Date().toISOString(),
         },
+        teams: [],
       },
       { status: 201 },
     );
