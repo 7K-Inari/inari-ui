@@ -172,12 +172,6 @@ function OverviewTab({ clusterId }: { clusterId: string }) {
           <p className="text-xs text-muted-foreground">Discovered capabilities</p>
           <p>{cluster.capabilityCount}</p>
         </div>
-        {cluster.description && (
-          <div className="col-span-full">
-            <p className="text-xs text-muted-foreground">Description</p>
-            <p>{cluster.description}</p>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

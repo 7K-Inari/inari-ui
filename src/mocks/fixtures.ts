@@ -19,7 +19,6 @@ export const connectedCluster: ClusterDetail = {
   capabilityCount: 8,
   lastSeenAt: iso(now - 30_000),
   createdAt: iso(now - 86_400_000),
-  description: "Local kind cluster for development",
   agentVersion: "0.3.1",
 };
 
@@ -245,7 +244,6 @@ export function registerCluster(
     capabilityCount: 0,
     lastSeenAt: null,
     createdAt: new Date().toISOString(),
-    description: body.description,
     agentVersion: null,
   };
   state.clusters.push(cluster);
