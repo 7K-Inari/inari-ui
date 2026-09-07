@@ -1,21 +1,13 @@
 import { Link } from "react-router-dom";
 
-import { listCloudAccounts, listProviderConfigs } from "@/api/cloud-accounts";
+import { listCloudAccounts } from "@/api/cloud-accounts";
 import { useAsyncResource } from "@/api/hooks";
-import type { ProviderConfig } from "@/api/cloud-accounts";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
 import { CloudAccountStatusBadge } from "@/pages/cloud-accounts/status-badge";
-
-const HEALTH_VARIANT: Record<ProviderConfig["health"], "success" | "warning" | "muted"> = {
-  healthy: "success",
-  degraded: "warning",
-  unknown: "muted",
-};
 
 export function CloudAccountListPage() {
   const { tenant } = useTenant();
@@ -26,11 +18,6 @@ export function CloudAccountListPage() {
   } = useAsyncResource((token) => listCloudAccounts(token, tenant), [tenant], {
     refetchIntervalMs: 15_000,
   });
-  const { data: providerConfigs } = useAsyncResource(
-    (token) => listProviderConfigs(token, tenant),
-    [tenant],
-    { refetchIntervalMs: 15_000 },
-  );
 
   return (
     <div className="space-y-4">
@@ -78,11 +65,9 @@ export function CloudAccountListPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
               <tr>
-                <th className="px-4 py-2 font-medium">Name</th>
                 <th className="px-4 py-2 font-medium">Account ID</th>
-                <th className="px-4 py-2 font-medium">Regions</th>
+                <th className="px-4 py-2 font-medium">Role ARN</th>
                 <th className="px-4 py-2 font-medium">Status</th>
-                <th className="px-4 py-2 font-medium">ProviderConfig</th>
                 <th className="px-4 py-2 font-medium">Last validated</th>
               </tr>
             </thead>
@@ -92,26 +77,14 @@ export function CloudAccountListPage() {
                   <td className="px-4 py-2">
                     <Link
                       to={tenantLink(tenant, `cloud-accounts/${account.id}`)}
-                      className="font-medium text-primary hover:underline"
+                      className="font-medium font-mono text-xs text-primary hover:underline"
                     >
-                      {account.name}
+                      {account.accountId}
                     </Link>
                   </td>
-                  <td className="px-4 py-2 font-mono text-xs">{account.accountId}</td>
-                  <td className="px-4 py-2">
-                    <div className="flex flex-wrap gap-1">
-                      {account.regions.map((region) => (
-                        <Badge key={region} variant="outline" className="font-mono">
-                          {region}
-                        </Badge>
-                      ))}
-                    </div>
-                  </td>
+                  <td className="px-4 py-2 break-all font-mono text-xs">{account.roleArn}</td>
                   <td className="px-4 py-2">
                     <CloudAccountStatusBadge status={account.status} />
-                  </td>
-                  <td className="px-4 py-2 font-mono text-xs">
-                    {account.providerConfigName ?? "—"}
                   </td>
                   <td className="px-4 py-2 text-muted-foreground">
                     {formatRelative(account.lastValidatedAt)}
@@ -121,40 +94,6 @@ export function CloudAccountListPage() {
             </tbody>
           </table>
         </div>
-      )}
-
-      {providerConfigs && providerConfigs.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>ProviderConfigs</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-hidden rounded-lg border">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
-                  <tr>
-                    <th className="px-4 py-2 font-medium">Name</th>
-                    <th className="px-4 py-2 font-medium">Kind</th>
-                    <th className="px-4 py-2 font-medium">Health</th>
-                    <th className="px-4 py-2 font-medium">Account ID</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {providerConfigs.map((pc) => (
-                    <tr key={pc.name} className="border-t hover:bg-muted/30">
-                      <td className="px-4 py-2 font-mono text-xs">{pc.name}</td>
-                      <td className="px-4 py-2">{pc.kind}</td>
-                      <td className="px-4 py-2">
-                        <Badge variant={HEALTH_VARIANT[pc.health]}>{pc.health}</Badge>
-                      </td>
-                      <td className="px-4 py-2 font-mono text-xs">{pc.accountId}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
       )}
     </div>
   );

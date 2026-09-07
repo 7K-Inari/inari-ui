@@ -35,17 +35,15 @@ function renderPage(id = "ri-orders-db") {
 }
 
 describe("ResourceDetailPage", () => {
-  it("shows status, spec, composed resources and an ArgoCD deep link", async () => {
+  it("shows status, spec and cluster ID", async () => {
     renderPage();
     expect(await screen.findByRole("heading", { name: "orders-db" })).toBeInTheDocument();
     expect(screen.getByText("Synced")).toBeInTheDocument();
-    expect(screen.getByText("RDSInstance")).toBeInTheDocument();
-    expect(screen.getByText("orders-db-conn")).toBeInTheDocument();
+    expect(screen.getByText(/cluster cl-eks-prod/)).toBeInTheDocument();
     expect(screen.getByText(/"storageGi": 100/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open in ArgoCD" })).toHaveAttribute(
-      "href",
-      "https://argocd.eks-prod-eu.example.com/applications/orders-db",
-    );
+    // InstanceView has no composed-resources or ArgoCD deep link in the contract.
+    expect(screen.queryByText(/Composed resources/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Open in ArgoCD" })).not.toBeInTheDocument();
   });
 
   it("shows an empty actions menu when no extensions contribute actions", async () => {

@@ -1,8 +1,7 @@
 import { Link, useParams } from "react-router-dom";
 
 import { ApiError } from "@/api/client";
-import { getClusterSet } from "@/api/fleet";
-import { listClusters } from "@/api/clusters";
+import { getClusterSet, listClusterSetMembers } from "@/api/fleet";
 import { useAsyncResource } from "@/api/hooks";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -18,7 +17,10 @@ export function ClusterSetDetailPage() {
     (token) => getClusterSet(token, tenant, clusterSetId!),
     [clusterSetId, tenant],
   );
-  const clusters = useAsyncResource((token) => listClusters(token, tenant), [tenant]);
+  const members = useAsyncResource(
+    (token) => listClusterSetMembers(token, tenant, clusterSetId!),
+    [clusterSetId, tenant],
+  );
 
   if (set.error) {
     const notFound = set.error instanceof ApiError && set.error.status === 404;
@@ -40,7 +42,7 @@ export function ClusterSetDetailPage() {
   if (!set.data) return null;
   const data = set.data;
 
-  const members = (clusters.data ?? []).filter((c) => data.memberClusterIds.includes(c.id));
+  const memberList = members.data ?? [];
 
   return (
     <div className="space-y-4">
@@ -65,11 +67,15 @@ export function ClusterSetDetailPage() {
       <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base">
-            Member clusters ({members.length})
+            Member clusters ({memberList.length})
           </CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          {members.length === 0 ? (
+          {members.loading && !members.data ? (
+            <p className="px-6 pb-6 text-sm text-muted-foreground">
+              Resolving member clusters…
+            </p>
+          ) : memberList.length === 0 ? (
             <p className="px-6 pb-6 text-sm text-muted-foreground">
               No member clusters match this set's labels yet.
             </p>
@@ -82,7 +88,7 @@ export function ClusterSetDetailPage() {
                 </tr>
               </thead>
               <tbody>
-                {members.map((cluster) => (
+                {memberList.map((cluster) => (
                   <tr key={cluster.id} className="border-t">
                     <td className="px-4 py-2">
                       <Link
@@ -93,8 +99,8 @@ export function ClusterSetDetailPage() {
                       </Link>
                     </td>
                     <td className="px-4 py-2">
-                      <Badge variant={cluster.status === "connected" ? "success" : "muted"}>
-                        {cluster.status}
+                      <Badge variant={cluster.state === "active" ? "success" : "muted"}>
+                        {cluster.state}
                       </Badge>
                     </td>
                   </tr>

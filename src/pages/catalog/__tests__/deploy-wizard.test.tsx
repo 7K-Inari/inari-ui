@@ -38,15 +38,21 @@ async function fillConfigure(user: ReturnType<typeof userEvent.setup>) {
   await screen.findByLabelText(/PostgreSQL engine version/);
   await user.type(screen.getByLabelText("Instance name"), "orders-db-2");
   await user.selectOptions(screen.getByLabelText("Target cluster"), "cl-eks-prod");
+  // Touch the form so the schema defaults are captured into the submitted spec.
+  const storage = screen.getByLabelText(/Storage \(Gi\)/);
+  await user.clear(storage);
+  await user.type(storage, "100");
 }
 
 describe("DeployWizardPage", () => {
-  it("renders the schema form with locked fields disabled and policy defaults", async () => {
+  it("renders the schema form from the version schema and uiHints", async () => {
     renderWizard();
-    const locked = await screen.findByLabelText(/Instance class/);
-    expect(locked).toBeDisabled();
-    expect(locked).toHaveValue("db.t3.medium");
-    expect(screen.getByText(/Locked by platform policy/)).toBeInTheDocument();
+    const engine = await screen.findByLabelText(/PostgreSQL engine version/);
+    expect(engine).toBeInTheDocument();
+    expect(engine).not.toBeDisabled();
+    // Schema defaults render as initial field values.
+    expect(screen.getByLabelText("Instance class")).toHaveValue("db.t3.medium");
+    expect(screen.queryByText(/Locked by platform policy/)).not.toBeInTheDocument();
   });
 
   it("blocks advancing without a name and target cluster", async () => {
@@ -68,11 +74,12 @@ describe("DeployWizardPage", () => {
         return HttpResponse.json(
           {
             deploy: {
-              instanceId: "dep-test",
-              version: "1.4.0",
-              status: "deploying",
-              commitSha: "",
-              prUrl: "https://github.com/acme/acme-inari-state/pull/101",
+              InstanceID: "dep-test",
+              Version: "1.4.0",
+              Status: "deploying",
+              CommitSHA: "",
+              PRURL: "https://github.com/acme/acme-inari-state/pull/101",
+              ApprovalID: "",
             },
           },
           { status: 201 },
@@ -102,7 +109,6 @@ describe("DeployWizardPage", () => {
     await user.click(screen.getByRole("button", { name: "Next" }));
 
     expect(await screen.findByRole("heading", { name: "Review" })).toBeInTheDocument();
-    expect(screen.getAllByText(/pull request/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/orders-db-2/)).toBeInTheDocument();
     expect(screen.getByText(/eks-prod-eu/)).toBeInTheDocument();
     expect(screen.getAllByText(/1\.4\.0/).length).toBeGreaterThan(0);
@@ -124,10 +130,12 @@ describe("DeployWizardPage", () => {
       name: "orders-db-2",
     });
     expect(body.spec.instanceClass).toBe("db.t3.medium");
+    expect(body.spec.storageGi).toBe(100);
 
     expect(
       await screen.findByText(/Deploy healthy/, undefined, { timeout: 10000 }),
     ).toBeInTheDocument();
+    expect(screen.getAllByText(/pull request/i).length).toBeGreaterThan(0);
     expect(
       screen.getByRole("link", { name: "Open pull request" }),
     ).toHaveAttribute("href", "https://github.com/acme/acme-inari-state/pull/101");

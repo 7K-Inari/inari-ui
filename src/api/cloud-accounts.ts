@@ -1,9 +1,14 @@
 import { apiFetch } from "@/api/client";
+import type { components } from "@/api/__generated__/schema";
 import { resolveTenant } from "@/tenant/current";
 
 // Cloud account onboarding (§5.7): the platform never holds tenant cloud
 // credentials — accounts are connected via an IAM role trusting the platform
 // cluster's OIDC provider, validated with a dry-run AssumeRole.
+// All server shapes come from the huma-generated OpenAPI contract (pinned
+// snapshot in openapi/openapi.yaml); the view models below only carry the
+// fields that contract actually provides (CloudAccount, RegisterInputBody,
+// AccountOutputBody, renderCloudAccountProviderConfig, validateCloudAccount).
 
 export type CloudAccountStatus = "pending_trust" | "validating" | "connected" | "failed";
 
@@ -11,48 +16,44 @@ export interface CloudAccount {
   id: string;
   tenant: string;
   provider: "aws";
-  name: string;
   accountId: string;
   roleArn: string;
   externalId: string;
-  regions: string[];
+  issuerUrl: string | null;
   status: CloudAccountStatus;
   statusMessage: string | null;
-  providerConfigName: string | null;
   lastValidatedAt: string | null;
   createdAt: string;
 }
 
-export interface TrustSnippet {
-  oidcProviderArn: string;
-  issuerUrl: string;
-  audience: string;
-  subject: string;
-  externalId: string;
-  cloudformation: string;
-  terraform: string;
-}
-
+// POST /tenants/{org}/cloud-accounts body (RegisterInputBody in the contract).
 export interface CreateCloudAccountRequest {
-  provider: "aws";
-  name: string;
   accountId: string;
-  regions: string[];
+  roleArn: string;
+  externalId?: string;
+  issuerUrl?: string;
+  provider?: string;
+  runContext?: string;
 }
 
-export interface ValidationResult {
-  status: "ok" | "failed";
-  message: string;
-  providerConfigName: string | null;
-  checkedAt: string;
-}
+type ServerCloudAccount = components["schemas"]["CloudAccount"];
+type ListAccountsResponse = components["schemas"]["ListAccountsOutputBody"];
+type AccountResponse = components["schemas"]["AccountOutputBody"];
 
-export interface ProviderConfig {
-  name: string;
-  kind: string;
-  health: "healthy" | "degraded" | "unknown";
-  accountId: string;
-  createdAt: string;
+function mapCloudAccount(a: ServerCloudAccount): CloudAccount {
+  return {
+    id: a.id,
+    tenant: a.orgId,
+    provider: a.provider as "aws",
+    accountId: a.accountId,
+    roleArn: a.roleArn,
+    externalId: a.externalId ?? "",
+    issuerUrl: a.issuerUrl ?? null,
+    status: a.state as CloudAccountStatus,
+    statusMessage: a.validationError ?? null,
+    lastValidatedAt: a.validatedAt ?? null,
+    createdAt: a.createdAt,
+  };
 }
 
 function tenantPath(tenant?: string): string {
@@ -63,11 +64,11 @@ export async function listCloudAccounts(
   token: string | undefined,
   tenant: string,
 ): Promise<CloudAccount[]> {
-  const res = await apiFetch<{ accounts: CloudAccount[] | null }>(
+  const res = await apiFetch<ListAccountsResponse>(
     `${tenantPath(tenant)}/cloud-accounts`,
     { token },
   );
-  return res.accounts ?? [];
+  return (res.accounts ?? []).map(mapCloudAccount);
 }
 
 export async function getCloudAccount(
@@ -75,55 +76,51 @@ export async function getCloudAccount(
   id: string,
   tenant?: string,
 ): Promise<CloudAccount> {
-  const res = await apiFetch<{ account: CloudAccount }>(
+  const res = await apiFetch<AccountResponse>(
     `${tenantPath(tenant)}/cloud-accounts/${encodeURIComponent(id)}`,
     { token },
   );
-  return res.account;
+  return mapCloudAccount(res.account);
 }
 
 export async function createCloudAccount(
   token: string | undefined,
   tenant: string,
   body: CreateCloudAccountRequest,
-): Promise<{ account: CloudAccount; trust: TrustSnippet }> {
-  return apiFetch<{ account: CloudAccount; trust: TrustSnippet }>(
+): Promise<{ account: CloudAccount }> {
+  const res = await apiFetch<AccountResponse>(
     `${tenantPath(tenant)}/cloud-accounts`,
     { token, method: "POST", body },
   );
+  return { account: mapCloudAccount(res.account) };
 }
 
-export async function getTrustSnippet(
+// GET /tenants/{org}/cloud-accounts/{id}/providerconfig?clusterId=... renders
+// the Crossplane ProviderConfig manifest; the response body is a plain string.
+export async function renderCloudAccountProviderConfig(
   token: string | undefined,
   id: string,
+  clusterId: string,
   tenant?: string,
-): Promise<TrustSnippet> {
-  const res = await apiFetch<{ trust: TrustSnippet }>(
-    `${tenantPath(tenant)}/cloud-accounts/${encodeURIComponent(id)}/trust-snippet`,
+): Promise<string> {
+  return apiFetch<string>(
+    `${tenantPath(tenant)}/cloud-accounts/${encodeURIComponent(id)}/providerconfig` +
+      `?clusterId=${encodeURIComponent(clusterId)}`,
     { token },
   );
-  return res.trust;
 }
 
+// POST /tenants/{org}/cloud-accounts/{id}/validate returns the updated account
+// envelope (AccountOutputBody); the console derives the validation outcome
+// from the account state fields, not a separate result payload.
 export async function validateCloudAccount(
   token: string | undefined,
   id: string,
   tenant?: string,
-): Promise<ValidationResult> {
-  const res = await apiFetch<{ validation: ValidationResult }>(
+): Promise<CloudAccount> {
+  const res = await apiFetch<AccountResponse>(
     `${tenantPath(tenant)}/cloud-accounts/${encodeURIComponent(id)}/validate`,
     { token, method: "POST" },
   );
-  return res.validation;
-}
-
-export async function listProviderConfigs(
-  token: string | undefined,
-  tenant: string,
-): Promise<ProviderConfig[]> {
-  const res = await apiFetch<{ providerConfigs: ProviderConfig[] | null }>(
-    `${tenantPath(tenant)}/provider-configs`,
-    { token },
-  );
-  return res.providerConfigs ?? [];
+  return mapCloudAccount(res.account);
 }

@@ -50,26 +50,31 @@ describe("ZoneDetailPage", () => {
     expect(screen.getByText("cl-eks-prod")).toBeInTheDocument();
   });
 
-  it("shows the decommission form only for active zones and requires a reason", async () => {
+  it("offers decommission for an active zone without requiring a reason", async () => {
+    // The huma decommission contract takes no request body, so the console
+    // offers a plain request action rather than a reason form.
     const user = userEvent.setup();
     renderDetail("zn-acme-core");
     await screen.findByRole("heading", { name: "acme-core" });
     const button = screen.getByRole("button", { name: "Request decommission" });
-    expect(button).toBeDisabled();
-    await user.type(screen.getByLabelText("Reason"), "Moving to a shared zone");
     expect(button).toBeEnabled();
+    await user.click(button);
+    expect(
+      await screen.findByText(/Teardown is gated on approval/),
+    ).toBeInTheDocument();
   });
 
   it("shows the approval-gate message after requesting decommission", async () => {
     const user = userEvent.setup();
     renderDetail("zn-acme-core");
     await screen.findByRole("heading", { name: "acme-core" });
-    await user.type(screen.getByLabelText("Reason"), "Moving to a shared zone");
     await user.click(screen.getByRole("button", { name: "Request decommission" }));
     expect(
       await screen.findByText(/Teardown is gated on approval/),
     ).toBeInTheDocument();
     expect(screen.getByText(/Approvals inbox/)).toBeInTheDocument();
+    // The zone transitions to decommission_pending_approval once refetched.
+    expect(await screen.findByTestId("zone-status-decommission_pending_approval")).toBeInTheDocument();
   });
 
   it("does not offer decommission for a provisioning zone", async () => {

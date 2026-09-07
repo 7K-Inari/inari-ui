@@ -1,8 +1,8 @@
+import type { CreateClusterRequest } from "@/api/clusters";
 import type {
   Capability,
   ClusterDetail,
   ClusterSummary,
-  CreateClusterRequest,
   CreateClusterResponse,
 } from "@/api/types";
 
@@ -19,7 +19,6 @@ export const connectedCluster: ClusterDetail = {
   capabilityCount: 8,
   lastSeenAt: iso(now - 30_000),
   createdAt: iso(now - 86_400_000),
-  agentVersion: "0.3.1",
 };
 
 export const degradedCluster: ClusterDetail = {
@@ -32,7 +31,6 @@ export const degradedCluster: ClusterDetail = {
   capabilityCount: 21,
   lastSeenAt: iso(now - 900_000),
   createdAt: iso(now - 30 * 86_400_000),
-  agentVersion: "0.3.0",
 };
 
 export const otherTenantCluster: ClusterDetail = {
@@ -45,7 +43,6 @@ export const otherTenantCluster: ClusterDetail = {
   capabilityCount: 12,
   lastSeenAt: iso(now - 60_000),
   createdAt: iso(now - 7 * 86_400_000),
-  agentVersion: "0.3.1",
 };
 
 export const kindCapabilities: Capability[] = [
@@ -240,11 +237,10 @@ export function registerCluster(
     tenant,
     status: "pending",
     k8sVersion: null,
-    labels: body.labels,
+    labels: body.labels ?? {},
     capabilityCount: 0,
     lastSeenAt: null,
     createdAt: new Date().toISOString(),
-    agentVersion: null,
   };
   state.clusters.push(cluster);
   state.capabilities[id] = [];

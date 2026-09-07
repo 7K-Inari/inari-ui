@@ -56,10 +56,9 @@ describe("ApprovalsPage", () => {
     const confirm = screen.getByRole("button", { name: "Confirm approve" });
     expect(confirm).toBeEnabled();
     await user.click(confirm);
-    const row = (await screen.findByText("Looks good")).closest("tr")!;
-    expect(within(row).getByText("approved")).toBeInTheDocument();
+    // The wire inbox is state=pending: the decided request leaves the inbox.
+    expect(await screen.findByText(/Nothing waiting for your decision/)).toBeInTheDocument();
     expect(screen.queryByLabelText("Decision reason")).not.toBeInTheDocument();
-    expect(within(row).getByText("me@inari.dev")).toBeInTheDocument();
   });
 
   it("rejects with a reason", async () => {
@@ -69,8 +68,7 @@ describe("ApprovalsPage", () => {
     await user.click(screen.getByRole("button", { name: "Reject" }));
     await user.type(screen.getByLabelText("Decision reason"), "Not compliant");
     await user.click(screen.getByRole("button", { name: "Confirm reject" }));
-    const row = (await screen.findByText("Not compliant")).closest("tr")!;
-    expect(within(row).getByText("rejected")).toBeInTheDocument();
+    expect(await screen.findByText(/Nothing waiting for your decision/)).toBeInTheDocument();
   });
 
   it("requested tab shows own requests including rejected with reason", async () => {

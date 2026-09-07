@@ -110,7 +110,6 @@ describe("clusters api", () => {
   it("gets a cluster detail by id", async () => {
     const cluster = await getCluster("tok", "cl-kind-dev");
     expect(cluster.name).toBe("kind-dev");
-    expect(cluster.agentVersion).toBe("0.3.1");
   });
 
   it("throws ApiError with server message on 404", async () => {

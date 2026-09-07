@@ -17,6 +17,24 @@ jobs:
       - run: npm run typecheck
       - run: npm run test
       - run: npm run build
+
+  # Contract drift check: regenerate the TypeScript client types from the
+  # pinned OpenAPI snapshot and fail if the committed output differs. This
+  # catches hand-edits of generated code (or a forgotten sync) — the class
+  # of drift behind production 422s like "unexpected property".
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: regenerate types from pinned spec
+        run: npm run codegen
+      - name: fail on uncommitted generated diff
+        run: git diff --exit-code src/api/__generated__/ || (echo '::error::generated types out of sync — run npm run sync:api (or npm run codegen) and commit the result'; exit 1)
       - uses: actions/upload-artifact@v4
         with:
           name: inari-ui-bundle

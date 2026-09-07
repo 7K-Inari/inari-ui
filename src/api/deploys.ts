@@ -1,20 +1,18 @@
 import { apiFetch } from "@/api/client";
+import type { components } from "@/api/__generated__/schema";
 import type { CreateDeployRequest, Deploy, DeployPhase } from "@/api/types";
 import { resolveTenant } from "@/tenant/current";
 
 // Server REST surface: /api/v1/tenants/{org}/deploys + /instances/{id}.
+// Server shapes come from the huma-generated OpenAPI contract (pinned snapshot
+// in openapi/openapi.yaml); UI view models stay in @/api/types.
 function tenantPath(tenant: string): string {
   return `/tenants/${encodeURIComponent(tenant)}`;
 }
 
-interface ServerDeployResult {
-  instanceId: string;
-  version: string;
-  status: string; // "deploying" | "pending_approval"
-  approvalId?: string;
-  commitSha?: string;
-  prUrl?: string;
-}
+type ServerInstance = components["schemas"]["InstanceView"];
+type DeployResponse = components["schemas"]["DeployOutputBody"];
+type GetInstanceResponse = components["schemas"]["GetOutputBody"];
 
 export async function createDeploy(
   token: string | undefined,
@@ -22,38 +20,24 @@ export async function createDeploy(
   body: CreateDeployRequest,
 ): Promise<Deploy> {
   const org = resolveTenant(tenant);
-  const res = await apiFetch<{ deploy: ServerDeployResult }>(
+  const res = await apiFetch<DeployResponse>(
     `${tenantPath(org)}/deploys`,
     { token, method: "POST", body },
   );
   return {
-    id: res.deploy.instanceId,
+    id: res.deploy.InstanceID,
     tenant: org,
     itemId: body.itemId,
-    version: res.deploy.version || body.version,
+    version: res.deploy.Version || body.version,
     clusterId: body.clusterId,
     name: body.name,
-    phase: res.deploy.status === "pending_approval" ? "pending" : "syncing",
-    gitopsMode: res.deploy.prUrl ? "pull-request" : "direct-commit",
-    prUrl: res.deploy.prUrl ?? null,
-    instanceId: res.deploy.instanceId,
+    phase: res.deploy.Status === "pending_approval" ? "pending" : "syncing",
+    gitopsMode: res.deploy.PRURL ? "pull-request" : "direct-commit",
+    prUrl: res.deploy.PRURL || null,
+    instanceId: res.deploy.InstanceID,
     message: null,
     createdAt: new Date().toISOString(),
   };
-}
-
-interface ServerInstance {
-  id: string;
-  orgId: string;
-  clusterId: string;
-  catalogItemId: string;
-  version: string;
-  resourceRef?: { name?: string };
-  health?: string;
-  state?: string;
-  statusMessage?: string;
-  prUrl?: string;
-  createdAt: string;
 }
 
 function mapPhase(i: ServerInstance): DeployPhase {
@@ -71,7 +55,7 @@ export async function getDeploy(
   tenant?: string,
 ): Promise<Deploy> {
   const org = resolveTenant(tenant);
-  const res = await apiFetch<{ instance: ServerInstance }>(
+  const res = await apiFetch<GetInstanceResponse>(
     `${tenantPath(org)}/instances/${encodeURIComponent(id)}`,
     { token },
   );
@@ -82,7 +66,7 @@ export async function getDeploy(
     itemId: i.catalogItemId,
     version: i.version,
     clusterId: i.clusterId,
-    name: i.resourceRef?.name || i.id,
+    name: i.resourceRef.name || i.id,
     phase: mapPhase(i),
     gitopsMode: i.prUrl ? "pull-request" : "direct-commit",
     prUrl: i.prUrl ?? null,

@@ -52,7 +52,9 @@ export function CatalogItemDetailPage() {
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-semibold tracking-tight">{item.displayName}</h1>
             <Badge variant="secondary">{item.source}</Badge>
-            <Badge variant="muted">{item.category}</Badge>
+            {item.approvalPolicy !== "auto" && (
+              <Badge variant="warning">Approval required</Badge>
+            )}
           </div>
           <p className="text-sm text-muted-foreground">{item.description}</p>
         </div>
@@ -67,15 +69,6 @@ export function CatalogItemDetailPage() {
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Documentation</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <pre className="whitespace-pre-wrap font-sans text-sm">{item.docs}</pre>
-            </CardContent>
-          </Card>
-
           <Card>
             <CardHeader>
               <CardTitle className="text-base">Schema preview</CardTitle>
@@ -122,45 +115,9 @@ export function CatalogItemDetailPage() {
                       {v.version}
                     </span>
                     <Badge variant="muted">{v.channel}</Badge>
-                    {v.deprecated && <Badge variant="destructive">deprecated</Badge>}
                   </li>
                 ))}
               </ul>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Policy</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2 text-sm">
-              <p>
-                GitOps mode:{" "}
-                {item.policy.gitopsMode === "pull-request" ? "pull request" : "direct commit"}
-              </p>
-              {item.policy.approvalRequired && (
-                <p>
-                  <Badge variant="warning">Approval required</Badge>
-                </p>
-              )}
-              {item.policy.lockedFields.length > 0 && (
-                <div>
-                  <p className="font-medium">Locked fields</p>
-                  <ul className="list-disc pl-5 text-muted-foreground">
-                    {item.policy.lockedFields.map((f) => (
-                      <li key={f.path}>
-                        <code>{f.path}</code>
-                        {f.reason ? ` — ${f.reason}` : ""}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {item.policy.notes.map((n, i) => (
-                <p key={i} className="text-muted-foreground">
-                  {n}
-                </p>
-              ))}
             </CardContent>
           </Card>
         </div>

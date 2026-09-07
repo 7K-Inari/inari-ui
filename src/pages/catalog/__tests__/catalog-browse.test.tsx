@@ -38,12 +38,12 @@ function renderPage() {
 }
 
 describe("CatalogBrowsePage", () => {
-  it("lists all catalog items with source and category", async () => {
+  it("lists all catalog items with source", async () => {
     renderPage();
     expect(await screen.findByText("PostgreSQL on AWS")).toBeInTheDocument();
     expect(screen.getByText("cert-manager")).toBeInTheDocument();
     expect(screen.getByText("Keycloak Realm")).toBeInTheDocument();
-    expect(screen.getAllByText("database").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("curated").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Curated").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Discovered").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Platform").length).toBeGreaterThan(0);
@@ -59,26 +59,14 @@ describe("CatalogBrowsePage", () => {
     expect(screen.queryByText("cert-manager")).not.toBeInTheDocument();
   });
 
-  it("filters by cluster compatibility", async () => {
+  it("filters by platform source", async () => {
     const user = userEvent.setup();
     renderPage();
     await screen.findByText("PostgreSQL on AWS");
-    await user.selectOptions(
-      screen.getByLabelText("Cluster compatibility"),
-      "cl-kind-dev",
-    );
-    expect(screen.getByText("cert-manager")).toBeInTheDocument();
-    expect(screen.getByText("PostgreSQL on AWS")).toBeInTheDocument();
-    expect(screen.queryByText("Keycloak Realm")).not.toBeInTheDocument();
-  });
-
-  it("filters by category", async () => {
-    const user = userEvent.setup();
-    renderPage();
-    await screen.findByText("PostgreSQL on AWS");
-    await user.selectOptions(screen.getByLabelText("Category"), "identity");
+    await user.click(screen.getByRole("button", { name: "Platform" }));
     expect(screen.getByText("Keycloak Realm")).toBeInTheDocument();
     expect(screen.queryByText("PostgreSQL on AWS")).not.toBeInTheDocument();
+    expect(screen.queryByText("cert-manager")).not.toBeInTheDocument();
   });
 
   it("links items to detail pages carrying tenant context", async () => {

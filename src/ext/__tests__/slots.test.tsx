@@ -65,15 +65,12 @@ const instance: ResourceInstanceDetail = {
   catalogItemName: "Web Service",
   version: "1.2.0",
   clusterId: "c1",
-  clusterName: "prod-eu",
   health: "healthy",
   status: "Synced",
   ownerTeam: "payments",
   updateAvailable: null,
   createdAt: "",
   spec: {},
-  composedResources: [],
-  argocdUrl: null,
 };
 
 function ClusterTabsProbe() {
@@ -158,9 +155,7 @@ describe("blueprint slot wiring (inari-ext-argocd)", () => {
       displayName: "Web Service",
       description: "",
       source: "curated",
-      category: "apps",
       latestVersion: "1.2.0",
-      compatibleClusterIds: null,
     };
     render(
       <MemoryRouter>

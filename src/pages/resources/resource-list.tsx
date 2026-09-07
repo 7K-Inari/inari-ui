@@ -123,7 +123,7 @@ export function ResourceListPage() {
                     </td>
                     {showTenant && <td className="px-4 py-2">{r.tenant}</td>}
                     <td className="px-4 py-2">{r.catalogItemName}</td>
-                    <td className="px-4 py-2">{r.clusterName}</td>
+                    <td className="px-4 py-2">{r.clusterId}</td>
                     <td className="px-4 py-2">
                       <HealthBadge health={r.health} />
                     </td>

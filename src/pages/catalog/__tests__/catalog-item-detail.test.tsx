@@ -33,15 +33,15 @@ function renderPage(itemId = "cat-postgresql-aws") {
 }
 
 describe("CatalogItemDetailPage", () => {
-  it("shows docs, versions, schema preview and policy summary", async () => {
+  it("shows versions, schema preview and approval policy", async () => {
     renderPage();
     expect(await screen.findByRole("heading", { name: "PostgreSQL on AWS" })).toBeInTheDocument();
-    expect(screen.getByText(/Provisions an RDS instance/)).toBeInTheDocument();
+    expect(screen.getByText(/Managed PostgreSQL via Crossplane RDS/)).toBeInTheDocument();
     expect(screen.getByLabelText("Version")).toHaveValue("1.4.0");
-    expect(screen.getByText(/deprecated/i)).toBeInTheDocument();
+    expect(screen.getAllByText("1.3.0").length).toBeGreaterThan(0);
     expect(screen.getByLabelText(/PostgreSQL engine version/)).toBeInTheDocument();
-    expect(screen.getByText(/GitOps mode: pull request/i)).toBeInTheDocument();
-    expect(screen.getByText(/Cost guardrail/)).toBeInTheDocument();
+    expect(screen.getByText(/Schema preview/)).toBeInTheDocument();
+    expect(screen.queryByText(/Approval required/)).not.toBeInTheDocument();
   });
 
   it("deploy CTA carries tenant and pinned version", async () => {

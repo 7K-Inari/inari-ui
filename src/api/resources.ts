@@ -1,4 +1,5 @@
 import { apiFetch } from "@/api/client";
+import type { components } from "@/api/__generated__/schema";
 import type {
   Deploy,
   ResourceHealth,
@@ -9,37 +10,17 @@ import type {
 import { resolveTenant } from "@/tenant/current";
 
 // Server REST surface: /api/v1/tenants/{org}/instances...
+// Server shapes come from the huma-generated OpenAPI contract (pinned snapshot
+// in openapi/openapi.yaml); UI view models stay in @/api/types.
 function tenantPath(tenant: string): string {
   return `/tenants/${encodeURIComponent(tenant)}`;
 }
 
-interface ServerResourceRef {
-  kind?: string;
-  name?: string;
-  namespace?: string;
-}
-
-interface ServerInstance {
-  id: string;
-  orgId: string;
-  clusterId: string;
-  clusterName?: string;
-  catalogItemId: string;
-  version: string;
-  ownerTeam?: string;
-  spec?: Record<string, unknown>;
-  resourceRef?: ServerResourceRef;
-  health?: string;
-  syncState?: string;
-  statusMessage?: string;
-  state?: string;
-  prUrl?: string;
-  argocdUrl?: string | null;
-  newVersionAvailable?: boolean;
-  latestVersion?: string;
-  composedResources?: ResourceInstanceDetail["composedResources"];
-  createdAt: string;
-}
+type ServerInstance = components["schemas"]["InstanceView"];
+type ListInstancesResponse = components["schemas"]["ListOutputBody1"];
+type GetInstanceResponse = components["schemas"]["GetOutputBody"];
+type DiffResponse = components["schemas"]["DiffOutputBody"];
+type DeployResponse = components["schemas"]["DeployOutputBody"];
 
 function mapHealth(h: string | undefined): ResourceHealth {
   switch (h) {
@@ -59,13 +40,12 @@ function mapHealth(h: string | undefined): ResourceHealth {
 function mapInstance(i: ServerInstance): ResourceInstanceSummary {
   return {
     id: i.id,
-    name: i.resourceRef?.name || i.id,
+    name: i.resourceRef.name || i.id,
     tenant: i.orgId,
     catalogItemId: i.catalogItemId,
     catalogItemName: i.catalogItemId, // server doesn't join the item name yet
     version: i.version,
     clusterId: i.clusterId,
-    clusterName: i.clusterName ?? i.clusterId, // server doesn't join the cluster name yet
     health: mapHealth(i.health),
     status: i.state ?? "unknown",
     ownerTeam: i.ownerTeam ?? "",
@@ -78,7 +58,7 @@ export async function listResources(
   token: string | undefined,
   tenant: string,
 ): Promise<ResourceInstanceSummary[]> {
-  const res = await apiFetch<{ instances: ServerInstance[] | null }>(
+  const res = await apiFetch<ListInstancesResponse>(
     `${tenantPath(resolveTenant(tenant))}/instances`,
     { token },
   );
@@ -90,26 +70,15 @@ export async function getResource(
   id: string,
   tenant?: string,
 ): Promise<ResourceInstanceDetail> {
-  const res = await apiFetch<{ instance: ServerInstance }>(
+  const res = await apiFetch<GetInstanceResponse>(
     `${tenantPath(resolveTenant(tenant))}/instances/${encodeURIComponent(id)}`,
     { token },
   );
   const base = mapInstance(res.instance);
   return {
     ...base,
-    spec: res.instance.spec ?? {},
-    composedResources: (res.instance.composedResources ?? []) as ResourceInstanceDetail["composedResources"],
-    argocdUrl: res.instance.argocdUrl ?? null,
+    spec: (res.instance.spec ?? {}) as Record<string, unknown>,
   };
-}
-
-interface ServerDiffPreview {
-  instanceId: string;
-  itemId: string;
-  currentVersion: string;
-  targetVersion: string;
-  currentManifest: string;
-  targetManifest: string;
 }
 
 export async function getUpgradeDiff(
@@ -118,7 +87,7 @@ export async function getUpgradeDiff(
   to: string,
   tenant?: string,
 ): Promise<UpgradeDiff> {
-  const res = await apiFetch<{ diff: ServerDiffPreview }>(
+  const res = await apiFetch<DiffResponse>(
     `${tenantPath(resolveTenant(tenant))}/instances/${encodeURIComponent(id)}/diff?to=${encodeURIComponent(to)}`,
     { token },
   );
@@ -130,15 +99,6 @@ export async function getUpgradeDiff(
   };
 }
 
-interface ServerDeployResult {
-  instanceId: string;
-  version: string;
-  status: string;
-  approvalId?: string;
-  commitSha?: string;
-  prUrl?: string;
-}
-
 export async function upgradeResource(
   token: string | undefined,
   id: string,
@@ -146,21 +106,21 @@ export async function upgradeResource(
   tenant?: string,
 ): Promise<Deploy> {
   const org = resolveTenant(tenant);
-  const res = await apiFetch<{ deploy: ServerDeployResult }>(
+  const res = await apiFetch<DeployResponse>(
     `${tenantPath(org)}/instances/${encodeURIComponent(id)}/upgrade`,
     { token, method: "POST", body: { toVersion: to } },
   );
   return {
-    id: res.deploy.instanceId,
+    id: res.deploy.InstanceID,
     tenant: org,
     itemId: "",
-    version: res.deploy.version,
+    version: res.deploy.Version,
     clusterId: "",
     name: "",
-    phase: res.deploy.status === "pending_approval" ? "pending" : "syncing",
-    gitopsMode: res.deploy.prUrl ? "pull-request" : "direct-commit",
-    prUrl: res.deploy.prUrl ?? null,
-    instanceId: res.deploy.instanceId,
+    phase: res.deploy.Status === "pending_approval" ? "pending" : "syncing",
+    gitopsMode: res.deploy.PRURL ? "pull-request" : "direct-commit",
+    prUrl: res.deploy.PRURL || null,
+    instanceId: res.deploy.InstanceID,
     message: null,
     createdAt: new Date().toISOString(),
   };

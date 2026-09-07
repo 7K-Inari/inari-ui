@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -82,9 +82,6 @@ describe("ClusterDetailPage", () => {
     renderDetail();
     await screen.findByRole("heading", { name: "kind-dev" });
     await user.click(screen.getByRole("tab", { name: "Overview" }));
-    const main = screen.getByRole("tab", { name: "Overview" }).parentElement!.parentElement!;
-    expect(within(main).getByText("Agent version")).toBeInTheDocument();
-    expect(screen.getByText("0.3.1")).toBeInTheDocument();
     expect(screen.getByText("v1.30.2")).toBeInTheDocument();
   });
 

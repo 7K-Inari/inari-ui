@@ -38,44 +38,44 @@ function renderWizard() {
 }
 
 async function fillDetails(user: ReturnType<typeof userEvent.setup>) {
-  await user.type(screen.getByLabelText("Name"), "acme-test");
   await user.type(screen.getByLabelText("AWS account ID"), "444455556666");
+  await user.type(
+    screen.getByLabelText("Role ARN"),
+    "arn:aws:iam::444455556666:role/inari-platform-access",
+  );
   await user.click(screen.getByRole("button", { name: "Create account record" }));
 }
 
 describe("ConnectAccountWizardPage", () => {
-  it("validates the name and account ID formats client-side", async () => {
+  it("validates the account ID and role ARN formats client-side", async () => {
     const user = userEvent.setup();
     renderWizard();
-    await user.type(screen.getByLabelText("Name"), "Bad_Name");
     await user.type(screen.getByLabelText("AWS account ID"), "123");
+    await user.type(screen.getByLabelText("Role ARN"), "not-an-arn");
     await user.click(screen.getByRole("button", { name: "Create account record" }));
-    expect(
-      await screen.findByText(/lowercase letters, numbers, and dashes/),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/12-digit AWS account ID/)).toBeInTheDocument();
+    expect(await screen.findByText(/12-digit AWS account ID/)).toBeInTheDocument();
+    expect(screen.getByText(/arn:aws:iam::<12-digit account>:role/)).toBeInTheDocument();
   });
 
-  it("shows the trust snippet with ExternalId and sub condition after creating the record", async () => {
+  it("registers the account and shows the trust role values to configure", async () => {
     const user = userEvent.setup();
     renderWizard();
     await fillDetails(user);
 
+    // Step 2 surfaces the real role values (no server-side trust snippet exists).
+    expect((await screen.findAllByText("Create the trust role")).length).toBeGreaterThan(0);
     expect(
-      await screen.findAllByText(/system:serviceaccount:inari-system:crossplane-provider-aws/),
-    ).not.toHaveLength(0);
-    expect(screen.getByText("inari-acme-ca-acme-acme-test")).toBeInTheDocument();
-    expect(screen.getByText(/sts:AssumeRoleWithWebIdentity/)).toBeInTheDocument();
-
-    await user.click(screen.getByRole("tab", { name: "Terraform" }));
-    expect(screen.getByText(/aws_iam_role/)).toBeInTheDocument();
+      screen.getAllByText("arn:aws:iam::444455556666:role/inari-platform-access").length,
+    ).toBeGreaterThan(0);
+    expect(screen.getByText("inari-acme-444455556666")).toBeInTheDocument();
+    expect(screen.getByText(/oidc.eks.eu-west-1.amazonaws.com/)).toBeInTheDocument();
   });
 
   it("fails the first validation and connects on retry", async () => {
     const user = userEvent.setup();
     renderWizard();
     await fillDetails(user);
-    await screen.findByText(/sts:AssumeRoleWithWebIdentity/);
+    await screen.findAllByText("Create the trust role");
 
     await user.click(screen.getByRole("button", { name: /I've created the role/ }));
     expect(await screen.findByText("Validation failed")).toBeInTheDocument();
@@ -83,9 +83,8 @@ describe("ConnectAccountWizardPage", () => {
 
     await user.click(screen.getByRole("button", { name: "Retry validation" }));
     expect(await screen.findByText("Account connected")).toBeInTheDocument();
-    expect(screen.getByText("aws-acme-acme-test")).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Open account detail" }),
-    ).toHaveAttribute("href", "/acme/cloud-accounts/ca-acme-acme-test");
+    ).toHaveAttribute("href", "/acme/cloud-accounts/ca-acme-444455556666");
   });
 });

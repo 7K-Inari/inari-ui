@@ -11,19 +11,23 @@ import {
   createDeployMock,
   findCatalogItem,
   findResource,
+  instanceViewForDeploy,
   listCatalogItemsFiltered,
   listResourcesForTenant,
   pollDeployMock,
   upgradeDiffFor,
   upgradeResourceMock,
 } from "@/mocks/fixtures/catalog";
+import type { ApprovalRequest } from "@/api/approvals";
+import type { CloudAccount } from "@/api/cloud-accounts";
+import type { CreateClusterRequest } from "@/api/clusters";
+import type { AgentChannel } from "@/api/fleet";
+import type { TenantZone } from "@/api/zones";
 import type {
   ClusterSummary,
   ClusterDetail,
-  CreateClusterRequest,
   CreateDeployRequest,
   Deploy,
-  ResourceInstanceDetail,
 } from "@/api/types";
 import {
   auditCsv,
@@ -35,13 +39,12 @@ import {
   listApprovalsFor,
   listAuditFor,
   listPlatformResources,
-  listProviderConfigs,
   listZonesFor,
   pollZoneMock,
+  providerConfigManifestFor,
   rbacMatrixFor,
   requestDecommissionMock,
   setRbacMappingMock,
-  trustSnippetFor,
   validateAccount,
 } from "@/mocks/fixtures/m3";
 
@@ -49,15 +52,17 @@ import {
   addUiExtensionMock,
   createClusterSetMock,
   createScaffoldMock,
-  decideGateMock,
   deleteClusterSetMock,
   findTemplateMock,
   getClusterSetMock,
+  getRolloutMock,
   listAgentChannelMocks,
   listBackendExtensionMocks,
+  listClusterSetMembersMock,
   listClusterSetMocks,
   listDriftMocks,
   listRolloutMocks,
+  listRolloutTargetsMock,
   listTemplateMocks,
   listUiExtensionMocks,
   pollRolloutMock,
@@ -88,70 +93,117 @@ function toServerCluster(c: ClusterSummary | ClusterDetail) {
         : c.status === "pending"
           ? "pending_registration"
           : c.status,
-    agentVersion: "agentVersion" in c ? c.agentVersion : null,
     lastSeenAt: c.lastSeenAt,
     createdAt: c.createdAt,
   };
 }
 
-function toServerItem(i: any) {
+// ---- M3: cloud accounts (huma CloudAccount wire shape) ----
+
+function toServerCloudAccount(a: CloudAccount) {
   return {
-    id: i.id,
-    source: i.source,
-    name: i.name,
-    displayName: i.displayName,
-    description: i.description,
-    category: i.category,
-    docs: i.docs,
-    gitopsPolicy: i.policy?.gitopsMode,
-    lockedFields: i.policy?.lockedFields ?? [],
-    policyNotes: i.policy?.notes ?? [],
-    approvalPolicy: i.policy?.approvalRequired ? "platform-admin" : "auto",
-    versions: (i.versions ?? []).map((v: any, idx: number) => ({
-      id: `${i.id}-${v.version}`,
-      itemId: i.id,
-      version: v.version,
-      channel: v.channel,
-      deprecated: v.deprecated,
-      releasedAt: v.releasedAt,
-      schema: idx === 0 ? (i.schema ?? {}) : undefined,
-      uiHints: idx === 0 ? (i.uiHints ?? {}) : undefined,
-    })),
-    pinnedVersion: i.latestVersion ?? "",
-    compatibleClusterIds: i.compatibleClusterIds ?? null,
+    id: a.id,
+    orgId: a.tenant,
+    provider: a.provider,
+    accountId: a.accountId,
+    roleArn: a.roleArn,
+    externalId: a.externalId,
+    state: a.status,
+    validationError: a.statusMessage ?? undefined,
+    validatedAt: a.lastValidatedAt ?? undefined,
+    issuerUrl: "https://oidc.eks.eu-west-1.amazonaws.com/id/PLATFORMCLUSTER",
+    runContext: "tenant",
+    createdBy: "me@inari.dev",
+    createdAt: a.createdAt,
   };
 }
 
-function toServerInstance(r: ResourceInstanceDetail | any) {
+// ---- M3: approvals (huma ApprovalRequest wire shape) ----
+
+function toServerApproval(a: ApprovalRequest) {
   return {
-    id: r.id,
-    orgId: r.tenant,
-    clusterId: r.clusterId,
-    clusterName: r.clusterName,
-    catalogItemId: r.catalogItemId,
-    version: r.version,
-    ownerTeam: r.ownerTeam,
-    spec: r.spec ?? {},
-    resourceRef: { name: r.name },
-    health: r.health,
-    state: r.status,
-    statusMessage: "",
-    prUrl: r.prUrl ?? "",
-    argocdUrl: r.argocdUrl ?? null,
-    newVersionAvailable: Boolean(r.updateAvailable),
-    latestVersion: r.updateAvailable?.to ?? "",
-    composedResources: r.composedResources ?? [],
-    createdAt: r.createdAt,
+    id: a.id,
+    orgId: a.tenant,
+    action: a.kind,
+    name: a.title,
+    requester: a.requestedBy,
+    createdAt: a.requestedAt,
+    state: a.status,
+    approver: a.decidedBy ?? undefined,
+    decidedAt: a.decidedAt ?? undefined,
+    reason: a.decisionReason ?? undefined,
+    clusterId: "",
+    itemId: "",
+    version: "",
+    spec: {},
   };
+}
+
+// ---- M3: tenant zones (huma TenantZone wire shape) ----
+
+function toServerZone(z: TenantZone) {
+  return {
+    id: z.id,
+    orgId: z.tenant,
+    ownerOrgId: z.tenant,
+    displayName: z.name,
+    slug: z.slug,
+    ouId: z.orgUnit,
+    region: z.region,
+    tier: z.tier,
+    state: z.status,
+    cloudAccountId: z.cloudAccountId ?? undefined,
+    clusterId: z.clusterId ?? undefined,
+    managementAccountId: "ma-platform-prod",
+    createdBy: "me@inari.dev",
+    createdAt: z.createdAt,
+    updatedAt: z.updatedAt,
+  };
+}
+
+// GetZoneOutputBody carries the provisioning steps as a TenantZoneStep map
+// alongside the zone (the zone summary itself embeds no steps).
+function toServerZoneSteps(z: TenantZone) {
+  return Object.fromEntries(
+    z.steps.map((s) => [
+      s.name,
+      {
+        zoneId: z.id,
+        step: s.name,
+        status: s.status,
+        attempts: s.attempts,
+        detail: s.detail ?? undefined,
+        externalRef: s.externalRef ?? undefined,
+        updatedAt: s.updatedAt,
+      },
+    ]),
+  );
+}
+
+// ---- M4: fleet (huma ClusterSet/Rollout/RolloutTarget/DriftEvent/AgentChannel shapes) ----
+
+// Fleet fixtures in m4.ts already speak the huma wire shapes, so handlers
+// wrap them in the response envelopes without further mapping.
+
+function toServerItem(i: any) {
+  // Catalog fixtures already speak the huma ItemView wire shape.
+  return i;
+}
+
+function toServerInstance(r: any) {
+  // Instance fixtures already speak the huma InstanceView wire shape.
+  return r;
 }
 
 function toServerDeployResult(d: Deploy) {
+  // DeployResult is a Go-style struct in the huma spec: PascalCase fields.
   return {
-    instanceId: d.instanceId ?? d.id,
-    version: d.version,
-    status: d.phase === "pending" ? "pending_approval" : "deploying",
-    commitSha: "",
-    prUrl: d.prUrl ?? "",
+    InstanceID: d.instanceId ?? d.id,
+    Version: d.version,
+    Status: d.phase === "pending" ? "pending_approval" : "deploying",
+    CommitSHA: "",
+    PRURL: d.prUrl ?? "",
+    ApprovalID: "",
   };
 }
 
@@ -194,8 +246,6 @@ export const handlers = [
     const url = new URL(request.url);
     const items = listCatalogItemsFiltered({
       source: url.searchParams.get("source"),
-      category: url.searchParams.get("category"),
-      clusterId: url.searchParams.get("clusterId"),
     });
     return HttpResponse.json({ items: items.map(toServerItem) });
   }),
@@ -243,26 +293,7 @@ export const handlers = [
     // Deploy progression drives instance health (the wizard polls this).
     const deploy = pollDeployMock(params.id as string);
     if (deploy) {
-      return HttpResponse.json({
-        instance: {
-          id: deploy.id,
-          orgId: deploy.tenant,
-          clusterId: deploy.clusterId,
-          catalogItemId: deploy.itemId,
-          version: deploy.version,
-          resourceRef: { name: deploy.name },
-          health:
-            deploy.phase === "healthy"
-              ? "healthy"
-              : deploy.phase === "failed"
-                ? "degraded"
-                : "progressing",
-          state: deploy.phase,
-          statusMessage: deploy.message ?? "",
-          prUrl: deploy.prUrl ?? "",
-          createdAt: deploy.createdAt,
-        },
-      });
+      return HttpResponse.json({ instance: instanceViewForDeploy(deploy) });
     }
     const resource = findResource(params.id as string);
     if (!resource) return humaError(404, "instance not found");
@@ -367,52 +398,54 @@ export const handlers = [
 
   // ---- cloud accounts (M3) ----
   http.get(`${BASE}/cloud-accounts`, ({ params }) => {
-    return HttpResponse.json({ accounts: listAccounts(params.org as string) });
+    return HttpResponse.json({
+      accounts: listAccounts(params.org as string).map(toServerCloudAccount),
+    });
   }),
 
   http.get(`${BASE}/cloud-accounts/:id`, ({ params }) => {
     const account = findAccount(params.id as string);
     if (!account) return humaError(404, "cloud account not found");
-    return HttpResponse.json({ account });
+    return HttpResponse.json({ account: toServerCloudAccount(account) });
   }),
 
   http.post(`${BASE}/cloud-accounts`, async ({ params, request }) => {
     const body = (await request.json()) as {
-      name?: string;
       accountId?: string;
-      regions?: string[];
+      roleArn?: string;
+      externalId?: string;
+      issuerUrl?: string;
+      provider?: string;
+      runContext?: string;
     };
-    if (!body.name || !/^[a-z0-9][a-z0-9-]*$/.test(body.name)) {
-      return humaError(400, "name must be lowercase alphanumeric with dashes");
-    }
     if (!body.accountId || !/^\d{12}$/.test(body.accountId)) {
       return humaError(400, "accountId must be a 12-digit AWS account ID");
     }
+    if (!body.roleArn || !/^arn:aws:iam::\d{12}:role\/.+/.test(body.roleArn)) {
+      return humaError(400, "roleArn must be an arn:aws:iam::<acct>:role/<name> ARN");
+    }
     const account = createAccount(params.org as string, {
-      name: body.name,
       accountId: body.accountId,
-      regions: body.regions ?? [],
+      roleArn: body.roleArn,
+      externalId: body.externalId,
     });
-    return HttpResponse.json(
-      { account, trust: trustSnippetFor(account) },
-      { status: 201 },
-    );
+    return HttpResponse.json({ account: toServerCloudAccount(account) });
   }),
 
-  http.get(`${BASE}/cloud-accounts/:id/trust-snippet`, ({ params }) => {
+  http.get(`${BASE}/cloud-accounts/:id/providerconfig`, ({ params, request }) => {
     const account = findAccount(params.id as string);
     if (!account) return humaError(404, "cloud account not found");
-    return HttpResponse.json({ trust: trustSnippetFor(account) });
+    const url = new URL(request.url);
+    const clusterId = url.searchParams.get("clusterId");
+    if (!clusterId) return humaError(400, "clusterId query parameter is required");
+    // The huma endpoint renders the manifest as a plain-text body.
+    return HttpResponse.json(providerConfigManifestFor(account, clusterId));
   }),
 
   http.post(`${BASE}/cloud-accounts/:id/validate`, ({ params }) => {
-    const result = validateAccount(params.id as string);
-    if (!result) return humaError(404, "cloud account not found");
-    return HttpResponse.json({ validation: result });
-  }),
-
-  http.get(`${BASE}/provider-configs`, ({ params }) => {
-    return HttpResponse.json({ providerConfigs: listProviderConfigs(params.org as string) });
+    const account = validateAccount(params.id as string);
+    if (!account) return humaError(404, "cloud account not found");
+    return HttpResponse.json({ account: toServerCloudAccount(account) });
   }),
 
   // ---- rbac (M3) ----
@@ -436,20 +469,27 @@ export const handlers = [
   // ---- approvals (M3) ----
   http.get(`${BASE}/approvals`, ({ params, request }) => {
     const url = new URL(request.url);
-    const view = url.searchParams.get("view") === "requested" ? "requested" : "inbox";
-    return HttpResponse.json({ approvals: listApprovalsFor(params.org as string, view) });
+    // Wire contract: ?state=pending (inbox) / ?requester=me (own requests).
+    const requester = url.searchParams.get("requester");
+    const state = url.searchParams.get("state");
+    return HttpResponse.json({
+      approvals: listApprovalsFor(params.org as string, { requester, state }).map(
+        toServerApproval,
+      ),
+    });
   }),
 
-  http.post(`${BASE}/approvals/:id/:decision`, async ({ params, request }) => {
-    const decision = params.decision as string;
-    if (decision !== "approve" && decision !== "reject") {
-      return humaError(404, "unknown decision");
-    }
-    const body = (await request.json()) as { reason?: string };
+  http.post(`${BASE}/approvals/:id/decide`, async ({ params, request }) => {
+    const body = (await request.json()) as { approve?: boolean; reason?: string };
+    if (typeof body.approve !== "boolean") return humaError(400, "approve is required");
     if (!body.reason?.trim()) return humaError(400, "a decision reason is required");
-    const approval = decideApprovalMock(params.id as string, decision, body.reason);
+    const approval = decideApprovalMock(
+      params.id as string,
+      body.approve ? "approve" : "reject",
+      body.reason,
+    );
     if (!approval) return humaError(409, "approval not found or already decided");
-    return HttpResponse.json({ approval });
+    return HttpResponse.json({ approval: toServerApproval(approval) });
   }),
 
   // ---- audit (M3) ----
@@ -486,33 +526,42 @@ export const handlers = [
 
   // ---- tenant zones (M3) ----
   http.get(`${BASE}/zones`, ({ params }) => {
-    return HttpResponse.json({ zones: listZonesFor(params.org as string) });
+    return HttpResponse.json({
+      zones: listZonesFor(params.org as string).map(toServerZone),
+    });
   }),
 
   http.get(`${BASE}/zones/:id`, ({ params }) => {
     const zone = pollZoneMock(params.id as string);
     if (!zone) return humaError(404, "zone not found");
-    return HttpResponse.json({ zone });
+    return HttpResponse.json({ zone: toServerZone(zone), steps: toServerZoneSteps(zone) });
   }),
 
   http.post(`${BASE}/zones`, async ({ params, request }) => {
     const body = (await request.json()) as Partial<CreateZoneRequestBody>;
-    if (!body.name || !body.slug || !/^[a-z0-9][a-z0-9-]*$/.test(body.slug)) {
-      return humaError(400, "name and a lowercase dashed slug are required");
+    if (
+      !body.displayName ||
+      !body.slug ||
+      !/^[a-z0-9][a-z0-9-]*$/.test(body.slug)
+    ) {
+      return humaError(400, "displayName and a lowercase dashed slug are required");
+    }
+    if (!body.ouId || !body.managementAccountId || !body.region) {
+      return humaError(400, "ouId, managementAccountId, and region are required");
     }
     if (body.tier !== "starter") {
       return humaError(400, "only the starter tier is available at this time");
     }
     const zone = createZoneMock(params.org as string, body as CreateZoneRequestBody);
-    return HttpResponse.json({ zone }, { status: 201 });
+    return HttpResponse.json({ zone: toServerZone(zone) }, { status: 201 });
   }),
 
-  http.post(`${BASE}/zones/:id/decommission`, async ({ params, request }) => {
-    const body = (await request.json()) as { reason?: string };
-    if (!body.reason?.trim()) return humaError(400, "a decommission reason is required");
-    const zone = requestDecommissionMock(params.id as string, body.reason);
-    if (!zone) return humaError(409, "zone not found or not active");
-    return HttpResponse.json({ zone });
+  http.post(`${BASE}/zones/:id/decommission`, ({ params }) => {
+    // Huma contract: no request body; responds {approvalId} while the zone
+    // moves to decommission_pending_approval.
+    const approval = requestDecommissionMock(params.id as string);
+    if (!approval) return humaError(409, "zone not found or not active");
+    return HttpResponse.json({ approvalId: approval.id });
   }),
 
   // ---- extensions (M4) ----
@@ -588,91 +637,110 @@ export const handlers = [
   }),
 
   // ---- fleet (M4) ----
-  http.get(`${BASE}/clustersets`, ({ params }) => {
-    return HttpResponse.json({ clusterSets: listClusterSetMocks(params.org as string) });
+  http.get(`${BASE}/cluster-sets`, ({ params }) => {
+    return HttpResponse.json({
+      clusterSets: listClusterSetMocks(params.org as string),
+    });
   }),
 
-  http.post(`${BASE}/clustersets`, async ({ params, request }) => {
+  http.post(`${BASE}/cluster-sets`, async ({ params, request }) => {
     const body = (await request.json()) as {
       name?: string;
-      labels?: Record<string, string>;
+      labelSelector?: Record<string, string>;
     };
     if (!body.name || !/^[a-z0-9][a-z0-9-]*$/.test(body.name)) {
       return humaError(400, "name must be lowercase alphanumeric with dashes");
     }
     const clusterSet = createClusterSetMock(params.org as string, {
       name: body.name,
-      labels: body.labels ?? {},
+      labelSelector: body.labelSelector ?? {},
     });
     return HttpResponse.json({ clusterSet }, { status: 201 });
   }),
 
-  http.get(`${BASE}/clustersets/:id`, ({ params }) => {
+  http.get(`${BASE}/cluster-sets/:id`, ({ params }) => {
     const clusterSet = getClusterSetMock(params.id as string);
     if (!clusterSet) return humaError(404, "cluster set not found");
     return HttpResponse.json({ clusterSet });
   }),
 
-  http.delete(`${BASE}/clustersets/:id`, ({ params }) => {
+  http.delete(`${BASE}/cluster-sets/:id`, ({ params }) => {
     if (!deleteClusterSetMock(params.id as string)) {
       return humaError(404, "cluster set not found");
     }
     return new HttpResponse(null, { status: 204 });
   }),
 
-  http.get(`${BASE}/fleet/rollouts`, ({ params }) => {
-    return HttpResponse.json({ rollouts: listRolloutMocks(params.org as string) });
+  http.get(`${BASE}/cluster-sets/:id/members`, ({ params }) => {
+    if (!getClusterSetMock(params.id as string)) {
+      return humaError(404, "cluster set not found");
+    }
+    return HttpResponse.json({ clusters: listClusterSetMembersMock(params.id as string) });
   }),
 
-  http.get(`${BASE}/fleet/rollouts/:id`, ({ params }) => {
+  http.get(`${BASE}/rollouts`, ({ params }) => {
+    return HttpResponse.json({
+      rollouts: listRolloutMocks(params.org as string),
+    });
+  }),
+
+  http.get(`${BASE}/rollouts/:id`, ({ params }) => {
     const rollout = pollRolloutMock(params.id as string);
     if (!rollout) return humaError(404, "rollout not found");
     return HttpResponse.json({ rollout });
   }),
 
-  http.post(`${BASE}/fleet/rollouts/:id/gates/:stage/:decision`, ({ params }) => {
-    const decision = params.decision as string;
-    if (decision !== "approve" && decision !== "reject") {
-      return humaError(404, "unknown decision");
-    }
-    const rollout = decideGateMock(
-      params.id as string,
-      params.stage as string,
-      decision,
-    );
-    if (!rollout) return humaError(409, "rollout or gate not found, or gate not open");
-    return HttpResponse.json({ rollout });
+  http.get(`${BASE}/rollouts/:id/targets`, ({ params, request }) => {
+    const rollout = getRolloutMock(params.id as string);
+    if (!rollout) return humaError(404, "rollout not found");
+    const url = new URL(request.url);
+    const stage = url.searchParams.get("stage");
+    const targets = listRolloutTargetsMock(params.id as string);
+    return HttpResponse.json({
+      targets: stage === null ? targets : targets.filter((t) => t.stage === Number(stage)),
+    });
   }),
 
-  http.post(`${BASE}/fleet/rollouts/:id/rollback`, ({ params }) => {
+  http.post(`${BASE}/rollouts/:id/rollback`, ({ params }) => {
     const rollout = rollbackRolloutMock(params.id as string);
     if (!rollout) return humaError(404, "rollout not found");
     return HttpResponse.json({ rollout });
   }),
 
-  http.get(`${BASE}/fleet/drift`, () => {
-    return HttpResponse.json({ drift: listDriftMocks() });
+  http.get(`${BASE}/drift`, () => {
+    // ListDriftOutputBody carries driftEvents, not drift.
+    return HttpResponse.json({ driftEvents: listDriftMocks() });
   }),
 
-  http.get(`${BASE}/fleet/agent-channels`, () => {
+  http.get(`${BASE}/agent-channels`, () => {
     return HttpResponse.json({ channels: listAgentChannelMocks() });
   }),
 
-  http.put(`${BASE}/fleet/agent-channels/:clusterSetId`, async ({ params, request }) => {
-    const body = (await request.json()) as { channel?: string };
-    if (body.channel !== "stable" && body.channel !== "canary") {
+  http.put(`${BASE}/cluster-sets/:id/channels/:channel`, async ({ params, request }) => {
+    const channel = params.channel as string;
+    if (channel !== "stable" && channel !== "canary") {
       return humaError(400, "channel must be stable or canary");
     }
-    const channel = setAgentChannelMock(params.clusterSetId as string, body.channel);
-    if (!channel) return humaError(404, "cluster set not found");
-    return HttpResponse.json({ channel });
+    const body = (await request.json()) as { desiredAgentVersion?: string };
+    if (!body.desiredAgentVersion) {
+      return humaError(400, "desiredAgentVersion is required");
+    }
+    const updated = setAgentChannelMock(
+      params.id as string,
+      channel as AgentChannel,
+      body.desiredAgentVersion,
+    );
+    if (!updated) return humaError(404, "cluster set not found");
+    return HttpResponse.json({ channel: updated });
   }),
 ];
 
 interface CreateZoneRequestBody {
-  name: string;
   slug: string;
-  orgUnit: string;
+  displayName: string;
+  ouId: string;
+  managementAccountId: string;
   region: string;
-  tier: "starter";
+  tier: string;
+  tags?: Record<string, string>;
 }

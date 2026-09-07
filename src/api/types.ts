@@ -14,9 +14,7 @@ export interface ClusterSummary {
   createdAt: string;
 }
 
-export interface ClusterDetail extends ClusterSummary {
-  agentVersion: string | null;
-}
+export type ClusterDetail = ClusterSummary;
 
 export type CapabilityKind =
   | "crd"
@@ -44,16 +42,12 @@ export interface CatalogItemSummary {
   displayName: string;
   description: string;
   source: CatalogSource;
-  category: string;
   latestVersion: string;
-  compatibleClusterIds: string[] | null;
 }
 
 export interface CatalogVersion {
   version: string;
   channel: string;
-  deprecated: boolean;
-  releasedAt: string;
 }
 
 export interface UiHints {
@@ -67,25 +61,12 @@ export interface UiHints {
   };
 }
 
-export interface LockedField {
-  path: string;
-  value: unknown;
-  reason?: string;
-}
-
-export interface PolicySummary {
-  gitopsMode: "pull-request" | "direct-commit";
-  approvalRequired: boolean;
-  lockedFields: LockedField[];
-  notes: string[];
-}
-
 export interface CatalogItemDetail extends CatalogItemSummary {
-  docs: string;
   versions: CatalogVersion[];
   schema: Record<string, unknown>;
   uiHints: UiHints;
-  policy: PolicySummary;
+  // Wire field `approvalPolicy` on ItemView ("auto" = no approval needed).
+  approvalPolicy: string;
 }
 
 export type DeployPhase =
@@ -130,7 +111,6 @@ export interface ResourceInstanceSummary {
   catalogItemName: string;
   version: string;
   clusterId: string;
-  clusterName: string;
   health: ResourceHealth;
   status: string;
   ownerTeam: string;
@@ -138,18 +118,8 @@ export interface ResourceInstanceSummary {
   createdAt: string;
 }
 
-export interface ComposedResource {
-  kind: string;
-  name: string;
-  namespace: string;
-  health: ResourceHealth;
-  status: string;
-}
-
 export interface ResourceInstanceDetail extends ResourceInstanceSummary {
   spec: Record<string, unknown>;
-  composedResources: ComposedResource[];
-  argocdUrl: string | null;
 }
 
 export interface UpgradeDiff {
@@ -157,13 +127,6 @@ export interface UpgradeDiff {
   to: string;
   currentManifest: string;
   upgradedManifest: string;
-}
-
-export interface CreateClusterRequest {
-  name: string;
-  // No description: the cluster-registry API (inari-server huma schema)
-  // accepts only name+labels; extra properties are rejected with 422.
-  labels: Record<string, string>;
 }
 
 export interface CreateClusterResponse {
