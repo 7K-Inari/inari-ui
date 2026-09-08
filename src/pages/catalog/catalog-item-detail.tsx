@@ -58,13 +58,17 @@ export function CatalogItemDetailPage() {
           </div>
           <p className="text-sm text-muted-foreground">{item.description}</p>
         </div>
-        <Button asChild>
-          <Link
-            to={`${tenantLink(tenant, `catalog/${item.id}/deploy`)}?version=${encodeURIComponent(pinned)}`}
-          >
-            Deploy
-          </Link>
-        </Button>
+        {pinned ? (
+          <Button asChild>
+            <Link
+              to={`${tenantLink(tenant, `catalog/${item.id}/deploy`)}?version=${encodeURIComponent(pinned)}`}
+            >
+              Deploy
+            </Link>
+          </Button>
+        ) : (
+          <Button disabled>Deploy</Button>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
@@ -93,31 +97,37 @@ export function CatalogItemDetailPage() {
               <CardTitle className="text-base">Versions</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="space-y-1">
-                <Label htmlFor="catalog-version">Version</Label>
-                <select
-                  id="catalog-version"
-                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-                  value={pinned}
-                  onChange={(e) => setVersion(e.target.value)}
-                >
-                  {item.versions.map((v) => (
-                    <option key={v.version} value={v.version}>
-                      {v.version}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <ul className="space-y-1 text-sm">
-                {item.versions.map((v) => (
-                  <li key={v.version} className="flex items-center gap-2">
-                    <span className={v.version === pinned ? "font-medium" : ""}>
-                      {v.version}
-                    </span>
-                    <Badge variant="muted">{v.channel}</Badge>
-                  </li>
-                ))}
-              </ul>
+              {item.versions.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No versions published yet.</p>
+              ) : (
+                <>
+                  <div className="space-y-1">
+                    <Label htmlFor="catalog-version">Version</Label>
+                    <select
+                      id="catalog-version"
+                      className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                      value={pinned}
+                      onChange={(e) => setVersion(e.target.value)}
+                    >
+                      {item.versions.map((v) => (
+                        <option key={v.version} value={v.version}>
+                          {v.version}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <ul className="space-y-1 text-sm">
+                    {item.versions.map((v) => (
+                      <li key={v.version} className="flex items-center gap-2">
+                        <span className={v.version === pinned ? "font-medium" : ""}>
+                          {v.version}
+                        </span>
+                        <Badge variant="muted">{v.channel}</Badge>
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
             </CardContent>
           </Card>
         </div>

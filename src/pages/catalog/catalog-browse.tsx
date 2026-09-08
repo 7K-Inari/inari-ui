@@ -101,7 +101,14 @@ export function CatalogBrowsePage() {
             </CardHeader>
             <CardContent className="mt-auto flex flex-wrap items-center gap-2 pt-0 text-xs text-muted-foreground">
               <Badge variant="muted">{item.source}</Badge>
-              <span>v{item.latestVersion}</span>
+              {item.latestVersion ? (
+                <>
+                  <span>v{item.latestVersion}</span>
+                  {item.latestChannel && <Badge variant="muted">{item.latestChannel}</Badge>}
+                </>
+              ) : (
+                <span aria-label="no version published">—</span>
+              )}
               <CatalogCardSlots item={item} />
             </CardContent>
           </Card>

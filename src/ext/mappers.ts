@@ -35,7 +35,7 @@ export function toSdkCatalogItem(item: CatalogItemSummary): SdkCatalogItem {
     id: item.id,
     name: item.name,
     source: item.source,
-    version: item.latestVersion,
+    version: item.latestVersion ?? "",
     description: item.description,
   };
 }

@@ -42,7 +42,8 @@ export interface CatalogItemSummary {
   displayName: string;
   description: string;
   source: CatalogSource;
-  latestVersion: string;
+  latestVersion: string | null;
+  latestChannel: string | null;
 }
 
 export interface CatalogVersion {

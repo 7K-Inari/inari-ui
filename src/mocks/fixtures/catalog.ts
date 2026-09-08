@@ -114,10 +114,22 @@ const keycloakRealmItem: ItemView = {
   ],
 };
 
+const crossplaneItem: ItemView = {
+  id: "cat-crossplane-eks",
+  name: "crossplane-eks",
+  displayName: "Crossplane EKS",
+  description: "Discovered capability: EKS cluster provisioning (no package synced yet).",
+  source: "discovered",
+  approvalPolicy: "auto",
+  createdAt: iso(now - 10 * 86_400_000),
+  versions: null,
+};
+
 export const catalogItems: ItemView[] = [
   postgresItem,
   certManagerItem,
   keycloakRealmItem,
+  crossplaneItem,
 ];
 
 const DEPLOY_PHASES: DeployPhase[] = ["pending", "rendering", "committing", "syncing", "healthy"];
