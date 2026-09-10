@@ -175,7 +175,7 @@ describe("OverviewPage", () => {
     expect(within(card).queryByText(/redis-cache/)).not.toBeInTheDocument();
     expect(within(card).getByRole("link", { name: /view all/i })).toHaveAttribute(
       "href",
-      "/acme/fleet",
+      "/acme/fleet?tab=drift",
     );
   });
 

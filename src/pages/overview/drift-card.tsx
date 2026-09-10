@@ -20,7 +20,7 @@ export function DriftCard() {
     <OverviewCard
       title="Drift"
       testId="card-drift"
-      href={tenantLink(tenant, "fleet")}
+      href={`${tenantLink(tenant, "fleet")}?tab=drift`}
       state={state}
       isEmpty={(events) => events.length === 0}
       empty={<p>No open drift detected</p>}
