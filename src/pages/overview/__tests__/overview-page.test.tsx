@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
@@ -110,6 +110,43 @@ describe("OverviewPage", () => {
     renderPage();
     expect(await screen.findByText(/No clusters registered yet/)).toBeInTheDocument();
     expect(await screen.findByText(/No pending approvals/)).toBeInTheDocument();
+  });
+
+  it("polls approvals every 15s and clusters every 30s", async () => {
+    vi.useFakeTimers();
+    try {
+      let clusterCalls = 0;
+      let approvalCalls = 0;
+      mockServer.use(
+        http.get("*/api/v1/tenants/acme/clusters", () => {
+          clusterCalls += 1;
+          return HttpResponse.json({ clusters: [] });
+        }),
+        http.get("*/api/v1/tenants/acme/approvals", () => {
+          approvalCalls += 1;
+          return HttpResponse.json({ approvals: [] });
+        }),
+      );
+
+      renderPage();
+      await act(async () => {});
+      expect(clusterCalls).toBe(1);
+      expect(approvalCalls).toBe(1);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(15_000);
+      });
+      expect(approvalCalls).toBe(2);
+      expect(clusterCalls).toBe(1);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(15_000);
+      });
+      expect(approvalCalls).toBe(3);
+      expect(clusterCalls).toBe(2);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("keeps other cards working when one fails, and recovers on retry", async () => {
