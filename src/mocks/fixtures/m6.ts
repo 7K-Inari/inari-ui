@@ -137,8 +137,10 @@ function seedState(): PolicyMockState {
 
 let state: PolicyMockState = seedState();
 
-let idCounter = 0;
-const nextId = (prefix: string) => `${prefix}-${++idCounter}`;
+// Start above the seeded id range (ex-1/ex-2, pp-*) so generated ids never
+// collide with fixtures.
+let idCounter = 100;
+const nextId = (prefix: string) => `${prefix}-gen${++idCounter}`;
 
 export const policyMockControl = {
   reset() {

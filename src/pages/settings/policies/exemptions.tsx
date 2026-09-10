@@ -14,7 +14,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { formatRelative } from "@/lib/time";
 import {
   CapabilityGate,
   useOrgCapabilities,
@@ -195,7 +194,7 @@ export function ExemptionsPage() {
                   <td className="px-4 py-2">{ex.reason ?? "—"}</td>
                   <td className="px-4 py-2 text-xs">{ex.createdBy ?? "—"}</td>
                   <td className="px-4 py-2 text-xs text-muted-foreground">
-                    {formatRelative(ex.expiresAt)}
+                    {new Date(ex.expiresAt).toLocaleString()}
                   </td>
                   <td className="px-4 py-2">
                     {ex.state === "pending" && (
