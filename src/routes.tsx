@@ -44,6 +44,7 @@ import { OrgProfilePage } from "@/pages/settings/org/org-profile";
 import { TeamsPage } from "@/pages/settings/org/teams";
 import { VisibilityPage } from "@/pages/settings/policies/visibility";
 import { RegistrationTokensPage } from "@/pages/settings/tokens/registration-tokens";
+import { EsoStoresPage } from "@/pages/settings/tokens/eso-stores";
 import { VendZoneWizardPage } from "@/pages/zones/vend-wizard";
 import { ZoneDetailPage } from "@/pages/zones/zone-detail";
 import { ZoneListPage } from "@/pages/zones/zone-list";
@@ -139,15 +140,7 @@ export function AppRoutes() {
             <Route path="policies/visibility" element={<VisibilityPage />} />
             <Route path="policies/approvals" element={<ApprovalsConfigPage />} />
             <Route path="tokens/registration" element={<RegistrationTokensPage />} />
-            <Route
-              path="tokens/eso-stores"
-              element={
-                <PlaceholderPage
-                  title="ESO stores"
-                  description="External Secrets Operator SecretStore registry. Ships in a later milestone."
-                />
-              }
-            />
+            <Route path="tokens/eso-stores" element={<EsoStoresPage />} />
             <Route path="*" element={<Navigate to="org/git" replace />} />
           </Route>
           <Route path="*" element={<Navigate to="overview" replace />} />

@@ -106,15 +106,22 @@ import {
   visibilityFor,
   approvalConfigFor,
   createOidcClientMock,
+  createSecretStoreMock,
   deleteOidcClientMock,
+  deleteSecretStoreMock,
   findOidcClient,
+  findSecretStore,
   oidcClientsFor,
   oidcScopesCatalog,
   putApprovalConfigMock,
   putClientScopesMock,
+  secretStoreStatusFor,
+  secretStoresFor,
   updateOidcClientMock,
+  updateSecretStoreMock,
 } from "@/mocks/fixtures/m6";
 import type { OidcClientInput } from "@/api/identity";
+import type { SecretStoreInput } from "@/api/secrets";
 
 type CreatePackInputBody = components["schemas"]["CreatePackInputBody"];
 type AssignPackInputBody = components["schemas"]["AssignPackInputBody"];
@@ -1102,6 +1109,51 @@ export const handlers = [
         autoApproveRules: body.autoApproveRules,
       }),
     });
+  }),
+
+  // ---- M6.W4: ESO secret-store registry (proposed routes) ----
+  http.get(`${BASE}/secret-stores`, ({ params }) =>
+    HttpResponse.json({ stores: secretStoresFor(params.org as string) }),
+  ),
+
+  http.post(`${BASE}/secret-stores`, async ({ params, request }) => {
+    const body = (await request.json()) as SecretStoreInput;
+    if (!body.name) {
+      return humaError(422, "validation failed (name is required)");
+    }
+    if (findSecretStore(params.org as string, body.name)) {
+      return humaError(409, `secret store "${body.name}" already exists`);
+    }
+    const store = createSecretStoreMock(params.org as string, body);
+    return HttpResponse.json({ store }, { status: 201 });
+  }),
+
+  http.patch(`${BASE}/secret-stores/:name`, async ({ params, request }) => {
+    const existing = findSecretStore(params.org as string, params.name as string);
+    if (!existing) return humaError(404, "secret store not found");
+    // Platform-scope writes require superuser (design §3.2).
+    if (existing.scope === "platform") {
+      return humaError(403, "platform-scoped secret stores are read-only");
+    }
+    const body = (await request.json()) as SecretStoreInput;
+    const store = updateSecretStoreMock(params.org as string, params.name as string, body);
+    return HttpResponse.json({ store });
+  }),
+
+  http.delete(`${BASE}/secret-stores/:name`, ({ params }) => {
+    const existing = findSecretStore(params.org as string, params.name as string);
+    if (!existing) return humaError(404, "secret store not found");
+    if (existing.scope === "platform") {
+      return humaError(403, "platform-scoped secret stores are read-only");
+    }
+    deleteSecretStoreMock(params.org as string, params.name as string);
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.get(`${BASE}/secret-stores/:name/status`, ({ params }) => {
+    const status = secretStoreStatusFor(params.org as string, params.name as string);
+    if (!status) return humaError(404, "secret store not found");
+    return HttpResponse.json({ status });
   }),
 ];
 

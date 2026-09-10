@@ -1,6 +1,11 @@
 import type { components } from "@/api/__generated__/schema";
 import type { OidcClient, OidcClientInput, OidcScope } from "@/api/identity";
 import type { ApprovalConfig } from "@/api/policies";
+import type {
+  SecretStore,
+  SecretStoreInput,
+  SecretStoreStatus,
+} from "@/api/secrets";
 
 type PolicyPack = components["schemas"]["PolicyPack"];
 type PolicyAssignment = components["schemas"]["PolicyAssignment"];
@@ -51,6 +56,7 @@ export interface PolicyMockState {
   registrationTokens: Record<string, RegistrationToken[]>;
   oidcClients: Record<string, OidcClient[]>;
   approvalConfigs: Record<string, ApprovalConfig>;
+  secretStores: Record<string, SecretStore[]>;
 }
 
 export const baselinePack: PolicyPack = {
@@ -279,6 +285,35 @@ function seedState(): PolicyMockState {
         updatedBy: "pe@inari.dev",
         updatedAt: iso(now - 4 * 86_400_000),
       },
+    },
+    secretStores: {
+      acme: [
+        {
+          name: "inari-platform",
+          orgId: "acme",
+          scope: "platform",
+          clusterIds: ["*"],
+          provider: {
+            type: "awsSM",
+            region: "us-east-1",
+            authSecretRef: { name: "inari-platform-creds", namespace: "inari-system" },
+          },
+          createdAt: iso(now - 120 * 86_400_000),
+        },
+        {
+          name: "acme-vault",
+          orgId: "acme",
+          scope: "cluster",
+          clusterIds: ["cl-kind-dev"],
+          provider: {
+            type: "vault",
+            url: "https://vault.acme.example",
+            authSecretRef: { name: "eso-vault-token", namespace: "external-secrets" },
+          },
+          createdAt: iso(now - 15 * 86_400_000),
+        },
+      ],
+      globex: [],
     },
   };
 }
@@ -643,4 +678,79 @@ export function putApprovalConfigMock(
   };
   state.approvalConfigs[org] = config;
   return config;
+}
+
+// ---- M6.W4: ESO secret-store registry ----
+
+export function secretStoresFor(org: string): SecretStore[] {
+  return state.secretStores[org] ?? [];
+}
+
+export function findSecretStore(org: string, name: string): SecretStore | null {
+  return secretStoresFor(org).find((s) => s.name === name) ?? null;
+}
+
+export function createSecretStoreMock(org: string, body: SecretStoreInput): SecretStore {
+  const stores = (state.secretStores[org] ??= []);
+  const store: SecretStore = {
+    name: body.name,
+    orgId: org,
+    scope: "cluster",
+    clusterIds: body.clusterIds ?? [],
+    provider: body.provider,
+    createdAt: new Date().toISOString(),
+  };
+  stores.push(store);
+  return store;
+}
+
+export function updateSecretStoreMock(
+  org: string,
+  name: string,
+  body: SecretStoreInput,
+): SecretStore | null {
+  const store = findSecretStore(org, name);
+  if (!store) return null;
+  store.clusterIds = body.clusterIds ?? [];
+  store.provider = body.provider;
+  return store;
+}
+
+export function deleteSecretStoreMock(org: string, name: string): boolean {
+  const stores = state.secretStores[org] ?? [];
+  const before = stores.length;
+  state.secretStores[org] = stores.filter((s) => s.name !== name);
+  return state.secretStores[org].length < before;
+}
+
+export function secretStoreStatusFor(org: string, name: string): SecretStoreStatus | null {
+  const store = findSecretStore(org, name);
+  if (!store) return null;
+  if (store.scope === "platform") {
+    return {
+      name: store.name,
+      delivered: true,
+      conditions: [
+        {
+          type: "Ready",
+          status: "True",
+          reason: "Reconciled",
+          lastTransitionTime: store.createdAt,
+        },
+      ],
+    };
+  }
+  return {
+    name: store.name,
+    delivered: false,
+    conditions: [
+      {
+        type: "Ready",
+        status: "False",
+        reason: "WaitingForAgent",
+        message: "Waiting for the cluster agent to reconcile the SecretStore.",
+        lastTransitionTime: store.createdAt,
+      },
+    ],
+  };
 }
