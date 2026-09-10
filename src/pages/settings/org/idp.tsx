@@ -74,6 +74,11 @@ const PROVIDER_CREATE_SCHEMA: Record<string, unknown> = {
   },
 };
 
+// Mask the write-only secret input (matches the rotate form's type=password).
+const PROVIDER_UI_SCHEMA = {
+  clientSecret: { "ui:widget": "password" as const },
+};
+
 function toInput(data: Record<string, unknown>): IdpProviderInput {
   const claimMapping = (data.claimMapping ?? {}) as Record<string, unknown>;
   return {
@@ -240,6 +245,7 @@ export function IdpBrokeringPage() {
             <SchemaForm
               ref={formRef}
               schema={provider ? PROVIDER_BASE_SCHEMA : PROVIDER_CREATE_SCHEMA}
+              uiSchema={PROVIDER_UI_SCHEMA}
               formData={formData}
               onChange={setFormData}
             />

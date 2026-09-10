@@ -76,6 +76,33 @@ describe("OrgDomainsPage", () => {
     expect(await screen.findByText("mail.acme.example")).toBeInTheDocument();
   });
 
+  it("rejects an invalid domain without calling the server", async () => {
+    seedProvider(["acme.example"]);
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("acme.example");
+    await user.type(screen.getByLabelText(/Add domain/), "not a domain!");
+    await user.click(screen.getByRole("button", { name: "Add domain" }));
+    expect(await screen.findByText(/enter a valid domain/i)).toBeInTheDocument();
+    expect(policyMockControl.getState().idpProviders.acme.domainHints).toEqual([
+      "acme.example",
+    ]);
+  });
+
+  it("rejects a duplicate domain without calling the server", async () => {
+    seedProvider(["acme.example"]);
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("acme.example");
+    // Case-insensitive duplicate: input is normalized to lowercase first.
+    await user.type(screen.getByLabelText(/Add domain/), "ACME.example");
+    await user.click(screen.getByRole("button", { name: "Add domain" }));
+    expect(await screen.findByText(/already listed/i)).toBeInTheDocument();
+    expect(policyMockControl.getState().idpProviders.acme.domainHints).toEqual([
+      "acme.example",
+    ]);
+  });
+
   it("surfaces the server 409 when a domain is claimed by another organization", async () => {
     seedProvider(["acme.example"]);
     const user = userEvent.setup();

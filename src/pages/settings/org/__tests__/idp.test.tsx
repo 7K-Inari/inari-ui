@@ -75,6 +75,29 @@ describe("IdpBrokeringPage", () => {
     expect(screen.queryByText("sec-new")).not.toBeInTheDocument();
   });
 
+  it("masks the client secret input on create", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText(/no SSO provider configured/i);
+    await user.click(screen.getByRole("button", { name: "Configure provider" }));
+    expect(screen.getByLabelText(/Client secret/)).toHaveAttribute("type", "password");
+  });
+
+  it("blocks create when the client secret is empty", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText(/no SSO provider configured/i);
+    await user.click(screen.getByRole("button", { name: "Configure provider" }));
+    await user.type(screen.getByLabelText(/Alias/), "acme-sso");
+    await user.type(screen.getByLabelText(/Issuer URL/), "https://idp.acme.example");
+    await user.type(screen.getByLabelText(/Client ID/), "inari-acme");
+    await user.click(screen.getByRole("button", { name: "Save provider" }));
+    // Validation fails: the form stays open and no provider is created.
+    expect(screen.getByRole("button", { name: "Save provider" })).toBeInTheDocument();
+    expect(screen.queryByText("acme-sso")).not.toBeInTheDocument();
+    expect(policyMockControl.getState().idpProviders.acme).toBeUndefined();
+  });
+
   it("shows the configured provider without exposing the secret", async () => {
     seedProvider();
     renderPage();
