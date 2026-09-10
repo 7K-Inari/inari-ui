@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
 
-import { decideApproval, decideReason, listApprovals } from "@/api/approvals";
+import { decideApproval, decideReason, listApprovalsInbox } from "@/api/approvals";
+import type { ApprovalRequest } from "@/api/approvals";
+import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
 import { usePermissions } from "@/auth/permissions-context";
 import { Button } from "@/components/ui/button";
@@ -8,12 +10,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { tenantLink } from "@/tenant/tenant-link";
 import { isForbidden } from "@/pages/overview/overview-card";
 import { ApprovalListItems, type DecideFn } from "@/pages/overview/pending-approvals-card";
-import { useOrgFanout } from "@/pages/overview/use-org-fanout";
 
 export const ALL_TENANTS_POLL_MS = 60_000;
 
 interface SectionProps {
-  orgs: string[];
   orgNames: Map<string, string>;
 }
 
@@ -64,14 +64,15 @@ function SectionSkeleton() {
 
 export { SectionSkeleton };
 
-// Pending approvals fanned out across the caller's orgs, grouped by org. One
-// failing org degrades to an inline chip; it never blanks the other groups.
-export function AllTenantsApprovalsSection({ orgs, orgNames }: SectionProps) {
+// Pending approvals from the caller-scoped aggregate endpoint
+// (GET /approvals/inbox, server v1.6.0), grouped client-side by org. One
+// request covers every org — no fan-out cap, so no org is ever hidden.
+export function AllTenantsApprovalsSection({ orgNames }: SectionProps) {
   const { token } = useAuth();
   const permissions = usePermissions();
-  const { entries, overflow, refetchAll } = useOrgFanout(
-    orgs,
-    (token, org) => listApprovals(token, org, "inbox"),
+  const { data, loading, error, refetch } = useAsyncResource(
+    (tok) => listApprovalsInbox(tok),
+    [],
     { refetchIntervalMs: ALL_TENANTS_POLL_MS },
   );
 
@@ -80,18 +81,18 @@ export function AllTenantsApprovalsSection({ orgs, orgNames }: SectionProps) {
       ? undefined
       : async (id, decision) => {
           await decideApproval(token, org, id, decision, decideReason(decision));
-          refetchAll();
+          refetch();
         };
 
-  const firstLoad =
-    entries.length > 0 && entries.every((e) => e.state.data === null && e.state.loading);
-  const groups = entries.filter((e) => (e.state.data?.length ?? 0) > 0);
-  const errors = entries.filter(
-    (e) => e.state.error && !e.state.data && !isForbidden(e.state.error),
-  );
-  const allEmpty =
-    entries.length > 0 &&
-    entries.every((e) => e.state.data !== null && e.state.data.length === 0);
+  const firstLoad = loading && data === null;
+  const groups = new Map<string, ApprovalRequest[]>();
+  for (const approval of data ?? []) {
+    const list = groups.get(approval.tenant) ?? [];
+    list.push(approval);
+    groups.set(approval.tenant, list);
+  }
+  const showError = error !== null && data === null && !isForbidden(error);
+  const allEmpty = data !== null && data.length === 0;
 
   return (
     <Card data-testid="all-approvals">
@@ -100,7 +101,7 @@ export function AllTenantsApprovalsSection({ orgs, orgNames }: SectionProps) {
       </CardHeader>
       <CardContent className="space-y-4">
         {firstLoad && <SectionSkeleton />}
-        {groups.map(({ org, state }) => (
+        {[...groups.entries()].map(([org, approvals]) => (
           <div key={org} data-testid={`all-approvals-org-${org}`} className="space-y-2">
             <div className="flex items-center justify-between">
               <Link
@@ -110,27 +111,27 @@ export function AllTenantsApprovalsSection({ orgs, orgNames }: SectionProps) {
                 {orgNames.get(org) ?? org}
               </Link>
               <span className="text-xs text-muted-foreground">
-                {state.data?.length} pending
+                {approvals.length} pending
               </span>
             </div>
-            <ApprovalListItems approvals={state.data ?? []} onDecide={decideFor(org)} />
+            <ApprovalListItems approvals={approvals} onDecide={decideFor(org)} />
           </div>
         ))}
-        {errors.map(({ org, state }) => (
-          <OrgErrorChip
-            key={org}
-            org={org}
-            name={orgNames.get(org) ?? org}
-            message={state.error?.message ?? "Request failed"}
-            onRetry={refetchAll}
-          />
-        ))}
+        {showError && (
+          <div className="flex items-center gap-3 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm">
+            <span className="text-destructive">
+              Failed to load ({error?.message ?? "Request failed"})
+            </span>
+            <Button variant="outline" size="sm" className="ml-auto" onClick={refetch}>
+              Retry
+            </Button>
+          </div>
+        )}
         {allEmpty && (
           <p className="py-2 text-sm text-muted-foreground">
             No pending approvals across your organizations.
           </p>
         )}
-        <OverflowNote count={overflow} />
       </CardContent>
     </Card>
   );

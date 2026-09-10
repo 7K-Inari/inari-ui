@@ -14,11 +14,6 @@ export interface OrgFanoutResult<T> {
   refetchAll: () => void;
 }
 
-// Escape hatch: if org-count-per-user data or latency measurements ever show
-// this cap hiding approvals (p95 orgs/user >= 5, max >= 10, or section p95
-// >= 1.5s), swap the approvals section to the caller-scoped server aggregate
-// GET /api/v1/approvals/inbox (overview design, Slice 5) instead of raising
-// the cap. Closed as not needed on 2026-09-10 for lack of justifying data.
 const DEFAULT_CAP = 10;
 
 // Bounded cross-org fan-out for the all-tenants home (no wildcard tenant

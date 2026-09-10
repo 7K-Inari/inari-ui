@@ -31,7 +31,7 @@ export function AllTenantsHome() {
       <TenantStrip state={tenantsState} />
       {tenants.length > 0 && (
         <div className="grid gap-6 lg:grid-cols-2">
-          <AllTenantsApprovalsSection orgs={orgs} orgNames={orgNames} />
+          <AllTenantsApprovalsSection orgNames={orgNames} />
           <AllTenantsClusterRollup orgs={orgs} orgNames={orgNames} />
           <AllTenantsActivitySection orgs={orgs} orgNames={orgNames} />
         </div>
