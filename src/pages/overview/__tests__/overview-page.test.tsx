@@ -274,7 +274,8 @@ describe("OverviewPage", () => {
     expect(await within(driftCard).findByText(/No open drift detected/)).toBeInTheDocument();
   });
 
-  it("keeps other cards working when one fails, and recovers on retry", async () => {    const user = userEvent.setup();
+  it("keeps other cards working when one fails, and recovers on retry", async () => {
+    const user = userEvent.setup();
     let failing = true;
     mockServer.use(
       http.get("*/api/v1/tenants/acme/clusters", () => {
