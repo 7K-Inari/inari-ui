@@ -165,7 +165,7 @@ export function DeployWizardPage() {
   }
   const itemData = item.data;
 
-  const pinned = version || itemData.latestVersion;
+  const pinned = version || itemData.latestVersion || "";
 
   const next = () => {
     if (!name) {

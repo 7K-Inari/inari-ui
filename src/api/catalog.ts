@@ -30,13 +30,18 @@ function mapVersion(v: ServerCatalogItemVersion): CatalogVersion {
 
 function mapItem(i: ServerCatalogItem): CatalogItemSummary {
   const versions = i.versions ?? [];
+  const pinned = i.pinnedVersion
+    ? versions.find((v) => v.version === i.pinnedVersion)
+    : undefined;
+  const latest = pinned ?? versions.find((v) => v.channel === "stable") ?? versions[0];
   return {
     id: i.id,
     name: i.name,
     displayName: i.displayName || i.name,
     description: i.description ?? "",
     source: i.source as CatalogSource,
-    latestVersion: i.pinnedVersion || versions[0]?.version || "",
+    latestVersion: latest?.version ?? null,
+    latestChannel: latest?.channel ?? null,
   };
 }
 

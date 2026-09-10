@@ -156,6 +156,7 @@ describe("blueprint slot wiring (inari-ext-argocd)", () => {
       description: "",
       source: "curated",
       latestVersion: "1.2.0",
+      latestChannel: "stable",
     };
     render(
       <MemoryRouter>

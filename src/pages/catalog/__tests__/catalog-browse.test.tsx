@@ -75,6 +75,20 @@ describe("CatalogBrowsePage", () => {
     expect(link).toHaveAttribute("href", "/acme/catalog/cat-postgresql-aws");
   });
 
+  it("shows latest version and channel per item", async () => {
+    renderPage();
+    await screen.findByText("PostgreSQL on AWS");
+    expect(screen.getByText("v1.4.0")).toBeInTheDocument();
+    expect(screen.getByText("v1.15.0")).toBeInTheDocument();
+    expect(screen.getAllByText("stable").length).toBeGreaterThan(0);
+  });
+
+  it("renders versionless items with a dash instead of a broken version", async () => {
+    renderPage();
+    await screen.findByText("Crossplane EKS");
+    expect(screen.getByLabelText("no version published")).toHaveTextContent("—");
+  });
+
   it("renders an error message when the API fails", async () => {
     const { http, HttpResponse } = await import("msw");
     mockServer.use(
