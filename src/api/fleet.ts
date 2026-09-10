@@ -75,6 +75,7 @@ export interface DriftEntry {
   id: string;
   clusterId: string;
   kind: string;
+  status?: string;
   resourceRef?: string;
   desiredHash?: string;
   reportedHash?: string;
@@ -194,6 +195,7 @@ function mapDriftEvent(d: ServerDriftEvent): DriftEntry {
     id: d.id,
     clusterId: d.clusterId,
     kind: d.kind,
+    status: d.status,
     resourceRef: d.resourceRef,
     desiredHash: d.desiredHash,
     reportedHash: d.reportedHash,
@@ -324,8 +326,10 @@ export async function rollbackRollout(
 export async function listDrift(
   token: string | undefined,
   tenant: string,
+  opts?: { status?: string },
 ): Promise<DriftEntry[]> {
-  const res = await apiFetch<ListDriftResponse>(`${base(tenant)}/drift`, {
+  const query = opts?.status ? `?status=${encodeURIComponent(opts.status)}` : "";
+  const res = await apiFetch<ListDriftResponse>(`${base(tenant)}/drift${query}`, {
     token,
   });
   return (res.driftEvents ?? []).map(mapDriftEvent);
