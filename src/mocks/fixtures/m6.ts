@@ -1,5 +1,6 @@
 import type { components } from "@/api/__generated__/schema";
 import type { OidcClient, OidcClientInput, OidcScope } from "@/api/identity";
+import type { IdpProvider, IdpProviderInput } from "@/api/idp";
 import type { ApprovalConfig } from "@/api/policies";
 import type {
   SecretStore,
@@ -57,6 +58,9 @@ export interface PolicyMockState {
   oidcClients: Record<string, OidcClient[]>;
   approvalConfigs: Record<string, ApprovalConfig>;
   secretStores: Record<string, SecretStore[]>;
+  idpProviders: Record<string, IdpProvider>;
+  // Domains claimed across all orgs, for login routing 409s.
+  claimedDomains: Record<string, string>;
 }
 
 export const baselinePack: PolicyPack = {
@@ -315,6 +319,9 @@ function seedState(): PolicyMockState {
       ],
       globex: [],
     },
+    idpProviders: {},
+    // globex has already claimed example.com; acme starts with no IdP.
+    claimedDomains: { "example.com": "globex" },
   };
 }
 
@@ -753,4 +760,66 @@ export function secretStoreStatusFor(org: string, name: string): SecretStoreStat
       },
     ],
   };
+}
+
+// ---- M6.W6: IdP brokering + login-routing domains ----
+
+export function idpProviderFor(org: string): IdpProvider | null {
+  return state.idpProviders[org] ?? null;
+}
+
+export function putIdpProviderMock(org: string, body: IdpProviderInput): IdpProvider {
+  const existing = state.idpProviders[org];
+  const nowIso = new Date().toISOString();
+  const provider: IdpProvider = {
+    provider: body.provider,
+    alias: body.alias,
+    issuerUrl: body.issuerUrl,
+    clientId: body.clientId,
+    // Secret is write-only: create with one sets it; edits without one keep it.
+    secretConfigured: existing ? existing.secretConfigured || Boolean(body.clientSecret) : Boolean(body.clientSecret),
+    claimMapping: body.claimMapping,
+    domainHints: body.domainHints ?? [],
+    createdAt: existing?.createdAt ?? nowIso,
+    updatedAt: nowIso,
+  };
+  for (const d of existing?.domainHints ?? []) delete state.claimedDomains[d];
+  state.idpProviders[org] = provider;
+  for (const d of provider.domainHints) state.claimedDomains[d] = org;
+  return provider;
+}
+
+export function rotateIdpSecretMock(org: string, clientSecret: string): IdpProvider | null {
+  const provider = state.idpProviders[org];
+  if (!provider || !clientSecret) return null;
+  provider.secretConfigured = true;
+  provider.updatedAt = new Date().toISOString();
+  return provider;
+}
+
+export function deleteIdpProviderMock(org: string): boolean {
+  const provider = state.idpProviders[org];
+  if (!provider) return false;
+  for (const d of provider.domainHints) delete state.claimedDomains[d];
+  delete state.idpProviders[org];
+  return true;
+}
+
+// Returns the conflicting domain when another org has claimed it.
+export function domainClaimConflict(org: string, domainHints: string[]): string | null {
+  for (const d of domainHints) {
+    const claimant = state.claimedDomains[d];
+    if (claimant && claimant !== org) return d;
+  }
+  return null;
+}
+
+export function putDomainHintsMock(org: string, domainHints: string[]): IdpProvider | null {
+  const provider = state.idpProviders[org];
+  if (!provider) return null;
+  for (const d of provider.domainHints) delete state.claimedDomains[d];
+  provider.domainHints = domainHints;
+  provider.updatedAt = new Date().toISOString();
+  for (const d of domainHints) state.claimedDomains[d] = org;
+  return provider;
 }
