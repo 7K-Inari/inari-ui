@@ -1,4 +1,6 @@
 import type { components } from "@/api/__generated__/schema";
+import type { OidcClient, OidcClientInput, OidcScope } from "@/api/identity";
+import type { ApprovalConfig } from "@/api/policies";
 
 type PolicyPack = components["schemas"]["PolicyPack"];
 type PolicyAssignment = components["schemas"]["PolicyAssignment"];
@@ -47,6 +49,8 @@ export interface PolicyMockState {
   teamMembers: Record<string, MemberView[]>;
   visibility: Record<string, CatalogVisibilityRule[]>;
   registrationTokens: Record<string, RegistrationToken[]>;
+  oidcClients: Record<string, OidcClient[]>;
+  approvalConfigs: Record<string, ApprovalConfig>;
 }
 
 export const baselinePack: PolicyPack = {
@@ -236,6 +240,46 @@ function seedState(): PolicyMockState {
       globex: [],
     },
     registrationTokens: {},
+    oidcClients: {
+      acme: [
+        {
+          id: "oc-cli",
+          orgId: "acme",
+          name: "inari-cli",
+          description: "Public client for the Inari CLI",
+          redirectUris: ["http://localhost:8976/callback"],
+          grantTypes: ["authorization_code", "refresh_token"],
+          isPublic: true,
+          scopes: ["clusters:read", "catalog:read"],
+          createdAt: iso(now - 50 * 86_400_000),
+        },
+        {
+          id: "oc-ci",
+          orgId: "acme",
+          name: "ci-deployer",
+          description: "Service client for CI pipelines",
+          redirectUris: [],
+          grantTypes: ["client_credentials"],
+          isPublic: false,
+          scopes: ["deploys:write"],
+          createdAt: iso(now - 20 * 86_400_000),
+        },
+      ],
+      globex: [],
+    },
+    approvalConfigs: {
+      acme: {
+        orgId: "acme",
+        thresholds: [
+          { action: "deploy", approvalsRequired: 1 },
+          { action: "zone-decommission", approvalsRequired: 2 },
+        ],
+        approverGroups: ["tenant-acme/platform-team"],
+        autoApproveRules: [{ action: "deploy", condition: "env == 'dev'" }],
+        updatedBy: "pe@inari.dev",
+        updatedAt: iso(now - 4 * 86_400_000),
+      },
+    },
   };
 }
 
@@ -507,4 +551,96 @@ export function revokeRegistrationTokenMock(clusterId: string, tokenId: string):
   const before = tokens.length;
   state.registrationTokens[clusterId] = tokens.filter((t) => t.id !== tokenId);
   return state.registrationTokens[clusterId].length < before;
+}
+
+// ---- M6.W3: identity (OIDC clients / scopes) and approvals config ----
+
+export const oidcScopesCatalog: OidcScope[] = [
+  { name: "clusters:read", description: "Read tenant clusters", audience: "inari-clusters" },
+  { name: "clusters:write", description: "Register and remove clusters", audience: "inari-clusters" },
+  { name: "deploys:write", description: "Create and upgrade deploys", audience: "inari-deploys" },
+  { name: "catalog:read", description: "Browse the service catalog", audience: "inari-catalog" },
+];
+
+export function oidcClientsFor(org: string): OidcClient[] {
+  return state.oidcClients[org] ?? [];
+}
+
+export function findOidcClient(org: string, id: string): OidcClient | null {
+  return oidcClientsFor(org).find((c) => c.id === id) ?? null;
+}
+
+export function createOidcClientMock(org: string, body: OidcClientInput): OidcClient {
+  const clients = (state.oidcClients[org] ??= []);
+  const client: OidcClient = {
+    id: nextId("oc"),
+    orgId: org,
+    name: body.name,
+    description: body.description,
+    redirectUris: body.redirectUris ?? [],
+    grantTypes: body.grantTypes ?? [],
+    isPublic: body.isPublic ?? false,
+    scopes: [],
+    createdAt: new Date().toISOString(),
+  };
+  clients.push(client);
+  return client;
+}
+
+export function updateOidcClientMock(
+  org: string,
+  id: string,
+  body: OidcClientInput,
+): OidcClient | null {
+  const client = findOidcClient(org, id);
+  if (!client) return null;
+  client.name = body.name;
+  client.description = body.description;
+  client.redirectUris = body.redirectUris ?? [];
+  client.grantTypes = body.grantTypes ?? [];
+  client.isPublic = body.isPublic ?? false;
+  return client;
+}
+
+export function deleteOidcClientMock(org: string, id: string): boolean {
+  const clients = state.oidcClients[org] ?? [];
+  const before = clients.length;
+  state.oidcClients[org] = clients.filter((c) => c.id !== id);
+  return state.oidcClients[org].length < before;
+}
+
+export function putClientScopesMock(org: string, id: string, scopes: string[]): OidcClient | null {
+  const client = findOidcClient(org, id);
+  if (!client) return null;
+  client.scopes = scopes;
+  return client;
+}
+
+export function approvalConfigFor(org: string): ApprovalConfig {
+  return (
+    state.approvalConfigs[org] ?? {
+      orgId: org,
+      thresholds: [],
+      approverGroups: [],
+      autoApproveRules: [],
+      updatedBy: "",
+      updatedAt: new Date(now).toISOString(),
+    }
+  );
+}
+
+export function putApprovalConfigMock(
+  org: string,
+  body: Pick<ApprovalConfig, "thresholds" | "approverGroups" | "autoApproveRules">,
+): ApprovalConfig {
+  const config: ApprovalConfig = {
+    orgId: org,
+    thresholds: body.thresholds ?? [],
+    approverGroups: body.approverGroups ?? [],
+    autoApproveRules: body.autoApproveRules ?? [],
+    updatedBy: "me@inari.dev",
+    updatedAt: new Date().toISOString(),
+  };
+  state.approvalConfigs[org] = config;
+  return config;
 }

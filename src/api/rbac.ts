@@ -52,3 +52,18 @@ export async function setRbacMapping(
     body: { groupPath, clusterRole, mapped },
   });
 }
+
+// Declarative whole-set replace (M6.W3 settings editor): the settings page
+// submits the full desired mapping set in one call rather than N sequential
+// per-cell writes.
+export async function putRbacMappings(
+  token: string | undefined,
+  tenant: string,
+  mappings: RbacMapping[],
+): Promise<void> {
+  await apiFetch(`/tenants/${encodeURIComponent(resolveTenant(tenant))}/rbac/mappings`, {
+    token,
+    method: "PUT",
+    body: { mappings },
+  });
+}

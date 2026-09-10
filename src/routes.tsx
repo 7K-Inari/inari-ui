@@ -34,6 +34,10 @@ import { SettingsLayout } from "@/pages/settings/settings-layout";
 import { CompliancePage } from "@/pages/settings/policies/compliance";
 import { ExemptionsPage } from "@/pages/settings/policies/exemptions";
 import { PolicyPacksPage } from "@/pages/settings/policies/packs";
+import { ApprovalsConfigPage } from "@/pages/settings/policies/approvals-config";
+import { OidcClientsPage } from "@/pages/settings/identity/clients";
+import { OidcScopesPage } from "@/pages/settings/identity/scopes";
+import { RbacMappingSettingsPage } from "@/pages/settings/identity/rbac-mapping";
 import { GitSettingsPage } from "@/pages/settings/org/git";
 import { MembersPage } from "@/pages/settings/org/members";
 import { OrgProfilePage } from "@/pages/settings/org/org-profile";
@@ -126,46 +130,14 @@ export function AppRoutes() {
                 />
               }
             />
-            <Route
-              path="identity/clients"
-              element={
-                <PlaceholderPage
-                  title="OIDC clients"
-                  description="Service and public clients for agents, CLI, and CI. Ships in a later milestone."
-                />
-              }
-            />
-            <Route
-              path="identity/scopes"
-              element={
-                <PlaceholderPage
-                  title="Scopes"
-                  description="Audience/scope catalog per client. Ships in a later milestone."
-                />
-              }
-            />
-            <Route
-              path="identity/rbac"
-              element={
-                <PlaceholderPage
-                  title="RBAC mapping"
-                  description="Group-to-role mapping matrix. Ships in a later milestone."
-                />
-              }
-            />
+            <Route path="identity/clients" element={<OidcClientsPage />} />
+            <Route path="identity/scopes" element={<OidcScopesPage />} />
+            <Route path="identity/rbac" element={<RbacMappingSettingsPage />} />
             <Route path="policies/packs" element={<PolicyPacksPage />} />
             <Route path="policies/exemptions" element={<ExemptionsPage />} />
             <Route path="policies/compliance" element={<CompliancePage />} />
             <Route path="policies/visibility" element={<VisibilityPage />} />
-            <Route
-              path="policies/approvals"
-              element={
-                <PlaceholderPage
-                  title="Approvals configuration"
-                  description="Approval thresholds and approver groups. Ships in a later milestone."
-                />
-              }
-            />
+            <Route path="policies/approvals" element={<ApprovalsConfigPage />} />
             <Route path="tokens/registration" element={<RegistrationTokensPage />} />
             <Route
               path="tokens/eso-stores"

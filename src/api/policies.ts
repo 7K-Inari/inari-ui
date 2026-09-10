@@ -171,3 +171,50 @@ export async function putCatalogVisibility(
     { token, method: "PUT", body: { visible } },
   );
 }
+
+// ---- approvals configuration (M6.W3) ----
+// TODO(contract-sync): proposed huma shapes not yet in the pinned contract;
+// swap for generated schemas after npm run sync:api.
+
+export interface ApprovalThreshold {
+  action: string;
+  approvalsRequired: number;
+}
+
+export interface AutoApproveRule {
+  action: string;
+  condition: string;
+}
+
+export interface ApprovalConfig {
+  orgId: string;
+  thresholds: ApprovalThreshold[];
+  approverGroups: string[];
+  autoApproveRules: AutoApproveRule[];
+  updatedBy: string;
+  /** Format: date-time */
+  updatedAt: string;
+}
+
+export async function getApprovalConfig(
+  token: string | undefined,
+  tenant: string,
+): Promise<ApprovalConfig> {
+  const res = await apiFetch<{ config: ApprovalConfig }>(
+    `${tenantPath(tenant)}/approval-config`,
+    { token },
+  );
+  return res.config;
+}
+
+export async function putApprovalConfig(
+  token: string | undefined,
+  tenant: string,
+  body: Pick<ApprovalConfig, "thresholds" | "approverGroups" | "autoApproveRules">,
+): Promise<ApprovalConfig> {
+  const res = await apiFetch<{ config: ApprovalConfig }>(
+    `${tenantPath(tenant)}/approval-config`,
+    { token, method: "PUT", body },
+  );
+  return res.config;
+}

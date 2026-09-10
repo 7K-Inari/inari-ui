@@ -367,6 +367,14 @@ export function setRbacMappingMock(
   if (!mapped && idx !== -1) list.splice(idx, 1);
 }
 
+// Declarative whole-set replace (M6.W3 settings editor).
+export function setRbacMappingsMock(
+  tenant: string,
+  mappings: { groupPath: string; clusterRole: string }[],
+): void {
+  state.rbac[tenant] = mappings.map((m) => ({ ...m }));
+}
+
 // ---- approvals ----
 
 export function listApprovalsFor(
