@@ -81,16 +81,21 @@ function toFormData(store: SecretStore): Record<string, unknown> {
 function toInput(data: Record<string, unknown>): SecretStoreInput {
   const provider = (data.provider ?? {}) as Record<string, unknown>;
   const ref = (provider.authSecretRef ?? {}) as Record<string, unknown>;
+  const type = String(provider.type ?? "") as SecretStoreProviderType;
+  // Keep only the fields relevant to the selected provider type — otherwise
+  // switching type on edit leaks stale values (e.g. a vault url onto awsSM).
+  const field = (key: string, relevant: boolean) =>
+    relevant && provider[key] ? String(provider[key]) : undefined;
   return {
     name: String(data.name ?? ""),
     clusterIds: Array.isArray(data.clusterIds)
       ? (data.clusterIds as unknown[]).map(String)
       : [],
     provider: {
-      type: String(provider.type ?? "") as SecretStoreProviderType,
-      region: provider.region ? String(provider.region) : undefined,
-      url: provider.url ? String(provider.url) : undefined,
-      projectId: provider.projectId ? String(provider.projectId) : undefined,
+      type,
+      region: field("region", type === "awsSM"),
+      url: field("url", type === "vault" || type === "azurekv"),
+      projectId: field("projectId", type === "gcpsm"),
       authSecretRef: {
         name: String(ref.name ?? ""),
         namespace: String(ref.namespace ?? ""),

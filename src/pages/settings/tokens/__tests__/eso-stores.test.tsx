@@ -118,15 +118,15 @@ describe("EsoStoresPage", () => {
     const row = screen.getByText("acme-vault").closest("tr")!;
     await user.click(within(row).getByRole("button", { name: "Edit" }));
     expect(screen.getByLabelText(/^Name/)).toBeDisabled();
-    const region = screen.getByLabelText(/Region/);
-    await user.clear(region);
-    await user.type(region, "eu-west-1");
+    const url = screen.getByLabelText(/Server URL/);
+    await user.clear(url);
+    await user.type(url, "https://vault-eu.acme.example");
     await user.click(screen.getByRole("button", { name: "Save store" }));
     await screen.findByText("acme-vault");
     const updated = policyMockControl
       .getState()
       .secretStores.acme.find((s) => s.name === "acme-vault");
-    expect(updated?.provider.region).toBe("eu-west-1");
+    expect(updated?.provider.url).toBe("https://vault-eu.acme.example");
   });
 
   it("deletes an org-owned store after confirmation", async () => {
@@ -208,5 +208,23 @@ describe("EsoStoresPage", () => {
     await user.click(screen.getByRole("button", { name: "New store" }));
     expect(screen.getByLabelText(/^Name/)).not.toBeDisabled();
     expect(screen.getByLabelText(/^Name/)).toHaveValue("");
+  });
+
+  it("drops stale provider-specific fields when switching provider type", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("acme-vault");
+    const row = screen.getByText("acme-vault").closest("tr")!;
+    await user.click(within(row).getByRole("button", { name: "Edit" }));
+    await user.selectOptions(screen.getByLabelText(/Provider/), "awsSM");
+    await user.click(screen.getByRole("button", { name: "Save store" }));
+    await screen.findByText("acme-vault");
+    const updated = policyMockControl
+      .getState()
+      .secretStores.acme.find((s) => s.name === "acme-vault");
+    expect(updated?.provider).toEqual({
+      type: "awsSM",
+      authSecretRef: { name: "eso-vault-token", namespace: "external-secrets" },
+    });
   });
 });
