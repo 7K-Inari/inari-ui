@@ -69,7 +69,8 @@ export function decideReason(decision: "approve" | "reject"): string {
   return decision === "approve" ? "Approved from overview" : "Rejected from overview";
 }
 
-export async function decideApproval(  token: string | undefined,
+export async function decideApproval(
+  token: string | undefined,
   tenant: string,
   id: string,
   decision: "approve" | "reject",
