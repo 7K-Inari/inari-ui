@@ -64,6 +64,20 @@ describe("MembersPage", () => {
     expect(added?.role).toBe("viewer");
   });
 
+  it("changes a member role via PUT", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    const row = (await screen.findByText("Dev Dorian")).closest("tr")!;
+    await user.selectOptions(
+      within(row).getByLabelText("Role for Dev Dorian"),
+      "admin",
+    );
+    const updated = policyMockControl
+      .getState()
+      .orgMembers.acme.find((m) => m.userId === "u-dev");
+    expect(updated?.role).toBe("admin");
+  });
+
   it("removes a member", async () => {
     const user = userEvent.setup();
     renderPage();
