@@ -38,6 +38,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/approvals/inbox": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List pending approvals across all orgs the caller belongs to */
+        get: operations["inboxApprovals"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenants": {
         parameters: {
             query?: never;
@@ -447,7 +464,8 @@ export interface paths {
         get: operations["getCluster"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Cancel a pending cluster registration (409 once registered) */
+        delete: operations["deleteCluster"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1849,6 +1867,15 @@ export interface components {
             readonly $schema?: string;
             config: components["schemas"]["TenantGitConfig"];
         };
+        InboxOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/InboxOutputBody.json
+             */
+            readonly $schema?: string;
+            items: components["schemas"]["ApprovalRequest"][] | null;
+        };
         InstanceView: {
             catalogItemId: string;
             clusterId: string;
@@ -2564,6 +2591,38 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    inboxApprovals: {
+        parameters: {
+            query?: {
+                /** @description Max items to return (default 50, max 200) */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InboxOutputBody"];
+                };
             };
             /** @description Error */
             default: {
@@ -3592,6 +3651,36 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ClusterOutputBody"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteCluster: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {

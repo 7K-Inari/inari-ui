@@ -122,6 +122,27 @@ function toServerCluster(c: ClusterSummary | ClusterDetail) {
 
 // ---- M3: cloud accounts (huma CloudAccount wire shape) ----
 
+// Orgs the mock caller belongs to; matches the tenants used by the cluster
+// and m3 fixtures (acme, globex) so cross-tenant pages fan out over both.
+function seededOrganizations() {
+  return [
+    {
+      id: "t-acme",
+      slug: "acme",
+      displayName: "Acme Corp",
+      keycloakOrgId: "kc-acme",
+      createdAt: new Date(Date.now() - 90 * 86_400_000).toISOString(),
+    },
+    {
+      id: "t-globex",
+      slug: "globex",
+      displayName: "Globex Inc",
+      keycloakOrgId: "kc-globex",
+      createdAt: new Date(Date.now() - 60 * 86_400_000).toISOString(),
+    },
+  ];
+}
+
 function toServerCloudAccount(a: CloudAccount) {
   return {
     id: a.id,
@@ -240,6 +261,9 @@ export const handlers = [
   ),
 
   // ---- tenants (platform-scoped, not under /tenants/:org) ----
+  http.get("*/api/v1/tenants", () =>
+    HttpResponse.json({ tenants: seededOrganizations() }),
+  ),
   http.post("*/api/v1/tenants", async ({ request }) => {
     const body = (await request.json()) as { slug?: string; displayName?: string };
     if (!body.slug || !body.displayName) {
@@ -488,6 +512,13 @@ export const handlers = [
     return HttpResponse.json({ ok: true });
   }),
 
+  // ---- approvals inbox aggregate (server v1.6.0, caller-scoped) ----
+  http.get("*/api/v1/approvals/inbox", () => {
+    // "all" lists pending inbox items across every org fixture.
+    const items = listApprovalsFor("all", { state: "pending" }).map(toServerApproval);
+    return HttpResponse.json({ items });
+  }),
+
   // ---- approvals (M3) ----
   http.get(`${BASE}/approvals`, ({ params, request }) => {
     const url = new URL(request.url);
@@ -729,9 +760,11 @@ export const handlers = [
     return HttpResponse.json({ rollout });
   }),
 
-  http.get(`${BASE}/drift`, () => {
+  http.get(`${BASE}/drift`, ({ request }) => {
     // ListDriftOutputBody carries driftEvents, not drift.
-    return HttpResponse.json({ driftEvents: listDriftMocks() });
+    const status = new URL(request.url).searchParams.get("status");
+    const events = listDriftMocks().filter((d) => !status || d.status === status);
+    return HttpResponse.json({ driftEvents: events });
   }),
 
   http.get(`${BASE}/agent-channels`, () => {

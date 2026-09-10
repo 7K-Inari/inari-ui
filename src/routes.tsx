@@ -5,7 +5,9 @@ import { ExtensionHostProviders, useSdkSlotContext } from "@/ext/host-context";
 import { ExtensionsProvider } from "@/ext/registry";
 import { ExtensionPageHost } from "@/ext/slots";
 import { AppShell } from "@/layout/app-shell";
-import { AllTenantsHome, PlaceholderPage } from "@/pages/placeholder";
+import { PlaceholderPage } from "@/pages/placeholder";
+import { AllTenantsHome } from "@/pages/overview/all-tenants-home";
+import { OverviewPage } from "@/pages/overview/overview-page";
 import { CreateOrganizationPage } from "@/pages/organizations/create-organization";
 import { ClusterDetailPage } from "@/pages/clusters/cluster-detail";
 import { ClusterListPage } from "@/pages/clusters/cluster-list";
@@ -221,10 +223,5 @@ export function AppRoutes() {
 function OverviewOrHome() {
   const { tenant } = useTenant();
   if (tenant === ALL_TENANTS) return <AllTenantsHome />;
-  return (
-    <PlaceholderPage
-      title="Overview"
-      description="Tenant overview: resources, health, and activity."
-    />
-  );
+  return <OverviewPage />;
 }
