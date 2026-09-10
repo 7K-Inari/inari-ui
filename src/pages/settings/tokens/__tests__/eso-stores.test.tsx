@@ -167,4 +167,46 @@ describe("EsoStoresPage", () => {
     ).not.toBeInTheDocument();
     expect(screen.getByText("Read-only (org viewer)")).toBeInTheDocument();
   });
+
+  it("surfaces a duplicate-name 409 without creating the store", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("acme-vault");
+    await user.click(screen.getByRole("button", { name: "New store" }));
+    await user.type(screen.getByLabelText(/^Name/), "acme-vault");
+    await user.selectOptions(screen.getByLabelText(/Provider/), "awsSM");
+    await user.type(screen.getByLabelText(/^Secret name\s*\*$/), "x");
+    await user.type(screen.getByLabelText(/^Secret namespace\s*\*$/), "y");
+    await user.click(screen.getByRole("button", { name: "Create store" }));
+    expect(await screen.findByText(/already exists/)).toBeInTheDocument();
+    expect(policyMockControl.getState().secretStores.acme).toHaveLength(2);
+  });
+
+  it("surfaces a list failure", async () => {
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.get("*/api/v1/tenants/:org/secret-stores", () =>
+        HttpResponse.json(
+          { title: "Error", status: 500, detail: "boom" },
+          { status: 500 },
+        ),
+      ),
+    );
+    renderPage();
+    expect(
+      await screen.findByText(/Failed to load secret stores/),
+    ).toBeInTheDocument();
+  });
+
+  it("cancel-during-edit then New store resets the form", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("acme-vault");
+    const row = screen.getByText("acme-vault").closest("tr")!;
+    await user.click(within(row).getByRole("button", { name: "Edit" }));
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+    await user.click(screen.getByRole("button", { name: "New store" }));
+    expect(screen.getByLabelText(/^Name/)).not.toBeDisabled();
+    expect(screen.getByLabelText(/^Name/)).toHaveValue("");
+  });
 });
