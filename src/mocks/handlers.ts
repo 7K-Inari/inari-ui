@@ -73,6 +73,28 @@ import {
   setAgentChannelMock,
 } from "@/mocks/fixtures/m4";
 
+import type { components } from "@/api/__generated__/schema";
+import {
+  assignPackMock,
+  createPackMock,
+  decideExemptionMock,
+  evaluateMock,
+  exemptionsFor,
+  gitConfigFor,
+  packsFor,
+  policiesFor,
+  requestExemptionMock,
+  setGitConfigMock,
+  unassignPackMock,
+} from "@/mocks/fixtures/m6";
+
+type CreatePackInputBody = components["schemas"]["CreatePackInputBody"];
+type AssignPackInputBody = components["schemas"]["AssignPackInputBody"];
+type RequestExemptionInputBody = components["schemas"]["RequestExemptionInputBody"];
+type DecideExemptionInputBody = components["schemas"]["DecideExemptionInputBody"];
+type EvaluateInputBody = components["schemas"]["EvaluateInputBody"];
+type GitConfigInputBody = components["schemas"]["GitConfigInputBody"];
+
 // Handlers mirror the real inari-server REST surface: tenant slug in the
 // path (/api/v1/tenants/{org}/...) and wrapped response envelopes
 // ({cluster}, {clusters}, {items}, {instances}, {deploy}, ...).
@@ -765,6 +787,91 @@ export const handlers = [
     );
     if (!updated) return humaError(404, "cluster set not found");
     return HttpResponse.json({ channel: updated });
+  }),
+
+  // ---- M6.W1: settings — policy packs ----
+  http.get(`${BASE}/policy-packs`, ({ params }) =>
+    HttpResponse.json({ packs: packsFor(params.org as string) }),
+  ),
+
+  http.post(`${BASE}/policy-packs`, async ({ params, request }) => {
+    const body = (await request.json()) as CreatePackInputBody;
+    if (!body.name || !body.engine || !body.version || body.manifests === undefined) {
+      return humaError(422, "validation failed (name, engine, version, manifests are required)");
+    }
+    return HttpResponse.json({ pack: createPackMock(params.org as string, body) });
+  }),
+
+  http.post(`${BASE}/policy-packs/:id/assign`, async ({ params, request }) => {
+    const body = (await request.json()) as AssignPackInputBody;
+    if (!body.targetType || !body.targetId) {
+      return humaError(422, "validation failed (targetType, targetId are required)");
+    }
+    const assignment = assignPackMock(params.id as string, body);
+    if (!assignment) return humaError(404, "policy pack not found");
+    return HttpResponse.json({ assignment });
+  }),
+
+  http.delete(`${BASE}/policy-packs/:id/assignments/:assignmentId`, ({ params }) => {
+    if (!unassignPackMock(params.id as string, params.assignmentId as string)) {
+      return humaError(404, "assignment not found");
+    }
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // ---- M6.W1: settings — exemptions ----
+  http.get(`${BASE}/exemptions`, ({ params }) =>
+    HttpResponse.json({ exemptions: exemptionsFor(params.org as string) }),
+  ),
+
+  http.post(`${BASE}/exemptions`, async ({ params, request }) => {
+    const body = (await request.json()) as RequestExemptionInputBody;
+    if (!body.policyId || !body.reason || !body.expiresAt) {
+      return humaError(422, "validation failed (policyId, reason, expiresAt are required)");
+    }
+    return HttpResponse.json({
+      exemption: requestExemptionMock(params.org as string, body),
+    });
+  }),
+
+  http.post(`${BASE}/exemptions/:id/decide`, async ({ params, request }) => {
+    const body = (await request.json()) as DecideExemptionInputBody;
+    const exemption = decideExemptionMock(params.id as string, body.approve);
+    if (!exemption) return humaError(404, "exemption not found");
+    return HttpResponse.json({ exemption });
+  }),
+
+  // ---- M6.W1: settings — compliance ----
+  http.get(`${BASE}/policies`, ({ params }) =>
+    HttpResponse.json({ policies: policiesFor(params.org as string) }),
+  ),
+
+  http.post(`${BASE}/policies/evaluate`, async ({ request }) => {
+    const body = (await request.json()) as EvaluateInputBody;
+    if (!body.itemId || !body.version || !body.clusterId) {
+      return humaError(422, "validation failed (itemId, version, clusterId are required)");
+    }
+    return HttpResponse.json({ decision: evaluateMock() });
+  }),
+
+  // ---- M6.W1: settings — tenant git config ----
+  http.get(`${BASE}/git-config`, ({ params }) => {
+    const config = gitConfigFor(params.org as string);
+    if (!config) return humaError(404, "git config not found");
+    return HttpResponse.json({ config });
+  }),
+
+  http.put(`${BASE}/git-config`, async ({ params, request }) => {
+    const body = (await request.json()) as GitConfigInputBody;
+    if (!body.repo || !body.commitPolicy) {
+      return humaError(422, "validation failed (repo, commitPolicy are required)");
+    }
+    if (body.commitPolicy !== "direct" && body.commitPolicy !== "pull_request") {
+      return humaError(422, "commitPolicy must be direct or pull_request");
+    }
+    const config = setGitConfigMock(params.org as string, body);
+    void config;
+    return new HttpResponse(null, { status: 204 });
   }),
 ];
 

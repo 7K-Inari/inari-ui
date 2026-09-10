@@ -30,6 +30,11 @@ import { RbacMatrixPage } from "@/pages/rbac/rbac-matrix";
 import { ApprovalsPage } from "@/pages/approvals/approvals-page";
 import { AuditLogPage } from "@/pages/audit/audit-log-page";
 import { PlatformPage } from "@/pages/platform/platform-page";
+import { SettingsLayout } from "@/pages/settings/settings-layout";
+import { CompliancePage } from "@/pages/settings/policies/compliance";
+import { ExemptionsPage } from "@/pages/settings/policies/exemptions";
+import { PolicyPacksPage } from "@/pages/settings/policies/packs";
+import { GitSettingsPage } from "@/pages/settings/org/git";
 import { VendZoneWizardPage } from "@/pages/zones/vend-wizard";
 import { ZoneDetailPage } from "@/pages/zones/zone-detail";
 import { ZoneListPage } from "@/pages/zones/zone-list";
@@ -92,15 +97,122 @@ export function AppRoutes() {
           <Route path="rbac" element={<RbacMatrixPage />} />
           <Route path="ext/*" element={<ExtensionPageRoute />} />
           <Route path="extensions" element={<ExtensionsPage />} />
-          <Route
-            path="settings/*"
-            element={
-              <PlaceholderPage
-                title="Settings"
-                description="Tenant/Org, Identity, Policies, and Tokens & Secrets."
-              />
-            }
-          />
+          <Route path="settings" element={<SettingsLayout />}>
+            <Route index element={<Navigate to="org/git" replace />} />
+            <Route
+              path="org"
+              element={
+                <PlaceholderPage
+                  title="Organization profile"
+                  description="Org name and display settings. Ships in a later milestone."
+                />
+              }
+            />
+            <Route
+              path="org/members"
+              element={
+                <PlaceholderPage
+                  title="Members"
+                  description="Org-wide membership and role assignment. Ships in a later milestone."
+                />
+              }
+            />
+            <Route
+              path="org/teams"
+              element={
+                <PlaceholderPage
+                  title="Teams"
+                  description="Team CRUD and per-team membership. Ships in a later milestone."
+                />
+              }
+            />
+            <Route path="org/git" element={<GitSettingsPage />} />
+            <Route
+              path="org/idp"
+              element={
+                <PlaceholderPage
+                  title="IdP brokering"
+                  description="Bring-your-own identity provider (OIDC). Ships in a later milestone."
+                />
+              }
+            />
+            <Route
+              path="org/domains"
+              element={
+                <PlaceholderPage
+                  title="Domains"
+                  description="Verified organization domains. Ships in a later milestone."
+                />
+              }
+            />
+            <Route
+              path="identity/clients"
+              element={
+                <PlaceholderPage
+                  title="OIDC clients"
+                  description="Service and public clients for agents, CLI, and CI. Ships in a later milestone."
+                />
+              }
+            />
+            <Route
+              path="identity/scopes"
+              element={
+                <PlaceholderPage
+                  title="Scopes"
+                  description="Audience/scope catalog per client. Ships in a later milestone."
+                />
+              }
+            />
+            <Route
+              path="identity/rbac"
+              element={
+                <PlaceholderPage
+                  title="RBAC mapping"
+                  description="Group-to-role mapping matrix. Ships in a later milestone."
+                />
+              }
+            />
+            <Route path="policies/packs" element={<PolicyPacksPage />} />
+            <Route path="policies/exemptions" element={<ExemptionsPage />} />
+            <Route path="policies/compliance" element={<CompliancePage />} />
+            <Route
+              path="policies/visibility"
+              element={
+                <PlaceholderPage
+                  title="Catalog visibility"
+                  description="Tenant-scoped catalog visibility rules. Ships once the server route lands."
+                />
+              }
+            />
+            <Route
+              path="policies/approvals"
+              element={
+                <PlaceholderPage
+                  title="Approvals configuration"
+                  description="Approval thresholds and approver groups. Ships in a later milestone."
+                />
+              }
+            />
+            <Route
+              path="tokens/registration"
+              element={
+                <PlaceholderPage
+                  title="Registration tokens"
+                  description="Cluster registration tokens. Ships in a later milestone."
+                />
+              }
+            />
+            <Route
+              path="tokens/eso-stores"
+              element={
+                <PlaceholderPage
+                  title="ESO stores"
+                  description="External Secrets Operator SecretStore registry. Ships in a later milestone."
+                />
+              }
+            />
+            <Route path="*" element={<Navigate to="org/git" replace />} />
+          </Route>
           <Route path="*" element={<Navigate to="overview" replace />} />
         </Route>
       </Routes>
