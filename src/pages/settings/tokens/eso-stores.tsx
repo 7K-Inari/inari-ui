@@ -32,7 +32,7 @@ const STORE_SCHEMA: Record<string, unknown> = {
     name: {
       type: "string",
       title: "Name",
-      pattern: "^[a-z0-9-]+$",
+      pattern: "^[a-z0-9][a-z0-9-]*$",
       description: "Lowercase alphanumeric with dashes.",
     },
     clusterIds: {
