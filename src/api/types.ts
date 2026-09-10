@@ -117,6 +117,7 @@ export interface ResourceInstanceSummary {
   ownerTeam: string;
   updateAvailable: { from: string; to: string } | null;
   createdAt: string;
+  updatedAt: string;
 }
 
 export interface ResourceInstanceDetail extends ResourceInstanceSummary {

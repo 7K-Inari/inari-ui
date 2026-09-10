@@ -10,6 +10,7 @@ import {
   OverflowNote,
   SectionSkeleton,
 } from "@/pages/overview/all-tenants-approvals";
+import { isForbidden } from "@/pages/overview/overview-card";
 import { useOrgFanout } from "@/pages/overview/use-org-fanout";
 
 interface SectionProps {
@@ -58,7 +59,9 @@ export function AllTenantsClusterRollup({ orgs, orgNames }: SectionProps) {
   const firstLoad =
     entries.length > 0 && entries.every((e) => e.state.data === null && e.state.loading);
   const chips = entries.filter((e) => (e.state.data?.length ?? 0) > 0);
-  const errors = entries.filter((e) => e.state.error && !e.state.data);
+  const errors = entries.filter(
+    (e) => e.state.error && !e.state.data && !isForbidden(e.state.error),
+  );
   const allEmpty =
     entries.length > 0 &&
     entries.every((e) => e.state.data !== null && e.state.data.length === 0);

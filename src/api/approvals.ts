@@ -63,8 +63,13 @@ export async function listApprovals(
   return (res.approvals ?? []).map(mapApproval);
 }
 
-export async function decideApproval(
-  token: string | undefined,
+// Inline decide (overview cards) has no reason input; the server records a
+// default rationale.
+export function decideReason(decision: "approve" | "reject"): string {
+  return decision === "approve" ? "Approved from overview" : "Rejected from overview";
+}
+
+export async function decideApproval(  token: string | undefined,
   tenant: string,
   id: string,
   decision: "approve" | "reject",

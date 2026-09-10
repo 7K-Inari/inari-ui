@@ -1,10 +1,13 @@
 import { Link } from "react-router-dom";
 
-import { listApprovals } from "@/api/approvals";
+import { decideApproval, decideReason, listApprovals } from "@/api/approvals";
+import { useAuth } from "@/auth/auth-context";
+import { usePermissions } from "@/auth/permissions-context";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { tenantLink } from "@/tenant/tenant-link";
-import { ApprovalListItems } from "@/pages/overview/pending-approvals-card";
+import { isForbidden } from "@/pages/overview/overview-card";
+import { ApprovalListItems, type DecideFn } from "@/pages/overview/pending-approvals-card";
 import { useOrgFanout } from "@/pages/overview/use-org-fanout";
 
 export const ALL_TENANTS_POLL_MS = 60_000;
@@ -64,16 +67,28 @@ export { SectionSkeleton };
 // Pending approvals fanned out across the caller's orgs, grouped by org. One
 // failing org degrades to an inline chip; it never blanks the other groups.
 export function AllTenantsApprovalsSection({ orgs, orgNames }: SectionProps) {
+  const { token } = useAuth();
+  const permissions = usePermissions();
   const { entries, overflow, refetchAll } = useOrgFanout(
     orgs,
     (token, org) => listApprovals(token, org, "inbox"),
     { refetchIntervalMs: ALL_TENANTS_POLL_MS },
   );
 
+  const decideFor = (org: string): DecideFn | undefined =>
+    permissions.tenants?.[org]?.canDecideApprovals === false
+      ? undefined
+      : async (id, decision) => {
+          await decideApproval(token, org, id, decision, decideReason(decision));
+          refetchAll();
+        };
+
   const firstLoad =
     entries.length > 0 && entries.every((e) => e.state.data === null && e.state.loading);
   const groups = entries.filter((e) => (e.state.data?.length ?? 0) > 0);
-  const errors = entries.filter((e) => e.state.error && !e.state.data);
+  const errors = entries.filter(
+    (e) => e.state.error && !e.state.data && !isForbidden(e.state.error),
+  );
   const allEmpty =
     entries.length > 0 &&
     entries.every((e) => e.state.data !== null && e.state.data.length === 0);
@@ -98,7 +113,7 @@ export function AllTenantsApprovalsSection({ orgs, orgNames }: SectionProps) {
                 {state.data?.length} pending
               </span>
             </div>
-            <ApprovalListItems approvals={state.data ?? []} />
+            <ApprovalListItems approvals={state.data ?? []} onDecide={decideFor(org)} />
           </div>
         ))}
         {errors.map(({ org, state }) => (

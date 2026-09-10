@@ -139,4 +139,73 @@ describe("PermissionsProvider", () => {
       expect(screen.getByTestId("can-create")).toHaveTextContent("false"),
     );
   });
+
+  describe("per-tenant projection seam", () => {
+    function TenantProbe() {
+      const permissions = usePermissions();
+      return (
+        <span data-testid="tenant-flags">
+          {JSON.stringify(permissions.tenants ?? null)}
+        </span>
+      );
+    }
+
+    it("parses a well-formed tenants projection when present", async () => {
+      mockServer.use(
+        http.get("*/api/v1/me/permissions", () =>
+          HttpResponse.json({
+            canCreateOrganizations: false,
+            tenants: { acme: { canDecideApprovals: true, canRegisterClusters: false } },
+          }),
+        ),
+      );
+      render(
+        <PermissionsProvider>
+          <TenantProbe />
+        </PermissionsProvider>,
+      );
+      await waitFor(() =>
+        expect(screen.getByTestId("tenant-flags")).toHaveTextContent(
+          '{"acme":{"canDecideApprovals":true,"canRegisterClusters":false}}',
+        ),
+      );
+    });
+
+    it("drops malformed tenant entries and non-boolean flags", async () => {
+      mockServer.use(
+        http.get("*/api/v1/me/permissions", () =>
+          HttpResponse.json({
+            canCreateOrganizations: false,
+            tenants: { acme: "nope", globex: { canDeploy: "yes", canDecideApprovals: true } },
+          }),
+        ),
+      );
+      render(
+        <PermissionsProvider>
+          <TenantProbe />
+        </PermissionsProvider>,
+      );
+      await waitFor(() =>
+        expect(screen.getByTestId("tenant-flags")).toHaveTextContent(
+          '{"globex":{"canDecideApprovals":true}}',
+        ),
+      );
+    });
+
+    it("leaves tenants absent when the server does not project it", async () => {
+      mockServer.use(
+        http.get("*/api/v1/me/permissions", () =>
+          HttpResponse.json({ canCreateOrganizations: true }),
+        ),
+      );
+      render(
+        <PermissionsProvider>
+          <TenantProbe />
+        </PermissionsProvider>,
+      );
+      await waitFor(() =>
+        expect(screen.getByTestId("tenant-flags")).toHaveTextContent("null"),
+      );
+    });
+  });
 });
