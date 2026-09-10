@@ -10,8 +10,16 @@ import type { components } from "@/api/__generated__/schema";
 type Organization = components["schemas"]["Organization"];
 type CreateTenantRequest = components["schemas"]["CreateTenantInputBody"];
 type CreateTenantResponse = components["schemas"]["TenantOutputBody"];
+type ListTenantsResponse = components["schemas"]["ListTenantsOutputBody"];
 
 export type Tenant = Organization;
+
+// The only cross-tenant call in the contract: orgs visible to the caller
+// (drives the tenant switcher and the all-tenants home).
+export async function listTenants(token: string | undefined): Promise<Tenant[]> {
+  const res = await apiFetch<ListTenantsResponse>(`/tenants`, { token });
+  return res.tenants ?? [];
+}
 
 export async function createTenant(
   token: string | undefined,

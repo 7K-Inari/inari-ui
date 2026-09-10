@@ -7,6 +7,26 @@ import { OverviewCard } from "@/pages/overview/overview-card";
 
 const MAX_ITEMS = 5;
 
+// Shared with the all-tenants home (org-grouped mode): the top-5 pending
+// approvals list with requester and relative age.
+export function ApprovalListItems({ approvals }: { approvals: ApprovalRequest[] }) {
+  return (
+    <ul className="space-y-2">
+      {approvals.slice(0, MAX_ITEMS).map((a) => (
+        <li key={a.id} className="flex items-center justify-between gap-4 text-sm">
+          <div className="min-w-0">
+            <p className="truncate font-medium">{a.title}</p>
+            <p className="text-xs text-muted-foreground">{a.requestedBy}</p>
+          </div>
+          <span className="shrink-0 text-xs text-muted-foreground">
+            {formatRelative(a.requestedAt)}
+          </span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function PendingApprovalsCard() {
   const { tenant } = useTenant();
   const state = useAsyncResource((token) => listApprovals(token, tenant, "inbox"), [tenant], {
@@ -28,19 +48,7 @@ export function PendingApprovalsCard() {
             <span className="text-3xl font-semibold text-foreground">{approvals.length}</span>{" "}
             pending
           </p>
-          <ul className="space-y-2">
-            {approvals.slice(0, MAX_ITEMS).map((a) => (
-              <li key={a.id} className="flex items-center justify-between gap-4 text-sm">
-                <div className="min-w-0">
-                  <p className="truncate font-medium">{a.title}</p>
-                  <p className="text-xs text-muted-foreground">{a.requestedBy}</p>
-                </div>
-                <span className="shrink-0 text-xs text-muted-foreground">
-                  {formatRelative(a.requestedAt)}
-                </span>
-              </li>
-            ))}
-          </ul>
+          <ApprovalListItems approvals={approvals} />
         </div>
       )}
     </OverviewCard>

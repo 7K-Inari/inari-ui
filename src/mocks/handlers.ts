@@ -100,6 +100,27 @@ function toServerCluster(c: ClusterSummary | ClusterDetail) {
 
 // ---- M3: cloud accounts (huma CloudAccount wire shape) ----
 
+// Orgs the mock caller belongs to; matches the tenants used by the cluster
+// and m3 fixtures (acme, globex) so cross-tenant pages fan out over both.
+function seededOrganizations() {
+  return [
+    {
+      id: "t-acme",
+      slug: "acme",
+      displayName: "Acme Corp",
+      keycloakOrgId: "kc-acme",
+      createdAt: new Date(Date.now() - 90 * 86_400_000).toISOString(),
+    },
+    {
+      id: "t-globex",
+      slug: "globex",
+      displayName: "Globex Inc",
+      keycloakOrgId: "kc-globex",
+      createdAt: new Date(Date.now() - 60 * 86_400_000).toISOString(),
+    },
+  ];
+}
+
 function toServerCloudAccount(a: CloudAccount) {
   return {
     id: a.id,
@@ -218,6 +239,9 @@ export const handlers = [
   ),
 
   // ---- tenants (platform-scoped, not under /tenants/:org) ----
+  http.get("*/api/v1/tenants", () =>
+    HttpResponse.json({ tenants: seededOrganizations() }),
+  ),
   http.post("*/api/v1/tenants", async ({ request }) => {
     const body = (await request.json()) as { slug?: string; displayName?: string };
     if (!body.slug || !body.displayName) {
