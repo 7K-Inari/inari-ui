@@ -122,6 +122,7 @@ export function IdpBrokeringPage() {
     });
     setEditing(true);
     setActionError(null);
+    setNotice(null);
   };
 
   const openEdit = (p: IdpProvider) => {
@@ -135,6 +136,7 @@ export function IdpBrokeringPage() {
     });
     setEditing(true);
     setActionError(null);
+    setNotice(null);
   };
 
   const submit = async () => {
@@ -168,6 +170,7 @@ export function IdpBrokeringPage() {
       return;
     }
     setActionError(null);
+    setNotice(null);
     try {
       await deleteIdentityProvider(token, tenant);
       refetch();
@@ -184,6 +187,7 @@ export function IdpBrokeringPage() {
     ) {
       setRotating(true);
       setActionError(null);
+      setNotice(null);
     }
   };
 
