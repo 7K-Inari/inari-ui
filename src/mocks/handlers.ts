@@ -45,6 +45,7 @@ import {
   rbacMatrixFor,
   requestDecommissionMock,
   setRbacMappingMock,
+  setRbacMappingsMock,
   validateAccount,
 } from "@/mocks/fixtures/m3";
 
@@ -103,7 +104,17 @@ import {
   teamsFor,
   unassignPackMock,
   visibilityFor,
+  approvalConfigFor,
+  createOidcClientMock,
+  deleteOidcClientMock,
+  findOidcClient,
+  oidcClientsFor,
+  oidcScopesCatalog,
+  putApprovalConfigMock,
+  putClientScopesMock,
+  updateOidcClientMock,
 } from "@/mocks/fixtures/m6";
+import type { OidcClientInput } from "@/api/identity";
 
 type CreatePackInputBody = components["schemas"]["CreatePackInputBody"];
 type AssignPackInputBody = components["schemas"]["AssignPackInputBody"];
@@ -523,7 +534,14 @@ export const handlers = [
       groupPath?: string;
       clusterRole?: string;
       mapped?: boolean;
+      mappings?: { groupPath: string; clusterRole: string }[];
     };
+    // M6.W3: declarative whole-set replace — the submitted array IS the new
+    // desired mapping set (not a delta).
+    if (Array.isArray(body.mappings)) {
+      setRbacMappingsMock(params.org as string, body.mappings);
+      return HttpResponse.json({ ok: true });
+    }
     if (!body.groupPath || !body.clusterRole) {
       return humaError(400, "groupPath and clusterRole are required");
     }
@@ -996,6 +1014,94 @@ export const handlers = [
     if (!getOrgMock(params.org as string)) return humaError(404, "organization not found");
     putVisibilityMock(params.org as string, params.item as string, body.visible);
     return new HttpResponse(null, { status: 204 });
+  }),
+
+  // ---- M6.W3: identity — OIDC clients (proposed routes) ----
+  http.get(`${BASE}/identity/clients`, ({ params }) =>
+    HttpResponse.json({ clients: oidcClientsFor(params.org as string) }),
+  ),
+
+  http.post(`${BASE}/identity/clients`, async ({ params, request }) => {
+    const body = (await request.json()) as OidcClientInput;
+    if (!body.name) {
+      return humaError(422, "validation failed (name is required)");
+    }
+    const client = createOidcClientMock(params.org as string, body);
+    return HttpResponse.json(
+      {
+        client,
+        secret: client.isPublic
+          ? undefined
+          : { clientId: client.id, secret: `sec-${client.id}-onetime` },
+      },
+      { status: 201 },
+    );
+  }),
+
+  http.put(`${BASE}/identity/clients/:id`, async ({ params, request }) => {
+    const body = (await request.json()) as OidcClientInput;
+    if (!body.name) {
+      return humaError(422, "validation failed (name is required)");
+    }
+    const client = updateOidcClientMock(params.org as string, params.id as string, body);
+    if (!client) return humaError(404, "client not found");
+    return HttpResponse.json({ client });
+  }),
+
+  http.delete(`${BASE}/identity/clients/:id`, ({ params }) => {
+    if (!deleteOidcClientMock(params.org as string, params.id as string)) {
+      return humaError(404, "client not found");
+    }
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.post(`${BASE}/identity/clients/:id/secret:rotate`, ({ params }) => {
+    const client = findOidcClient(params.org as string, params.id as string);
+    if (!client) return humaError(404, "client not found");
+    if (client.isPublic) return humaError(422, "public clients have no secret");
+    return HttpResponse.json({
+      secret: { clientId: client.id, secret: `sec-${client.id}-rotated` },
+    });
+  }),
+
+  http.get(`${BASE}/identity/scopes`, () =>
+    HttpResponse.json({ scopes: oidcScopesCatalog }),
+  ),
+
+  http.put(`${BASE}/identity/clients/:id/scopes`, async ({ params, request }) => {
+    const body = (await request.json()) as { scopes?: string[] };
+    if (!Array.isArray(body.scopes)) {
+      return humaError(422, "validation failed (scopes must be an array)");
+    }
+    const client = putClientScopesMock(params.org as string, params.id as string, body.scopes);
+    if (!client) return humaError(404, "client not found");
+    return HttpResponse.json({ client });
+  }),
+
+  // ---- M6.W3: approvals configuration (proposed routes) ----
+  http.get(`${BASE}/approval-config`, ({ params }) =>
+    HttpResponse.json({ config: approvalConfigFor(params.org as string) }),
+  ),
+
+  http.put(`${BASE}/approval-config`, async ({ params, request }) => {
+    const body = (await request.json()) as {
+      thresholds?: { action: string; approvalsRequired: number }[];
+      approverGroups?: string[];
+      autoApproveRules?: { action: string; condition: string }[];
+    };
+    if (!body.thresholds || !body.approverGroups || !body.autoApproveRules) {
+      return humaError(
+        422,
+        "validation failed (thresholds, approverGroups, autoApproveRules are required)",
+      );
+    }
+    return HttpResponse.json({
+      config: putApprovalConfigMock(params.org as string, {
+        thresholds: body.thresholds,
+        approverGroups: body.approverGroups,
+        autoApproveRules: body.autoApproveRules,
+      }),
+    });
   }),
 ];
 
