@@ -2,6 +2,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { ApiError } from "@/api/client";
 import {
+  clusterHealth,
   createCluster,
   deleteCluster,
   getCapabilities,
@@ -23,6 +24,15 @@ afterEach(() => {
   mockControl.reset();
 });
 afterAll(() => mockServer.close());
+
+describe("clusterHealth", () => {
+  it("maps server states to UI statuses", () => {
+    expect(clusterHealth("active")).toBe("connected");
+    expect(clusterHealth("degraded")).toBe("degraded");
+    expect(clusterHealth("pending_registration")).toBe("pending");
+    expect(clusterHealth("unreachable")).toBe("disconnected");
+  });
+});
 
 describe("clusters api", () => {
   it("lists clusters scoped to a tenant", async () => {

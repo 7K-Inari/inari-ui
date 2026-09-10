@@ -24,7 +24,9 @@ function tenantPath(tenant: string): string {
 type ServerCluster = components["schemas"]["Cluster"];
 export type CreateClusterRequest = components["schemas"]["CreateClusterInputBody"];
 
-function mapStatus(state: string): ClusterStatus {
+// Shared health derivation used by the cluster list and the overview
+// dashboard card — both must agree on the state → status mapping.
+export function clusterHealth(state: string): ClusterStatus {
   switch (state) {
     case "active":
       return "connected";
@@ -42,7 +44,7 @@ function mapCluster(c: ServerCluster): ClusterDetail {
     id: c.id,
     name: c.name,
     tenant: c.orgId,
-    status: mapStatus(c.state),
+    status: clusterHealth(c.state),
     k8sVersion: c.kubernetesVersion ?? null,
     labels: c.labels ?? {},
     capabilityCount: 0, // not part of the list payload; the detail page loads capabilities
