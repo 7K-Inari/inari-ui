@@ -490,6 +490,13 @@ export const handlers = [
     return HttpResponse.json({ ok: true });
   }),
 
+  // ---- approvals inbox aggregate (server v1.6.0, caller-scoped) ----
+  http.get("*/api/v1/approvals/inbox", () => {
+    // "all" lists pending inbox items across every org fixture.
+    const items = listApprovalsFor("all", { state: "pending" }).map(toServerApproval);
+    return HttpResponse.json({ items });
+  }),
+
   // ---- approvals (M3) ----
   http.get(`${BASE}/approvals`, ({ params, request }) => {
     const url = new URL(request.url);

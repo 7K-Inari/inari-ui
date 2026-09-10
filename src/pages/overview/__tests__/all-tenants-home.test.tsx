@@ -82,11 +82,60 @@ describe("AllTenantsHome", () => {
     );
   });
 
-  it("keeps other orgs working when one org's approvals fail, and recovers on retry", async () => {
+  it("makes a single caller-scoped inbox request and no per-org approval fan-out", async () => {
+    let inboxCalls = 0;
+    const perOrgCalls: string[] = [];
+    mockServer.use(
+      http.get("*/api/v1/approvals/inbox", () => {
+        inboxCalls += 1;
+        return HttpResponse.json({ items: [] });
+      }),
+      http.get("*/api/v1/tenants/:org/approvals", ({ params }) => {
+        perOrgCalls.push(params.org as string);
+        return HttpResponse.json({ approvals: [] });
+      }),
+    );
+
+    renderPage();
+    await screen.findByTestId("all-approvals");
+    await screen.findByText(/No pending approvals across your organizations/);
+    expect(inboxCalls).toBe(1);
+    expect(perOrgCalls).toEqual([]);
+  });
+
+  it("decides an inbox item against its own org and refetches the aggregate", async () => {
+    const user = userEvent.setup();
+    let inboxCalls = 0;
+    const decideCalls: { org: string; id: string; approve: boolean }[] = [];
+    mockServer.use(
+      http.get("*/api/v1/approvals/inbox", () => {
+        inboxCalls += 1;
+      }),
+      http.post("*/api/v1/tenants/:org/approvals/:id/decide", async ({ params, request }) => {
+        const body = (await request.json()) as { approve: boolean; reason: string };
+        decideCalls.push({ org: params.org as string, id: params.id as string, approve: body.approve });
+        return HttpResponse.json({ approval: { id: params.id, state: "approved" } });
+      }),
+    );
+
+    renderPage();
+    const section = await screen.findByTestId("all-approvals");
+    const globexGroup = await within(section).findByTestId("all-approvals-org-globex");
+    const before = inboxCalls;
+    await user.click(within(globexGroup).getByRole("button", { name: "Approve" }));
+
+    await within(section).findByText(/No pending approvals across your organizations|acme corp/i);
+    expect(decideCalls).toEqual([
+      { org: "globex", id: "ap-4", approve: true },
+    ]);
+    expect(inboxCalls).toBeGreaterThan(before);
+  });
+
+  it("shows a single error with retry when the inbox request fails", async () => {
     const user = userEvent.setup();
     let failing = true;
     mockServer.use(
-      http.get("*/api/v1/tenants/globex/approvals", () => {
+      http.get("*/api/v1/approvals/inbox", () => {
         if (failing) {
           return HttpResponse.json(
             { title: "Internal Server Error", status: 500, detail: "boom" },
@@ -94,7 +143,7 @@ describe("AllTenantsHome", () => {
           );
         }
         return HttpResponse.json({
-          approvals: [
+          items: [
             {
               id: "ap-recovered",
               orgId: "globex",
@@ -115,26 +164,12 @@ describe("AllTenantsHome", () => {
 
     renderPage();
     const section = await screen.findByTestId("all-approvals");
-    const acmeGroup = await within(section).findByTestId("all-approvals-org-acme");
-    await within(acmeGroup).findByText("Deploy postgresql-aws 16.3 to eks-prod-eu");
-
-    const chip = await within(section).findByTestId("org-error-globex");
-    expect(within(chip).getByText(/failed to load/i)).toBeInTheDocument();
+    const alert = await within(section).findByText(/failed to load/i);
+    expect(alert).toBeInTheDocument();
 
     failing = false;
-    await user.click(within(chip).getByRole("button", { name: /retry/i }));
+    await user.click(within(section).getByRole("button", { name: /retry/i }));
     await within(section).findByTestId("all-approvals-org-globex");
-  });
-
-  it("renders fast orgs even when one org's request never settles", async () => {
-    mockServer.use(
-      http.get("*/api/v1/tenants/globex/approvals", () => new Promise(() => {})),
-    );
-
-    renderPage();
-    const section = await screen.findByTestId("all-approvals");
-    const acmeGroup = await within(section).findByTestId("all-approvals-org-acme");
-    await within(acmeGroup).findByText("Deploy postgresql-aws 16.3 to eks-prod-eu");
   });
 
   it("keeps other orgs working when one org's clusters fail", async () => {    mockServer.use(
@@ -161,8 +196,13 @@ describe("AllTenantsHome", () => {
       createdAt: new Date().toISOString(),
     }));
     const requested: string[] = [];
+    let inboxCalls = 0;
     mockServer.use(
       http.get("*/api/v1/tenants", () => HttpResponse.json({ tenants: orgs })),
+      http.get("*/api/v1/approvals/inbox", () => {
+        inboxCalls += 1;
+        return HttpResponse.json({ items: [] });
+      }),
       http.get("*/api/v1/tenants/:org/approvals", ({ params }) => {
         requested.push(params.org as string);
         return HttpResponse.json({ approvals: [] });
@@ -192,6 +232,8 @@ describe("AllTenantsHome", () => {
     expect(screen.queryByTestId("org-chip-org10")).not.toBeInTheDocument();
     expect(screen.getAllByText(/and 2 more organizations/i).length).toBeGreaterThan(0);
     expect(new Set(requested).size).toBeLessThanOrEqual(10);
+    // The approvals section no longer fans out per org: one aggregate call.
+    expect(inboxCalls).toBe(1);
   });
 
   it("shows per-org connected/total cluster chips", async () => {
@@ -209,7 +251,7 @@ describe("AllTenantsHome", () => {
 
   it("renders global empty states when nothing exists across orgs", async () => {
     mockServer.use(
-      http.get("*/api/v1/tenants/:org/approvals", () => HttpResponse.json({ approvals: [] })),
+      http.get("*/api/v1/approvals/inbox", () => HttpResponse.json({ items: [] })),
       http.get("*/api/v1/tenants/:org/clusters", () => HttpResponse.json({ clusters: [] })),
     );
 
@@ -252,9 +294,9 @@ describe("AllTenantsHome", () => {
             ],
           });
         }),
-        http.get("*/api/v1/tenants/:org/approvals", () => {
+        http.get("*/api/v1/approvals/inbox", () => {
           approvalCalls += 1;
-          return HttpResponse.json({ approvals: [] });
+          return HttpResponse.json({ items: [] });
         }),
         http.get("*/api/v1/tenants/:org/clusters", () => {
           clusterCalls += 1;
