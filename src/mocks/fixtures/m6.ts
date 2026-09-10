@@ -11,6 +11,22 @@ type CreatePackRequest = components["schemas"]["CreatePackInputBody"];
 type RequestExemptionRequest = components["schemas"]["RequestExemptionInputBody"];
 type GitConfigRequest = components["schemas"]["GitConfigInputBody"];
 
+export type Organization = components["schemas"]["Organization"];
+export type Team = components["schemas"]["Team"];
+export type MemberView = components["schemas"]["MemberView"];
+export type RegistrationToken = components["schemas"]["RegistrationToken"];
+
+// M6.W2: proposed wire shapes for routes not yet in the pinned contract
+// (org PATCH, org-wide members, team CRUD, catalog visibility, token
+// list/revoke). Swap for generated types after contract sync.
+export interface CatalogVisibilityRule {
+  itemId: string;
+  itemName: string;
+  visible: boolean;
+  updatedBy: string;
+  updatedAt: string;
+}
+
 // Slice-1 settings mocks: policy packs, exemptions, compliance policies,
 // and tenant git config. Fixtures speak the huma wire shapes directly, so
 // handlers wrap them in response envelopes without mapping.
@@ -25,6 +41,12 @@ export interface PolicyMockState {
   policies: Policy[];
   gitConfigs: Record<string, TenantGitConfig>;
   nextEvaluateDecision: PolicyDecision | null;
+  orgs: Record<string, Organization>;
+  orgMembers: Record<string, MemberView[]>;
+  teams: Record<string, Team[]>;
+  teamMembers: Record<string, MemberView[]>;
+  visibility: Record<string, CatalogVisibilityRule[]>;
+  registrationTokens: Record<string, RegistrationToken[]>;
 }
 
 export const baselinePack: PolicyPack = {
@@ -132,6 +154,88 @@ function seedState(): PolicyMockState {
       },
     },
     nextEvaluateDecision: null,
+    orgs: {
+      acme: {
+        id: "t-acme",
+        slug: "acme",
+        displayName: "Acme Corp",
+        keycloakOrgId: "kc-acme",
+        createdAt: iso(now - 90 * 86_400_000),
+      },
+      globex: {
+        id: "t-globex",
+        slug: "globex",
+        displayName: "Globex Inc",
+        keycloakOrgId: "kc-globex",
+        createdAt: iso(now - 60 * 86_400_000),
+      },
+    },
+    orgMembers: {
+      acme: [
+        {
+          userId: "u-admin",
+          displayName: "Ada Admin",
+          email: "ada@acme.example",
+          role: "admin",
+        },
+        {
+          userId: "u-dev",
+          displayName: "Dev Dorian",
+          email: "dorian@acme.example",
+          role: "member",
+        },
+      ],
+      globex: [
+        {
+          userId: "u-globex",
+          displayName: "Gail Globex",
+          email: "gail@globex.example",
+          role: "admin",
+        },
+      ],
+    },
+    teams: {
+      acme: [
+        {
+          id: "team-platform",
+          orgId: "t-acme",
+          name: "platform-team",
+          keycloakGroupPath: "/acme/platform-team",
+          createdAt: iso(now - 80 * 86_400_000),
+        },
+      ],
+      globex: [],
+    },
+    teamMembers: {
+      "acme/platform-team": [
+        {
+          userId: "u-admin",
+          displayName: "Ada Admin",
+          email: "ada@acme.example",
+          role: "admin",
+        },
+      ],
+    },
+    visibility: {
+      acme: [
+        {
+          itemId: "postgres",
+          itemName: "PostgreSQL",
+          visible: true,
+          updatedBy: "pe@inari.dev",
+          updatedAt: iso(now - 3 * 86_400_000),
+        },
+        {
+          itemId: "redis",
+          itemName: "Redis",
+          visible: false,
+          updatedBy: "pe@inari.dev",
+          updatedAt: iso(now - 2 * 86_400_000),
+        },
+      ],
+      globex: [],
+    },
+    registrationTokens: {},
   };
 }
 
@@ -247,4 +351,160 @@ export function setGitConfigMock(org: string, body: GitConfigRequest): TenantGit
   };
   state.gitConfigs[org] = config;
   return config;
+}
+
+// ---- M6.W2: org profile / members / teams / visibility / tokens ----
+
+export function listOrgsMock(): Organization[] {
+  return Object.values(state.orgs);
+}
+
+export function getOrgMock(slug: string): Organization | null {
+  return state.orgs[slug] ?? null;
+}
+
+export function patchOrgMock(slug: string, displayName: string): Organization | null {
+  const org = state.orgs[slug];
+  if (!org) return null;
+  org.displayName = displayName;
+  return org;
+}
+
+export function orgMembersFor(org: string): MemberView[] {
+  return state.orgMembers[org] ?? [];
+}
+
+export function putOrgMemberMock(
+  org: string,
+  subject: string,
+  body: { email: string; displayName?: string; role: string },
+): MemberView {
+  const members = (state.orgMembers[org] ??= []);
+  const existing = members.find((m) => m.userId === subject);
+  if (existing) {
+    existing.role = body.role;
+    existing.email = body.email;
+    if (body.displayName) existing.displayName = body.displayName;
+    return existing;
+  }
+  const member: MemberView = {
+    userId: subject,
+    displayName: body.displayName ?? body.email,
+    email: body.email,
+    role: body.role,
+  };
+  members.push(member);
+  return member;
+}
+
+export function deleteOrgMemberMock(org: string, subject: string): boolean {
+  const members = state.orgMembers[org] ?? [];
+  const before = members.length;
+  state.orgMembers[org] = members.filter((m) => m.userId !== subject);
+  return state.orgMembers[org].length < before;
+}
+
+export function teamsFor(org: string): Team[] {
+  return state.teams[org] ?? [];
+}
+
+export function createTeamMock(org: string, name: string): Team {
+  const teams = (state.teams[org] ??= []);
+  const team: Team = {
+    id: nextId("team"),
+    orgId: state.orgs[org]?.id ?? `t-${org}`,
+    name,
+    keycloakGroupPath: `/${org}/${name}`,
+    createdAt: new Date().toISOString(),
+  };
+  teams.push(team);
+  return team;
+}
+
+export function deleteTeamMock(org: string, name: string): boolean {
+  const teams = state.teams[org] ?? [];
+  const before = teams.length;
+  state.teams[org] = teams.filter((t) => t.name !== name);
+  delete state.teamMembers[`${org}/${name}`];
+  return state.teams[org].length < before;
+}
+
+export function teamMembersFor(org: string, team: string): MemberView[] {
+  return state.teamMembers[`${org}/${team}`] ?? [];
+}
+
+export function addTeamMemberMock(org: string, team: string, subject: string): boolean {
+  if (!teamsFor(org).some((t) => t.name === team)) return false;
+  const orgMember = orgMembersFor(org).find((m) => m.userId === subject);
+  const member: MemberView = orgMember ?? {
+    userId: subject,
+    displayName: subject,
+    email: "",
+    role: "member",
+  };
+  const members = (state.teamMembers[`${org}/${team}`] ??= []);
+  if (!members.some((m) => m.userId === subject)) members.push(member);
+  return true;
+}
+
+export function removeTeamMemberMock(org: string, team: string, subject: string): boolean {
+  const key = `${org}/${team}`;
+  const members = state.teamMembers[key] ?? [];
+  const before = members.length;
+  state.teamMembers[key] = members.filter((m) => m.userId !== subject);
+  return state.teamMembers[key].length < before;
+}
+
+export function visibilityFor(org: string): CatalogVisibilityRule[] {
+  return state.visibility[org] ?? [];
+}
+
+export function putVisibilityMock(
+  org: string,
+  itemId: string,
+  visible: boolean,
+): CatalogVisibilityRule {
+  const rules = (state.visibility[org] ??= []);
+  const existing = rules.find((r) => r.itemId === itemId);
+  if (existing) {
+    existing.visible = visible;
+    existing.updatedBy = "me@inari.dev";
+    existing.updatedAt = new Date().toISOString();
+    return existing;
+  }
+  const rule: CatalogVisibilityRule = {
+    itemId,
+    itemName: itemId,
+    visible,
+    updatedBy: "me@inari.dev",
+    updatedAt: new Date().toISOString(),
+  };
+  rules.push(rule);
+  return rule;
+}
+
+export function registrationTokensFor(clusterId: string): RegistrationToken[] {
+  return state.registrationTokens[clusterId] ?? [];
+}
+
+export function recordRegistrationTokenMock(
+  clusterId: string,
+): RegistrationToken {
+  const tokens = (state.registrationTokens[clusterId] ??= []);
+  const record: RegistrationToken = {
+    id: nextId("rt"),
+    clusterId,
+    createdBy: "me@inari.dev",
+    createdAt: new Date().toISOString(),
+    expiresAt: new Date(Date.now() + 15 * 60_000).toISOString(),
+  };
+  tokens.push(record);
+  return record;
+}
+
+export function revokeRegistrationTokenMock(clusterId: string, tokenId: string): boolean {
+  const tokens = state.registrationTokens[clusterId] ?? [];
+  const before = tokens.length;
+  state.registrationTokens[clusterId] = tokens.filter((t) => t.id !== tokenId);
+  return state.registrationTokens[clusterId].length < before;
 }
