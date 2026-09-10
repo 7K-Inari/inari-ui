@@ -233,13 +233,15 @@ describe("OverviewPage", () => {
 
       renderPage();
       await act(async () => {});
-      expect(instanceCalls).toBe(1);
+      // Two cards consume /instances now (resource health + recent activity).
+      expect(instanceCalls).toBe(2);
       expect(driftCalls).toBe(1);
 
       await act(async () => {
         await vi.advanceTimersByTimeAsync(30_000);
       });
-      expect(instanceCalls).toBe(2);
+      // Only the resource-health card polls at 30s; activity polls at 60s.
+      expect(instanceCalls).toBe(3);
       expect(driftCalls).toBe(2);
     } finally {
       vi.useRealTimers();

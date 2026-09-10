@@ -1,7 +1,9 @@
 import { useTenant } from "@/tenant/tenant-context";
+import { ActivityCard } from "@/pages/overview/activity-card";
 import { ClusterHealthCard } from "@/pages/overview/cluster-health-card";
 import { DriftCard } from "@/pages/overview/drift-card";
 import { PendingApprovalsCard } from "@/pages/overview/pending-approvals-card";
+import { QuickActionsCard } from "@/pages/overview/quick-actions-card";
 import { ResourceHealthCard } from "@/pages/overview/resource-health-card";
 
 export function OverviewPage() {
@@ -21,6 +23,8 @@ export function OverviewPage() {
         <PendingApprovalsCard />
         <ResourceHealthCard />
         <DriftCard />
+        <ActivityCard />
+        <QuickActionsCard />
       </div>
     </div>
   );

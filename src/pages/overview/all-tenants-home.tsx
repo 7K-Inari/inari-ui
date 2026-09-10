@@ -1,5 +1,6 @@
 import { useAsyncResource } from "@/api/hooks";
 import { listTenants } from "@/api/tenants";
+import { AllTenantsActivitySection } from "@/pages/overview/all-tenants-activity";
 import {
   ALL_TENANTS_POLL_MS,
   AllTenantsApprovalsSection,
@@ -8,7 +9,8 @@ import { AllTenantsClusterRollup } from "@/pages/overview/all-tenants-clusters";
 import { TenantStrip } from "@/pages/overview/tenant-strip";
 
 // Global home for multi-org users (plan §8.1): org strip with recents, then
-// bounded fan-out sections (approvals, cluster health) at a slower 60s poll.
+// bounded fan-out sections (approvals, cluster health, activity) at a slower
+// 60s poll.
 export function AllTenantsHome() {
   const tenantsState = useAsyncResource((token) => listTenants(token), [], {
     refetchIntervalMs: ALL_TENANTS_POLL_MS,
@@ -31,6 +33,7 @@ export function AllTenantsHome() {
         <div className="grid gap-6 lg:grid-cols-2">
           <AllTenantsApprovalsSection orgs={orgs} orgNames={orgNames} />
           <AllTenantsClusterRollup orgs={orgs} orgNames={orgNames} />
+          <AllTenantsActivitySection orgs={orgs} orgNames={orgNames} />
         </div>
       )}
     </div>

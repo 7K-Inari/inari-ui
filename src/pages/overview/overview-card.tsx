@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
+import { ApiError } from "@/api/client";
 import type { AsyncState } from "@/api/hooks";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -18,6 +19,13 @@ interface OverviewCardProps<T> {
 // Shared shell for overview cards: skeleton on first load, inline error with
 // retry, a purpose-built empty state, otherwise the card content. A card that
 // already has data keeps showing it through transient refresh errors.
+// A 403 (the caller may not read this resource in this tenant) hides the card
+// entirely rather than showing an error — permission gating is response-driven
+// until the server ships a per-tenant permission projection.
+export function isForbidden(error: Error | null): boolean {
+  return error instanceof ApiError && error.status === 403;
+}
+
 export function OverviewCard<T>({
   title,
   testId,
@@ -28,6 +36,10 @@ export function OverviewCard<T>({
   children,
 }: OverviewCardProps<T>) {
   const { data, loading, error, refetch } = state;
+
+  if (error && !data && isForbidden(error)) {
+    return null;
+  }
 
   let body: ReactNode;
   if (error && !data) {

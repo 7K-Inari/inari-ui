@@ -70,6 +70,7 @@ const instance: ResourceInstanceDetail = {
   ownerTeam: "payments",
   updateAvailable: null,
   createdAt: "",
+  updatedAt: "",
   spec: {},
 };
 

@@ -51,6 +51,7 @@ function mapInstance(i: ServerInstance): ResourceInstanceSummary {
     ownerTeam: i.ownerTeam ?? "",
     updateAvailable: i.newVersionAvailable ? { from: i.version, to: i.latestVersion ?? "" } : null,
     createdAt: i.createdAt,
+    updatedAt: i.updatedAt,
   };
 }
 
