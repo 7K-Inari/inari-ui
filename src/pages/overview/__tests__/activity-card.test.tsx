@@ -202,4 +202,34 @@ describe("AllTenantsHome activity section", () => {
     await within(section).findByText(/acme-db/);
     expect(within(section).queryByTestId("org-error-globex")).not.toBeInTheDocument();
   });
+
+  it("hides the section entirely when every org returns 403", async () => {
+    mockServer.use(
+      http.get("*/api/v1/tenants/:org/instances", () =>
+        HttpResponse.json({ title: "Forbidden", status: 403, detail: "denied" }, { status: 403 }),
+      ),
+    );
+
+    renderHome();
+    // Wait for a sibling section to settle so the activity fan-out has
+    // resolved too, then assert the card never rendered.
+    const approvals = await screen.findByTestId("all-approvals");
+    await within(approvals).findByText(/pending|No pending/i);
+    expect(screen.queryByTestId("all-activity")).not.toBeInTheDocument();
+  });
+
+  it("shows the empty state when orgs load with no instances and a 403 org", async () => {
+    mockServer.use(
+      http.get("*/api/v1/tenants/globex/instances", () =>
+        HttpResponse.json({ title: "Forbidden", status: 403, detail: "denied" }, { status: 403 }),
+      ),
+      http.get("*/api/v1/tenants/acme/instances", () =>
+        HttpResponse.json({ instances: [] }),
+      ),
+    );
+
+    renderHome();
+    const section = await screen.findByTestId("all-activity");
+    await within(section).findByText(/No recent activity across your organizations/);
+  });
 });

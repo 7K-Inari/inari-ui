@@ -42,6 +42,18 @@ export function AllTenantsActivitySection({ orgs, orgNames }: SectionProps) {
   const errors = entries.filter(
     (e) => e.state.error && !e.state.data && !isForbidden(e.state.error),
   );
+  // Orgs the caller cannot read are dropped; when every org is forbidden the
+  // whole card hides, mirroring the per-tenant OverviewCard 403 behavior.
+  const allForbidden =
+    entries.length > 0 &&
+    entries.every((e) => e.state.error && !e.state.data && isForbidden(e.state.error));
+  const settled = entries.filter(
+    (e) => e.state.data !== null || (e.state.error && isForbidden(e.state.error)),
+  );
+
+  if (allForbidden) {
+    return null;
+  }
 
   return (
     <Card data-testid="all-activity">
@@ -70,7 +82,7 @@ export function AllTenantsActivitySection({ orgs, orgNames }: SectionProps) {
             onRetry={refetchAll}
           />
         ))}
-        {!firstLoad && loaded.length === entries.length && items.length === 0 && (
+        {!firstLoad && settled.length === entries.length && items.length === 0 && (
           <p className="py-2 text-sm text-muted-foreground">
             No recent activity across your organizations.
           </p>
