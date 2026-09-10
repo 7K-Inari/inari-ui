@@ -10,6 +10,25 @@ import { OverviewCard } from "@/pages/overview/overview-card";
 
 const STATUS_ORDER: ClusterStatus[] = ["connected", "degraded", "pending", "disconnected"];
 
+// Shared with the all-tenants home (org-grouped mode): per-status cluster
+// counts in a stable order.
+export function ClusterStatusCounts({ clusters }: { clusters: ClusterSummary[] }) {
+  const counts = new Map<ClusterStatus, number>();
+  for (const c of clusters) {
+    counts.set(c.status, (counts.get(c.status) ?? 0) + 1);
+  }
+  return (
+    <ul className="space-y-1">
+      {STATUS_ORDER.filter((s) => counts.get(s)).map((s) => (
+        <li key={s} className="flex items-center justify-between text-sm">
+          <ClusterStatusBadge status={s} />
+          <span className="tabular-nums">{counts.get(s)}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function ClusterHealthCard() {
   const { tenant } = useTenant();
   const state = useAsyncResource((token) => listClusters(token, tenant), [tenant], {
@@ -32,25 +51,12 @@ export function ClusterHealthCard() {
         </p>
       }
     >
-      {(clusters: ClusterSummary[]) => {
-        const counts = new Map<ClusterStatus, number>();
-        for (const c of clusters) {
-          counts.set(c.status, (counts.get(c.status) ?? 0) + 1);
-        }
-        return (
-          <div className="space-y-3">
-            <p className="text-3xl font-semibold">{clusters.length}</p>
-            <ul className="space-y-1">
-              {STATUS_ORDER.filter((s) => counts.get(s)).map((s) => (
-                <li key={s} className="flex items-center justify-between text-sm">
-                  <ClusterStatusBadge status={s} />
-                  <span className="tabular-nums">{counts.get(s)}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-        );
-      }}
+      {(clusters: ClusterSummary[]) => (
+        <div className="space-y-3">
+          <p className="text-3xl font-semibold">{clusters.length}</p>
+          <ClusterStatusCounts clusters={clusters} />
+        </div>
+      )}
     </OverviewCard>
   );
 }
