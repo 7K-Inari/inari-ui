@@ -5,7 +5,6 @@ import { ExtensionHostProviders, useSdkSlotContext } from "@/ext/host-context";
 import { ExtensionsProvider } from "@/ext/registry";
 import { ExtensionPageHost } from "@/ext/slots";
 import { AppShell } from "@/layout/app-shell";
-import { PlaceholderPage } from "@/pages/placeholder";
 import { AllTenantsHome } from "@/pages/overview/all-tenants-home";
 import { OverviewPage } from "@/pages/overview/overview-page";
 import { CreateOrganizationPage } from "@/pages/organizations/create-organization";
@@ -41,6 +40,8 @@ import { RbacMappingSettingsPage } from "@/pages/settings/identity/rbac-mapping"
 import { GitSettingsPage } from "@/pages/settings/org/git";
 import { MembersPage } from "@/pages/settings/org/members";
 import { OrgProfilePage } from "@/pages/settings/org/org-profile";
+import { IdpBrokeringPage } from "@/pages/settings/org/idp";
+import { OrgDomainsPage } from "@/pages/settings/org/domains";
 import { TeamsPage } from "@/pages/settings/org/teams";
 import { VisibilityPage } from "@/pages/settings/policies/visibility";
 import { RegistrationTokensPage } from "@/pages/settings/tokens/registration-tokens";
@@ -113,24 +114,8 @@ export function AppRoutes() {
             <Route path="org/members" element={<MembersPage />} />
             <Route path="org/teams" element={<TeamsPage />} />
             <Route path="org/git" element={<GitSettingsPage />} />
-            <Route
-              path="org/idp"
-              element={
-                <PlaceholderPage
-                  title="IdP brokering"
-                  description="Bring-your-own identity provider (OIDC). Ships in a later milestone."
-                />
-              }
-            />
-            <Route
-              path="org/domains"
-              element={
-                <PlaceholderPage
-                  title="Domains"
-                  description="Verified organization domains. Ships in a later milestone."
-                />
-              }
-            />
+            <Route path="org/idp" element={<IdpBrokeringPage />} />
+            <Route path="org/domains" element={<OrgDomainsPage />} />
             <Route path="identity/clients" element={<OidcClientsPage />} />
             <Route path="identity/scopes" element={<OidcScopesPage />} />
             <Route path="identity/rbac" element={<RbacMappingSettingsPage />} />

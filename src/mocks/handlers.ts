@@ -119,8 +119,15 @@ import {
   secretStoresFor,
   updateOidcClientMock,
   updateSecretStoreMock,
+  deleteIdpProviderMock,
+  domainClaimConflict,
+  idpProviderFor,
+  putDomainHintsMock,
+  putIdpProviderMock,
+  rotateIdpSecretMock,
 } from "@/mocks/fixtures/m6";
 import type { OidcClientInput } from "@/api/identity";
+import type { IdpProviderInput } from "@/api/idp";
 import type { SecretStoreInput } from "@/api/secrets";
 
 type CreatePackInputBody = components["schemas"]["CreatePackInputBody"];
@@ -1074,6 +1081,61 @@ export const handlers = [
   http.get(`${BASE}/identity/scopes`, () =>
     HttpResponse.json({ scopes: oidcScopesCatalog }),
   ),
+
+  // ---- M6.W6: IdP brokering + domains (proposed routes) ----
+  http.get(`${BASE}/identity/provider`, ({ params }) =>
+    HttpResponse.json({ provider: idpProviderFor(params.org as string) }),
+  ),
+
+  http.put(`${BASE}/identity/provider`, async ({ params, request }) => {
+    const body = (await request.json()) as IdpProviderInput;
+    if (!body.alias || !body.issuerUrl || !body.clientId || !body.claimMapping) {
+      return humaError(422, "validation failed (alias, issuerUrl, clientId, claimMapping are required)");
+    }
+    if (!Array.isArray(body.domainHints)) {
+      return humaError(422, "validation failed (domainHints must be an array)");
+    }
+    if (!idpProviderFor(params.org as string) && !body.clientSecret) {
+      return humaError(422, "validation failed (clientSecret is required on create)");
+    }
+    const conflict = domainClaimConflict(params.org as string, body.domainHints);
+    if (conflict) {
+      return humaError(409, `domain "${conflict}" is already claimed by another organization`);
+    }
+    const provider = putIdpProviderMock(params.org as string, body);
+    return HttpResponse.json({ provider });
+  }),
+
+  http.post(`${BASE}/identity/provider/secret:rotate`, async ({ params, request }) => {
+    const body = (await request.json()) as { clientSecret?: string };
+    if (!body.clientSecret) {
+      return humaError(422, "validation failed (clientSecret is required)");
+    }
+    const provider = rotateIdpSecretMock(params.org as string, body.clientSecret);
+    if (!provider) return humaError(404, "no identity provider configured");
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.delete(`${BASE}/identity/provider`, ({ params }) => {
+    if (!deleteIdpProviderMock(params.org as string)) {
+      return humaError(404, "no identity provider configured");
+    }
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.put(`${BASE}/identity/provider/domains`, async ({ params, request }) => {
+    const body = (await request.json()) as { domainHints?: string[] };
+    if (!Array.isArray(body.domainHints)) {
+      return humaError(422, "validation failed (domainHints must be an array)");
+    }
+    const org = params.org as string;
+    if (!idpProviderFor(org)) return humaError(404, "no identity provider configured");
+    const conflict = domainClaimConflict(org, body.domainHints);
+    if (conflict) {
+      return humaError(409, `domain "${conflict}" is already claimed by another organization`);
+    }
+    return HttpResponse.json({ provider: putDomainHintsMock(org, body.domainHints) });
+  }),
 
   http.put(`${BASE}/identity/clients/:id/scopes`, async ({ params, request }) => {
     const body = (await request.json()) as { scopes?: string[] };
