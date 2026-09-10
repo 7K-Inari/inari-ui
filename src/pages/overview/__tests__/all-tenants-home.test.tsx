@@ -103,6 +103,34 @@ describe("AllTenantsHome", () => {
     expect(perOrgCalls).toEqual([]);
   });
 
+  it("decides an inbox item against its own org and refetches the aggregate", async () => {
+    const user = userEvent.setup();
+    let inboxCalls = 0;
+    const decideCalls: { org: string; id: string; approve: boolean }[] = [];
+    mockServer.use(
+      http.get("*/api/v1/approvals/inbox", () => {
+        inboxCalls += 1;
+      }),
+      http.post("*/api/v1/tenants/:org/approvals/:id/decide", async ({ params, request }) => {
+        const body = (await request.json()) as { approve: boolean; reason: string };
+        decideCalls.push({ org: params.org as string, id: params.id as string, approve: body.approve });
+        return HttpResponse.json({ approval: { id: params.id, state: "approved" } });
+      }),
+    );
+
+    renderPage();
+    const section = await screen.findByTestId("all-approvals");
+    const globexGroup = await within(section).findByTestId("all-approvals-org-globex");
+    const before = inboxCalls;
+    await user.click(within(globexGroup).getByRole("button", { name: "Approve" }));
+
+    await within(section).findByText(/No pending approvals across your organizations|acme corp/i);
+    expect(decideCalls).toEqual([
+      { org: "globex", id: "ap-4", approve: true },
+    ]);
+    expect(inboxCalls).toBeGreaterThan(before);
+  });
+
   it("shows a single error with retry when the inbox request fails", async () => {
     const user = userEvent.setup();
     let failing = true;
