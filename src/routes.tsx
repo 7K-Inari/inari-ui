@@ -35,6 +35,11 @@ import { CompliancePage } from "@/pages/settings/policies/compliance";
 import { ExemptionsPage } from "@/pages/settings/policies/exemptions";
 import { PolicyPacksPage } from "@/pages/settings/policies/packs";
 import { GitSettingsPage } from "@/pages/settings/org/git";
+import { MembersPage } from "@/pages/settings/org/members";
+import { OrgProfilePage } from "@/pages/settings/org/org-profile";
+import { TeamsPage } from "@/pages/settings/org/teams";
+import { VisibilityPage } from "@/pages/settings/policies/visibility";
+import { RegistrationTokensPage } from "@/pages/settings/tokens/registration-tokens";
 import { VendZoneWizardPage } from "@/pages/zones/vend-wizard";
 import { ZoneDetailPage } from "@/pages/zones/zone-detail";
 import { ZoneListPage } from "@/pages/zones/zone-list";
@@ -99,33 +104,9 @@ export function AppRoutes() {
           <Route path="extensions" element={<ExtensionsPage />} />
           <Route path="settings" element={<SettingsLayout />}>
             <Route index element={<Navigate to="org/git" replace />} />
-            <Route
-              path="org"
-              element={
-                <PlaceholderPage
-                  title="Organization profile"
-                  description="Org name and display settings. Ships in a later milestone."
-                />
-              }
-            />
-            <Route
-              path="org/members"
-              element={
-                <PlaceholderPage
-                  title="Members"
-                  description="Org-wide membership and role assignment. Ships in a later milestone."
-                />
-              }
-            />
-            <Route
-              path="org/teams"
-              element={
-                <PlaceholderPage
-                  title="Teams"
-                  description="Team CRUD and per-team membership. Ships in a later milestone."
-                />
-              }
-            />
+            <Route path="org" element={<OrgProfilePage />} />
+            <Route path="org/members" element={<MembersPage />} />
+            <Route path="org/teams" element={<TeamsPage />} />
             <Route path="org/git" element={<GitSettingsPage />} />
             <Route
               path="org/idp"
@@ -175,15 +156,7 @@ export function AppRoutes() {
             <Route path="policies/packs" element={<PolicyPacksPage />} />
             <Route path="policies/exemptions" element={<ExemptionsPage />} />
             <Route path="policies/compliance" element={<CompliancePage />} />
-            <Route
-              path="policies/visibility"
-              element={
-                <PlaceholderPage
-                  title="Catalog visibility"
-                  description="Tenant-scoped catalog visibility rules. Ships once the server route lands."
-                />
-              }
-            />
+            <Route path="policies/visibility" element={<VisibilityPage />} />
             <Route
               path="policies/approvals"
               element={
@@ -193,15 +166,7 @@ export function AppRoutes() {
                 />
               }
             />
-            <Route
-              path="tokens/registration"
-              element={
-                <PlaceholderPage
-                  title="Registration tokens"
-                  description="Cluster registration tokens. Ships in a later milestone."
-                />
-              }
-            />
+            <Route path="tokens/registration" element={<RegistrationTokensPage />} />
             <Route
               path="tokens/eso-stores"
               element={

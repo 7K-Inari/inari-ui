@@ -75,17 +75,34 @@ import {
 
 import type { components } from "@/api/__generated__/schema";
 import {
+  addTeamMemberMock,
   assignPackMock,
   createPackMock,
+  createTeamMock,
   decideExemptionMock,
+  deleteOrgMemberMock,
+  deleteTeamMock,
   evaluateMock,
   exemptionsFor,
+  getOrgMock,
   gitConfigFor,
+  listOrgsMock,
+  orgMembersFor,
   packsFor,
+  patchOrgMock,
   policiesFor,
+  putOrgMemberMock,
+  putVisibilityMock,
+  recordRegistrationTokenMock,
+  registrationTokensFor,
+  removeTeamMemberMock,
   requestExemptionMock,
+  revokeRegistrationTokenMock,
   setGitConfigMock,
+  teamMembersFor,
+  teamsFor,
   unassignPackMock,
+  visibilityFor,
 } from "@/mocks/fixtures/m6";
 
 type CreatePackInputBody = components["schemas"]["CreatePackInputBody"];
@@ -122,25 +139,10 @@ function toServerCluster(c: ClusterSummary | ClusterDetail) {
 
 // ---- M3: cloud accounts (huma CloudAccount wire shape) ----
 
-// Orgs the mock caller belongs to; matches the tenants used by the cluster
-// and m3 fixtures (acme, globex) so cross-tenant pages fan out over both.
+// Orgs the mock caller belongs to; PATCH /tenants/:org (M6.W2) mutates these
+// via the m6 mock state so the profile page round-trips.
 function seededOrganizations() {
-  return [
-    {
-      id: "t-acme",
-      slug: "acme",
-      displayName: "Acme Corp",
-      keycloakOrgId: "kc-acme",
-      createdAt: new Date(Date.now() - 90 * 86_400_000).toISOString(),
-    },
-    {
-      id: "t-globex",
-      slug: "globex",
-      displayName: "Globex Inc",
-      keycloakOrgId: "kc-globex",
-      createdAt: new Date(Date.now() - 60 * 86_400_000).toISOString(),
-    },
-  ];
+  return listOrgsMock();
 }
 
 function toServerCloudAccount(a: CloudAccount) {
@@ -393,10 +395,27 @@ export const handlers = [
   http.post(`${BASE}/clusters/:id/tokens`, ({ params }) => {
     const cluster = findCluster(params.id as string);
     if (!cluster) return humaError(404, "cluster not found");
+    const record = recordRegistrationTokenMock(cluster.id);
     return HttpResponse.json({
       token: `inari-reg-${cluster.name}-token`,
-      expiresAt: new Date(Date.now() + 15 * 60_000).toISOString(),
+      expiresAt: record.expiresAt,
+      record,
     });
+  }),
+
+  http.get(`${BASE}/clusters/:id/tokens`, ({ params }) => {
+    const cluster = findCluster(params.id as string);
+    if (!cluster) return humaError(404, "cluster not found");
+    return HttpResponse.json({ tokens: registrationTokensFor(cluster.id) });
+  }),
+
+  http.delete(`${BASE}/clusters/:id/tokens/:tokenId`, ({ params }) => {
+    const cluster = findCluster(params.id as string);
+    if (!cluster) return humaError(404, "cluster not found");
+    if (!revokeRegistrationTokenMock(cluster.id, params.tokenId as string)) {
+      return humaError(404, "token not found");
+    }
+    return new HttpResponse(null, { status: 204 });
   }),
 
   http.get(`${BASE}/clusters/:id`, ({ params }) => {
@@ -871,6 +890,111 @@ export const handlers = [
     }
     const config = setGitConfigMock(params.org as string, body);
     void config;
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // ---- M6.W2: org profile (proposed PATCH route) ----
+  http.patch(BASE, async ({ params, request }) => {
+    const body = (await request.json()) as { displayName?: string };
+    if (!body.displayName) {
+      return humaError(422, "validation failed (displayName is required)");
+    }
+    const org = patchOrgMock(params.org as string, body.displayName);
+    if (!org) return humaError(404, "organization not found");
+    return HttpResponse.json({ organization: org, teams: teamsFor(params.org as string) });
+  }),
+
+  // ---- M6.W2: org-wide members (proposed routes) ----
+  http.get(`${BASE}/members`, ({ params }) =>
+    HttpResponse.json({ members: orgMembersFor(params.org as string) }),
+  ),
+
+  http.put(`${BASE}/members/:subject`, async ({ params, request }) => {
+    const body = (await request.json()) as {
+      email?: string;
+      displayName?: string;
+      role?: string;
+    };
+    if (!body.email || !body.role) {
+      return humaError(422, "validation failed (email, role are required)");
+    }
+    if (!getOrgMock(params.org as string)) return humaError(404, "organization not found");
+    putOrgMemberMock(params.org as string, params.subject as string, {
+      email: body.email,
+      displayName: body.displayName,
+      role: body.role,
+    });
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.delete(`${BASE}/members/:subject`, ({ params }) => {
+    if (!deleteOrgMemberMock(params.org as string, params.subject as string)) {
+      return humaError(404, "member not found");
+    }
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // ---- M6.W2: teams (list is contract-covered; create/delete proposed) ----
+  http.get(`${BASE}/teams`, ({ params }) =>
+    HttpResponse.json({ teams: teamsFor(params.org as string) }),
+  ),
+
+  http.post(`${BASE}/teams`, async ({ params, request }) => {
+    const body = (await request.json()) as { name?: string };
+    if (!body.name || !/^[a-z0-9][a-z0-9-]*$/.test(body.name)) {
+      return humaError(422, "validation failed (name must be lowercase alphanumeric with dashes)");
+    }
+    if (!getOrgMock(params.org as string)) return humaError(404, "organization not found");
+    const team = createTeamMock(params.org as string, body.name);
+    return HttpResponse.json({ team }, { status: 201 });
+  }),
+
+  http.delete(`${BASE}/teams/:team`, ({ params }) => {
+    if (!deleteTeamMock(params.org as string, params.team as string)) {
+      return humaError(404, "team not found");
+    }
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.get(`${BASE}/teams/:team/members`, ({ params }) => {
+    if (!teamsFor(params.org as string).some((t) => t.name === params.team)) {
+      return humaError(404, "team not found");
+    }
+    return HttpResponse.json({
+      members: teamMembersFor(params.org as string, params.team as string),
+    });
+  }),
+
+  http.post(`${BASE}/teams/:team/members`, async ({ params, request }) => {
+    const body = (await request.json()) as { subject?: string };
+    if (!body.subject) {
+      return humaError(422, "validation failed (subject is required)");
+    }
+    if (!addTeamMemberMock(params.org as string, params.team as string, body.subject)) {
+      return humaError(404, "team not found");
+    }
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.delete(`${BASE}/teams/:team/members/:subject`, ({ params }) => {
+    if (!removeTeamMemberMock(params.org as string, params.team as string, params.subject as string)) {
+      return humaError(404, "member not found");
+    }
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // ---- M6.W2: catalog visibility overlay (proposed routes) ----
+  http.get(`${BASE}/catalog-visibility`, ({ params }) =>
+    HttpResponse.json({ rules: visibilityFor(params.org as string) }),
+  ),
+
+  http.put(`${BASE}/catalog-visibility/:item`, async ({ params, request }) => {
+    const body = (await request.json()) as { visible?: boolean };
+    if (typeof body.visible !== "boolean") {
+      return humaError(422, "validation failed (visible must be a boolean)");
+    }
+    if (!getOrgMock(params.org as string)) return humaError(404, "organization not found");
+    putVisibilityMock(params.org as string, params.item as string, body.visible);
     return new HttpResponse(null, { status: 204 });
   }),
 ];

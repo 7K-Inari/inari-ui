@@ -135,3 +135,39 @@ export async function evaluatePolicies(
   );
   return res.decision;
 }
+
+// ---- catalog visibility (tenant overlay) ----
+// TODO(contract-sync): proposed huma shapes not yet in the pinned contract
+// (1.6.0); swap for generated schemas after npm run sync:api.
+
+export interface CatalogVisibilityRule {
+  itemId: string;
+  itemName: string;
+  visible: boolean;
+  updatedBy: string;
+  /** Format: date-time */
+  updatedAt: string;
+}
+
+export async function listCatalogVisibility(
+  token: string | undefined,
+  tenant: string,
+): Promise<CatalogVisibilityRule[]> {
+  const res = await apiFetch<{ rules: CatalogVisibilityRule[] | null }>(
+    `${tenantPath(tenant)}/catalog-visibility`,
+    { token },
+  );
+  return res.rules ?? [];
+}
+
+export async function putCatalogVisibility(
+  token: string | undefined,
+  tenant: string,
+  itemId: string,
+  visible: boolean,
+): Promise<void> {
+  await apiFetch<unknown>(
+    `${tenantPath(tenant)}/catalog-visibility/${encodeURIComponent(itemId)}`,
+    { token, method: "PUT", body: { visible } },
+  );
+}
