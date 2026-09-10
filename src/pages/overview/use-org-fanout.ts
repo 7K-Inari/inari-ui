@@ -51,27 +51,31 @@ export function useOrgFanout<T>(
       }
       return next;
     });
-    Promise.allSettled(list.map((org) => fetcherRef.current(token, org))).then((results) => {
-      if (cancelled) return;
-      setStates((prev) => {
-        const next = { ...prev };
-        results.forEach((result, i) => {
-          const org = list[i];
-          next[org] =
-            result.status === "fulfilled"
-              ? { data: result.value, loading: false, error: null }
-              : {
-                  data: prev[org]?.data ?? null,
-                  loading: false,
-                  error:
-                    result.reason instanceof Error
-                      ? result.reason
-                      : new Error("Request failed"),
-                };
-        });
-        return next;
-      });
-    });
+    // Settle each org independently: Promise.allSettled would delay every
+    // org's result until the slowest one resolves, so one hung request must
+    // never hold its siblings in the loading state.
+    for (const org of list) {
+      fetcherRef.current(token, org).then(
+        (value) => {
+          if (cancelled) return;
+          setStates((prev) => ({
+            ...prev,
+            [org]: { data: value, loading: false, error: null },
+          }));
+        },
+        (reason: unknown) => {
+          if (cancelled) return;
+          setStates((prev) => ({
+            ...prev,
+            [org]: {
+              data: prev[org]?.data ?? null,
+              loading: false,
+              error: reason instanceof Error ? reason : new Error("Request failed"),
+            },
+          }));
+        },
+      );
+    }
     return () => {
       cancelled = true;
     };

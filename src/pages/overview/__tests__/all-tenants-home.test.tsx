@@ -126,8 +126,18 @@ describe("AllTenantsHome", () => {
     await within(section).findByTestId("all-approvals-org-globex");
   });
 
-  it("keeps other orgs working when one org's clusters fail", async () => {
+  it("renders fast orgs even when one org's request never settles", async () => {
     mockServer.use(
+      http.get("*/api/v1/tenants/globex/approvals", () => new Promise(() => {})),
+    );
+
+    renderPage();
+    const section = await screen.findByTestId("all-approvals");
+    const acmeGroup = await within(section).findByTestId("all-approvals-org-acme");
+    await within(acmeGroup).findByText("Deploy postgresql-aws 16.3 to eks-prod-eu");
+  });
+
+  it("keeps other orgs working when one org's clusters fail", async () => {    mockServer.use(
       http.get("*/api/v1/tenants/globex/clusters", () =>
         HttpResponse.json(
           { title: "Internal Server Error", status: 500, detail: "boom" },
