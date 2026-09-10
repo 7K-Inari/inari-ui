@@ -707,9 +707,11 @@ export const handlers = [
     return HttpResponse.json({ rollout });
   }),
 
-  http.get(`${BASE}/drift`, () => {
+  http.get(`${BASE}/drift`, ({ request }) => {
     // ListDriftOutputBody carries driftEvents, not drift.
-    return HttpResponse.json({ driftEvents: listDriftMocks() });
+    const status = new URL(request.url).searchParams.get("status");
+    const events = listDriftMocks().filter((d) => !status || d.status === status);
+    return HttpResponse.json({ driftEvents: events });
   }),
 
   http.get(`${BASE}/agent-channels`, () => {
