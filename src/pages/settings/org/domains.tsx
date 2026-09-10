@@ -37,7 +37,9 @@ export function OrgDomainsPage() {
 
   const fail = (err: unknown, fallback: string) => {
     if (err instanceof ApiError && err.status === 409) {
-      setActionError(`Domain is already claimed by another organization: ${err.message}`);
+      setActionError(
+        `Domain is already claimed by another organization: ${err.message}`,
+      );
     } else {
       setActionError(err instanceof ApiError ? err.message : fallback);
     }
@@ -58,7 +60,9 @@ export function OrgDomainsPage() {
   const add = async () => {
     const value = newDomain.trim().toLowerCase();
     if (!DOMAIN_PATTERN.test(value)) {
-      setActionError("Enter a valid domain (acme.example) or wildcard (*.acme.example).");
+      setActionError(
+        "Enter a valid domain (acme.example) or wildcard (*.acme.example).",
+      );
       return;
     }
     if (domains.includes(value)) {
@@ -71,7 +75,10 @@ export function OrgDomainsPage() {
   };
 
   const remove = (domain: string) =>
-    save(domains.filter((d) => d !== domain), "Failed to remove domain");
+    save(
+      domains.filter((d) => d !== domain),
+      "Failed to remove domain",
+    );
 
   return (
     <div className="space-y-4">
@@ -82,7 +89,9 @@ export function OrgDomainsPage() {
           <CapabilityGate
             capability="admin"
             fallback={
-              <span className="text-xs text-muted-foreground">Read-only (org viewer)</span>
+              <span className="text-xs text-muted-foreground">
+                Read-only (org viewer)
+              </span>
             }
           >
             <></>
@@ -104,15 +113,17 @@ export function OrgDomainsPage() {
 
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">{actionError}</CardContent>
+          <CardContent className="py-3 text-sm text-destructive">
+            {actionError}
+          </CardContent>
         </Card>
       )}
 
       {!error && !provider && !loading && (
         <Card>
           <CardContent className="py-12 text-center text-sm text-muted-foreground">
-            No domains claimed. Configure an SSO provider first — claimed domains route
-            users to it at login.
+            No domains claimed. Configure an SSO provider first — claimed
+            domains route users to it at login.
           </CardContent>
         </Card>
       )}
@@ -142,8 +153,9 @@ export function OrgDomainsPage() {
                     </Button>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Exact domains match one domain; a *. wildcard matches all subdomains.
-                    A domain already in use by another organization is rejected.
+                    Exact domains match one domain; a *. wildcard matches all
+                    subdomains. A domain already in use by another organization
+                    is rejected.
                   </p>
                 </div>
               </CardContent>
@@ -153,8 +165,9 @@ export function OrgDomainsPage() {
           {domains.length === 0 && (
             <Card>
               <CardContent className="py-12 text-center text-sm text-muted-foreground">
-                No domains claimed yet. Add a domain so users with matching email
-                addresses are routed to this organization&apos;s SSO provider at login.
+                No domains claimed yet. Add a domain so users with matching
+                email addresses are routed to this organization&apos;s SSO
+                provider at login.
               </CardContent>
             </Card>
           )}
@@ -182,7 +195,11 @@ export function OrgDomainsPage() {
                       </td>
                       <td className="px-4 py-2">
                         <CapabilityGate capability="admin">
-                          <Button variant="ghost" size="sm" onClick={() => remove(d)}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => remove(d)}
+                          >
                             Remove
                           </Button>
                         </CapabilityGate>

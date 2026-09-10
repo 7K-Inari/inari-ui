@@ -11,7 +11,10 @@ import {
   type IdpProviderInput,
 } from "@/api/idp";
 import { useAuth } from "@/auth/auth-context";
-import { SchemaForm, type SchemaFormHandle } from "@/components/schema-form/schema-form";
+import {
+  SchemaForm,
+  type SchemaFormHandle,
+} from "@/components/schema-form/schema-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -57,7 +60,8 @@ const PROVIDER_BASE_SCHEMA: Record<string, unknown> = {
         "Tenant email domains routed to this provider at login. Exact (acme.example) or wildcard (*.acme.example).",
       items: {
         type: "string",
-        pattern: "^(\\*\\.)?[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$",
+        pattern:
+          "^(\\*\\.)?[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$",
       },
       default: [],
     },
@@ -171,7 +175,11 @@ export function IdpBrokeringPage() {
   };
 
   const remove = async () => {
-    if (!window.confirm("Delete the SSO provider? Users will no longer be routed to it at login.")) {
+    if (
+      !window.confirm(
+        "Delete the SSO provider? Users will no longer be routed to it at login.",
+      )
+    ) {
       return;
     }
     setActionError(null);
@@ -205,7 +213,9 @@ export function IdpBrokeringPage() {
           <CapabilityGate
             capability="admin"
             fallback={
-              <span className="text-xs text-muted-foreground">Read-only (org viewer)</span>
+              <span className="text-xs text-muted-foreground">
+                Read-only (org viewer)
+              </span>
             }
           >
             {!provider && !editing && (
@@ -229,13 +239,17 @@ export function IdpBrokeringPage() {
 
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">{actionError}</CardContent>
+          <CardContent className="py-3 text-sm text-destructive">
+            {actionError}
+          </CardContent>
         </Card>
       )}
 
       {notice && (
         <Card>
-          <CardContent className="py-3 text-sm text-muted-foreground">{notice}</CardContent>
+          <CardContent className="py-3 text-sm text-muted-foreground">
+            {notice}
+          </CardContent>
         </Card>
       )}
 
@@ -272,7 +286,9 @@ export function IdpBrokeringPage() {
           <CardContent className="space-y-3 py-4">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">{provider.alias}</span>
-              <Badge variant="secondary">{provider.provider.toUpperCase()}</Badge>
+              <Badge variant="secondary">
+                {provider.provider.toUpperCase()}
+              </Badge>
               {provider.secretConfigured && (
                 <Badge variant="muted">Secret configured</Badge>
               )}
@@ -289,7 +305,8 @@ export function IdpBrokeringPage() {
               <div>
                 <dt className="text-xs text-muted-foreground">Claim mapping</dt>
                 <dd className="font-mono text-xs">
-                  email: {provider.claimMapping.email}, groups: {provider.claimMapping.groups}
+                  email: {provider.claimMapping.email}, groups:{" "}
+                  {provider.claimMapping.groups}
                 </dd>
               </div>
               <div>
@@ -314,7 +331,11 @@ export function IdpBrokeringPage() {
             </div>
             <CapabilityGate capability="admin">
               <div className="flex gap-1 pt-2">
-                <Button variant="ghost" size="sm" onClick={() => openEdit(provider)}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => openEdit(provider)}
+                >
                   Edit
                 </Button>
                 <Button variant="ghost" size="sm" onClick={confirmRotate}>

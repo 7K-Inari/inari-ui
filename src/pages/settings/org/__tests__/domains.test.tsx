@@ -1,7 +1,16 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
-import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 import { policyMockControl, putIdpProviderMock } from "@/mocks/fixtures/m6";
 import { mockServer } from "@/mocks/server";
@@ -24,7 +33,9 @@ afterEach(() => {
   policyMockControl.reset();
 });
 beforeEach(() => {
-  mockParsedToken = { organization: { acme: { name: "Acme", roles: ["admin"] } } };
+  mockParsedToken = {
+    organization: { acme: { name: "Acme", roles: ["admin"] } },
+  };
   policyMockControl.reset();
 });
 afterAll(() => mockServer.close());
@@ -33,13 +44,18 @@ function renderPage() {
   return render(
     <MemoryRouter initialEntries={["/acme/settings/org/domains"]}>
       <Routes>
-        <Route path="/:tenant/settings/org/domains" element={<OrgDomainsPage />} />
+        <Route
+          path="/:tenant/settings/org/domains"
+          element={<OrgDomainsPage />}
+        />
       </Routes>
     </MemoryRouter>,
   );
 }
 
-function seedProvider(domainHints: string[] = ["acme.example", "*.subs.acme.example"]) {
+function seedProvider(
+  domainHints: string[] = ["acme.example", "*.subs.acme.example"],
+) {
   putIdpProviderMock("acme", {
     provider: "oidc",
     alias: "acme-sso",
@@ -83,7 +99,9 @@ describe("OrgDomainsPage", () => {
     await screen.findByText("acme.example");
     await user.type(screen.getByLabelText(/Add domain/), "not a domain!");
     await user.click(screen.getByRole("button", { name: "Add domain" }));
-    expect(await screen.findByText(/enter a valid domain/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/enter a valid domain/i),
+    ).toBeInTheDocument();
     expect(policyMockControl.getState().idpProviders.acme.domainHints).toEqual([
       "acme.example",
     ]);
@@ -124,9 +142,9 @@ describe("OrgDomainsPage", () => {
     await screen.findByText("mail.acme.example");
     const row = screen.getByText("mail.acme.example").closest("tr")!;
     await user.click(
-      (Array.from(row.querySelectorAll("button")).find(
+      Array.from(row.querySelectorAll("button")).find(
         (b) => b.textContent === "Remove",
-      ))!,
+      )!,
     );
     expect(screen.queryByText("mail.acme.example")).not.toBeInTheDocument();
     expect(screen.getByText("acme.example")).toBeInTheDocument();
@@ -138,7 +156,9 @@ describe("OrgDomainsPage", () => {
     renderPage();
     await screen.findByText("acme.example");
     expect(screen.queryByLabelText(/Add domain/)).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Remove" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Remove" }),
+    ).not.toBeInTheDocument();
     expect(screen.getByText(/read-only/i)).toBeInTheDocument();
   });
 });
