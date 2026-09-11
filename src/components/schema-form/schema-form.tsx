@@ -38,27 +38,45 @@ function FieldTemplate({
   );
 }
 
-function TextWidget({ id, value, required, disabled, onChange, placeholder }: WidgetProps) {
+function TextWidget({
+  id,
+  value,
+  required,
+  disabled,
+  readonly,
+  onChange,
+  placeholder,
+}: WidgetProps) {
   return (
     <Input
       id={id}
       value={(value as string) ?? ""}
       required={required}
-      disabled={disabled}
+      disabled={disabled || readonly}
       placeholder={placeholder}
-      onChange={(e) => onChange(e.target.value === "" ? undefined : e.target.value)}
+      onChange={(e) =>
+        onChange(e.target.value === "" ? undefined : e.target.value)
+      }
     />
   );
 }
 
-function NumberWidget({ id, value, required, disabled, onChange, schema }: WidgetProps) {
+function NumberWidget({
+  id,
+  value,
+  required,
+  disabled,
+  readonly,
+  onChange,
+  schema,
+}: WidgetProps) {
   return (
     <Input
       id={id}
       type="number"
       value={value === undefined || value === null ? "" : String(value)}
       required={required}
-      disabled={disabled}
+      disabled={disabled || readonly}
       min={schema.minimum as number | undefined}
       max={schema.maximum as number | undefined}
       onChange={(e) => {
@@ -70,7 +88,15 @@ function NumberWidget({ id, value, required, disabled, onChange, schema }: Widge
   );
 }
 
-function CheckboxWidget({ id, value, required, disabled, onChange, label }: WidgetProps) {
+function CheckboxWidget({
+  id,
+  value,
+  required,
+  disabled,
+  readonly,
+  onChange,
+  label,
+}: WidgetProps) {
   return (
     <label htmlFor={id} className="flex items-center gap-2 text-sm">
       <input
@@ -79,7 +105,7 @@ function CheckboxWidget({ id, value, required, disabled, onChange, label }: Widg
         className="h-4 w-4 rounded border-input accent-primary"
         checked={Boolean(value)}
         required={required}
-        disabled={disabled}
+        disabled={disabled || readonly}
         onChange={(e) => onChange(e.target.checked)}
       />
       {label}
@@ -87,30 +113,50 @@ function CheckboxWidget({ id, value, required, disabled, onChange, label }: Widg
   );
 }
 
-function TextareaWidget({ id, value, required, disabled, onChange, placeholder }: WidgetProps) {
+function TextareaWidget({
+  id,
+  value,
+  required,
+  disabled,
+  readonly,
+  onChange,
+  placeholder,
+}: WidgetProps) {
   return (
     <textarea
       id={id}
       className="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
       value={(value as string) ?? ""}
       required={required}
-      disabled={disabled}
+      disabled={disabled || readonly}
       placeholder={placeholder}
-      onChange={(e) => onChange(e.target.value === "" ? undefined : e.target.value)}
+      onChange={(e) =>
+        onChange(e.target.value === "" ? undefined : e.target.value)
+      }
     />
   );
 }
 
-function SelectWidget({ id, value, required, disabled, onChange, options }: WidgetProps) {
+function SelectWidget({
+  id,
+  value,
+  required,
+  disabled,
+  readonly,
+  onChange,
+  options,
+}: WidgetProps) {
   return (
     <select
       id={id}
       className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
       value={value === undefined || value === null ? "" : String(value)}
       required={required}
-      disabled={disabled}
+      disabled={disabled || readonly}
       onChange={(e) => {
-        const opt = options.enumOptions?.find((o) => String(o.value) === e.target.value);
+        const opt = options.enumOptions?.find(
+          (o) => String(o.value) === e.target.value,
+        );
         onChange(opt ? opt.value : undefined);
       }}
     >
@@ -149,14 +195,20 @@ export interface SchemaFormHandle {
 }
 
 export const SchemaForm = React.forwardRef<SchemaFormHandle, SchemaFormProps>(
-  function SchemaForm({ schema, uiSchema, formData, onChange, disabled, className }, ref) {
+  function SchemaForm(
+    { schema, uiSchema, formData, onChange, disabled, className },
+    ref,
+  ) {
     const formRef = React.useRef<Form>(null);
     const extensionWidgets = useExtensionFormWidgets();
 
     React.useImperativeHandle(ref, () => ({
       validate: () => {
         formRef.current?.validateForm();
-        const result = validator.validateFormData(formData, schema as RJSFSchema);
+        const result = validator.validateFormData(
+          formData,
+          schema as RJSFSchema,
+        );
         return result.errors.length === 0;
       },
     }));
@@ -171,32 +223,34 @@ export const SchemaForm = React.forwardRef<SchemaFormHandle, SchemaFormProps>(
       <div className={cn("schema-form", className)}>
         <SlotBoundary key={widgetKey}>
           <Form
-          ref={formRef}
-          schema={schema as RJSFSchema}
-          uiSchema={uiSchema}
-          formData={formData}
-          disabled={disabled}
-          validator={validator}
-          widgets={{
-            TextWidget,
-            UpDownWidget: NumberWidget,
-            CheckboxWidget,
-            TextareaWidget,
-            SelectWidget,
-            ...extensionWidgets,
-          }}
-          templates={{
-            FieldTemplate,
-            ErrorListTemplate,
-            ButtonTemplates: { SubmitButton: () => null },
-          }}
-          liveValidate={false}
-          noHtml5Validate
-          onChange={(e: IChangeEvent) => onChange((e.formData ?? {}) as Record<string, unknown>)}
-          onSubmit={() => undefined}
-        >
-          <span />
-        </Form>
+            ref={formRef}
+            schema={schema as RJSFSchema}
+            uiSchema={uiSchema}
+            formData={formData}
+            disabled={disabled}
+            validator={validator}
+            widgets={{
+              TextWidget,
+              UpDownWidget: NumberWidget,
+              CheckboxWidget,
+              TextareaWidget,
+              SelectWidget,
+              ...extensionWidgets,
+            }}
+            templates={{
+              FieldTemplate,
+              ErrorListTemplate,
+              ButtonTemplates: { SubmitButton: () => null },
+            }}
+            liveValidate={false}
+            noHtml5Validate
+            onChange={(e: IChangeEvent) =>
+              onChange((e.formData ?? {}) as Record<string, unknown>)
+            }
+            onSubmit={() => undefined}
+          >
+            <span />
+          </Form>
         </SlotBoundary>
       </div>
     );

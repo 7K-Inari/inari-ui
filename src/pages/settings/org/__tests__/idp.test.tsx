@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { http, HttpResponse } from "msw";
 import {
   afterAll,
   afterEach,
@@ -346,6 +347,69 @@ describe("IdpBrokeringPage — SAML (M6.W8)", () => {
     await user.click(screen.getByRole("button", { name: "Save provider" }));
     expect(
       await screen.findByText("https://idp.acme.example/saml/sso-v2"),
+    ).toBeInTheDocument();
+  });
+
+  it("locks the provider type selector when editing", async () => {
+    seedProvider();
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("acme-sso");
+    await user.click(screen.getByRole("button", { name: "Edit" }));
+    // A provider's protocol cannot change after creation.
+    expect(screen.getByLabelText(/Provider type/)).toBeDisabled();
+    // OIDC fields stay on the form (no accidental swap to the SAML schema).
+    expect(screen.getByLabelText(/Issuer URL/)).toBeInTheDocument();
+  });
+
+  it("switching provider mid-create retains shared fields and strips the other protocol on save", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText(/no SSO provider configured/i);
+    await user.click(
+      screen.getByRole("button", { name: "Configure provider" }),
+    );
+    // Start as OIDC, fill shared + OIDC-only fields…
+    await user.type(screen.getByLabelText(/Alias/), "acme-mixed");
+    await user.type(
+      screen.getByLabelText(/Issuer URL/),
+      "https://idp.acme.example",
+    );
+    // …then switch to SAML: shared fields survive the form remount.
+    await user.selectOptions(screen.getByLabelText(/Provider type/), "saml");
+    expect(screen.getByLabelText(/Alias/)).toHaveValue("acme-mixed");
+    await user.type(
+      screen.getByLabelText(/Entity ID/),
+      "https://idp.acme.example/saml/metadata",
+    );
+    await user.type(
+      screen.getByLabelText(/SSO URL/),
+      "https://idp.acme.example/saml/sso",
+    );
+    await user.click(screen.getByRole("button", { name: "Save provider" }));
+    expect(await screen.findByText("acme-mixed")).toBeInTheDocument();
+    const saved = policyMockControl.getState().idpProviders.acme;
+    expect(saved.provider).toBe("saml");
+    // The OIDC-only issuer URL entered before the switch must not persist.
+    expect(saved).not.toHaveProperty("issuerUrl");
+  });
+
+  it("surfaces an error when the SP descriptor download fails", async () => {
+    seedSamlProvider();
+    mockServer.use(
+      http.get(
+        "*/api/v1/tenants/:org/identity/provider/export",
+        () => new HttpResponse(null, { status: 500 }),
+      ),
+    );
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("acme-saml");
+    await user.click(
+      screen.getByRole("button", { name: /download sp descriptor/i }),
+    );
+    expect(
+      await screen.findByText(/request failed with status 500/i),
     ).toBeInTheDocument();
   });
 

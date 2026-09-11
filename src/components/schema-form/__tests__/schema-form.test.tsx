@@ -3,7 +3,10 @@ import userEvent from "@testing-library/user-event";
 import * as React from "react";
 import { describe, expect, it } from "vitest";
 
-import { SchemaForm, type SchemaFormHandle } from "@/components/schema-form/schema-form";
+import {
+  SchemaForm,
+  type SchemaFormHandle,
+} from "@/components/schema-form/schema-form";
 
 const schema = {
   type: "object",
@@ -36,20 +39,61 @@ describe("SchemaForm", () => {
 
   it("validate() reports false when required fields are missing", () => {
     const ref = React.createRef<SchemaFormHandle>();
-    render(<SchemaForm ref={ref} schema={schema} formData={{}} onChange={() => undefined} />);
+    render(
+      <SchemaForm
+        ref={ref}
+        schema={schema}
+        formData={{}}
+        onChange={() => undefined}
+      />,
+    );
     expect(ref.current!.validate()).toBe(false);
   });
 
   it("validate() reports true when the data is valid", () => {
     const ref = React.createRef<SchemaFormHandle>();
     render(
-      <SchemaForm ref={ref} schema={schema} formData={{ engine: "16" }} onChange={() => undefined} />,
+      <SchemaForm
+        ref={ref}
+        schema={schema}
+        formData={{ engine: "16" }}
+        onChange={() => undefined}
+      />,
     );
     expect(ref.current!.validate()).toBe(true);
   });
 
   it("does not render a submit button", () => {
-    render(<SchemaForm schema={schema} formData={{}} onChange={() => undefined} />);
-    expect(screen.queryByRole("button", { name: /submit/i })).not.toBeInTheDocument();
+    render(
+      <SchemaForm schema={schema} formData={{}} onChange={() => undefined} />,
+    );
+    expect(
+      screen.queryByRole("button", { name: /submit/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("disables readOnly fields", () => {
+    render(
+      <SchemaForm
+        schema={{
+          type: "object",
+          properties: {
+            kind: {
+              type: "string",
+              title: "Kind",
+              enum: ["a", "b"],
+              readOnly: true,
+            },
+            note: { type: "string", title: "Note", readOnly: true },
+            flag: { type: "boolean", title: "Flag", readOnly: true },
+          },
+        }}
+        formData={{ kind: "a", note: "x", flag: true }}
+        onChange={() => undefined}
+      />,
+    );
+    expect(screen.getByLabelText(/Kind/)).toBeDisabled();
+    expect(screen.getByLabelText(/Note/)).toBeDisabled();
+    expect(screen.getByLabelText(/Flag/)).toBeDisabled();
   });
 });
