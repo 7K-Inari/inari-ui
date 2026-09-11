@@ -216,6 +216,7 @@ function seedState(): PolicyMockState {
           id: "team-platform",
           orgId: "t-acme",
           name: "platform-team",
+          role: "admin",
           keycloakGroupPath: "/acme/platform-team",
           createdAt: iso(now - 80 * 86_400_000),
         },
@@ -525,6 +526,8 @@ export function createTeamMock(org: string, name: string): Team {
     id: nextId("team"),
     orgId: state.orgs[org]?.id ?? `t-${org}`,
     name,
+    // Server default per CreateTeamInputBody: role defaults to viewer.
+    role: "viewer",
     keycloakGroupPath: `/${org}/${name}`,
     createdAt: new Date().toISOString(),
   };
