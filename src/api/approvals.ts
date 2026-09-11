@@ -31,6 +31,7 @@ export interface ApprovalRequest {
 
 type ServerApprovalRequest = components["schemas"]["ApprovalRequest"];
 type ListApprovalsResponse = components["schemas"]["ListOutputBody"];
+type InboxResponse = components["schemas"]["InboxOutputBody"];
 type DecideResponse = components["schemas"]["DecideOutputBody"];
 
 function mapApproval(a: ServerApprovalRequest): ApprovalRequest {
@@ -61,6 +62,20 @@ export async function listApprovals(
     { token },
   );
   return (res.approvals ?? []).map(mapApproval);
+}
+
+// Inline decide (overview cards) has no reason input; the server records a
+// default rationale.
+export function decideReason(decision: "approve" | "reject"): string {
+  return decision === "approve" ? "Approved from overview" : "Rejected from overview";
+}
+
+// Caller-scoped aggregate (server v1.6.0): pending approvals across all orgs
+// the caller belongs to, filtered server-side via OpenFGA per org. Powers the
+// all-tenants approvals section without per-org fan-out.
+export async function listApprovalsInbox(token: string | undefined): Promise<ApprovalRequest[]> {
+  const res = await apiFetch<InboxResponse>(`/approvals/inbox`, { token });
+  return (res.items ?? []).map(mapApproval);
 }
 
 export async function decideApproval(

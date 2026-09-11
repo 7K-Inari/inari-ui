@@ -45,6 +45,7 @@ import {
   rbacMatrixFor,
   requestDecommissionMock,
   setRbacMappingMock,
+  setRbacMappingsMock,
   validateAccount,
 } from "@/mocks/fixtures/m3";
 
@@ -73,6 +74,69 @@ import {
   setAgentChannelMock,
 } from "@/mocks/fixtures/m4";
 
+import type { components } from "@/api/__generated__/schema";
+import {
+  addTeamMemberMock,
+  assignPackMock,
+  createPackMock,
+  createTeamMock,
+  decideExemptionMock,
+  deleteOrgMemberMock,
+  deleteTeamMock,
+  evaluateMock,
+  exemptionsFor,
+  getOrgMock,
+  gitConfigFor,
+  listOrgsMock,
+  orgMembersFor,
+  packsFor,
+  patchOrgMock,
+  policiesFor,
+  putOrgMemberMock,
+  putVisibilityMock,
+  recordRegistrationTokenMock,
+  registrationTokensFor,
+  removeTeamMemberMock,
+  requestExemptionMock,
+  revokeRegistrationTokenMock,
+  setGitConfigMock,
+  teamMembersFor,
+  teamsFor,
+  unassignPackMock,
+  visibilityFor,
+  approvalConfigFor,
+  createOidcClientMock,
+  createSecretStoreMock,
+  deleteOidcClientMock,
+  deleteSecretStoreMock,
+  findOidcClient,
+  findSecretStore,
+  oidcClientsFor,
+  oidcScopesCatalog,
+  putApprovalConfigMock,
+  putClientScopesMock,
+  secretStoreStatusFor,
+  secretStoresFor,
+  updateOidcClientMock,
+  updateSecretStoreMock,
+  deleteIdpProviderMock,
+  domainClaimConflict,
+  idpProviderFor,
+  putDomainHintsMock,
+  putIdpProviderMock,
+  rotateIdpSecretMock,
+} from "@/mocks/fixtures/m6";
+import type { OidcClientInput } from "@/api/identity";
+import type { IdpProviderInput } from "@/api/idp";
+import type { SecretStoreInput } from "@/api/secrets";
+
+type CreatePackInputBody = components["schemas"]["CreatePackInputBody"];
+type AssignPackInputBody = components["schemas"]["AssignPackInputBody"];
+type RequestExemptionInputBody = components["schemas"]["RequestExemptionInputBody"];
+type DecideExemptionInputBody = components["schemas"]["DecideExemptionInputBody"];
+type EvaluateInputBody = components["schemas"]["EvaluateInputBody"];
+type GitConfigInputBody = components["schemas"]["GitConfigInputBody"];
+
 // Handlers mirror the real inari-server REST surface: tenant slug in the
 // path (/api/v1/tenants/{org}/...) and wrapped response envelopes
 // ({cluster}, {clusters}, {items}, {instances}, {deploy}, ...).
@@ -99,6 +163,12 @@ function toServerCluster(c: ClusterSummary | ClusterDetail) {
 }
 
 // ---- M3: cloud accounts (huma CloudAccount wire shape) ----
+
+// Orgs the mock caller belongs to; PATCH /tenants/:org (M6.W2) mutates these
+// via the m6 mock state so the profile page round-trips.
+function seededOrganizations() {
+  return listOrgsMock();
+}
 
 function toServerCloudAccount(a: CloudAccount) {
   return {
@@ -218,6 +288,9 @@ export const handlers = [
   ),
 
   // ---- tenants (platform-scoped, not under /tenants/:org) ----
+  http.get("*/api/v1/tenants", () =>
+    HttpResponse.json({ tenants: seededOrganizations() }),
+  ),
   http.post("*/api/v1/tenants", async ({ request }) => {
     const body = (await request.json()) as { slug?: string; displayName?: string };
     if (!body.slug || !body.displayName) {
@@ -347,10 +420,27 @@ export const handlers = [
   http.post(`${BASE}/clusters/:id/tokens`, ({ params }) => {
     const cluster = findCluster(params.id as string);
     if (!cluster) return humaError(404, "cluster not found");
+    const record = recordRegistrationTokenMock(cluster.id);
     return HttpResponse.json({
       token: `inari-reg-${cluster.name}-token`,
-      expiresAt: new Date(Date.now() + 15 * 60_000).toISOString(),
+      expiresAt: record.expiresAt,
+      record,
     });
+  }),
+
+  http.get(`${BASE}/clusters/:id/tokens`, ({ params }) => {
+    const cluster = findCluster(params.id as string);
+    if (!cluster) return humaError(404, "cluster not found");
+    return HttpResponse.json({ tokens: registrationTokensFor(cluster.id) });
+  }),
+
+  http.delete(`${BASE}/clusters/:id/tokens/:tokenId`, ({ params }) => {
+    const cluster = findCluster(params.id as string);
+    if (!cluster) return humaError(404, "cluster not found");
+    if (!revokeRegistrationTokenMock(cluster.id, params.tokenId as string)) {
+      return humaError(404, "token not found");
+    }
+    return new HttpResponse(null, { status: 204 });
   }),
 
   http.get(`${BASE}/clusters/:id`, ({ params }) => {
@@ -458,12 +548,26 @@ export const handlers = [
       groupPath?: string;
       clusterRole?: string;
       mapped?: boolean;
+      mappings?: { groupPath: string; clusterRole: string }[];
     };
+    // M6.W3: declarative whole-set replace — the submitted array IS the new
+    // desired mapping set (not a delta).
+    if (Array.isArray(body.mappings)) {
+      setRbacMappingsMock(params.org as string, body.mappings);
+      return HttpResponse.json({ ok: true });
+    }
     if (!body.groupPath || !body.clusterRole) {
       return humaError(400, "groupPath and clusterRole are required");
     }
     setRbacMappingMock(params.org as string, body.groupPath, body.clusterRole, Boolean(body.mapped));
     return HttpResponse.json({ ok: true });
+  }),
+
+  // ---- approvals inbox aggregate (server v1.6.0, caller-scoped) ----
+  http.get("*/api/v1/approvals/inbox", () => {
+    // "all" lists pending inbox items across every org fixture.
+    const items = listApprovalsFor("all", { state: "pending" }).map(toServerApproval);
+    return HttpResponse.json({ items });
   }),
 
   // ---- approvals (M3) ----
@@ -707,9 +811,11 @@ export const handlers = [
     return HttpResponse.json({ rollout });
   }),
 
-  http.get(`${BASE}/drift`, () => {
+  http.get(`${BASE}/drift`, ({ request }) => {
     // ListDriftOutputBody carries driftEvents, not drift.
-    return HttpResponse.json({ driftEvents: listDriftMocks() });
+    const status = new URL(request.url).searchParams.get("status");
+    const events = listDriftMocks().filter((d) => !status || d.status === status);
+    return HttpResponse.json({ driftEvents: events });
   }),
 
   http.get(`${BASE}/agent-channels`, () => {
@@ -732,6 +838,384 @@ export const handlers = [
     );
     if (!updated) return humaError(404, "cluster set not found");
     return HttpResponse.json({ channel: updated });
+  }),
+
+  // ---- M6.W1: settings — policy packs ----
+  http.get(`${BASE}/policy-packs`, ({ params }) =>
+    HttpResponse.json({ packs: packsFor(params.org as string) }),
+  ),
+
+  http.post(`${BASE}/policy-packs`, async ({ params, request }) => {
+    const body = (await request.json()) as CreatePackInputBody;
+    if (!body.name || !body.engine || !body.version || body.manifests === undefined) {
+      return humaError(422, "validation failed (name, engine, version, manifests are required)");
+    }
+    return HttpResponse.json({ pack: createPackMock(params.org as string, body) });
+  }),
+
+  http.post(`${BASE}/policy-packs/:id/assign`, async ({ params, request }) => {
+    const body = (await request.json()) as AssignPackInputBody;
+    if (!body.targetType || !body.targetId) {
+      return humaError(422, "validation failed (targetType, targetId are required)");
+    }
+    const assignment = assignPackMock(params.id as string, body);
+    if (!assignment) return humaError(404, "policy pack not found");
+    return HttpResponse.json({ assignment });
+  }),
+
+  http.delete(`${BASE}/policy-packs/:id/assignments/:assignmentId`, ({ params }) => {
+    if (!unassignPackMock(params.id as string, params.assignmentId as string)) {
+      return humaError(404, "assignment not found");
+    }
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // ---- M6.W1: settings — exemptions ----
+  http.get(`${BASE}/exemptions`, ({ params }) =>
+    HttpResponse.json({ exemptions: exemptionsFor(params.org as string) }),
+  ),
+
+  http.post(`${BASE}/exemptions`, async ({ params, request }) => {
+    const body = (await request.json()) as RequestExemptionInputBody;
+    if (!body.policyId || !body.reason || !body.expiresAt) {
+      return humaError(422, "validation failed (policyId, reason, expiresAt are required)");
+    }
+    return HttpResponse.json({
+      exemption: requestExemptionMock(params.org as string, body),
+    });
+  }),
+
+  http.post(`${BASE}/exemptions/:id/decide`, async ({ params, request }) => {
+    const body = (await request.json()) as DecideExemptionInputBody;
+    const exemption = decideExemptionMock(params.id as string, body.approve);
+    if (!exemption) return humaError(404, "exemption not found");
+    return HttpResponse.json({ exemption });
+  }),
+
+  // ---- M6.W1: settings — compliance ----
+  http.get(`${BASE}/policies`, ({ params }) =>
+    HttpResponse.json({ policies: policiesFor(params.org as string) }),
+  ),
+
+  http.post(`${BASE}/policies/evaluate`, async ({ request }) => {
+    const body = (await request.json()) as EvaluateInputBody;
+    if (!body.itemId || !body.version || !body.clusterId) {
+      return humaError(422, "validation failed (itemId, version, clusterId are required)");
+    }
+    return HttpResponse.json({ decision: evaluateMock() });
+  }),
+
+  // ---- M6.W1: settings — tenant git config ----
+  http.get(`${BASE}/git-config`, ({ params }) => {
+    const config = gitConfigFor(params.org as string);
+    if (!config) return humaError(404, "git config not found");
+    return HttpResponse.json({ config });
+  }),
+
+  http.put(`${BASE}/git-config`, async ({ params, request }) => {
+    const body = (await request.json()) as GitConfigInputBody;
+    if (!body.repo || !body.commitPolicy) {
+      return humaError(422, "validation failed (repo, commitPolicy are required)");
+    }
+    if (body.commitPolicy !== "direct" && body.commitPolicy !== "pull_request") {
+      return humaError(422, "commitPolicy must be direct or pull_request");
+    }
+    const config = setGitConfigMock(params.org as string, body);
+    void config;
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // ---- M6.W2: org profile (proposed PATCH route) ----
+  http.patch(BASE, async ({ params, request }) => {
+    const body = (await request.json()) as { displayName?: string };
+    if (!body.displayName) {
+      return humaError(422, "validation failed (displayName is required)");
+    }
+    const org = patchOrgMock(params.org as string, body.displayName);
+    if (!org) return humaError(404, "organization not found");
+    return HttpResponse.json({ organization: org, teams: teamsFor(params.org as string) });
+  }),
+
+  // ---- M6.W2: org-wide members (proposed routes) ----
+  http.get(`${BASE}/members`, ({ params }) =>
+    HttpResponse.json({ members: orgMembersFor(params.org as string) }),
+  ),
+
+  http.put(`${BASE}/members/:subject`, async ({ params, request }) => {
+    const body = (await request.json()) as {
+      email?: string;
+      displayName?: string;
+      role?: string;
+    };
+    if (!body.email || !body.role) {
+      return humaError(422, "validation failed (email, role are required)");
+    }
+    if (!getOrgMock(params.org as string)) return humaError(404, "organization not found");
+    putOrgMemberMock(params.org as string, params.subject as string, {
+      email: body.email,
+      displayName: body.displayName,
+      role: body.role,
+    });
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.delete(`${BASE}/members/:subject`, ({ params }) => {
+    if (!deleteOrgMemberMock(params.org as string, params.subject as string)) {
+      return humaError(404, "member not found");
+    }
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // ---- M6.W2: teams (list is contract-covered; create/delete proposed) ----
+  http.get(`${BASE}/teams`, ({ params }) =>
+    HttpResponse.json({ teams: teamsFor(params.org as string) }),
+  ),
+
+  http.post(`${BASE}/teams`, async ({ params, request }) => {
+    const body = (await request.json()) as { name?: string };
+    if (!body.name || !/^[a-z0-9][a-z0-9-]*$/.test(body.name)) {
+      return humaError(422, "validation failed (name must be lowercase alphanumeric with dashes)");
+    }
+    if (!getOrgMock(params.org as string)) return humaError(404, "organization not found");
+    const team = createTeamMock(params.org as string, body.name);
+    return HttpResponse.json({ team }, { status: 201 });
+  }),
+
+  http.delete(`${BASE}/teams/:team`, ({ params }) => {
+    if (!deleteTeamMock(params.org as string, params.team as string)) {
+      return humaError(404, "team not found");
+    }
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.get(`${BASE}/teams/:team/members`, ({ params }) => {
+    if (!teamsFor(params.org as string).some((t) => t.name === params.team)) {
+      return humaError(404, "team not found");
+    }
+    return HttpResponse.json({
+      members: teamMembersFor(params.org as string, params.team as string),
+    });
+  }),
+
+  http.post(`${BASE}/teams/:team/members`, async ({ params, request }) => {
+    const body = (await request.json()) as { subject?: string };
+    if (!body.subject) {
+      return humaError(422, "validation failed (subject is required)");
+    }
+    if (!addTeamMemberMock(params.org as string, params.team as string, body.subject)) {
+      return humaError(404, "team not found");
+    }
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.delete(`${BASE}/teams/:team/members/:subject`, ({ params }) => {
+    if (!removeTeamMemberMock(params.org as string, params.team as string, params.subject as string)) {
+      return humaError(404, "member not found");
+    }
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // ---- M6.W2: catalog visibility overlay (proposed routes) ----
+  http.get(`${BASE}/catalog-visibility`, ({ params }) =>
+    HttpResponse.json({ rules: visibilityFor(params.org as string) }),
+  ),
+
+  http.put(`${BASE}/catalog-visibility/:item`, async ({ params, request }) => {
+    const body = (await request.json()) as { visible?: boolean };
+    if (typeof body.visible !== "boolean") {
+      return humaError(422, "validation failed (visible must be a boolean)");
+    }
+    if (!getOrgMock(params.org as string)) return humaError(404, "organization not found");
+    putVisibilityMock(params.org as string, params.item as string, body.visible);
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // ---- M6.W3: identity — OIDC clients (proposed routes) ----
+  http.get(`${BASE}/identity/clients`, ({ params }) =>
+    HttpResponse.json({ clients: oidcClientsFor(params.org as string) }),
+  ),
+
+  http.post(`${BASE}/identity/clients`, async ({ params, request }) => {
+    const body = (await request.json()) as OidcClientInput;
+    if (!body.name) {
+      return humaError(422, "validation failed (name is required)");
+    }
+    const client = createOidcClientMock(params.org as string, body);
+    return HttpResponse.json(
+      {
+        client,
+        secret: client.isPublic
+          ? undefined
+          : { clientId: client.id, secret: `sec-${client.id}-onetime` },
+      },
+      { status: 201 },
+    );
+  }),
+
+  http.put(`${BASE}/identity/clients/:id`, async ({ params, request }) => {
+    const body = (await request.json()) as OidcClientInput;
+    if (!body.name) {
+      return humaError(422, "validation failed (name is required)");
+    }
+    const client = updateOidcClientMock(params.org as string, params.id as string, body);
+    if (!client) return humaError(404, "client not found");
+    return HttpResponse.json({ client });
+  }),
+
+  http.delete(`${BASE}/identity/clients/:id`, ({ params }) => {
+    if (!deleteOidcClientMock(params.org as string, params.id as string)) {
+      return humaError(404, "client not found");
+    }
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.post(`${BASE}/identity/clients/:id/secret:rotate`, ({ params }) => {
+    const client = findOidcClient(params.org as string, params.id as string);
+    if (!client) return humaError(404, "client not found");
+    if (client.isPublic) return humaError(422, "public clients have no secret");
+    return HttpResponse.json({
+      secret: { clientId: client.id, secret: `sec-${client.id}-rotated` },
+    });
+  }),
+
+  http.get(`${BASE}/identity/scopes`, () =>
+    HttpResponse.json({ scopes: oidcScopesCatalog }),
+  ),
+
+  // ---- M6.W6: IdP brokering + domains (proposed routes) ----
+  http.get(`${BASE}/identity/provider`, ({ params }) =>
+    HttpResponse.json({ provider: idpProviderFor(params.org as string) }),
+  ),
+
+  http.put(`${BASE}/identity/provider`, async ({ params, request }) => {
+    const body = (await request.json()) as IdpProviderInput;
+    if (!body.alias || !body.issuerUrl || !body.clientId || !body.claimMapping) {
+      return humaError(422, "validation failed (alias, issuerUrl, clientId, claimMapping are required)");
+    }
+    if (!Array.isArray(body.domainHints)) {
+      return humaError(422, "validation failed (domainHints must be an array)");
+    }
+    if (!idpProviderFor(params.org as string) && !body.clientSecret) {
+      return humaError(422, "validation failed (clientSecret is required on create)");
+    }
+    const conflict = domainClaimConflict(params.org as string, body.domainHints);
+    if (conflict) {
+      return humaError(409, `domain "${conflict}" is already claimed by another organization`);
+    }
+    const provider = putIdpProviderMock(params.org as string, body);
+    return HttpResponse.json({ provider });
+  }),
+
+  http.post(`${BASE}/identity/provider/secret:rotate`, async ({ params, request }) => {
+    const body = (await request.json()) as { clientSecret?: string };
+    if (!body.clientSecret) {
+      return humaError(422, "validation failed (clientSecret is required)");
+    }
+    const provider = rotateIdpSecretMock(params.org as string, body.clientSecret);
+    if (!provider) return humaError(404, "no identity provider configured");
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.delete(`${BASE}/identity/provider`, ({ params }) => {
+    if (!deleteIdpProviderMock(params.org as string)) {
+      return humaError(404, "no identity provider configured");
+    }
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.put(`${BASE}/identity/provider/domains`, async ({ params, request }) => {
+    const body = (await request.json()) as { domainHints?: string[] };
+    if (!Array.isArray(body.domainHints)) {
+      return humaError(422, "validation failed (domainHints must be an array)");
+    }
+    const org = params.org as string;
+    if (!idpProviderFor(org)) return humaError(404, "no identity provider configured");
+    const conflict = domainClaimConflict(org, body.domainHints);
+    if (conflict) {
+      return humaError(409, `domain "${conflict}" is already claimed by another organization`);
+    }
+    return HttpResponse.json({ provider: putDomainHintsMock(org, body.domainHints) });
+  }),
+
+  http.put(`${BASE}/identity/clients/:id/scopes`, async ({ params, request }) => {
+    const body = (await request.json()) as { scopes?: string[] };
+    if (!Array.isArray(body.scopes)) {
+      return humaError(422, "validation failed (scopes must be an array)");
+    }
+    const client = putClientScopesMock(params.org as string, params.id as string, body.scopes);
+    if (!client) return humaError(404, "client not found");
+    return HttpResponse.json({ client });
+  }),
+
+  // ---- M6.W3: approvals configuration (proposed routes) ----
+  http.get(`${BASE}/approval-config`, ({ params }) =>
+    HttpResponse.json({ config: approvalConfigFor(params.org as string) }),
+  ),
+
+  http.put(`${BASE}/approval-config`, async ({ params, request }) => {
+    const body = (await request.json()) as {
+      thresholds?: { action: string; approvalsRequired: number }[];
+      approverGroups?: string[];
+      autoApproveRules?: { action: string; condition: string }[];
+    };
+    if (!body.thresholds || !body.approverGroups || !body.autoApproveRules) {
+      return humaError(
+        422,
+        "validation failed (thresholds, approverGroups, autoApproveRules are required)",
+      );
+    }
+    return HttpResponse.json({
+      config: putApprovalConfigMock(params.org as string, {
+        thresholds: body.thresholds,
+        approverGroups: body.approverGroups,
+        autoApproveRules: body.autoApproveRules,
+      }),
+    });
+  }),
+
+  // ---- M6.W4: ESO secret-store registry (proposed routes) ----
+  http.get(`${BASE}/secret-stores`, ({ params }) =>
+    HttpResponse.json({ stores: secretStoresFor(params.org as string) }),
+  ),
+
+  http.post(`${BASE}/secret-stores`, async ({ params, request }) => {
+    const body = (await request.json()) as SecretStoreInput;
+    if (!body.name) {
+      return humaError(422, "validation failed (name is required)");
+    }
+    if (findSecretStore(params.org as string, body.name)) {
+      return humaError(409, `secret store "${body.name}" already exists`);
+    }
+    const store = createSecretStoreMock(params.org as string, body);
+    return HttpResponse.json({ store }, { status: 201 });
+  }),
+
+  http.patch(`${BASE}/secret-stores/:name`, async ({ params, request }) => {
+    const existing = findSecretStore(params.org as string, params.name as string);
+    if (!existing) return humaError(404, "secret store not found");
+    // Platform-scope writes require superuser (design §3.2).
+    if (existing.scope === "platform") {
+      return humaError(403, "platform-scoped secret stores are read-only");
+    }
+    const body = (await request.json()) as SecretStoreInput;
+    const store = updateSecretStoreMock(params.org as string, params.name as string, body);
+    return HttpResponse.json({ store });
+  }),
+
+  http.delete(`${BASE}/secret-stores/:name`, ({ params }) => {
+    const existing = findSecretStore(params.org as string, params.name as string);
+    if (!existing) return humaError(404, "secret store not found");
+    if (existing.scope === "platform") {
+      return humaError(403, "platform-scoped secret stores are read-only");
+    }
+    deleteSecretStoreMock(params.org as string, params.name as string);
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.get(`${BASE}/secret-stores/:name/status`, ({ params }) => {
+    const status = secretStoreStatusFor(params.org as string, params.name as string);
+    if (!status) return humaError(404, "secret store not found");
+    return HttpResponse.json({ status });
   }),
 ];
 

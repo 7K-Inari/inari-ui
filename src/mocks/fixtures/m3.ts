@@ -120,6 +120,18 @@ function seedState(): M3State {
         decidedAt: iso(now - 2 * 86_400_000),
         decisionReason: "Use the platform-managed ingress instead.",
       },
+      {
+        id: "ap-4",
+        tenant: "globex",
+        kind: "deploy",
+        title: "Deploy redis-cache to gke-staging",
+        requestedBy: "joe@globex.example",
+        requestedAt: iso(now - 3_600_000),
+        status: "pending",
+        decidedBy: null,
+        decidedAt: null,
+        decisionReason: null,
+      },
     ],
     audit: [
       {
@@ -353,6 +365,14 @@ export function setRbacMappingMock(
   const idx = list.findIndex((m) => m.groupPath === groupPath && m.clusterRole === clusterRole);
   if (mapped && idx === -1) list.push({ groupPath, clusterRole });
   if (!mapped && idx !== -1) list.splice(idx, 1);
+}
+
+// Declarative whole-set replace (M6.W3 settings editor).
+export function setRbacMappingsMock(
+  tenant: string,
+  mappings: { groupPath: string; clusterRole: string }[],
+): void {
+  state.rbac[tenant] = mappings.map((m) => ({ ...m }));
 }
 
 // ---- approvals ----

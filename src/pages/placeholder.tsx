@@ -27,15 +27,3 @@ export function PlaceholderPage({
     </div>
   );
 }
-
-export function AllTenantsHome() {
-  return (
-    <div className="space-y-2">
-      <h1 className="text-2xl font-semibold tracking-tight">All tenants</h1>
-      <p className="text-sm text-muted-foreground">
-        Aggregated resources, pending approvals, and notifications across every
-        organization you belong to will appear here.
-      </p>
-    </div>
-  );
-}

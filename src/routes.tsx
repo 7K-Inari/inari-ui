@@ -5,7 +5,8 @@ import { ExtensionHostProviders, useSdkSlotContext } from "@/ext/host-context";
 import { ExtensionsProvider } from "@/ext/registry";
 import { ExtensionPageHost } from "@/ext/slots";
 import { AppShell } from "@/layout/app-shell";
-import { AllTenantsHome, PlaceholderPage } from "@/pages/placeholder";
+import { AllTenantsHome } from "@/pages/overview/all-tenants-home";
+import { OverviewPage } from "@/pages/overview/overview-page";
 import { CreateOrganizationPage } from "@/pages/organizations/create-organization";
 import { ClusterDetailPage } from "@/pages/clusters/cluster-detail";
 import { ClusterListPage } from "@/pages/clusters/cluster-list";
@@ -28,6 +29,23 @@ import { RbacMatrixPage } from "@/pages/rbac/rbac-matrix";
 import { ApprovalsPage } from "@/pages/approvals/approvals-page";
 import { AuditLogPage } from "@/pages/audit/audit-log-page";
 import { PlatformPage } from "@/pages/platform/platform-page";
+import { SettingsLayout } from "@/pages/settings/settings-layout";
+import { CompliancePage } from "@/pages/settings/policies/compliance";
+import { ExemptionsPage } from "@/pages/settings/policies/exemptions";
+import { PolicyPacksPage } from "@/pages/settings/policies/packs";
+import { ApprovalsConfigPage } from "@/pages/settings/policies/approvals-config";
+import { OidcClientsPage } from "@/pages/settings/identity/clients";
+import { OidcScopesPage } from "@/pages/settings/identity/scopes";
+import { RbacMappingSettingsPage } from "@/pages/settings/identity/rbac-mapping";
+import { GitSettingsPage } from "@/pages/settings/org/git";
+import { MembersPage } from "@/pages/settings/org/members";
+import { OrgProfilePage } from "@/pages/settings/org/org-profile";
+import { IdpBrokeringPage } from "@/pages/settings/org/idp";
+import { OrgDomainsPage } from "@/pages/settings/org/domains";
+import { TeamsPage } from "@/pages/settings/org/teams";
+import { VisibilityPage } from "@/pages/settings/policies/visibility";
+import { RegistrationTokensPage } from "@/pages/settings/tokens/registration-tokens";
+import { EsoStoresPage } from "@/pages/settings/tokens/eso-stores";
 import { VendZoneWizardPage } from "@/pages/zones/vend-wizard";
 import { ZoneDetailPage } from "@/pages/zones/zone-detail";
 import { ZoneListPage } from "@/pages/zones/zone-list";
@@ -90,15 +108,26 @@ export function AppRoutes() {
           <Route path="rbac" element={<RbacMatrixPage />} />
           <Route path="ext/*" element={<ExtensionPageRoute />} />
           <Route path="extensions" element={<ExtensionsPage />} />
-          <Route
-            path="settings/*"
-            element={
-              <PlaceholderPage
-                title="Settings"
-                description="Tenant/Org, Identity, Policies, and Tokens & Secrets."
-              />
-            }
-          />
+          <Route path="settings" element={<SettingsLayout />}>
+            <Route index element={<Navigate to="org/git" replace />} />
+            <Route path="org" element={<OrgProfilePage />} />
+            <Route path="org/members" element={<MembersPage />} />
+            <Route path="org/teams" element={<TeamsPage />} />
+            <Route path="org/git" element={<GitSettingsPage />} />
+            <Route path="org/idp" element={<IdpBrokeringPage />} />
+            <Route path="org/domains" element={<OrgDomainsPage />} />
+            <Route path="identity/clients" element={<OidcClientsPage />} />
+            <Route path="identity/scopes" element={<OidcScopesPage />} />
+            <Route path="identity/rbac" element={<RbacMappingSettingsPage />} />
+            <Route path="policies/packs" element={<PolicyPacksPage />} />
+            <Route path="policies/exemptions" element={<ExemptionsPage />} />
+            <Route path="policies/compliance" element={<CompliancePage />} />
+            <Route path="policies/visibility" element={<VisibilityPage />} />
+            <Route path="policies/approvals" element={<ApprovalsConfigPage />} />
+            <Route path="tokens/registration" element={<RegistrationTokensPage />} />
+            <Route path="tokens/eso-stores" element={<EsoStoresPage />} />
+            <Route path="*" element={<Navigate to="org/git" replace />} />
+          </Route>
           <Route path="*" element={<Navigate to="overview" replace />} />
         </Route>
       </Routes>
@@ -109,10 +138,5 @@ export function AppRoutes() {
 function OverviewOrHome() {
   const { tenant } = useTenant();
   if (tenant === ALL_TENANTS) return <AllTenantsHome />;
-  return (
-    <PlaceholderPage
-      title="Overview"
-      description="Tenant overview: resources, health, and activity."
-    />
-  );
+  return <OverviewPage />;
 }

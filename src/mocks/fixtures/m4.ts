@@ -79,6 +79,18 @@ function seedState(): M4State {
         status: "open",
         detectedAt: new Date(Date.now() - 1800_000).toISOString(),
       },
+      {
+        id: "drift-3",
+        orgId: "acme",
+        clusterId: "c-eu-1",
+        kind: "StatefulSet",
+        resourceRef: "redis-cache",
+        desiredHash: "sha256:aa10desired",
+        reportedHash: "sha256:aa10reported",
+        detail: "resolved by agent resync",
+        status: "resolved",
+        detectedAt: new Date(Date.now() - 86400_000).toISOString(),
+      },
     ],
     agentChannels: [
       {
