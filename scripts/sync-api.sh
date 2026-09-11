@@ -14,7 +14,12 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 cd "$(mktemp -d)"
 oras pull "$IMAGE"
-cp openapi.yaml "$ROOT/openapi/openapi.yaml"
+# Artifact layout is dist/openapi.yaml (older releases shipped it at the root).
+if [ -f dist/openapi.yaml ]; then
+  cp dist/openapi.yaml "$ROOT/openapi/openapi.yaml"
+else
+  cp openapi.yaml "$ROOT/openapi/openapi.yaml"
+fi
 
 cd "$ROOT"
 npm run codegen

@@ -1,6 +1,7 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { http, HttpResponse } from "msw";
 import {
   afterAll,
   afterEach,
@@ -200,5 +201,234 @@ describe("IdpBrokeringPage", () => {
       screen.queryByRole("button", { name: "Rotate secret" }),
     ).not.toBeInTheDocument();
     expect(screen.getByText(/read-only/i)).toBeInTheDocument();
+  });
+});
+
+function seedSamlProvider() {
+  putIdpProviderMock("acme", {
+    provider: "saml",
+    alias: "acme-saml",
+    entityId: "https://idp.acme.example/saml/metadata",
+    ssoUrl: "https://idp.acme.example/saml/sso",
+    nameIdFormat: "urn:oasis:names:tc:SAML:1.1:nameid-format:persistent",
+    claimMapping: { email: "email", groups: "groups" },
+    domainHints: ["acme.example"],
+  });
+}
+
+const VALID_METADATA_XML = [
+  `<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="https://idp.acme.example/saml/metadata">`,
+  `  <md:IDPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">`,
+  `    <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:persistent</md:NameIDFormat>`,
+  `    <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://idp.acme.example/saml/sso"/>`,
+  `  </md:IDPSSODescriptor>`,
+  `</md:EntityDescriptor>`,
+].join("\n");
+
+describe("IdpBrokeringPage — SAML (M6.W8)", () => {
+  it("creates a SAML provider via manual entry", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText(/no SSO provider configured/i);
+    await user.click(
+      screen.getByRole("button", { name: "Configure provider" }),
+    );
+    await user.selectOptions(screen.getByLabelText(/Provider type/), "saml");
+    await user.type(screen.getByLabelText(/Alias/), "acme-saml");
+    await user.type(
+      screen.getByLabelText(/Entity ID/),
+      "https://idp.acme.example/saml/metadata",
+    );
+    await user.type(
+      screen.getByLabelText(/SSO URL/),
+      "https://idp.acme.example/saml/sso",
+    );
+    await user.click(screen.getByRole("button", { name: "Save provider" }));
+    expect(await screen.findByText("acme-saml")).toBeInTheDocument();
+    expect(screen.getByText("SAML")).toBeInTheDocument();
+    expect(
+      screen.getByText("https://idp.acme.example/saml/metadata"),
+    ).toBeInTheDocument();
+    // SP descriptor exposure so the tenant can configure their IdP: fetched
+    // with the bearer token and offered as a blob download.
+    const createObjectURL = vi.fn().mockReturnValue("blob:mock");
+    const revokeObjectURL = vi.fn();
+    Object.assign(URL, { createObjectURL, revokeObjectURL });
+    await user.click(
+      screen.getByRole("button", { name: /download sp descriptor/i }),
+    );
+    await waitFor(() => expect(createObjectURL).toHaveBeenCalled());
+    expect(revokeObjectURL).toHaveBeenCalled();
+    // SAML has no client secret: no rotate control, no secret badge.
+    expect(
+      screen.queryByRole("button", { name: "Rotate secret" }),
+    ).not.toBeInTheDocument();
+    expect(screen.queryByText(/secret configured/i)).not.toBeInTheDocument();
+  });
+
+  it("imports SAML metadata XML and prefills the manual fields", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText(/no SSO provider configured/i);
+    await user.click(
+      screen.getByRole("button", { name: "Configure provider" }),
+    );
+    await user.selectOptions(screen.getByLabelText(/Provider type/), "saml");
+    await user.click(screen.getByLabelText(/Metadata XML/));
+    await user.paste(VALID_METADATA_XML);
+    await user.click(screen.getByRole("button", { name: "Import metadata" }));
+    expect(await screen.findByLabelText(/Entity ID/)).toHaveValue(
+      "https://idp.acme.example/saml/metadata",
+    );
+    expect(screen.getByLabelText(/SSO URL/)).toHaveValue(
+      "https://idp.acme.example/saml/sso",
+    );
+  });
+
+  it("imports SAML metadata from a URL", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText(/no SSO provider configured/i);
+    await user.click(
+      screen.getByRole("button", { name: "Configure provider" }),
+    );
+    await user.selectOptions(screen.getByLabelText(/Provider type/), "saml");
+    await user.type(
+      screen.getByLabelText(/Metadata URL/),
+      "https://idp.acme.example/saml/metadata",
+    );
+    await user.click(screen.getByRole("button", { name: "Import metadata" }));
+    expect(await screen.findByLabelText(/Entity ID/)).toHaveValue(
+      "https://idp.acme.example/saml/metadata",
+    );
+  });
+
+  it("surfaces an error when metadata import fails", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText(/no SSO provider configured/i);
+    await user.click(
+      screen.getByRole("button", { name: "Configure provider" }),
+    );
+    await user.selectOptions(screen.getByLabelText(/Provider type/), "saml");
+    await user.click(screen.getByLabelText(/Metadata XML/));
+    await user.paste("this is not xml");
+    await user.click(screen.getByRole("button", { name: "Import metadata" }));
+    expect(
+      await screen.findByText(/could not parse SAML metadata/i),
+    ).toBeInTheDocument();
+  });
+
+  it("blocks SAML create without entityId and ssoUrl", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText(/no SSO provider configured/i);
+    await user.click(
+      screen.getByRole("button", { name: "Configure provider" }),
+    );
+    await user.selectOptions(screen.getByLabelText(/Provider type/), "saml");
+    await user.type(screen.getByLabelText(/Alias/), "acme-saml");
+    await user.click(screen.getByRole("button", { name: "Save provider" }));
+    expect(
+      screen.getByRole("button", { name: "Save provider" }),
+    ).toBeInTheDocument();
+    expect(policyMockControl.getState().idpProviders.acme).toBeUndefined();
+  });
+
+  it("edits a SAML provider", async () => {
+    seedSamlProvider();
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("acme-saml");
+    await user.click(screen.getByRole("button", { name: "Edit" }));
+    const ssoUrl = screen.getByLabelText(/SSO URL/);
+    await user.clear(ssoUrl);
+    await user.type(ssoUrl, "https://idp.acme.example/saml/sso-v2");
+    await user.click(screen.getByRole("button", { name: "Save provider" }));
+    expect(
+      await screen.findByText("https://idp.acme.example/saml/sso-v2"),
+    ).toBeInTheDocument();
+  });
+
+  it("locks the provider type selector when editing", async () => {
+    seedProvider();
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("acme-sso");
+    await user.click(screen.getByRole("button", { name: "Edit" }));
+    // A provider's protocol cannot change after creation.
+    expect(screen.getByLabelText(/Provider type/)).toBeDisabled();
+    // OIDC fields stay on the form (no accidental swap to the SAML schema).
+    expect(screen.getByLabelText(/Issuer URL/)).toBeInTheDocument();
+  });
+
+  it("switching provider mid-create retains shared fields and strips the other protocol on save", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText(/no SSO provider configured/i);
+    await user.click(
+      screen.getByRole("button", { name: "Configure provider" }),
+    );
+    // Start as OIDC, fill shared + OIDC-only fields…
+    await user.type(screen.getByLabelText(/Alias/), "acme-mixed");
+    await user.type(
+      screen.getByLabelText(/Issuer URL/),
+      "https://idp.acme.example",
+    );
+    // …then switch to SAML: shared fields survive the form remount.
+    await user.selectOptions(screen.getByLabelText(/Provider type/), "saml");
+    expect(screen.getByLabelText(/Alias/)).toHaveValue("acme-mixed");
+    await user.type(
+      screen.getByLabelText(/Entity ID/),
+      "https://idp.acme.example/saml/metadata",
+    );
+    await user.type(
+      screen.getByLabelText(/SSO URL/),
+      "https://idp.acme.example/saml/sso",
+    );
+    await user.click(screen.getByRole("button", { name: "Save provider" }));
+    expect(await screen.findByText("acme-mixed")).toBeInTheDocument();
+    const saved = policyMockControl.getState().idpProviders.acme;
+    expect(saved.provider).toBe("saml");
+    // The OIDC-only issuer URL entered before the switch must not persist.
+    expect(saved).not.toHaveProperty("issuerUrl");
+  });
+
+  it("surfaces an error when the SP descriptor download fails", async () => {
+    seedSamlProvider();
+    mockServer.use(
+      http.get(
+        "*/api/v1/tenants/:org/identity/provider/export",
+        () => new HttpResponse(null, { status: 500 }),
+      ),
+    );
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("acme-saml");
+    await user.click(
+      screen.getByRole("button", { name: /download sp descriptor/i }),
+    );
+    expect(
+      await screen.findByText(/request failed with status 500/i),
+    ).toBeInTheDocument();
+  });
+
+  it("replaces the signing certificate", async () => {
+    seedSamlProvider();
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("acme-saml");
+    await user.click(
+      screen.getByRole("button", { name: "Replace certificate" }),
+    );
+    const input = await screen.findByLabelText(/New signing certificate/);
+    await user.click(input);
+    await user.paste(
+      "-----BEGIN CERTIFICATE-----\nMIIDNEW\n-----END CERTIFICATE-----",
+    );
+    await user.click(screen.getByRole("button", { name: "Upload" }));
+    expect(await screen.findByText(/certificate updated/i)).toBeInTheDocument();
+    // Expiry is surfaced after upload.
+    expect(await screen.findByText(/certificate expires/i)).toBeInTheDocument();
   });
 });

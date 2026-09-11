@@ -87,7 +87,8 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        patch?: never;
+        /** Update the tenant profile (org admin only) */
+        patch: operations["updateTenant"];
         trace?: never;
     };
     "/api/v1/tenants/{org}/agent-channels": {
@@ -100,6 +101,24 @@ export interface paths {
         /** List agent channel pins */
         get: operations["listAgentChannels"];
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/approval-config": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the org's effective approval policy config */
+        get: operations["getApprovalConfig"];
+        /** Replace the org's approval policy config */
+        put: operations["updateApprovalConfig"];
         post?: never;
         delete?: never;
         options?: never;
@@ -253,6 +272,40 @@ export interface paths {
         /** List catalog items visible to the tenant (optionally per cluster) */
         get: operations["listCatalog"];
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/catalog-visibility": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List effective catalog visibility for the tenant (platform rule AND org overlay) */
+        get: operations["listCatalogVisibility"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/catalog-visibility/{item}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set the org-level visibility overlay for one catalog item (org admin) */
+        put: operations["setCatalogOrgVisibility"];
         post?: never;
         delete?: never;
         options?: never;
@@ -580,11 +633,29 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** List active (unconsumed, unexpired) registration tokens */
+        get: operations["listRegistrationTokens"];
         put?: never;
         /** Issue a one-time TTL'd registration token */
         post: operations["issueRegistrationToken"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/clusters/{id}/tokens/{tokenId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke (burn) a registration token (org admin only) */
+        delete: operations["revokeRegistrationToken"];
         options?: never;
         head?: never;
         patch?: never;
@@ -747,6 +818,131 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenants/{org}/identity/clients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List OIDC clients of a tenant (org admin only) */
+        get: operations["listIdentityClients"];
+        put?: never;
+        /** Create an OIDC client; the secret is returned exactly once (org admin only) */
+        post: operations["createIdentityClient"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/identity/clients/{clientId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an OIDC client (org admin only) */
+        get: operations["getIdentityClient"];
+        put?: never;
+        post?: never;
+        /** Disable an OIDC client (org admin only; row retained for audit) */
+        delete: operations["disableIdentityClient"];
+        options?: never;
+        head?: never;
+        /** Update an OIDC client (org admin only) */
+        patch: operations["updateIdentityClient"];
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/identity/clients/{clientId}/scopes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Replace the scopes of an OIDC client (org admin only) */
+        put: operations["putIdentityClientScopes"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/identity/clients/{clientId}/secret:rotate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rotate the client secret; the new value is returned exactly once (org admin only) */
+        post: operations["rotateIdentityClientSecret"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/identity/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List brokered identity providers of a tenant (org admin only; at most one in v1) */
+        get: operations["listIdentityProviders"];
+        put?: never;
+        /** Broker an OIDC identity provider into the tenant; the client secret is write-only (org admin only) */
+        post: operations["createIdentityProvider"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/identity/providers/{alias}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a brokered identity provider (org admin only) */
+        get: operations["getIdentityProvider"];
+        put?: never;
+        post?: never;
+        /** Remove a brokered identity provider (org admin only) */
+        delete: operations["deleteIdentityProvider"];
+        options?: never;
+        head?: never;
+        /** Update a brokered identity provider; clientSecret rotates the secret when set (org admin only) */
+        patch: operations["updateIdentityProvider"];
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/identity/scopes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read-only catalog of per-service audiences/scopes (org admin only) */
+        get: operations["listIdentityScopes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenants/{org}/instances": {
         parameters: {
             query?: never;
@@ -810,6 +1006,41 @@ export interface paths {
         /** One-click upgrade of an instance to a newer catalog version */
         post: operations["upgradeInstance"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Org-wide member view (highest role + teams) */
+        get: operations["listOrgMembers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/members/{subject}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set a user's org role (org admin only) */
+        put: operations["setMemberRole"];
+        post?: never;
+        /** Remove a user from the organization (org admin only) */
+        delete: operations["removeOrgMember"];
         options?: never;
         head?: never;
         patch?: never;
@@ -992,6 +1223,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenants/{org}/rbac/mappings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Declarative bulk set of team→role mappings, applied atomically (org admin only) */
+        put: operations["putRBACMappings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenants/{org}/rollouts": {
         parameters: {
             query?: never;
@@ -1122,8 +1370,26 @@ export interface paths {
         /** List teams of a tenant */
         get: operations["listTeams"];
         put?: never;
-        post?: never;
+        /** Create a team granting an org role (org admin only) */
+        post: operations["createTeam"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/teams/{team}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete a team (org admin only; default teams are protected) */
+        delete: operations["deleteTeam"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1267,6 +1533,13 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        ApprovalConfig: {
+            approvalTtl: string;
+            approverGroups?: components["schemas"]["ApproverGroup"][] | null;
+            autoApprove?: components["schemas"]["AutoApproveRule"][] | null;
+            defaultPolicy: string;
+            thresholds?: components["schemas"]["ApprovalThreshold"][] | null;
+        };
         ApprovalOutputBody: {
             /**
              * Format: uri
@@ -1301,6 +1574,16 @@ export interface components {
             state: string;
             version: string;
         };
+        ApprovalThreshold: {
+            /** Format: double */
+            gt: number;
+            kind: string;
+            policy: string;
+        };
+        ApproverGroup: {
+            name: string;
+            subjects: string[] | null;
+        };
         AssignPackInputBody: {
             /**
              * Format: uri
@@ -1320,6 +1603,28 @@ export interface components {
              */
             readonly $schema?: string;
             assignment: components["schemas"]["PolicyAssignment"];
+        };
+        AutoApproveRule: {
+            itemIds: string[] | null;
+            kind: string;
+        };
+        BrokeredIdP: {
+            alias: string;
+            claimMapping: components["schemas"]["IdPClaimMapping"];
+            clientId: string;
+            /** Format: date-time */
+            createdAt: string;
+            domainHints: string[] | null;
+            issuerUrl: string;
+        };
+        BrokeredIdPOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/BrokeredIdPOutputBody.json
+             */
+            readonly $schema?: string;
+            provider: components["schemas"]["BrokeredIdP"];
         };
         BulkAssignPolicyInputBody: {
             /**
@@ -1417,6 +1722,12 @@ export interface components {
             readonly $schema?: string;
             channel: components["schemas"]["AgentChannel"];
         };
+        ClaimMappingInput: {
+            /** @description Claim carrying the user email (defaults to the IdP's standard mapping) */
+            email?: string;
+            /** @description Claim carrying group memberships, mapped into the tenant members group */
+            groups?: string;
+        };
         CloudAccount: {
             accountId: string;
             /** Format: date-time */
@@ -1482,6 +1793,36 @@ export interface components {
             readonly $schema?: string;
             clusterSet: components["schemas"]["ClusterSet"];
         };
+        ConfigOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/ConfigOutputBody.json
+             */
+            readonly $schema?: string;
+            config: components["schemas"]["ApprovalConfig"];
+            orgId: string;
+            /** Format: date-time */
+            updatedAt: string | null;
+        };
+        CreateBrokeredIdPInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/CreateBrokeredIdPInputBody.json
+             */
+            readonly $schema?: string;
+            /** @description URL-safe IdP alias (KC alias becomes org-<org>-<alias>) */
+            alias: string;
+            claimMapping?: components["schemas"]["ClaimMappingInput"];
+            clientId: string;
+            /** @description Write-only: forwarded to Keycloak, never stored or returned */
+            clientSecret: string;
+            /** @description Org email domains used for home-IdP discovery */
+            domainHints?: string[] | null;
+            /** @description OIDC issuer URL (https); discovered via the discovery endpoint */
+            issuerUrl: string;
+        };
         CreateClusterInputBody: {
             /**
              * Format: uri
@@ -1505,6 +1846,35 @@ export interface components {
                 [key: string]: string;
             };
             name: string;
+        };
+        CreateIdentityClientInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/CreateIdentityClientInputBody.json
+             */
+            readonly $schema?: string;
+            audiences?: string[] | null;
+            /** @description URL-safe client name (clientId becomes org-<org>-<name>) */
+            name: string;
+            redirectUris?: string[] | null;
+            scopes?: string[] | null;
+            /**
+             * @description service = confidential client-credentials; public = browser/native with redirect URIs
+             * @enum {string}
+             */
+            type: "service" | "public";
+        };
+        CreateIdentityClientOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/CreateIdentityClientOutputBody.json
+             */
+            readonly $schema?: string;
+            client: components["schemas"]["IdentityClient"];
+            /** @description Returned exactly once; never stored server-side */
+            secret?: string;
         };
         CreateInputBody: {
             /**
@@ -1565,6 +1935,18 @@ export interface components {
             name: string;
             stages: components["schemas"]["RolloutStage"][] | null;
             targetRef: string;
+        };
+        CreateTeamInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/CreateTeamInputBody.json
+             */
+            readonly $schema?: string;
+            /** @description URL-safe team name */
+            name: string;
+            /** @description Org role the team grants (default viewer) */
+            role?: string;
         };
         CreateTenantInputBody: {
             /**
@@ -1867,6 +2249,30 @@ export interface components {
             readonly $schema?: string;
             config: components["schemas"]["TenantGitConfig"];
         };
+        IdPClaimMapping: {
+            email?: string;
+            groups?: string;
+        };
+        IdentityClient: {
+            audiences: string[] | null;
+            clientId: string;
+            /** Format: date-time */
+            createdAt: string;
+            name: string;
+            redirectUris?: string[] | null;
+            scopes: string[] | null;
+            status: string;
+            type: string;
+        };
+        IdentityClientOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/IdentityClientOutputBody.json
+             */
+            readonly $schema?: string;
+            client: components["schemas"]["IdentityClient"];
+        };
         InboxOutputBody: {
             /**
              * Format: uri
@@ -1937,6 +2343,15 @@ export interface components {
             readonly $schema?: string;
             accounts: components["schemas"]["CloudAccount"][] | null;
         };
+        ListBrokeredIdPsOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/ListBrokeredIdPsOutputBody.json
+             */
+            readonly $schema?: string;
+            providers: components["schemas"]["BrokeredIdP"][] | null;
+        };
         ListCapabilitiesOutputBody: {
             /**
              * Format: uri
@@ -2000,6 +2415,24 @@ export interface components {
             readonly $schema?: string;
             exemptions: components["schemas"]["Exemption"][] | null;
         };
+        ListIdentityClientsOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/ListIdentityClientsOutputBody.json
+             */
+            readonly $schema?: string;
+            clients: components["schemas"]["IdentityClient"][] | null;
+        };
+        ListIdentityScopesOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/ListIdentityScopesOutputBody.json
+             */
+            readonly $schema?: string;
+            scopes: components["schemas"]["ServiceScopes"][] | null;
+        };
         ListMembersOutputBody: {
             /**
              * Format: uri
@@ -2008,6 +2441,24 @@ export interface components {
              */
             readonly $schema?: string;
             members: components["schemas"]["MemberView"][] | null;
+        };
+        ListOrgMembersOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/ListOrgMembersOutputBody.json
+             */
+            readonly $schema?: string;
+            members: components["schemas"]["OrgMemberView"][] | null;
+        };
+        ListOrgVisibilityOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/ListOrgVisibilityOutputBody.json
+             */
+            readonly $schema?: string;
+            items: components["schemas"]["OrgVisibilityEntry"][] | null;
         };
         ListOutputBody: {
             /**
@@ -2090,6 +2541,15 @@ export interface components {
             readonly $schema?: string;
             tenants: components["schemas"]["Organization"][] | null;
         };
+        ListTokensOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/ListTokensOutputBody.json
+             */
+            readonly $schema?: string;
+            tokens: components["schemas"]["RegistrationToken"][] | null;
+        };
         ListZonesOutputBody: {
             /**
              * Format: uri
@@ -2138,6 +2598,31 @@ export interface components {
             name: string;
             orgId: string;
             url: string;
+        };
+        OrgMemberView: {
+            displayName: string;
+            email: string;
+            role: string;
+            teams: string[] | null;
+            userId: string;
+        };
+        OrgVisibilityEntry: {
+            displayName: string;
+            itemId: string;
+            name: string;
+            orgHidden: boolean;
+            platformHidden: boolean;
+            visible: boolean;
+        };
+        OrgVisibilityInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/OrgVisibilityInputBody.json
+             */
+            readonly $schema?: string;
+            /** @description false hides the item for this org; true shows it (subject to platform rules) */
+            visible: boolean;
         };
         Organization: {
             /** Format: date-time */
@@ -2220,6 +2705,44 @@ export interface components {
             reason: string;
             remediation: string;
             rule: string;
+        };
+        PutClientScopesInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/PutClientScopesInputBody.json
+             */
+            readonly $schema?: string;
+            scopes: string[] | null;
+        };
+        PutMemberInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/PutMemberInputBody.json
+             */
+            readonly $schema?: string;
+            /** @description Org role to grant */
+            role: string;
+        };
+        PutRBACMappingsInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/PutRBACMappingsInputBody.json
+             */
+            readonly $schema?: string;
+            /** @description Declarative team→role set; applied atomically */
+            mappings: components["schemas"]["TeamRoleMapping"][] | null;
+        };
+        PutRBACMappingsOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/PutRBACMappingsOutputBody.json
+             */
+            readonly $schema?: string;
+            changes: components["schemas"]["TeamRoleChange"][] | null;
         };
         RegisterInputBody: {
             /**
@@ -2381,6 +2904,20 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        RotateSecretOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/RotateSecretOutputBody.json
+             */
+            readonly $schema?: string;
+            /** @description Returned exactly once; never stored server-side */
+            secret: string;
+        };
+        ServiceScopes: {
+            audience: string;
+            scopes: string[] | null;
+        };
         SetChannelInputBody: {
             /**
              * Format: uri
@@ -2416,6 +2953,26 @@ export interface components {
             keycloakGroupPath: string;
             name: string;
             orgId: string;
+            role: string;
+        };
+        TeamOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/TeamOutputBody.json
+             */
+            readonly $schema?: string;
+            team: components["schemas"]["Team"];
+        };
+        TeamRoleChange: {
+            name: string;
+            newRole: string;
+            oldRole: string;
+            teamId: string;
+        };
+        TeamRoleMapping: {
+            role: string;
+            team: string;
         };
         TenantGitConfig: {
             baseBranch: string;
@@ -2491,6 +3048,41 @@ export interface components {
             /** @description Plaintext bootstrap token, returned once */
             token: string;
         };
+        UpdateBrokeredIdPInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/UpdateBrokeredIdPInputBody.json
+             */
+            readonly $schema?: string;
+            claimMapping?: components["schemas"]["ClaimMappingInput"];
+            clientId?: string;
+            /** @description Write-only: rotates the secret when set */
+            clientSecret?: string;
+            domainHints?: string[];
+            issuerUrl?: string;
+        };
+        UpdateConfigInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/UpdateConfigInputBody.json
+             */
+            readonly $schema?: string;
+            config: components["schemas"]["ApprovalConfig"];
+        };
+        UpdateIdentityClientInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/UpdateIdentityClientInputBody.json
+             */
+            readonly $schema?: string;
+            audiences?: string[];
+            name?: string;
+            redirectUris?: string[];
+            scopes?: string[];
+        };
         UpdateInputBody: {
             /**
              * Format: uri
@@ -2513,6 +3105,15 @@ export interface components {
             readonly $schema?: string;
             enabled: boolean;
             source: string;
+        };
+        UpdateTenantInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/UpdateTenantInputBody.json
+             */
+            readonly $schema?: string;
+            displayName: string;
         };
         UpgradeInputBody: {
             /**
@@ -2729,6 +3330,42 @@ export interface operations {
             };
         };
     };
+    updateTenant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Tenant slug */
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTenantInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TenantOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     listAgentChannels: {
         parameters: {
             query?: never;
@@ -2747,6 +3384,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ListChannelsOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getApprovalConfig: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfigOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    updateApprovalConfig: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateConfigInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfigOutputBody"];
                 };
             };
             /** @description Error */
@@ -3058,6 +3761,71 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ListCatalogOutputBody"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listCatalogVisibility: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListOrgVisibilityOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    setCatalogOrgVisibility: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                item: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OrgVisibilityInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {
@@ -3888,6 +4656,38 @@ export interface operations {
             };
         };
     };
+    listRegistrationTokens: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListTokensOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     issueRegistrationToken: {
         parameters: {
             query?: never;
@@ -3908,6 +4708,37 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["TokenOutputBody"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    revokeRegistrationToken: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+                tokenId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {
@@ -4348,6 +5179,436 @@ export interface operations {
             };
         };
     };
+    listIdentityClients: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Tenant slug */
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListIdentityClientsOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    createIdentityClient: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateIdentityClientInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateIdentityClientOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getIdentityClient: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                clientId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IdentityClientOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    disableIdentityClient: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                clientId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    updateIdentityClient: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                clientId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateIdentityClientInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IdentityClientOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    putIdentityClientScopes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                clientId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PutClientScopesInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IdentityClientOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    rotateIdentityClientSecret: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                clientId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RotateSecretOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listIdentityProviders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Tenant slug */
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListBrokeredIdPsOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    createIdentityProvider: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBrokeredIdPInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrokeredIdPOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getIdentityProvider: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                alias: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrokeredIdPOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteIdentityProvider: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                alias: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    updateIdentityProvider: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                alias: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateBrokeredIdPInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BrokeredIdPOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listIdentityScopes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Tenant slug */
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListIdentityScopesOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     listInstances: {
         parameters: {
             query?: {
@@ -4475,6 +5736,102 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["DeployOutputBody"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listOrgMembers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Tenant slug */
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListOrgMembersOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    setMemberRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                subject: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PutMemberInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    removeOrgMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                subject: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {
@@ -5047,6 +6404,41 @@ export interface operations {
             };
         };
     };
+    putRBACMappings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PutRBACMappingsInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PutRBACMappingsOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     listRollouts: {
         parameters: {
             query?: never;
@@ -5331,6 +6723,74 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ListTeamsOutputBody"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    createTeam: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Tenant slug */
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateTeamInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeamOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteTeam: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Tenant slug */
+                org: string;
+                /** @description Team name */
+                team: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {

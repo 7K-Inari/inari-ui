@@ -60,6 +60,35 @@ components:
         - createdAt
         - updatedAt
       type: object
+    ApprovalConfig:
+      additionalProperties: false
+      properties:
+        approvalTtl:
+          type: string
+        approverGroups:
+          items:
+            $ref: "#/components/schemas/ApproverGroup"
+          type:
+            - array
+            - "null"
+        autoApprove:
+          items:
+            $ref: "#/components/schemas/AutoApproveRule"
+          type:
+            - array
+            - "null"
+        defaultPolicy:
+          type: string
+        thresholds:
+          items:
+            $ref: "#/components/schemas/ApprovalThreshold"
+          type:
+            - array
+            - "null"
+      required:
+        - defaultPolicy
+        - approvalTtl
+      type: object
     ApprovalOutputBody:
       additionalProperties: false
       properties:
@@ -131,6 +160,36 @@ components:
         - state
         - createdAt
       type: object
+    ApprovalThreshold:
+      additionalProperties: false
+      properties:
+        gt:
+          format: double
+          type: number
+        kind:
+          type: string
+        policy:
+          type: string
+      required:
+        - kind
+        - gt
+        - policy
+      type: object
+    ApproverGroup:
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        subjects:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+      required:
+        - name
+        - subjects
+      type: object
     AssignPackInputBody:
       additionalProperties: false
       properties:
@@ -164,6 +223,64 @@ components:
           $ref: "#/components/schemas/PolicyAssignment"
       required:
         - assignment
+      type: object
+    AutoApproveRule:
+      additionalProperties: false
+      properties:
+        itemIds:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        kind:
+          type: string
+      required:
+        - kind
+        - itemIds
+      type: object
+    BrokeredIdP:
+      additionalProperties: false
+      properties:
+        alias:
+          type: string
+        claimMapping:
+          $ref: "#/components/schemas/IdPClaimMapping"
+        clientId:
+          type: string
+        createdAt:
+          format: date-time
+          type: string
+        domainHints:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        issuerUrl:
+          type: string
+      required:
+        - alias
+        - issuerUrl
+        - clientId
+        - claimMapping
+        - domainHints
+        - createdAt
+      type: object
+    BrokeredIdPOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/BrokeredIdPOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        provider:
+          $ref: "#/components/schemas/BrokeredIdP"
+      required:
+        - provider
       type: object
     BulkAssignPolicyInputBody:
       additionalProperties: false
@@ -367,6 +484,16 @@ components:
       required:
         - channel
       type: object
+    ClaimMappingInput:
+      additionalProperties: false
+      properties:
+        email:
+          description: Claim carrying the user email (defaults to the IdP's standard mapping)
+          type: string
+        groups:
+          description: Claim carrying group memberships, mapped into the tenant members group
+          type: string
+      type: object
     CloudAccount:
       additionalProperties: false
       properties:
@@ -502,6 +629,72 @@ components:
       required:
         - clusterSet
       type: object
+    ConfigOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ConfigOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        config:
+          $ref: "#/components/schemas/ApprovalConfig"
+        orgId:
+          type: string
+        updatedAt:
+          format: date-time
+          type:
+            - string
+            - "null"
+      required:
+        - config
+        - orgId
+        - updatedAt
+      type: object
+    CreateBrokeredIdPInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreateBrokeredIdPInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        alias:
+          description: URL-safe IdP alias (KC alias becomes org-<org>-<alias>)
+          maxLength: 63
+          minLength: 1
+          pattern: ^[a-z0-9][a-z0-9-]*$
+          type: string
+        claimMapping:
+          $ref: "#/components/schemas/ClaimMappingInput"
+        clientId:
+          minLength: 1
+          type: string
+        clientSecret:
+          description: "Write-only: forwarded to Keycloak, never stored or returned"
+          minLength: 1
+          type: string
+        domainHints:
+          description: Org email domains used for home-IdP discovery
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        issuerUrl:
+          description: OIDC issuer URL (https); discovered via the discovery endpoint
+          minLength: 1
+          type: string
+      required:
+        - alias
+        - issuerUrl
+        - clientId
+        - clientSecret
+      type: object
     CreateClusterInputBody:
       additionalProperties: false
       properties:
@@ -542,6 +735,68 @@ components:
       required:
         - name
         - labelSelector
+      type: object
+    CreateIdentityClientInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreateIdentityClientInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        audiences:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        name:
+          description: URL-safe client name (clientId becomes org-<org>-<name>)
+          maxLength: 63
+          minLength: 1
+          pattern: ^[a-z0-9][a-z0-9-]*$
+          type: string
+        redirectUris:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        scopes:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        type:
+          description: service = confidential client-credentials; public = browser/native with redirect URIs
+          enum:
+            - service
+            - public
+          type: string
+      required:
+        - name
+        - type
+      type: object
+    CreateIdentityClientOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreateIdentityClientOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        client:
+          $ref: "#/components/schemas/IdentityClient"
+        secret:
+          description: Returned exactly once; never stored server-side
+          type: string
+      required:
+        - client
       type: object
     CreateInputBody:
       additionalProperties: false
@@ -661,6 +916,28 @@ components:
         - targetRef
         - desiredVersion
         - stages
+      type: object
+    CreateTeamInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreateTeamInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        name:
+          description: URL-safe team name
+          maxLength: 63
+          minLength: 1
+          pattern: ^[a-z0-9][a-z0-9-]*$
+          type: string
+        role:
+          description: Org role the team grants (default viewer)
+          type: string
+      required:
+        - name
       type: object
     CreateTenantInputBody:
       additionalProperties: false
@@ -1217,6 +1494,70 @@ components:
       required:
         - config
       type: object
+    IdPClaimMapping:
+      additionalProperties: false
+      properties:
+        email:
+          type: string
+        groups:
+          type: string
+      type: object
+    IdentityClient:
+      additionalProperties: false
+      properties:
+        audiences:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        clientId:
+          type: string
+        createdAt:
+          format: date-time
+          type: string
+        name:
+          type: string
+        redirectUris:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        scopes:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        status:
+          type: string
+        type:
+          type: string
+      required:
+        - clientId
+        - name
+        - type
+        - audiences
+        - scopes
+        - status
+        - createdAt
+      type: object
+    IdentityClientOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/IdentityClientOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        client:
+          $ref: "#/components/schemas/IdentityClient"
+      required:
+        - client
+      type: object
     InboxOutputBody:
       additionalProperties: false
       properties:
@@ -1382,6 +1723,25 @@ components:
       required:
         - accounts
       type: object
+    ListBrokeredIdPsOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListBrokeredIdPsOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        providers:
+          items:
+            $ref: "#/components/schemas/BrokeredIdP"
+          type:
+            - array
+            - "null"
+      required:
+        - providers
+      type: object
     ListCapabilitiesOutputBody:
       additionalProperties: false
       properties:
@@ -1515,6 +1875,44 @@ components:
       required:
         - exemptions
       type: object
+    ListIdentityClientsOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListIdentityClientsOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        clients:
+          items:
+            $ref: "#/components/schemas/IdentityClient"
+          type:
+            - array
+            - "null"
+      required:
+        - clients
+      type: object
+    ListIdentityScopesOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListIdentityScopesOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        scopes:
+          items:
+            $ref: "#/components/schemas/ServiceScopes"
+          type:
+            - array
+            - "null"
+      required:
+        - scopes
+      type: object
     ListMembersOutputBody:
       additionalProperties: false
       properties:
@@ -1533,6 +1931,44 @@ components:
             - "null"
       required:
         - members
+      type: object
+    ListOrgMembersOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListOrgMembersOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        members:
+          items:
+            $ref: "#/components/schemas/OrgMemberView"
+          type:
+            - array
+            - "null"
+      required:
+        - members
+      type: object
+    ListOrgVisibilityOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListOrgVisibilityOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        items:
+          items:
+            $ref: "#/components/schemas/OrgVisibilityEntry"
+          type:
+            - array
+            - "null"
+      required:
+        - items
       type: object
     ListOutputBody:
       additionalProperties: false
@@ -1705,6 +2141,25 @@ components:
       required:
         - tenants
       type: object
+    ListTokensOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListTokensOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        tokens:
+          items:
+            $ref: "#/components/schemas/RegistrationToken"
+          type:
+            - array
+            - "null"
+      required:
+        - tokens
+      type: object
     ListZonesOutputBody:
       additionalProperties: false
       properties:
@@ -1825,6 +2280,69 @@ components:
         - events
         - enabled
         - createdAt
+      type: object
+    OrgMemberView:
+      additionalProperties: false
+      properties:
+        displayName:
+          type: string
+        email:
+          type: string
+        role:
+          type: string
+        teams:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        userId:
+          type: string
+      required:
+        - userId
+        - email
+        - displayName
+        - role
+        - teams
+      type: object
+    OrgVisibilityEntry:
+      additionalProperties: false
+      properties:
+        displayName:
+          type: string
+        itemId:
+          type: string
+        name:
+          type: string
+        orgHidden:
+          type: boolean
+        platformHidden:
+          type: boolean
+        visible:
+          type: boolean
+      required:
+        - itemId
+        - name
+        - displayName
+        - visible
+        - orgHidden
+        - platformHidden
+      type: object
+    OrgVisibilityInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/OrgVisibilityInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        visible:
+          description: false hides the item for this org; true shows it (subject to platform rules)
+          type: boolean
+      required:
+        - visible
       type: object
     Organization:
       additionalProperties: false
@@ -2017,6 +2535,80 @@ components:
         - rule
         - reason
         - remediation
+      type: object
+    PutClientScopesInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/PutClientScopesInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        scopes:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+      required:
+        - scopes
+      type: object
+    PutMemberInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/PutMemberInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        role:
+          description: Org role to grant
+          type: string
+      required:
+        - role
+      type: object
+    PutRBACMappingsInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/PutRBACMappingsInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        mappings:
+          description: Declarative team→role set; applied atomically
+          items:
+            $ref: "#/components/schemas/TeamRoleMapping"
+          type:
+            - array
+            - "null"
+      required:
+        - mappings
+      type: object
+    PutRBACMappingsOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/PutRBACMappingsOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        changes:
+          items:
+            $ref: "#/components/schemas/TeamRoleChange"
+          type:
+            - array
+            - "null"
+      required:
+        - changes
       type: object
     RegisterInputBody:
       additionalProperties: false
@@ -2359,6 +2951,37 @@ components:
         - status
         - updatedAt
       type: object
+    RotateSecretOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RotateSecretOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        secret:
+          description: Returned exactly once; never stored server-side
+          type: string
+      required:
+        - secret
+      type: object
+    ServiceScopes:
+      additionalProperties: false
+      properties:
+        audience:
+          type: string
+        scopes:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+      required:
+        - audience
+        - scopes
+      type: object
     SetChannelInputBody:
       additionalProperties: false
       properties:
@@ -2423,12 +3046,58 @@ components:
           type: string
         orgId:
           type: string
+        role:
+          type: string
       required:
         - id
         - orgId
         - name
+        - role
         - keycloakGroupPath
         - createdAt
+      type: object
+    TeamOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/TeamOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        team:
+          $ref: "#/components/schemas/Team"
+      required:
+        - team
+      type: object
+    TeamRoleChange:
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        newRole:
+          type: string
+        oldRole:
+          type: string
+        teamId:
+          type: string
+      required:
+        - teamId
+        - name
+        - oldRole
+        - newRole
+      type: object
+    TeamRoleMapping:
+      additionalProperties: false
+      properties:
+        role:
+          type: string
+        team:
+          type: string
+      required:
+        - team
+        - role
       type: object
     TenantGitConfig:
       additionalProperties: false
@@ -2592,6 +3261,72 @@ components:
         - record
         - expiresAt
       type: object
+    UpdateBrokeredIdPInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/UpdateBrokeredIdPInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        claimMapping:
+          $ref: "#/components/schemas/ClaimMappingInput"
+        clientId:
+          type: string
+        clientSecret:
+          description: "Write-only: rotates the secret when set"
+          type: string
+        domainHints:
+          items:
+            type: string
+          type: array
+        issuerUrl:
+          type: string
+      type: object
+    UpdateConfigInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/UpdateConfigInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        config:
+          $ref: "#/components/schemas/ApprovalConfig"
+      required:
+        - config
+      type: object
+    UpdateIdentityClientInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/UpdateIdentityClientInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        audiences:
+          items:
+            type: string
+          type: array
+        name:
+          maxLength: 63
+          minLength: 1
+          type: string
+        redirectUris:
+          items:
+            type: string
+          type: array
+        scopes:
+          items:
+            type: string
+          type: array
+      type: object
     UpdateInputBody:
       additionalProperties: false
       properties:
@@ -2634,6 +3369,23 @@ components:
       required:
         - source
         - enabled
+      type: object
+    UpdateTenantInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/UpdateTenantInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        displayName:
+          maxLength: 200
+          minLength: 1
+          type: string
+      required:
+        - displayName
       type: object
     UpgradeInputBody:
       additionalProperties: false
@@ -2824,6 +3576,38 @@ paths:
       security:
         - bearer: []
       summary: Get a tenant by slug
+    patch:
+      operationId: updateTenant
+      parameters:
+        - description: Tenant slug
+          in: path
+          name: org
+          required: true
+          schema:
+            description: Tenant slug
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTenantInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TenantOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Update the tenant profile (org admin only)
   /api/v1/tenants/{org}/agent-channels:
     get:
       operationId: listAgentChannels
@@ -2849,6 +3633,61 @@ paths:
       security:
         - bearer: []
       summary: List agent channel pins
+  /api/v1/tenants/{org}/approval-config:
+    get:
+      operationId: getApprovalConfig
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Get the org's effective approval policy config
+    put:
+      operationId: updateApprovalConfig
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateConfigInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConfigOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Replace the org's approval policy config
   /api/v1/tenants/{org}/approvals:
     get:
       operationId: listApprovals
@@ -3140,6 +3979,63 @@ paths:
       security:
         - bearer: []
       summary: List catalog items visible to the tenant (optionally per cluster)
+  /api/v1/tenants/{org}/catalog-visibility:
+    get:
+      operationId: listCatalogVisibility
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListOrgVisibilityOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: List effective catalog visibility for the tenant (platform rule AND org overlay)
+  /api/v1/tenants/{org}/catalog-visibility/{item}:
+    put:
+      operationId: setCatalogOrgVisibility
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: item
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OrgVisibilityInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Set the org-level visibility overlay for one catalog item (org admin)
   /api/v1/tenants/{org}/catalog/{item}:
     get:
       operationId: getCatalogItem
@@ -3903,6 +4799,35 @@ paths:
         - bearer: []
       summary: Revoke a cluster (disables its Keycloak client)
   /api/v1/tenants/{org}/clusters/{id}/tokens:
+    get:
+      operationId: listRegistrationTokens
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListTokensOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: List active (unconsumed, unexpired) registration tokens
     post:
       operationId: issueRegistrationToken
       parameters:
@@ -3932,6 +4857,37 @@ paths:
       security:
         - bearer: []
       summary: Issue a one-time TTL'd registration token
+  /api/v1/tenants/{org}/clusters/{id}/tokens/{tokenId}:
+    delete:
+      operationId: revokeRegistrationToken
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: tokenId
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Revoke (burn) a registration token (org admin only)
   /api/v1/tenants/{org}/clusters/{id}/uncordon:
     post:
       operationId: uncordonCluster
@@ -4315,6 +5271,393 @@ paths:
       security:
         - bearer: []
       summary: Set the tenant state repo + commit policy (platform engineer)
+  /api/v1/tenants/{org}/identity/clients:
+    get:
+      operationId: listIdentityClients
+      parameters:
+        - description: Tenant slug
+          in: path
+          name: org
+          required: true
+          schema:
+            description: Tenant slug
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListIdentityClientsOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: List OIDC clients of a tenant (org admin only)
+    post:
+      operationId: createIdentityClient
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateIdentityClientInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateIdentityClientOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Create an OIDC client; the secret is returned exactly once (org admin only)
+  /api/v1/tenants/{org}/identity/clients/{clientId}:
+    delete:
+      operationId: disableIdentityClient
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: clientId
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Disable an OIDC client (org admin only; row retained for audit)
+    get:
+      operationId: getIdentityClient
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: clientId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentityClientOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Get an OIDC client (org admin only)
+    patch:
+      operationId: updateIdentityClient
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: clientId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateIdentityClientInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentityClientOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Update an OIDC client (org admin only)
+  /api/v1/tenants/{org}/identity/clients/{clientId}/scopes:
+    put:
+      operationId: putIdentityClientScopes
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: clientId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PutClientScopesInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/IdentityClientOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Replace the scopes of an OIDC client (org admin only)
+  /api/v1/tenants/{org}/identity/clients/{clientId}/secret:rotate:
+    post:
+      operationId: rotateIdentityClientSecret
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: clientId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RotateSecretOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Rotate the client secret; the new value is returned exactly once (org admin only)
+  /api/v1/tenants/{org}/identity/providers:
+    get:
+      operationId: listIdentityProviders
+      parameters:
+        - description: Tenant slug
+          in: path
+          name: org
+          required: true
+          schema:
+            description: Tenant slug
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListBrokeredIdPsOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: List brokered identity providers of a tenant (org admin only; at most one in v1)
+    post:
+      operationId: createIdentityProvider
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBrokeredIdPInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BrokeredIdPOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Broker an OIDC identity provider into the tenant; the client secret is write-only (org admin only)
+  /api/v1/tenants/{org}/identity/providers/{alias}:
+    delete:
+      operationId: deleteIdentityProvider
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: alias
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Remove a brokered identity provider (org admin only)
+    get:
+      operationId: getIdentityProvider
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: alias
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BrokeredIdPOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Get a brokered identity provider (org admin only)
+    patch:
+      operationId: updateIdentityProvider
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: alias
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBrokeredIdPInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/BrokeredIdPOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Update a brokered identity provider; clientSecret rotates the secret when set (org admin only)
+  /api/v1/tenants/{org}/identity/scopes:
+    get:
+      operationId: listIdentityScopes
+      parameters:
+        - description: Tenant slug
+          in: path
+          name: org
+          required: true
+          schema:
+            description: Tenant slug
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListIdentityScopesOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Read-only catalog of per-service audiences/scopes (org admin only)
   /api/v1/tenants/{org}/instances:
     get:
       operationId: listInstances
@@ -4464,6 +5807,90 @@ paths:
       security:
         - bearer: []
       summary: One-click upgrade of an instance to a newer catalog version
+  /api/v1/tenants/{org}/members:
+    get:
+      operationId: listOrgMembers
+      parameters:
+        - description: Tenant slug
+          in: path
+          name: org
+          required: true
+          schema:
+            description: Tenant slug
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListOrgMembersOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Org-wide member view (highest role + teams)
+  /api/v1/tenants/{org}/members/{subject}:
+    delete:
+      operationId: removeOrgMember
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: subject
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Remove a user from the organization (org admin only)
+    put:
+      operationId: setMemberRole
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: subject
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PutMemberInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Set a user's org role (org admin only)
   /api/v1/tenants/{org}/notification-endpoints:
     get:
       operationId: listNotificationEndpoints
@@ -4967,6 +6394,37 @@ paths:
       security:
         - bearer: []
       summary: Remove a policy pack assignment
+  /api/v1/tenants/{org}/rbac/mappings:
+    put:
+      operationId: putRBACMappings
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PutRBACMappingsInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PutRBACMappingsOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Declarative bulk set of team→role mappings, applied atomically (org admin only)
   /api/v1/tenants/{org}/rollouts:
     get:
       operationId: listRollouts
@@ -5241,6 +6699,68 @@ paths:
       security:
         - bearer: []
       summary: List teams of a tenant
+    post:
+      operationId: createTeam
+      parameters:
+        - description: Tenant slug
+          in: path
+          name: org
+          required: true
+          schema:
+            description: Tenant slug
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateTeamInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Create a team granting an org role (org admin only)
+  /api/v1/tenants/{org}/teams/{team}:
+    delete:
+      operationId: deleteTeam
+      parameters:
+        - description: Tenant slug
+          in: path
+          name: org
+          required: true
+          schema:
+            description: Tenant slug
+            type: string
+        - description: Team name
+          in: path
+          name: team
+          required: true
+          schema:
+            description: Team name
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Delete a team (org admin only; default teams are protected)
   /api/v1/tenants/{org}/teams/{team}/members:
     get:
       operationId: listMembers

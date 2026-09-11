@@ -6,12 +6,11 @@ import { resolveTenant } from "@/tenant/current";
 // (openapi/openapi.yaml); shapes below are proposed wire shapes mocked by MSW.
 // Swap for generated schemas after npm run sync:api.
 
-// v1 is OIDC-only, but the provider field is a discriminated union so SAML can
-// be added later without redesign.
-export type IdpProviderKind = "oidc";
+// M6.W8: SAML joins OIDC in the reserved provider union.
+export type IdpProviderKind = "oidc" | "saml";
 
 export interface OidcProvider {
-  provider: IdpProviderKind;
+  provider: "oidc";
   alias: string;
   issuerUrl: string;
   clientId: string;
@@ -25,7 +24,7 @@ export interface OidcProvider {
   updatedAt: string;
 }
 
-export type IdpProvider = OidcProvider;
+export type IdpProvider = OidcProvider | SamlProvider;
 
 export interface OidcProviderInput {
   provider: "oidc";
@@ -38,7 +37,91 @@ export interface OidcProviderInput {
   domainHints: string[];
 }
 
-export type IdpProviderInput = OidcProviderInput;
+export type IdpProviderInput = OidcProviderInput | SamlProviderInput;
+
+// ---- SAML (M6.W8) ----
+
+// SAML IdPs have no discovery URL: configuration comes from metadata XML
+// import (import-config) or manual entityID/SSO URL/certificate entry.
+export interface SamlProvider {
+  provider: "saml";
+  alias: string;
+  entityId: string;
+  // Single sign-on service URL (redirect binding).
+  ssoUrl: string;
+  nameIdFormat: string;
+  // IdP signing certificate (PEM). Public key material — safe to return.
+  signingCertificate?: string;
+  certExpiresAt?: string;
+  wantAuthnRequestsSigned: boolean;
+  wantAssertionsSigned: boolean;
+  claimMapping: { email: string; groups: string };
+  domainHints: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SamlProviderInput {
+  provider: "saml";
+  alias: string;
+  entityId: string;
+  ssoUrl: string;
+  nameIdFormat?: string;
+  // PEM; accepted on create/edit and via the certificate upload endpoint.
+  signingCertificate?: string;
+  wantAuthnRequestsSigned?: boolean;
+  wantAssertionsSigned?: boolean;
+  claimMapping: { email: string; groups: string };
+  domainHints: string[];
+}
+
+// Result of importing IdP metadata (KC import-config equivalent): the server
+// parses the XML (or fetches metadataUrl) and returns the extracted config.
+export interface SamlMetadataImport {
+  entityId: string;
+  ssoUrl: string;
+  nameIdFormat?: string;
+  signingCertificate?: string;
+}
+
+// POST /identity/provider/import-config — parse SAML metadata into config.
+export async function importIdpMetadata(
+  token: string | undefined,
+  tenant: string,
+  body: { metadataUrl?: string; metadataXml?: string },
+): Promise<SamlMetadataImport> {
+  const res = await apiFetch<{ config: SamlMetadataImport }>(
+    `${tenantPath(tenant)}/identity/provider/import-config`,
+    { token, method: "POST", body },
+  );
+  return res.config;
+}
+
+// POST /identity/provider/certificate — upload/rotate the IdP signing
+// certificate (PEM). Returns the updated provider with cert expiry.
+export async function uploadIdpCertificate(
+  token: string | undefined,
+  tenant: string,
+  certificate: string,
+): Promise<IdpProvider> {
+  const res = await apiFetch<{ provider: IdpProvider }>(
+    `${tenantPath(tenant)}/identity/provider/certificate`,
+    { token, method: "POST", body: { certificate } },
+  );
+  return res.provider;
+}
+
+// GET /identity/provider/export — SP descriptor XML tenants hand to their IdP
+// to configure the Inari side. Fetched with the bearer token (a plain anchor
+// navigation would not authenticate), then offered as a blob download.
+export async function exportSpDescriptor(
+  token: string | undefined,
+  tenant: string,
+): Promise<string> {
+  return apiFetch<string>(`${tenantPath(tenant)}/identity/provider/export`, {
+    token,
+  });
+}
 
 function tenantPath(tenant: string): string {
   return `/tenants/${encodeURIComponent(resolveTenant(tenant))}`;
