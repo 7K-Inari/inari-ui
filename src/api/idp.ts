@@ -1,4 +1,4 @@
-import { API_BASE_URL, apiFetch } from "@/api/client";
+import { apiFetch } from "@/api/client";
 import { resolveTenant } from "@/tenant/current";
 
 // M6.W6: IdP brokering + login-routing domains (Settings §3.3).
@@ -112,9 +112,15 @@ export async function uploadIdpCertificate(
 }
 
 // GET /identity/provider/export — SP descriptor XML tenants hand to their IdP
-// to configure the Inari side. Returned as a URL for a download link.
-export function spDescriptorUrl(tenant: string): string {
-  return `${API_BASE_URL}${tenantPath(tenant)}/identity/provider/export`;
+// to configure the Inari side. Fetched with the bearer token (a plain anchor
+// navigation would not authenticate), then offered as a blob download.
+export async function exportSpDescriptor(
+  token: string | undefined,
+  tenant: string,
+): Promise<string> {
+  return apiFetch<string>(`${tenantPath(tenant)}/identity/provider/export`, {
+    token,
+  });
 }
 
 function tenantPath(tenant: string): string {

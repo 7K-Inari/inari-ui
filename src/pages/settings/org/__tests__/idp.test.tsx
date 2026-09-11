@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import {
@@ -248,13 +248,16 @@ describe("IdpBrokeringPage — SAML (M6.W8)", () => {
     expect(
       screen.getByText("https://idp.acme.example/saml/metadata"),
     ).toBeInTheDocument();
-    // SP descriptor exposure so the tenant can configure their IdP.
-    expect(
-      screen.getByRole("link", { name: /download sp descriptor/i }),
-    ).toHaveAttribute(
-      "href",
-      expect.stringContaining("/identity/provider/export"),
+    // SP descriptor exposure so the tenant can configure their IdP: fetched
+    // with the bearer token and offered as a blob download.
+    const createObjectURL = vi.fn().mockReturnValue("blob:mock");
+    const revokeObjectURL = vi.fn();
+    Object.assign(URL, { createObjectURL, revokeObjectURL });
+    await user.click(
+      screen.getByRole("button", { name: /download sp descriptor/i }),
     );
+    await waitFor(() => expect(createObjectURL).toHaveBeenCalled());
+    expect(revokeObjectURL).toHaveBeenCalled();
     // SAML has no client secret: no rotate control, no secret badge.
     expect(
       screen.queryByRole("button", { name: "Rotate secret" }),

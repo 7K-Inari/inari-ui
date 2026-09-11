@@ -4,11 +4,11 @@ import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
 import {
   deleteIdentityProvider,
+  exportSpDescriptor,
   getIdentityProvider,
   importIdpMetadata,
   putIdentityProvider,
   rotateProviderSecret,
-  spDescriptorUrl,
   uploadIdpCertificate,
   type IdpProvider,
   type IdpProviderInput,
@@ -319,6 +319,23 @@ export function IdpBrokeringPage() {
     }
   };
 
+  const downloadSpDescriptor = async () => {
+    setActionError(null);
+    try {
+      const xml = await exportSpDescriptor(token, tenant);
+      const url = URL.createObjectURL(
+        new Blob([xml], { type: "application/samlmetadata+xml" }),
+      );
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${tenant}-sp-descriptor.xml`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      fail(err, "Failed to download SP descriptor");
+    }
+  };
+
   const remove = async () => {
     if (
       !window.confirm(
@@ -536,13 +553,13 @@ export function IdpBrokeringPage() {
             </dl>
             {provider.provider === "saml" && (
               <p className="text-xs text-muted-foreground">
-                <a
+                <button
+                  type="button"
                   className="underline"
-                  href={spDescriptorUrl(tenant)}
-                  download
+                  onClick={downloadSpDescriptor}
                 >
                   Download SP descriptor
-                </a>{" "}
+                </button>{" "}
                 to hand to your IdP administrator to configure the Inari side.
               </p>
             )}
