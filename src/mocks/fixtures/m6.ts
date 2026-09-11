@@ -1,6 +1,10 @@
 import type { components } from "@/api/__generated__/schema";
 import type { OidcClient, OidcClientInput, OidcScope } from "@/api/identity";
-import type { IdpProvider, IdpProviderInput } from "@/api/idp";
+import type {
+  IdpProvider,
+  IdpProviderInput,
+  SamlMetadataImport,
+} from "@/api/idp";
 import type { ApprovalConfig } from "@/api/policies";
 import type {
   SecretStore,
@@ -16,7 +20,8 @@ type TenantGitConfig = components["schemas"]["TenantGitConfig"];
 type PolicyDecision = components["schemas"]["PolicyDecision"];
 type AssignPackRequest = components["schemas"]["AssignPackInputBody"];
 type CreatePackRequest = components["schemas"]["CreatePackInputBody"];
-type RequestExemptionRequest = components["schemas"]["RequestExemptionInputBody"];
+type RequestExemptionRequest =
+  components["schemas"]["RequestExemptionInputBody"];
 type GitConfigRequest = components["schemas"]["GitConfigInputBody"];
 
 export type Organization = components["schemas"]["Organization"];
@@ -152,10 +157,7 @@ export const denyDecision: PolicyDecision = {
 
 function seedState(): PolicyMockState {
   return {
-    packs: [
-      { ...baselinePack },
-      { ...platformPack },
-    ],
+    packs: [{ ...baselinePack }, { ...platformPack }],
     assignments: [],
     exemptions: [{ ...pendingExemption }, { ...approvedExemption }],
     policies: [{ ...maxSizePolicy }, { ...registryPolicy }],
@@ -300,7 +302,10 @@ function seedState(): PolicyMockState {
           provider: {
             type: "awsSM",
             region: "us-east-1",
-            authSecretRef: { name: "inari-platform-creds", namespace: "inari-system" },
+            authSecretRef: {
+              name: "inari-platform-creds",
+              namespace: "inari-system",
+            },
           },
           createdAt: iso(now - 120 * 86_400_000),
         },
@@ -312,7 +317,10 @@ function seedState(): PolicyMockState {
           provider: {
             type: "vault",
             url: "https://vault.acme.example",
-            authSecretRef: { name: "eso-vault-token", namespace: "external-secrets" },
+            authSecretRef: {
+              name: "eso-vault-token",
+              namespace: "external-secrets",
+            },
           },
           createdAt: iso(now - 15 * 86_400_000),
         },
@@ -345,7 +353,10 @@ export function packsFor(org: string): PolicyPack[] {
   return state.packs.filter((p) => !p.orgId || p.orgId === org);
 }
 
-export function createPackMock(org: string, body: CreatePackRequest): PolicyPack {
+export function createPackMock(
+  org: string,
+  body: CreatePackRequest,
+): PolicyPack {
   const pack: PolicyPack = {
     id: nextId("pp"),
     name: body.name,
@@ -377,7 +388,10 @@ export function assignPackMock(
   return assignment;
 }
 
-export function unassignPackMock(packId: string, assignmentId: string): boolean {
+export function unassignPackMock(
+  packId: string,
+  assignmentId: string,
+): boolean {
   const before = state.assignments.length;
   state.assignments = state.assignments.filter(
     (a) => !(a.packId === packId && a.id === assignmentId),
@@ -408,7 +422,10 @@ export function requestExemptionMock(
   return exemption;
 }
 
-export function decideExemptionMock(id: string, approve: boolean): Exemption | null {
+export function decideExemptionMock(
+  id: string,
+  approve: boolean,
+): Exemption | null {
   const exemption = state.exemptions.find((e) => e.id === id);
   if (!exemption) return null;
   exemption.state = approve ? "approved" : "rejected";
@@ -421,14 +438,19 @@ export function policiesFor(org: string): Policy[] {
 }
 
 export function evaluateMock(): PolicyDecision {
-  return state.nextEvaluateDecision ?? { allow: true, violations: [], warnings: [] };
+  return (
+    state.nextEvaluateDecision ?? { allow: true, violations: [], warnings: [] }
+  );
 }
 
 export function gitConfigFor(org: string): TenantGitConfig | null {
   return state.gitConfigs[org] ?? null;
 }
 
-export function setGitConfigMock(org: string, body: GitConfigRequest): TenantGitConfig {
+export function setGitConfigMock(
+  org: string,
+  body: GitConfigRequest,
+): TenantGitConfig {
   const config: TenantGitConfig = {
     orgId: org,
     repo: body.repo,
@@ -449,7 +471,10 @@ export function getOrgMock(slug: string): Organization | null {
   return state.orgs[slug] ?? null;
 }
 
-export function patchOrgMock(slug: string, displayName: string): Organization | null {
+export function patchOrgMock(
+  slug: string,
+  displayName: string,
+): Organization | null {
   const org = state.orgs[slug];
   if (!org) return null;
   org.displayName = displayName;
@@ -519,7 +544,11 @@ export function teamMembersFor(org: string, team: string): MemberView[] {
   return state.teamMembers[`${org}/${team}`] ?? [];
 }
 
-export function addTeamMemberMock(org: string, team: string, subject: string): boolean {
+export function addTeamMemberMock(
+  org: string,
+  team: string,
+  subject: string,
+): boolean {
   if (!teamsFor(org).some((t) => t.name === team)) return false;
   const orgMember = orgMembersFor(org).find((m) => m.userId === subject);
   const member: MemberView = orgMember ?? {
@@ -533,7 +562,11 @@ export function addTeamMemberMock(org: string, team: string, subject: string): b
   return true;
 }
 
-export function removeTeamMemberMock(org: string, team: string, subject: string): boolean {
+export function removeTeamMemberMock(
+  org: string,
+  team: string,
+  subject: string,
+): boolean {
   const key = `${org}/${team}`;
   const members = state.teamMembers[key] ?? [];
   const before = members.length;
@@ -588,7 +621,10 @@ export function recordRegistrationTokenMock(
   return record;
 }
 
-export function revokeRegistrationTokenMock(clusterId: string, tokenId: string): boolean {
+export function revokeRegistrationTokenMock(
+  clusterId: string,
+  tokenId: string,
+): boolean {
   const tokens = state.registrationTokens[clusterId] ?? [];
   const before = tokens.length;
   state.registrationTokens[clusterId] = tokens.filter((t) => t.id !== tokenId);
@@ -598,10 +634,26 @@ export function revokeRegistrationTokenMock(clusterId: string, tokenId: string):
 // ---- M6.W3: identity (OIDC clients / scopes) and approvals config ----
 
 export const oidcScopesCatalog: OidcScope[] = [
-  { name: "clusters:read", description: "Read tenant clusters", audience: "inari-clusters" },
-  { name: "clusters:write", description: "Register and remove clusters", audience: "inari-clusters" },
-  { name: "deploys:write", description: "Create and upgrade deploys", audience: "inari-deploys" },
-  { name: "catalog:read", description: "Browse the service catalog", audience: "inari-catalog" },
+  {
+    name: "clusters:read",
+    description: "Read tenant clusters",
+    audience: "inari-clusters",
+  },
+  {
+    name: "clusters:write",
+    description: "Register and remove clusters",
+    audience: "inari-clusters",
+  },
+  {
+    name: "deploys:write",
+    description: "Create and upgrade deploys",
+    audience: "inari-deploys",
+  },
+  {
+    name: "catalog:read",
+    description: "Browse the service catalog",
+    audience: "inari-catalog",
+  },
 ];
 
 export function oidcClientsFor(org: string): OidcClient[] {
@@ -612,7 +664,10 @@ export function findOidcClient(org: string, id: string): OidcClient | null {
   return oidcClientsFor(org).find((c) => c.id === id) ?? null;
 }
 
-export function createOidcClientMock(org: string, body: OidcClientInput): OidcClient {
+export function createOidcClientMock(
+  org: string,
+  body: OidcClientInput,
+): OidcClient {
   const clients = (state.oidcClients[org] ??= []);
   const client: OidcClient = {
     id: nextId("oc"),
@@ -651,7 +706,11 @@ export function deleteOidcClientMock(org: string, id: string): boolean {
   return state.oidcClients[org].length < before;
 }
 
-export function putClientScopesMock(org: string, id: string, scopes: string[]): OidcClient | null {
+export function putClientScopesMock(
+  org: string,
+  id: string,
+  scopes: string[],
+): OidcClient | null {
   const client = findOidcClient(org, id);
   if (!client) return null;
   client.scopes = scopes;
@@ -673,7 +732,10 @@ export function approvalConfigFor(org: string): ApprovalConfig {
 
 export function putApprovalConfigMock(
   org: string,
-  body: Pick<ApprovalConfig, "thresholds" | "approverGroups" | "autoApproveRules">,
+  body: Pick<
+    ApprovalConfig,
+    "thresholds" | "approverGroups" | "autoApproveRules"
+  >,
 ): ApprovalConfig {
   const config: ApprovalConfig = {
     orgId: org,
@@ -697,7 +759,10 @@ export function findSecretStore(org: string, name: string): SecretStore | null {
   return secretStoresFor(org).find((s) => s.name === name) ?? null;
 }
 
-export function createSecretStoreMock(org: string, body: SecretStoreInput): SecretStore {
+export function createSecretStoreMock(
+  org: string,
+  body: SecretStoreInput,
+): SecretStore {
   const stores = (state.secretStores[org] ??= []);
   const store: SecretStore = {
     name: body.name,
@@ -730,7 +795,10 @@ export function deleteSecretStoreMock(org: string, name: string): boolean {
   return state.secretStores[org].length < before;
 }
 
-export function secretStoreStatusFor(org: string, name: string): SecretStoreStatus | null {
+export function secretStoreStatusFor(
+  org: string,
+  name: string,
+): SecretStoreStatus | null {
   const store = findSecretStore(org, name);
   if (!store) return null;
   if (store.scope === "platform") {
@@ -768,30 +836,62 @@ export function idpProviderFor(org: string): IdpProvider | null {
   return state.idpProviders[org] ?? null;
 }
 
-export function putIdpProviderMock(org: string, body: IdpProviderInput): IdpProvider {
+export function putIdpProviderMock(
+  org: string,
+  body: IdpProviderInput,
+): IdpProvider {
   const existing = state.idpProviders[org];
   const nowIso = new Date().toISOString();
-  const provider: IdpProvider = {
-    provider: body.provider,
+  const base = {
     alias: body.alias,
-    issuerUrl: body.issuerUrl,
-    clientId: body.clientId,
-    // Secret is write-only: create with one sets it; edits without one keep it.
-    secretConfigured: existing ? existing.secretConfigured || Boolean(body.clientSecret) : Boolean(body.clientSecret),
     claimMapping: body.claimMapping,
     domainHints: body.domainHints ?? [],
     createdAt: existing?.createdAt ?? nowIso,
     updatedAt: nowIso,
   };
+  const provider: IdpProvider =
+    body.provider === "saml"
+      ? {
+          ...base,
+          provider: "saml",
+          entityId: body.entityId,
+          ssoUrl: body.ssoUrl,
+          nameIdFormat:
+            body.nameIdFormat ??
+            "urn:oasis:names:tc:SAML:1.1:nameid-format:persistent",
+          signingCertificate:
+            body.signingCertificate ??
+            (existing?.provider === "saml"
+              ? existing.signingCertificate
+              : undefined),
+          certExpiresAt:
+            existing?.provider === "saml" ? existing.certExpiresAt : undefined,
+          wantAuthnRequestsSigned: body.wantAuthnRequestsSigned ?? false,
+          wantAssertionsSigned: body.wantAssertionsSigned ?? false,
+        }
+      : {
+          ...base,
+          provider: "oidc",
+          issuerUrl: body.issuerUrl,
+          clientId: body.clientId,
+          // Secret is write-only: create with one sets it; edits without one keep it.
+          secretConfigured:
+            existing?.provider === "oidc"
+              ? existing.secretConfigured || Boolean(body.clientSecret)
+              : Boolean(body.clientSecret),
+        };
   for (const d of existing?.domainHints ?? []) delete state.claimedDomains[d];
   state.idpProviders[org] = provider;
   for (const d of provider.domainHints) state.claimedDomains[d] = org;
   return provider;
 }
 
-export function rotateIdpSecretMock(org: string, clientSecret: string): IdpProvider | null {
+export function rotateIdpSecretMock(
+  org: string,
+  clientSecret: string,
+): IdpProvider | null {
   const provider = state.idpProviders[org];
-  if (!provider || !clientSecret) return null;
+  if (!provider || provider.provider !== "oidc" || !clientSecret) return null;
   provider.secretConfigured = true;
   provider.updatedAt = new Date().toISOString();
   return provider;
@@ -805,8 +905,77 @@ export function deleteIdpProviderMock(org: string): boolean {
   return true;
 }
 
+// Canned metadata returned when importing via metadataUrl (fetch mocked away).
+export const MOCK_SAML_METADATA_XML = [
+  `<?xml version="1.0" encoding="UTF-8"?>`,
+  `<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="https://idp.acme.example/saml/metadata">`,
+  `  <md:IDPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">`,
+  `    <md:KeyDescriptor use="signing"><ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#"><ds:X509Data><ds:X509Certificate>MIIDFAKECERT</ds:X509Certificate></ds:X509Data></ds:KeyInfo></md:KeyDescriptor>`,
+  `    <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:persistent</md:NameIDFormat>`,
+  `    <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://idp.acme.example/saml/sso"/>`,
+  `  </md:IDPSSODescriptor>`,
+  `</md:EntityDescriptor>`,
+].join("\n");
+
+// Parses SAML IdP metadata XML into provider config (mock of KC import-config).
+// Returns null when the XML has no recognizable EntityDescriptor.
+export function parseSamlMetadataMock(xml: string): SamlMetadataImport | null {
+  const entityId = xml.match(/entityID="([^"]+)"/)?.[1];
+  const ssoUrl =
+    xml.match(
+      /<md:SingleSignOnService[^>]*Binding="[^"]*HTTP-Redirect"[^>]*Location="([^"]+)"/,
+    )?.[1] ?? xml.match(/<md:SingleSignOnService[^>]*Location="([^"]+)"/)?.[1];
+  if (!entityId || !ssoUrl) return null;
+  const nameIdFormat = xml.match(
+    /<md:NameIDFormat>([^<]+)<\/md:NameIDFormat>/,
+  )?.[1];
+  const cert = xml.match(
+    /<ds:X509Certificate>([^<]+)<\/ds:X509Certificate>/,
+  )?.[1];
+  return {
+    entityId,
+    ssoUrl,
+    nameIdFormat,
+    signingCertificate: cert
+      ? `-----BEGIN CERTIFICATE-----\n${cert}\n-----END CERTIFICATE-----`
+      : undefined,
+  };
+}
+
+// Uploads (replaces) the IdP signing certificate on a SAML provider.
+export function uploadIdpCertificateMock(
+  org: string,
+  certificate: string,
+): IdpProvider | null {
+  const provider = state.idpProviders[org];
+  if (!provider || provider.provider !== "saml") return null;
+  provider.signingCertificate = certificate;
+  provider.certExpiresAt = new Date(
+    Date.now() + 365 * 24 * 3600 * 1000,
+  ).toISOString();
+  provider.updatedAt = new Date().toISOString();
+  return provider;
+}
+
+// SP descriptor XML handed to tenants so they can configure their IdP.
+export function spDescriptorXmlMock(org: string): string | null {
+  const provider = state.idpProviders[org];
+  if (!provider || provider.provider !== "saml") return null;
+  return [
+    `<?xml version="1.0" encoding="UTF-8"?>`,
+    `<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="https://sso.inari.example/realms/${org}">`,
+    `  <md:SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">`,
+    `    <md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://sso.inari.example/realms/${org}/broker/${provider.alias}/endpoint" index="0"/>`,
+    `  </md:SPSSODescriptor>`,
+    `</md:EntityDescriptor>`,
+  ].join("\n");
+}
+
 // Returns the conflicting domain when another org has claimed it.
-export function domainClaimConflict(org: string, domainHints: string[]): string | null {
+export function domainClaimConflict(
+  org: string,
+  domainHints: string[],
+): string | null {
   for (const d of domainHints) {
     const claimant = state.claimedDomains[d];
     if (claimant && claimant !== org) return d;
@@ -814,7 +983,10 @@ export function domainClaimConflict(org: string, domainHints: string[]): string 
   return null;
 }
 
-export function putDomainHintsMock(org: string, domainHints: string[]): IdpProvider | null {
+export function putDomainHintsMock(
+  org: string,
+  domainHints: string[],
+): IdpProvider | null {
   const provider = state.idpProviders[org];
   if (!provider) return null;
   for (const d of provider.domainHints) delete state.claimedDomains[d];

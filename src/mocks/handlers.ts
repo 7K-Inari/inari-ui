@@ -122,9 +122,13 @@ import {
   deleteIdpProviderMock,
   domainClaimConflict,
   idpProviderFor,
+  MOCK_SAML_METADATA_XML,
+  parseSamlMetadataMock,
   putDomainHintsMock,
   putIdpProviderMock,
   rotateIdpSecretMock,
+  spDescriptorXmlMock,
+  uploadIdpCertificateMock,
 } from "@/mocks/fixtures/m6";
 import type { OidcClientInput } from "@/api/identity";
 import type { IdpProviderInput } from "@/api/idp";
@@ -132,8 +136,10 @@ import type { SecretStoreInput } from "@/api/secrets";
 
 type CreatePackInputBody = components["schemas"]["CreatePackInputBody"];
 type AssignPackInputBody = components["schemas"]["AssignPackInputBody"];
-type RequestExemptionInputBody = components["schemas"]["RequestExemptionInputBody"];
-type DecideExemptionInputBody = components["schemas"]["DecideExemptionInputBody"];
+type RequestExemptionInputBody =
+  components["schemas"]["RequestExemptionInputBody"];
+type DecideExemptionInputBody =
+  components["schemas"]["DecideExemptionInputBody"];
 type EvaluateInputBody = components["schemas"]["EvaluateInputBody"];
 type GitConfigInputBody = components["schemas"]["GitConfigInputBody"];
 
@@ -292,9 +298,15 @@ export const handlers = [
     HttpResponse.json({ tenants: seededOrganizations() }),
   ),
   http.post("*/api/v1/tenants", async ({ request }) => {
-    const body = (await request.json()) as { slug?: string; displayName?: string };
+    const body = (await request.json()) as {
+      slug?: string;
+      displayName?: string;
+    };
     if (!body.slug || !body.displayName) {
-      return humaError(422, "validation failed (expected required property displayName to be present)");
+      return humaError(
+        422,
+        "validation failed (expected required property displayName to be present)",
+      );
     }
     if (body.slug === "taken") {
       return humaError(409, `tenant slug "${body.slug}" already exists`);
@@ -344,7 +356,8 @@ export const handlers = [
         {
           title: "Error",
           status: 422,
-          detail: "denied by policy inari.storage/max-size: storage.size 500Gi exceeds tenant quota of 100Gi",
+          detail:
+            "denied by policy inari.storage/max-size: storage.size 500Gi exceeds tenant quota of 100Gi",
           remediation:
             "Reduce spec.storage.size to 100Gi or less, or request a quota increase via Approvals.",
         },
@@ -352,13 +365,18 @@ export const handlers = [
       );
     }
     const deploy = createDeployMock("acme", body);
-    return HttpResponse.json({ deploy: toServerDeployResult(deploy) }, { status: 201 });
+    return HttpResponse.json(
+      { deploy: toServerDeployResult(deploy) },
+      { status: 201 },
+    );
   }),
 
   // ---- instances (resources) ----
   http.get(`${BASE}/instances`, ({ params }) => {
     return HttpResponse.json({
-      instances: listResourcesForTenant(params.org as string).map(toServerInstance),
+      instances: listResourcesForTenant(params.org as string).map(
+        toServerInstance,
+      ),
     });
   }),
 
@@ -375,7 +393,10 @@ export const handlers = [
 
   http.get(`${BASE}/instances/:id/diff`, ({ params, request }) => {
     const url = new URL(request.url);
-    const diff = upgradeDiffFor(params.id as string, url.searchParams.get("to") ?? "");
+    const diff = upgradeDiffFor(
+      params.id as string,
+      url.searchParams.get("to") ?? "",
+    );
     if (!diff) return humaError(404, "instance not found");
     return HttpResponse.json({
       diff: {
@@ -391,9 +412,15 @@ export const handlers = [
 
   http.post(`${BASE}/instances/:id/upgrade`, async ({ params, request }) => {
     const body = (await request.json()) as { toVersion?: string };
-    const deploy = upgradeResourceMock(params.id as string, body.toVersion ?? "");
+    const deploy = upgradeResourceMock(
+      params.id as string,
+      body.toVersion ?? "",
+    );
     if (!deploy) return humaError(404, "instance not found");
-    return HttpResponse.json({ deploy: toServerDeployResult(deploy) }, { status: 201 });
+    return HttpResponse.json(
+      { deploy: toServerDeployResult(deploy) },
+      { status: 201 },
+    );
   }),
 
   // ---- clusters ----
@@ -404,17 +431,26 @@ export const handlers = [
   }),
 
   http.post(`${BASE}/clusters`, async ({ params, request }) => {
-    const body = (await request.json()) as CreateClusterRequest & Record<string, unknown>;
+    const body = (await request.json()) as CreateClusterRequest &
+      Record<string, unknown>;
     // Mirror the cluster-registry huma schema: strict properties.
-    const extra = Object.keys(body).filter((k) => k !== "name" && k !== "labels");
+    const extra = Object.keys(body).filter(
+      (k) => k !== "name" && k !== "labels",
+    );
     if (extra.length > 0) {
-      return humaError(422, `validation failed (unexpected property ${extra[0]})`);
+      return humaError(
+        422,
+        `validation failed (unexpected property ${extra[0]})`,
+      );
     }
     if (!body.name || !/^[a-z0-9][a-z0-9-]*$/.test(body.name)) {
       return humaError(400, "name must be lowercase alphanumeric with dashes");
     }
     const created = registerCluster(params.org as string, body);
-    return HttpResponse.json({ cluster: toServerCluster(created.cluster) }, { status: 201 });
+    return HttpResponse.json(
+      { cluster: toServerCluster(created.cluster) },
+      { status: 201 },
+    );
   }),
 
   http.post(`${BASE}/clusters/:id/tokens`, ({ params }) => {
@@ -512,7 +548,10 @@ export const handlers = [
       return humaError(400, "accountId must be a 12-digit AWS account ID");
     }
     if (!body.roleArn || !/^arn:aws:iam::\d{12}:role\/.+/.test(body.roleArn)) {
-      return humaError(400, "roleArn must be an arn:aws:iam::<acct>:role/<name> ARN");
+      return humaError(
+        400,
+        "roleArn must be an arn:aws:iam::<acct>:role/<name> ARN",
+      );
     }
     const account = createAccount(params.org as string, {
       accountId: body.accountId,
@@ -522,15 +561,19 @@ export const handlers = [
     return HttpResponse.json({ account: toServerCloudAccount(account) });
   }),
 
-  http.get(`${BASE}/cloud-accounts/:id/providerconfig`, ({ params, request }) => {
-    const account = findAccount(params.id as string);
-    if (!account) return humaError(404, "cloud account not found");
-    const url = new URL(request.url);
-    const clusterId = url.searchParams.get("clusterId");
-    if (!clusterId) return humaError(400, "clusterId query parameter is required");
-    // The huma endpoint renders the manifest as a plain-text body.
-    return HttpResponse.json(providerConfigManifestFor(account, clusterId));
-  }),
+  http.get(
+    `${BASE}/cloud-accounts/:id/providerconfig`,
+    ({ params, request }) => {
+      const account = findAccount(params.id as string);
+      if (!account) return humaError(404, "cloud account not found");
+      const url = new URL(request.url);
+      const clusterId = url.searchParams.get("clusterId");
+      if (!clusterId)
+        return humaError(400, "clusterId query parameter is required");
+      // The huma endpoint renders the manifest as a plain-text body.
+      return HttpResponse.json(providerConfigManifestFor(account, clusterId));
+    },
+  ),
 
   http.post(`${BASE}/cloud-accounts/:id/validate`, ({ params }) => {
     const account = validateAccount(params.id as string);
@@ -559,14 +602,21 @@ export const handlers = [
     if (!body.groupPath || !body.clusterRole) {
       return humaError(400, "groupPath and clusterRole are required");
     }
-    setRbacMappingMock(params.org as string, body.groupPath, body.clusterRole, Boolean(body.mapped));
+    setRbacMappingMock(
+      params.org as string,
+      body.groupPath,
+      body.clusterRole,
+      Boolean(body.mapped),
+    );
     return HttpResponse.json({ ok: true });
   }),
 
   // ---- approvals inbox aggregate (server v1.6.0, caller-scoped) ----
   http.get("*/api/v1/approvals/inbox", () => {
     // "all" lists pending inbox items across every org fixture.
-    const items = listApprovalsFor("all", { state: "pending" }).map(toServerApproval);
+    const items = listApprovalsFor("all", { state: "pending" }).map(
+      toServerApproval,
+    );
     return HttpResponse.json({ items });
   }),
 
@@ -577,22 +627,29 @@ export const handlers = [
     const requester = url.searchParams.get("requester");
     const state = url.searchParams.get("state");
     return HttpResponse.json({
-      approvals: listApprovalsFor(params.org as string, { requester, state }).map(
-        toServerApproval,
-      ),
+      approvals: listApprovalsFor(params.org as string, {
+        requester,
+        state,
+      }).map(toServerApproval),
     });
   }),
 
   http.post(`${BASE}/approvals/:id/decide`, async ({ params, request }) => {
-    const body = (await request.json()) as { approve?: boolean; reason?: string };
-    if (typeof body.approve !== "boolean") return humaError(400, "approve is required");
-    if (!body.reason?.trim()) return humaError(400, "a decision reason is required");
+    const body = (await request.json()) as {
+      approve?: boolean;
+      reason?: string;
+    };
+    if (typeof body.approve !== "boolean")
+      return humaError(400, "approve is required");
+    if (!body.reason?.trim())
+      return humaError(400, "a decision reason is required");
     const approval = decideApprovalMock(
       params.id as string,
       body.approve ? "approve" : "reject",
       body.reason,
     );
-    if (!approval) return humaError(409, "approval not found or already decided");
+    if (!approval)
+      return humaError(409, "approval not found or already decided");
     return HttpResponse.json({ approval: toServerApproval(approval) });
   }),
 
@@ -625,7 +682,9 @@ export const handlers = [
 
   // ---- platform resources (M3) ----
   http.get(`${BASE}/platform-resources`, ({ params }) => {
-    return HttpResponse.json({ resources: listPlatformResources(params.org as string) });
+    return HttpResponse.json({
+      resources: listPlatformResources(params.org as string),
+    });
   }),
 
   // ---- tenant zones (M3) ----
@@ -638,7 +697,10 @@ export const handlers = [
   http.get(`${BASE}/zones/:id`, ({ params }) => {
     const zone = pollZoneMock(params.id as string);
     if (!zone) return humaError(404, "zone not found");
-    return HttpResponse.json({ zone: toServerZone(zone), steps: toServerZoneSteps(zone) });
+    return HttpResponse.json({
+      zone: toServerZone(zone),
+      steps: toServerZoneSteps(zone),
+    });
   }),
 
   http.post(`${BASE}/zones`, async ({ params, request }) => {
@@ -648,15 +710,24 @@ export const handlers = [
       !body.slug ||
       !/^[a-z0-9][a-z0-9-]*$/.test(body.slug)
     ) {
-      return humaError(400, "displayName and a lowercase dashed slug are required");
+      return humaError(
+        400,
+        "displayName and a lowercase dashed slug are required",
+      );
     }
     if (!body.ouId || !body.managementAccountId || !body.region) {
-      return humaError(400, "ouId, managementAccountId, and region are required");
+      return humaError(
+        400,
+        "ouId, managementAccountId, and region are required",
+      );
     }
     if (body.tier !== "starter") {
       return humaError(400, "only the starter tier is available at this time");
     }
-    const zone = createZoneMock(params.org as string, body as CreateZoneRequestBody);
+    const zone = createZoneMock(
+      params.org as string,
+      body as CreateZoneRequestBody,
+    );
     return HttpResponse.json({ zone: toServerZone(zone) }, { status: 201 });
   }),
 
@@ -674,17 +745,26 @@ export const handlers = [
   }),
 
   http.post(`${BASE}/extensions/ui`, async ({ request }) => {
-    const body = (await request.json()) as { name?: string; remoteEntryUrl?: string };
+    const body = (await request.json()) as {
+      name?: string;
+      remoteEntryUrl?: string;
+    };
     if (!body.name || !/^[a-z0-9][a-z0-9-]*$/.test(body.name)) {
       return humaError(400, "name must be lowercase alphanumeric with dashes");
     }
-    if (!body.remoteEntryUrl || !/^(https?:\/\/|\/)/.test(body.remoteEntryUrl)) {
+    if (
+      !body.remoteEntryUrl ||
+      !/^(https?:\/\/|\/)/.test(body.remoteEntryUrl)
+    ) {
       return humaError(400, "remoteEntryUrl must be a URL or absolute path");
     }
     if (listUiExtensionMocks().some((e) => e.name === body.name)) {
       return humaError(409, "extension already installed");
     }
-    const extension = addUiExtensionMock({ name: body.name, remoteEntryUrl: body.remoteEntryUrl });
+    const extension = addUiExtensionMock({
+      name: body.name,
+      remoteEntryUrl: body.remoteEntryUrl,
+    });
     return HttpResponse.json({ extension }, { status: 201 });
   }),
 
@@ -779,7 +859,9 @@ export const handlers = [
     if (!getClusterSetMock(params.id as string)) {
       return humaError(404, "cluster set not found");
     }
-    return HttpResponse.json({ clusters: listClusterSetMembersMock(params.id as string) });
+    return HttpResponse.json({
+      clusters: listClusterSetMembersMock(params.id as string),
+    });
   }),
 
   http.get(`${BASE}/rollouts`, ({ params }) => {
@@ -801,7 +883,10 @@ export const handlers = [
     const stage = url.searchParams.get("stage");
     const targets = listRolloutTargetsMock(params.id as string);
     return HttpResponse.json({
-      targets: stage === null ? targets : targets.filter((t) => t.stage === Number(stage)),
+      targets:
+        stage === null
+          ? targets
+          : targets.filter((t) => t.stage === Number(stage)),
     });
   }),
 
@@ -814,7 +899,9 @@ export const handlers = [
   http.get(`${BASE}/drift`, ({ request }) => {
     // ListDriftOutputBody carries driftEvents, not drift.
     const status = new URL(request.url).searchParams.get("status");
-    const events = listDriftMocks().filter((d) => !status || d.status === status);
+    const events = listDriftMocks().filter(
+      (d) => !status || d.status === status,
+    );
     return HttpResponse.json({ driftEvents: events });
   }),
 
@@ -822,23 +909,26 @@ export const handlers = [
     return HttpResponse.json({ channels: listAgentChannelMocks() });
   }),
 
-  http.put(`${BASE}/cluster-sets/:id/channels/:channel`, async ({ params, request }) => {
-    const channel = params.channel as string;
-    if (channel !== "stable" && channel !== "canary") {
-      return humaError(400, "channel must be stable or canary");
-    }
-    const body = (await request.json()) as { desiredAgentVersion?: string };
-    if (!body.desiredAgentVersion) {
-      return humaError(400, "desiredAgentVersion is required");
-    }
-    const updated = setAgentChannelMock(
-      params.id as string,
-      channel as AgentChannel,
-      body.desiredAgentVersion,
-    );
-    if (!updated) return humaError(404, "cluster set not found");
-    return HttpResponse.json({ channel: updated });
-  }),
+  http.put(
+    `${BASE}/cluster-sets/:id/channels/:channel`,
+    async ({ params, request }) => {
+      const channel = params.channel as string;
+      if (channel !== "stable" && channel !== "canary") {
+        return humaError(400, "channel must be stable or canary");
+      }
+      const body = (await request.json()) as { desiredAgentVersion?: string };
+      if (!body.desiredAgentVersion) {
+        return humaError(400, "desiredAgentVersion is required");
+      }
+      const updated = setAgentChannelMock(
+        params.id as string,
+        channel as AgentChannel,
+        body.desiredAgentVersion,
+      );
+      if (!updated) return humaError(404, "cluster set not found");
+      return HttpResponse.json({ channel: updated });
+    },
+  ),
 
   // ---- M6.W1: settings — policy packs ----
   http.get(`${BASE}/policy-packs`, ({ params }) =>
@@ -847,28 +937,46 @@ export const handlers = [
 
   http.post(`${BASE}/policy-packs`, async ({ params, request }) => {
     const body = (await request.json()) as CreatePackInputBody;
-    if (!body.name || !body.engine || !body.version || body.manifests === undefined) {
-      return humaError(422, "validation failed (name, engine, version, manifests are required)");
+    if (
+      !body.name ||
+      !body.engine ||
+      !body.version ||
+      body.manifests === undefined
+    ) {
+      return humaError(
+        422,
+        "validation failed (name, engine, version, manifests are required)",
+      );
     }
-    return HttpResponse.json({ pack: createPackMock(params.org as string, body) });
+    return HttpResponse.json({
+      pack: createPackMock(params.org as string, body),
+    });
   }),
 
   http.post(`${BASE}/policy-packs/:id/assign`, async ({ params, request }) => {
     const body = (await request.json()) as AssignPackInputBody;
     if (!body.targetType || !body.targetId) {
-      return humaError(422, "validation failed (targetType, targetId are required)");
+      return humaError(
+        422,
+        "validation failed (targetType, targetId are required)",
+      );
     }
     const assignment = assignPackMock(params.id as string, body);
     if (!assignment) return humaError(404, "policy pack not found");
     return HttpResponse.json({ assignment });
   }),
 
-  http.delete(`${BASE}/policy-packs/:id/assignments/:assignmentId`, ({ params }) => {
-    if (!unassignPackMock(params.id as string, params.assignmentId as string)) {
-      return humaError(404, "assignment not found");
-    }
-    return new HttpResponse(null, { status: 204 });
-  }),
+  http.delete(
+    `${BASE}/policy-packs/:id/assignments/:assignmentId`,
+    ({ params }) => {
+      if (
+        !unassignPackMock(params.id as string, params.assignmentId as string)
+      ) {
+        return humaError(404, "assignment not found");
+      }
+      return new HttpResponse(null, { status: 204 });
+    },
+  ),
 
   // ---- M6.W1: settings — exemptions ----
   http.get(`${BASE}/exemptions`, ({ params }) =>
@@ -878,7 +986,10 @@ export const handlers = [
   http.post(`${BASE}/exemptions`, async ({ params, request }) => {
     const body = (await request.json()) as RequestExemptionInputBody;
     if (!body.policyId || !body.reason || !body.expiresAt) {
-      return humaError(422, "validation failed (policyId, reason, expiresAt are required)");
+      return humaError(
+        422,
+        "validation failed (policyId, reason, expiresAt are required)",
+      );
     }
     return HttpResponse.json({
       exemption: requestExemptionMock(params.org as string, body),
@@ -900,7 +1011,10 @@ export const handlers = [
   http.post(`${BASE}/policies/evaluate`, async ({ request }) => {
     const body = (await request.json()) as EvaluateInputBody;
     if (!body.itemId || !body.version || !body.clusterId) {
-      return humaError(422, "validation failed (itemId, version, clusterId are required)");
+      return humaError(
+        422,
+        "validation failed (itemId, version, clusterId are required)",
+      );
     }
     return HttpResponse.json({ decision: evaluateMock() });
   }),
@@ -915,9 +1029,15 @@ export const handlers = [
   http.put(`${BASE}/git-config`, async ({ params, request }) => {
     const body = (await request.json()) as GitConfigInputBody;
     if (!body.repo || !body.commitPolicy) {
-      return humaError(422, "validation failed (repo, commitPolicy are required)");
+      return humaError(
+        422,
+        "validation failed (repo, commitPolicy are required)",
+      );
     }
-    if (body.commitPolicy !== "direct" && body.commitPolicy !== "pull_request") {
+    if (
+      body.commitPolicy !== "direct" &&
+      body.commitPolicy !== "pull_request"
+    ) {
       return humaError(422, "commitPolicy must be direct or pull_request");
     }
     const config = setGitConfigMock(params.org as string, body);
@@ -933,7 +1053,10 @@ export const handlers = [
     }
     const org = patchOrgMock(params.org as string, body.displayName);
     if (!org) return humaError(404, "organization not found");
-    return HttpResponse.json({ organization: org, teams: teamsFor(params.org as string) });
+    return HttpResponse.json({
+      organization: org,
+      teams: teamsFor(params.org as string),
+    });
   }),
 
   // ---- M6.W2: org-wide members (proposed routes) ----
@@ -950,7 +1073,8 @@ export const handlers = [
     if (!body.email || !body.role) {
       return humaError(422, "validation failed (email, role are required)");
     }
-    if (!getOrgMock(params.org as string)) return humaError(404, "organization not found");
+    if (!getOrgMock(params.org as string))
+      return humaError(404, "organization not found");
     putOrgMemberMock(params.org as string, params.subject as string, {
       email: body.email,
       displayName: body.displayName,
@@ -974,9 +1098,13 @@ export const handlers = [
   http.post(`${BASE}/teams`, async ({ params, request }) => {
     const body = (await request.json()) as { name?: string };
     if (!body.name || !/^[a-z0-9][a-z0-9-]*$/.test(body.name)) {
-      return humaError(422, "validation failed (name must be lowercase alphanumeric with dashes)");
+      return humaError(
+        422,
+        "validation failed (name must be lowercase alphanumeric with dashes)",
+      );
     }
-    if (!getOrgMock(params.org as string)) return humaError(404, "organization not found");
+    if (!getOrgMock(params.org as string))
+      return humaError(404, "organization not found");
     const team = createTeamMock(params.org as string, body.name);
     return HttpResponse.json({ team }, { status: 201 });
   }),
@@ -1002,14 +1130,26 @@ export const handlers = [
     if (!body.subject) {
       return humaError(422, "validation failed (subject is required)");
     }
-    if (!addTeamMemberMock(params.org as string, params.team as string, body.subject)) {
+    if (
+      !addTeamMemberMock(
+        params.org as string,
+        params.team as string,
+        body.subject,
+      )
+    ) {
       return humaError(404, "team not found");
     }
     return new HttpResponse(null, { status: 204 });
   }),
 
   http.delete(`${BASE}/teams/:team/members/:subject`, ({ params }) => {
-    if (!removeTeamMemberMock(params.org as string, params.team as string, params.subject as string)) {
+    if (
+      !removeTeamMemberMock(
+        params.org as string,
+        params.team as string,
+        params.subject as string,
+      )
+    ) {
       return humaError(404, "member not found");
     }
     return new HttpResponse(null, { status: 204 });
@@ -1025,8 +1165,13 @@ export const handlers = [
     if (typeof body.visible !== "boolean") {
       return humaError(422, "validation failed (visible must be a boolean)");
     }
-    if (!getOrgMock(params.org as string)) return humaError(404, "organization not found");
-    putVisibilityMock(params.org as string, params.item as string, body.visible);
+    if (!getOrgMock(params.org as string))
+      return humaError(404, "organization not found");
+    putVisibilityMock(
+      params.org as string,
+      params.item as string,
+      body.visible,
+    );
     return new HttpResponse(null, { status: 204 });
   }),
 
@@ -1057,7 +1202,11 @@ export const handlers = [
     if (!body.name) {
       return humaError(422, "validation failed (name is required)");
     }
-    const client = updateOidcClientMock(params.org as string, params.id as string, body);
+    const client = updateOidcClientMock(
+      params.org as string,
+      params.id as string,
+      body,
+    );
     if (!client) return humaError(404, "client not found");
     return HttpResponse.json({ client });
   }),
@@ -1089,32 +1238,113 @@ export const handlers = [
 
   http.put(`${BASE}/identity/provider`, async ({ params, request }) => {
     const body = (await request.json()) as IdpProviderInput;
-    if (!body.alias || !body.issuerUrl || !body.clientId || !body.claimMapping) {
-      return humaError(422, "validation failed (alias, issuerUrl, clientId, claimMapping are required)");
+    if (!body.alias || !body.claimMapping) {
+      return humaError(
+        422,
+        "validation failed (alias, claimMapping are required)",
+      );
+    }
+    if (body.provider === "saml") {
+      if (!body.entityId || !body.ssoUrl) {
+        return humaError(
+          422,
+          "validation failed (entityId, ssoUrl are required)",
+        );
+      }
+    } else if (!body.issuerUrl || !body.clientId) {
+      return humaError(
+        422,
+        "validation failed (issuerUrl, clientId are required)",
+      );
     }
     if (!Array.isArray(body.domainHints)) {
       return humaError(422, "validation failed (domainHints must be an array)");
     }
-    if (!idpProviderFor(params.org as string) && !body.clientSecret) {
-      return humaError(422, "validation failed (clientSecret is required on create)");
+    if (
+      body.provider === "oidc" &&
+      !idpProviderFor(params.org as string) &&
+      !body.clientSecret
+    ) {
+      return humaError(
+        422,
+        "validation failed (clientSecret is required on create)",
+      );
     }
-    const conflict = domainClaimConflict(params.org as string, body.domainHints);
+    const conflict = domainClaimConflict(
+      params.org as string,
+      body.domainHints,
+    );
     if (conflict) {
-      return humaError(409, `domain "${conflict}" is already claimed by another organization`);
+      return humaError(
+        409,
+        `domain "${conflict}" is already claimed by another organization`,
+      );
     }
     const provider = putIdpProviderMock(params.org as string, body);
     return HttpResponse.json({ provider });
   }),
 
-  http.post(`${BASE}/identity/provider/secret:rotate`, async ({ params, request }) => {
-    const body = (await request.json()) as { clientSecret?: string };
-    if (!body.clientSecret) {
-      return humaError(422, "validation failed (clientSecret is required)");
+  http.post(`${BASE}/identity/provider/import-config`, async ({ request }) => {
+    const body = (await request.json()) as {
+      metadataUrl?: string;
+      metadataXml?: string;
+    };
+    const xml =
+      body.metadataXml ??
+      (body.metadataUrl ? MOCK_SAML_METADATA_XML : undefined);
+    const config = xml ? parseSamlMetadataMock(xml) : null;
+    if (!config) {
+      return humaError(
+        422,
+        "could not parse SAML metadata: no EntityDescriptor with a SingleSignOnService",
+      );
     }
-    const provider = rotateIdpSecretMock(params.org as string, body.clientSecret);
-    if (!provider) return humaError(404, "no identity provider configured");
-    return new HttpResponse(null, { status: 204 });
+    return HttpResponse.json({ config });
   }),
+
+  http.post(
+    `${BASE}/identity/provider/certificate`,
+    async ({ params, request }) => {
+      const body = (await request.json()) as { certificate?: string };
+      if (!body.certificate?.includes("BEGIN CERTIFICATE")) {
+        return humaError(
+          422,
+          "validation failed (certificate must be PEM encoded)",
+        );
+      }
+      const provider = uploadIdpCertificateMock(
+        params.org as string,
+        body.certificate,
+      );
+      if (!provider)
+        return humaError(404, "no SAML identity provider configured");
+      return HttpResponse.json({ provider });
+    },
+  ),
+
+  http.get(`${BASE}/identity/provider/export`, ({ params }) => {
+    const xml = spDescriptorXmlMock(params.org as string);
+    if (!xml) return humaError(404, "no SAML identity provider configured");
+    return new HttpResponse(xml, {
+      headers: { "Content-Type": "application/samlmetadata+xml" },
+    });
+  }),
+
+  http.post(
+    `${BASE}/identity/provider/secret:rotate`,
+    async ({ params, request }) => {
+      const body = (await request.json()) as { clientSecret?: string };
+      if (!body.clientSecret) {
+        return humaError(422, "validation failed (clientSecret is required)");
+      }
+      const provider = rotateIdpSecretMock(
+        params.org as string,
+        body.clientSecret,
+      );
+      if (!provider) return humaError(404, "no identity provider configured");
+      return new HttpResponse(null, { status: 204 });
+    },
+  ),
 
   http.delete(`${BASE}/identity/provider`, ({ params }) => {
     if (!deleteIdpProviderMock(params.org as string)) {
@@ -1129,23 +1359,36 @@ export const handlers = [
       return humaError(422, "validation failed (domainHints must be an array)");
     }
     const org = params.org as string;
-    if (!idpProviderFor(org)) return humaError(404, "no identity provider configured");
+    if (!idpProviderFor(org))
+      return humaError(404, "no identity provider configured");
     const conflict = domainClaimConflict(org, body.domainHints);
     if (conflict) {
-      return humaError(409, `domain "${conflict}" is already claimed by another organization`);
+      return humaError(
+        409,
+        `domain "${conflict}" is already claimed by another organization`,
+      );
     }
-    return HttpResponse.json({ provider: putDomainHintsMock(org, body.domainHints) });
+    return HttpResponse.json({
+      provider: putDomainHintsMock(org, body.domainHints),
+    });
   }),
 
-  http.put(`${BASE}/identity/clients/:id/scopes`, async ({ params, request }) => {
-    const body = (await request.json()) as { scopes?: string[] };
-    if (!Array.isArray(body.scopes)) {
-      return humaError(422, "validation failed (scopes must be an array)");
-    }
-    const client = putClientScopesMock(params.org as string, params.id as string, body.scopes);
-    if (!client) return humaError(404, "client not found");
-    return HttpResponse.json({ client });
-  }),
+  http.put(
+    `${BASE}/identity/clients/:id/scopes`,
+    async ({ params, request }) => {
+      const body = (await request.json()) as { scopes?: string[] };
+      if (!Array.isArray(body.scopes)) {
+        return humaError(422, "validation failed (scopes must be an array)");
+      }
+      const client = putClientScopesMock(
+        params.org as string,
+        params.id as string,
+        body.scopes,
+      );
+      if (!client) return humaError(404, "client not found");
+      return HttpResponse.json({ client });
+    },
+  ),
 
   // ---- M6.W3: approvals configuration (proposed routes) ----
   http.get(`${BASE}/approval-config`, ({ params }) =>
@@ -1191,19 +1434,29 @@ export const handlers = [
   }),
 
   http.patch(`${BASE}/secret-stores/:name`, async ({ params, request }) => {
-    const existing = findSecretStore(params.org as string, params.name as string);
+    const existing = findSecretStore(
+      params.org as string,
+      params.name as string,
+    );
     if (!existing) return humaError(404, "secret store not found");
     // Platform-scope writes require superuser (design §3.2).
     if (existing.scope === "platform") {
       return humaError(403, "platform-scoped secret stores are read-only");
     }
     const body = (await request.json()) as SecretStoreInput;
-    const store = updateSecretStoreMock(params.org as string, params.name as string, body);
+    const store = updateSecretStoreMock(
+      params.org as string,
+      params.name as string,
+      body,
+    );
     return HttpResponse.json({ store });
   }),
 
   http.delete(`${BASE}/secret-stores/:name`, ({ params }) => {
-    const existing = findSecretStore(params.org as string, params.name as string);
+    const existing = findSecretStore(
+      params.org as string,
+      params.name as string,
+    );
     if (!existing) return humaError(404, "secret store not found");
     if (existing.scope === "platform") {
       return humaError(403, "platform-scoped secret stores are read-only");
@@ -1213,7 +1466,10 @@ export const handlers = [
   }),
 
   http.get(`${BASE}/secret-stores/:name/status`, ({ params }) => {
-    const status = secretStoreStatusFor(params.org as string, params.name as string);
+    const status = secretStoreStatusFor(
+      params.org as string,
+      params.name as string,
+    );
     if (!status) return humaError(404, "secret store not found");
     return HttpResponse.json({ status });
   }),
