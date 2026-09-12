@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import { http, HttpResponse } from "msw";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -212,10 +212,14 @@ describe("AllTenantsHome activity section", () => {
 
     renderHome();
     // Wait for a sibling section to settle so the activity fan-out has
-    // resolved too, then assert the card never rendered.
+    // resolved too, then wait for the card to be gone: on slow CI runners
+    // the fan-out can still be in its skeleton state when the sibling
+    // settles, so a bare queryByTestId races and flakes.
     const approvals = await screen.findByTestId("all-approvals");
     await within(approvals).findByText(/pending|No pending/i);
-    expect(screen.queryByTestId("all-activity")).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByTestId("all-activity")).not.toBeInTheDocument(),
+    );
   });
 
   it("shows the empty state when orgs load with no instances and a 403 org", async () => {
