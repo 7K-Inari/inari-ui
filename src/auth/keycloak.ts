@@ -20,7 +20,7 @@ export async function initKeycloak(): Promise<boolean> {
     initPromise = keycloak
       .init({
         onLoad: "login-required",
-        scope: "openid organization",
+        scope: "openid organization:*",
         checkLoginIframe: false,
       })
       .catch((err) => {
