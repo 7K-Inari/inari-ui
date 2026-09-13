@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { policyMockControl } from "@/mocks/fixtures/m6";
+import { createNotificationEndpointMock, policyMockControl } from "@/mocks/fixtures/m6";
 import { mockServer } from "@/mocks/server";
 import { NotificationsPage } from "@/pages/settings/notifications";
 
@@ -261,6 +261,66 @@ describe("NotificationsPage", () => {
     expect(
       screen.getByText(/delivery history is not exposed/i),
     ).toBeInTheDocument();
+  });
+
+  it("surfaces a row action failure inline and keeps server state", async () => {
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.put("*/api/v1/tenants/:org/notification-endpoints/:id", () =>
+        HttpResponse.json(
+          { title: "Error", status: 403, detail: "insufficient permissions" },
+          { status: 403 },
+        ),
+      ),
+    );
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("ops-slack");
+    const row = screen.getByText("ops-slack").closest("tr")!;
+    await user.click(within(row).getByRole("checkbox"));
+    expect(
+      await within(row).findByText(/insufficient permissions/),
+    ).toBeInTheDocument();
+    // Server state unchanged.
+    expect(
+      policyMockControl
+        .getState()
+        .notificationEndpoints.acme.find((e) => e.id === "ne-slack-ops")
+        ?.enabled,
+    ).toBe(true);
+  });
+
+  it("sends the secret on create when provided", async () => {
+    const { http, HttpResponse } = await import("msw");
+    let captured: Record<string, unknown> | null = null;
+    mockServer.use(
+      http.post(
+        "*/api/v1/tenants/:org/notification-endpoints",
+        async ({ request }) => {
+          captured = (await request.json()) as Record<string, unknown>;
+          const endpoint = createNotificationEndpointMock("acme", captured);
+          return HttpResponse.json({ endpoint });
+        },
+      ),
+    );
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("ops-slack");
+    await user.click(screen.getByRole("button", { name: "New endpoint" }));
+    await user.type(screen.getByLabelText(/^Name/), "signed-hook");
+    await user.click(screen.getByRole("radio", { name: "Webhook" }));
+    await user.type(screen.getByLabelText(/^URL/), "https://example.com/hook");
+    await user.type(screen.getByLabelText(/Signing secret/), "s3cr3t");
+    await user.click(screen.getByRole("button", { name: "Create endpoint" }));
+    await screen.findByText("signed-hook");
+    expect(captured).toMatchObject({
+      name: "signed-hook",
+      kind: "webhook",
+      url: "https://example.com/hook",
+      secret: "s3cr3t",
+      enabled: true,
+      events: [],
+    });
   });
 
   it("surfaces a list failure", async () => {
