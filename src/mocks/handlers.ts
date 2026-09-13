@@ -129,7 +129,13 @@ import {
   rotateIdpSecretMock,
   spDescriptorXmlMock,
   uploadIdpCertificateMock,
+  createNotificationEndpointMock,
+  deleteNotificationEndpointMock,
+  findNotificationEndpoint,
+  notificationEndpointsFor,
+  updateNotificationEndpointMock,
 } from "@/mocks/fixtures/m6";
+import type { NotificationEndpointInput } from "@/mocks/fixtures/m6";
 import type { OidcClientInput } from "@/api/identity";
 import type { IdpProviderInput } from "@/api/idp";
 import type { SecretStoreInput } from "@/api/secrets";
@@ -1473,7 +1479,118 @@ export const handlers = [
     if (!status) return humaError(404, "secret store not found");
     return HttpResponse.json({ status });
   }),
+
+  // ---- Notification endpoints (inari-server internal/notifications) ----
+  http.get(`${BASE}/notification-endpoints`, ({ params }) =>
+    HttpResponse.json({
+      endpoints: notificationEndpointsFor(params.org as string),
+    }),
+  ),
+
+  http.post(`${BASE}/notification-endpoints`, async ({ params, request }) => {
+    const body = (await request.json()) as NotificationEndpointInput;
+    const err = validateEndpointInput(body, true);
+    if (err) return humaError(422, err);
+    const endpoint = createNotificationEndpointMock(params.org as string, body);
+    return HttpResponse.json({ endpoint });
+  }),
+
+  http.put(
+    `${BASE}/notification-endpoints/:id`,
+    async ({ params, request }) => {
+      const existing = findNotificationEndpoint(
+        params.org as string,
+        params.id as string,
+      );
+      if (!existing) return humaError(404, "notification endpoint not found");
+      const body = (await request.json()) as NotificationEndpointInput;
+      const merged = { ...existing, ...body };
+      const err = validateEndpointInput(merged, false);
+      if (err) return humaError(422, err);
+      const endpoint = updateNotificationEndpointMock(
+        params.org as string,
+        params.id as string,
+        body,
+      );
+      return HttpResponse.json({ endpoint });
+    },
+  ),
+
+  http.delete(`${BASE}/notification-endpoints/:id`, ({ params }) => {
+    if (
+      !deleteNotificationEndpointMock(params.org as string, params.id as string)
+    ) {
+      return humaError(404, "notification endpoint not found");
+    }
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.post(`${BASE}/notification-endpoints/:id/test`, ({ params }) => {
+    const endpoint = findNotificationEndpoint(
+      params.org as string,
+      params.id as string,
+    );
+    if (!endpoint) return humaError(404, "notification endpoint not found");
+    return HttpResponse.json({
+      delivery: {
+        id: `nd-${Date.now()}`,
+        endpointId: endpoint.id,
+        eventType: "notification.test",
+        payload: {},
+        status: "delivered",
+        attempts: 1,
+        createdAt: new Date().toISOString(),
+        deliveredAt: new Date().toISOString(),
+      },
+    });
+  }),
 ];
+
+// Mirrors validateEndpoint in inari-server internal/notifications.
+const KNOWN_EVENTS = new Set([
+  "approval.requested",
+  "approval.decided",
+  "approval.cancelled",
+  "approval.expired",
+  "capabilities.ingested",
+  "instance.status",
+  "deploy.requested",
+  "instance.upgraded",
+  "drift.detected",
+  "drift.resolved",
+  "rollout.failed",
+  "rollout.completed",
+  "rollout.rolled_back",
+  "extension.state_changed",
+  "scaffold.completed",
+  "scaffold.failed",
+]);
+
+function validateEndpointInput(
+  body: NotificationEndpointInput,
+  requireAll: boolean,
+): string | null {
+  if (requireAll || body.name !== undefined) {
+    if (!body.name) return "validation failed (name is required)";
+  }
+  if (requireAll || body.kind !== undefined) {
+    if (body.kind !== "slack" && body.kind !== "webhook") {
+      return "validation failed (kind must be slack or webhook)";
+    }
+  }
+  if (requireAll || body.url !== undefined) {
+    if (!body.url || !/^https?:\/\//.test(body.url)) {
+      return "validation failed (url must be an http(s) URL)";
+    }
+    if (body.kind === "slack" && body.url && !body.url.startsWith("https://")) {
+      return "validation failed (slack endpoints must use https)";
+    }
+  }
+  for (const e of body.events ?? []) {
+    if (!KNOWN_EVENTS.has(e)) return "validation failed (unknown event type in events filter)";
+  }
+  return null;
+}
 
 interface CreateZoneRequestBody {
   slug: string;
