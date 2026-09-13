@@ -336,7 +336,7 @@ function EndpointRow({
       <td className="px-4 py-2">
         <span
           className="font-mono text-xs text-muted-foreground"
-          title={endpoint.url}
+          title={maskUrl(endpoint.url)}
         >
           {maskUrl(endpoint.url)}
         </span>

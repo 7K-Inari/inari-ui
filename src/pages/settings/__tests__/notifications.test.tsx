@@ -50,12 +50,11 @@ describe("NotificationsPage", () => {
     expect(screen.getByText("audit-webhook")).toBeInTheDocument();
     expect(screen.getByText("slack")).toBeInTheDocument();
     expect(screen.getByText("webhook")).toBeInTheDocument();
-    // URL masked to origin; full URL only in the title attribute.
+    // URL masked to origin; the full URL (with secret path) appears nowhere,
+    // including the title attribute.
     const masked = screen.getByText("https://hooks.slack.com/•••");
-    expect(masked).toHaveAttribute(
-      "title",
-      "https://hooks.slack.com/services/T000/B000/secret-token",
-    );
+    expect(masked).toHaveAttribute("title", "https://hooks.slack.com/•••");
+    expect(masked.getAttribute("title")).not.toContain("secret-token");
     expect(
       screen.queryByText(/secret-token/, { selector: "td" }),
     ).not.toBeInTheDocument();
@@ -72,24 +71,13 @@ describe("NotificationsPage", () => {
 
   it("shows an empty state with a create CTA when no endpoints exist", async () => {
     const user = userEvent.setup();
-    renderPage();
-    // Delete both seeded endpoints first via the UI-less state reset.
     policyMockControl.getState().notificationEndpoints.acme = [];
-    render(
-      <MemoryRouter initialEntries={["/acme/settings/notifications"]}>
-        <Routes>
-          <Route
-            path="/:tenant/settings/notifications"
-            element={<NotificationsPage />}
-          />
-        </Routes>
-      </MemoryRouter>,
-    );
-    const ctas = await screen.findAllByRole("button", {
+    renderPage();
+    const cta = await screen.findByRole("button", {
       name: "Create your first endpoint",
     });
-    await user.click(ctas[ctas.length - 1]);
-    expect(screen.getAllByLabelText(/^Name/).length).toBeGreaterThan(0);
+    await user.click(cta);
+    expect(screen.getByLabelText(/^Name/)).toBeInTheDocument();
   });
 
   it("creates an endpoint and refreshes the list", async () => {
