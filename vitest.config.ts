@@ -17,5 +17,12 @@ export default defineConfig({
     },
     setupFiles: ["./src/test/setup.ts"],
     css: false,
+    // The sandbox shell exports NODE_ENV=production, which makes Vite resolve
+    // React's production build and breaks @testing-library's act(). Pin the
+    // test env so tests run regardless of the ambient NODE_ENV.
+    env: { NODE_ENV: "test" },
+    // userEvent-heavy form tests exceed the 5s default under parallel load on
+    // constrained CI/sandbox machines.
+    testTimeout: 20000,
   },
 });

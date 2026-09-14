@@ -1,4 +1,5 @@
 import {
+  Bell,
   Building2,
   Eye,
   FileCheck2,
@@ -43,6 +44,7 @@ export const SETTINGS_NAV_SECTIONS: SettingsNavSection[] = [
       { label: "Git", path: "org/git", icon: FolderGit2, requiredCapability: "viewer" },
       { label: "IdP Brokering", path: "org/idp", icon: Webhook, requiredCapability: "admin" },
       { label: "Domains", path: "org/domains", icon: Globe, requiredCapability: "viewer" },
+      { label: "Notifications", path: "notifications", icon: Bell, requiredCapability: "viewer" },
     ],
   },
   {

@@ -1,4 +1,5 @@
 import type { components } from "@/api/__generated__/schema";
+import type { NotificationEndpoint } from "@/api/notifications";
 import type { OidcClient, OidcClientInput, OidcScope } from "@/api/identity";
 import type {
   IdpProvider,
@@ -64,6 +65,7 @@ export interface PolicyMockState {
   approvalConfigs: Record<string, ApprovalConfig>;
   secretStores: Record<string, SecretStore[]>;
   idpProviders: Record<string, IdpProvider>;
+  notificationEndpoints: Record<string, NotificationEndpoint[]>;
   // Domains claimed across all orgs, for login routing 409s.
   claimedDomains: Record<string, string>;
 }
@@ -329,6 +331,31 @@ function seedState(): PolicyMockState {
       globex: [],
     },
     idpProviders: {},
+    notificationEndpoints: {
+      acme: [
+        {
+          id: "ne-slack-ops",
+          orgId: "acme",
+          name: "ops-slack",
+          kind: "slack",
+          url: "https://hooks.slack.com/services/T000/B000/secret-token",
+          events: ["approval.requested", "approval.decided"],
+          enabled: true,
+          createdAt: iso(now - 12 * 86_400_000),
+        },
+        {
+          id: "ne-hook-audit",
+          orgId: "acme",
+          name: "audit-webhook",
+          kind: "webhook",
+          url: "https://webhook.site/00000000-0000-4000-8000-000000000000",
+          events: null,
+          enabled: false,
+          createdAt: iso(now - 6 * 86_400_000),
+        },
+      ],
+      globex: [],
+    },
     // globex has already claimed example.com; acme starts with no IdP.
     claimedDomains: { "example.com": "globex" },
   };
@@ -997,4 +1024,69 @@ export function putDomainHintsMock(
   provider.updatedAt = new Date().toISOString();
   for (const d of domainHints) state.claimedDomains[d] = org;
   return provider;
+}
+
+// ---- Notification endpoints (inari-server internal/notifications) ----
+
+export interface NotificationEndpointInput {
+  name?: string;
+  kind?: string;
+  url?: string;
+  secret?: string;
+  events?: string[] | null;
+  enabled?: boolean;
+}
+
+export function notificationEndpointsFor(org: string): NotificationEndpoint[] {
+  return state.notificationEndpoints[org] ?? [];
+}
+
+export function findNotificationEndpoint(
+  org: string,
+  id: string,
+): NotificationEndpoint | null {
+  return notificationEndpointsFor(org).find((e) => e.id === id) ?? null;
+}
+
+export function createNotificationEndpointMock(
+  org: string,
+  body: NotificationEndpointInput,
+): NotificationEndpoint {
+  const endpoints = (state.notificationEndpoints[org] ??= []);
+  const endpoint: NotificationEndpoint = {
+    id: nextId("ne"),
+    orgId: org,
+    name: body.name ?? "",
+    kind: body.kind ?? "webhook",
+    url: body.url ?? "",
+    events: body.events ?? null,
+    enabled: body.enabled ?? true,
+    createdAt: new Date().toISOString(),
+  };
+  endpoints.push(endpoint);
+  return endpoint;
+}
+
+export function updateNotificationEndpointMock(
+  org: string,
+  id: string,
+  body: NotificationEndpointInput,
+): NotificationEndpoint | null {
+  const endpoint = findNotificationEndpoint(org, id);
+  if (!endpoint) return null;
+  if (body.name !== undefined) endpoint.name = body.name;
+  if (body.url !== undefined) endpoint.url = body.url;
+  if (body.events !== undefined) endpoint.events = body.events;
+  if (body.enabled !== undefined) endpoint.enabled = body.enabled;
+  return endpoint;
+}
+
+export function deleteNotificationEndpointMock(
+  org: string,
+  id: string,
+): boolean {
+  const endpoints = state.notificationEndpoints[org] ?? [];
+  const before = endpoints.length;
+  state.notificationEndpoints[org] = endpoints.filter((e) => e.id !== id);
+  return state.notificationEndpoints[org].length < before;
 }

@@ -42,6 +42,7 @@ import { MembersPage } from "@/pages/settings/org/members";
 import { OrgProfilePage } from "@/pages/settings/org/org-profile";
 import { IdpBrokeringPage } from "@/pages/settings/org/idp";
 import { OrgDomainsPage } from "@/pages/settings/org/domains";
+import { NotificationsPage } from "@/pages/settings/notifications";
 import { TeamsPage } from "@/pages/settings/org/teams";
 import { VisibilityPage } from "@/pages/settings/policies/visibility";
 import { RegistrationTokensPage } from "@/pages/settings/tokens/registration-tokens";
@@ -116,6 +117,7 @@ export function AppRoutes() {
             <Route path="org/git" element={<GitSettingsPage />} />
             <Route path="org/idp" element={<IdpBrokeringPage />} />
             <Route path="org/domains" element={<OrgDomainsPage />} />
+            <Route path="notifications" element={<NotificationsPage />} />
             <Route path="identity/clients" element={<OidcClientsPage />} />
             <Route path="identity/scopes" element={<OidcScopesPage />} />
             <Route path="identity/rbac" element={<RbacMappingSettingsPage />} />
