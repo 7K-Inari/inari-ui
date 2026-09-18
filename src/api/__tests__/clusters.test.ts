@@ -7,7 +7,6 @@ import {
   deleteCluster,
   getCapabilities,
   getCluster,
-  getInstallManifest,
   listClusters,
 } from "@/api/clusters";
 import { mockControl } from "@/mocks/fixtures";
@@ -66,14 +65,12 @@ describe("clusters api", () => {
     expect(res.cluster.tenant).toBe("acme");
     expect(res.registrationToken).toMatch(/^inari-reg-/);
     expect(new Date(res.tokenExpiresAt).getTime()).toBeGreaterThan(Date.now());
-    const manifest = await getInstallManifest("tok", res.cluster.id, "acme");
-    expect(manifest).toContain(res.registrationToken);
 
-    const helm = res.install.helmCommand!;
-    expect(helm).toContain("helm install inari-agent oci://ghcr.io/7k-inari/inari-agent/charts/inari-agent");
-    expect(helm).toContain(`--set registration.token=${res.registrationToken}`);
-    expect(helm).toContain("--set tenant.slug=acme");
-    expect(helm).toContain(`--set agent.gatewayUrl=${config.agentGatewayUrl}`);
+    const helm = res.install.helmCommand;
+    expect(helm).toContain("helm install inari-agent oci://ghcr.io/7k-inari/charts/inari-agent");
+    expect(helm).toContain(`--set config.registrationToken=${res.registrationToken}`);
+    expect(helm).toContain("--set config.tenantID=acme");
+    expect(helm).toContain(`--set config.controlPlane=${config.agentGatewayUrl}`);
   });
 
   it("sends only huma-accepted properties on create (name+labels)", async () => {
@@ -100,9 +97,6 @@ describe("clusters api", () => {
           token: "inari-reg-stub-token",
           expiresAt: new Date(Date.now() + 15 * 60_000).toISOString(),
         }),
-      ),
-      http.post("*/api/v1/tenants/acme/clusters/cl-stub/install-manifest", () =>
-        HttpResponse.text("kind: Namespace"),
       ),
     );
     await createCluster("tok", "acme", { name: "kind-m1", labels: { env: "dev" } });
@@ -133,11 +127,6 @@ describe("clusters api", () => {
     const caps = await getCapabilities("tok", "cl-kind-dev");
     expect(caps.length).toBeGreaterThan(0);
     expect(caps.map((c) => c.kind)).toContain("kro-rgd");
-  });
-
-  it("fetches the install manifest as text", async () => {
-    const manifest = await getInstallManifest("tok", "cl-kind-dev");
-    expect(manifest).toContain("kind: Namespace");
   });
 
   it("deletes a pending cluster", async () => {

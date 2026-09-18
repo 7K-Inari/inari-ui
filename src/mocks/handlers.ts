@@ -518,16 +518,6 @@ export const handlers = [
     });
   }),
 
-  http.post(`${BASE}/clusters/:id/install-manifest`, ({ params }) => {
-    const cluster = findCluster(params.id as string);
-    if (!cluster) return humaError(404, "cluster not found");
-    const token = `inari-reg-${cluster.name}-token`;
-    return new HttpResponse(
-      `# install manifest for ${cluster.name}\napiVersion: v1\nkind: Namespace\nmetadata:\n  name: inari-system\n---\n# token: ${token}\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: inari-agent\n  namespace: inari-system\nspec:\n  replicas: 1\n`,
-      { headers: { "content-type": "text/yaml" } },
-    );
-  }),
-
   // ---- cloud accounts (M3) ----
   http.get(`${BASE}/cloud-accounts`, ({ params }) => {
     return HttpResponse.json({
