@@ -33,7 +33,7 @@ function mapItem(i: ServerCatalogItem): CatalogItemSummary {
   const pinned = i.pinnedVersion
     ? versions.find((v) => v.version === i.pinnedVersion)
     : undefined;
-  const latest = pinned ?? versions.find((v) => v.channel === "stable") ?? versions[0];
+  const latest = pinned ?? versions.find((v) => v.channel === "stable") ?? versions[versions.length - 1];
   return {
     id: i.id,
     name: i.name,
@@ -48,7 +48,12 @@ function mapItem(i: ServerCatalogItem): CatalogItemSummary {
 function mapItemDetail(i: ServerCatalogItem): CatalogItemDetail {
   const base = mapItem(i);
   const versions = (i.versions ?? []).map(mapVersion);
-  const latest = (i.versions ?? [])[0];
+  // The server returns versions ascending by version string, so index 0 is
+  // the OLDEST; pick the version matching mapItem's latest selection
+  // (pinned → stable channel → last), else the highest one.
+  const all = i.versions ?? [];
+  const latest =
+    all.find((v) => v.version === base.latestVersion) ?? all[all.length - 1];
   return {
     ...base,
     versions,

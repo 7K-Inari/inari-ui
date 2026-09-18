@@ -17,6 +17,10 @@ export interface TenantPermissions {
 export interface MyPermissions {
   canCreateOrganizations: boolean;
   tenants?: Record<string, TenantPermissions>;
+  // Effective org role per tenant slug ("org-admin", "platform-engineer",
+  // "developer", "viewer"), mirroring the members API. Absent on older
+  // servers — treat as "unknown", never as denial.
+  orgRoles?: Record<string, string>;
 }
 
 const TENANT_FLAGS = [
@@ -44,13 +48,24 @@ function parseTenantPermissions(raw: unknown): Record<string, TenantPermissions>
 export async function fetchMyPermissions(
   token: string | undefined,
 ): Promise<MyPermissions> {
-  const res = await apiFetch<{ canCreateOrganizations?: unknown; tenants?: unknown }>(
+  const res = await apiFetch<{ canCreateOrganizations?: unknown; tenants?: unknown; orgRoles?: unknown }>(
     `/me/permissions`,
     { token },
   );
   const tenants = parseTenantPermissions(res.tenants);
+  const orgRoles = parseOrgRoles(res.orgRoles);
   return {
     canCreateOrganizations: res.canCreateOrganizations === true,
     ...(tenants ? { tenants } : {}),
+    ...(orgRoles ? { orgRoles } : {}),
   };
+}
+
+function parseOrgRoles(raw: unknown): Record<string, string> | undefined {
+  if (typeof raw !== "object" || raw === null) return undefined;
+  const out: Record<string, string> = {};
+  for (const [org, value] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof value === "string") out[org] = value;
+  }
+  return Object.keys(out).length > 0 ? out : undefined;
 }
