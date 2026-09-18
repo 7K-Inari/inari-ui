@@ -120,40 +120,6 @@ export const kindCapabilities: Capability[] = [
   },
 ];
 
-function manifestFor(name: string, token: string): string {
-  return [
-    "apiVersion: v1",
-    "kind: Namespace",
-    "metadata:",
-    "  name: inari-system",
-    "---",
-    "apiVersion: apps/v1",
-    "kind: Deployment",
-    "metadata:",
-    "  name: inari-agent",
-    "  namespace: inari-system",
-    "spec:",
-    "  replicas: 1",
-    "  selector:",
-    "    matchLabels:",
-    "      app: inari-agent",
-    "  template:",
-    "    metadata:",
-    "      labels:",
-    "        app: inari-agent",
-    "    spec:",
-    "      containers:",
-    "        - name: agent",
-    "          image: ghcr.io/7k-inari/inari/agent:0.3.1",
-    "          env:",
-    `            - name: INARI_CLUSTER_NAME`,
-    `              value: "${name}"`,
-    "            - name: INARI_REGISTRATION_TOKEN",
-    `              value: "${token}"`,
-    "",
-  ].join("\n");
-}
-
 export interface MockState {
   clusters: ClusterDetail[];
   capabilities: Record<string, Capability[]>;
@@ -249,8 +215,7 @@ export function registerCluster(
     registrationToken: token,
     tokenExpiresAt: new Date(Date.now() + 15 * 60_000).toISOString(),
     install: {
-      manifestYaml: manifestFor(body.name, token),
-      helmCommand: `helm install inari-agent oci://ghcr.io/7k-inari/inari/charts/agent --set cluster.name=${body.name} --set registration.token=${token}`,
+      helmCommand: `helm install inari-agent oci://ghcr.io/7k-inari/charts/inari-agent --set config.tenantID=${cluster.tenant} --set config.registrationToken=${token}`,
     },
   };
 }

@@ -136,7 +136,6 @@ export interface CreateClusterResponse {
   registrationToken: string;
   tokenExpiresAt: string;
   install: {
-    manifestYaml: string;
-    helmCommand?: string;
+    helmCommand: string;
   };
 }

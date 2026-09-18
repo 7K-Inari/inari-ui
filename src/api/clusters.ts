@@ -116,6 +116,17 @@ interface TokenResponse {
   expiresAt: string;
 }
 
+export async function issueRegistrationToken(
+  token: string | undefined,
+  id: string,
+  tenant?: string,
+): Promise<TokenResponse> {
+  return apiFetch<TokenResponse>(
+    `${tenantPath(resolveTenant(tenant))}/clusters/${encodeURIComponent(id)}/tokens`,
+    { token, method: "POST" },
+  );
+}
+
 export async function createCluster(
   token: string | undefined,
   tenant: string,
@@ -127,45 +138,29 @@ export async function createCluster(
     { token, method: "POST", body },
   );
   // Issue the one-time registration token so the wizard can show it once.
-  const tok = await apiFetch<TokenResponse>(
-    `${tenantPath(org)}/clusters/${encodeURIComponent(created.cluster.id)}/tokens`,
-    { token, method: "POST" },
-  );
-  const manifestYaml = await getInstallManifest(token, created.cluster.id, org);
+  const tok = await issueRegistrationToken(token, created.cluster.id, org);
   return {
     cluster: mapCluster(created.cluster),
     registrationToken: tok.token,
     tokenExpiresAt: tok.expiresAt,
     install: {
-      manifestYaml,
-      helmCommand: buildHelmCommand(org, tok.token),
+      helmCommand: buildHelmCommand(created.cluster.orgId, tok.token),
     },
   };
 }
 
-// The inari-agent chart requires the tenant slug, the control-plane agent
-// gateway URL, and the one-time registration token. The gateway comes from
-// runtime config (per-deployment), not a hardcoded URL.
-export function buildHelmCommand(tenant: string, registrationToken: string): string {
+// The inari-agent chart requires the tenant ID, the control-plane address
+// agents dial out to, and the one-time registration token. The gateway comes
+// from runtime config (per-deployment), not a hardcoded URL. The chart
+// (oci://ghcr.io/7k-inari/charts/inari-agent) is the single source of truth
+// for what gets installed.
+export function buildHelmCommand(orgID: string, registrationToken: string): string {
   return [
-    "helm install inari-agent oci://ghcr.io/7k-inari/inari-agent/charts/inari-agent \\",
-    `  --set tenant.slug=${tenant} \\`,
-    `  --set agent.gatewayUrl=${config.agentGatewayUrl} \\`,
-    `  --set registration.token=${registrationToken}`,
+    "helm install inari-agent oci://ghcr.io/7k-inari/charts/inari-agent \\",
+    `  --set config.tenantID=${orgID} \\`,
+    `  --set config.controlPlane=${config.agentGatewayUrl} \\`,
+    `  --set config.registrationToken=${registrationToken}`,
   ].join("\n");
-}
-
-// The server renders a fresh manifest (with a fresh embedded token) per call
-// and returns application/yaml; apiFetch passes non-JSON through as text.
-export function getInstallManifest(
-  token: string | undefined,
-  id: string,
-  tenant?: string,
-): Promise<string> {
-  return apiFetch<string>(
-    `${tenantPath(resolveTenant(tenant))}/clusters/${encodeURIComponent(id)}/install-manifest`,
-    { token, method: "POST" },
-  );
 }
 
 // Cancels a pending registration. The server rejects deletes for clusters
