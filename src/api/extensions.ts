@@ -38,6 +38,15 @@ export interface BackendExtension {
   healthy: boolean;
 }
 
+// Raw registry record (§5.8): the API exposes `state`
+// (pending|ready|degraded|stopped); there is no `healthy` field.
+export interface BackendExtensionRecord {
+  name: string;
+  version: string;
+  description?: string;
+  state?: string;
+}
+
 export async function listUiExtensions(
   token: string | undefined,
   tenant: string,
@@ -76,9 +85,16 @@ export async function listBackendExtensions(
   token: string | undefined,
   tenant: string,
 ): Promise<BackendExtension[]> {
-  const res = await apiFetch<{ extensions: BackendExtension[] }>(
+  const res = await apiFetch<{ extensions: BackendExtensionRecord[] }>(
     `/tenants/${encodeURIComponent(resolveTenant(tenant))}/extensions`,
     { token },
   );
-  return res.extensions;
+  // Project registry state onto the badge: ready = healthy, anything else
+  // (pending/degraded/stopped) = unhealthy.
+  return (res.extensions ?? []).map((e) => ({
+    name: e.name,
+    version: e.version,
+    description: e.description,
+    healthy: e.state === "ready",
+  }));
 }

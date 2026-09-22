@@ -1,5 +1,5 @@
 import type { components } from "@/api/__generated__/schema";
-import type { BackendExtension, UiExtensionRemote } from "@/api/extensions";
+import type { BackendExtensionRecord, UiExtensionRemote } from "@/api/extensions";
 import type { AgentChannel } from "@/api/fleet";
 import type {
   CreateScaffoldRequest,
@@ -24,7 +24,7 @@ type ServerAgentChannel = components["schemas"]["AgentChannel"];
 
 interface M4State {
   uiExtensions: UiExtensionRemote[];
-  backendExtensions: BackendExtension[];
+  backendExtensions: BackendExtensionRecord[];
   scaffoldRuns: ScaffoldState[];
   clusterSets: ServerClusterSet[];
   rollouts: RolloutStateInternal[];
@@ -149,7 +149,7 @@ export function removeUiExtensionMock(name: string): boolean {
   return true;
 }
 
-export function listBackendExtensionMocks(): BackendExtension[] {
+export function listBackendExtensionMocks(): BackendExtensionRecord[] {
   return state.backendExtensions.map((e) => ({ ...e }));
 }
 
