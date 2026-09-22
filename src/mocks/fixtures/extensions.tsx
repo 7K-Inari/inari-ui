@@ -6,7 +6,7 @@ import {
   type InariExtension,
 } from "@7k-inari/ui-plugin-sdk";
 
-import type { BackendExtension, UiExtensionRemote } from "@/api/extensions";
+import type { BackendExtensionRecord, UiExtensionRemote } from "@/api/extensions";
 
 // The inari-ext-argocd reference extension (§5.8 "first-party eats the same
 // dogfood"). Used by MSW handlers and component tests: the registry loads its
@@ -67,9 +67,11 @@ export const argocdRemote: UiExtensionRemote = {
   enabled: true,
 };
 
-export const argocdBackendExtension: BackendExtension = {
+// Raw registry record, mirroring the server contract (state, not healthy) —
+// the client maps ready → healthy.
+export const argocdBackendExtension: BackendExtensionRecord = {
   name: "inari-ext-argocd",
   version: "0.1.0",
   description: "ArgoCD actions backend plugin.",
-  healthy: true,
+  state: "ready",
 };

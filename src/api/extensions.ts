@@ -40,7 +40,7 @@ export interface BackendExtension {
 
 // Raw registry record (§5.8): the API exposes `state`
 // (pending|ready|degraded|stopped); there is no `healthy` field.
-interface BackendExtensionRecord {
+export interface BackendExtensionRecord {
   name: string;
   version: string;
   description?: string;
