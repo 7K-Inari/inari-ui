@@ -4737,41 +4737,6 @@ paths:
       security:
         - bearer: []
       summary: Decommission a cluster (ownership-checked drain, identity revocation, archived audit)
-  /api/v1/tenants/{org}/clusters/{id}/install-manifest:
-    post:
-      operationId: renderInstallManifest
-      parameters:
-        - in: path
-          name: org
-          required: true
-          schema:
-            type: string
-        - in: path
-          name: id
-          required: true
-          schema:
-            type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                contentEncoding: base64
-                type: string
-          description: OK
-          headers:
-            Content-Type:
-              schema:
-                type: string
-        default:
-          content:
-            application/problem+json:
-              schema:
-                $ref: "#/components/schemas/ErrorModel"
-          description: Error
-      security:
-        - bearer: []
-      summary: Render the agent install manifest embedding a fresh registration token
   /api/v1/tenants/{org}/clusters/{id}/revoke:
     post:
       operationId: revokeCluster

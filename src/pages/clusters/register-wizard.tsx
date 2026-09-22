@@ -2,7 +2,7 @@ import * as React from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, Copy, Loader2 } from "lucide-react";
 
-import { createCluster, getCluster, getInstallManifest } from "@/api/clusters";
+import { buildHelmCommand, createCluster, getCluster, issueRegistrationToken } from "@/api/clusters";
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
 import type { ClusterStatus, CreateClusterResponse } from "@/api/types";
@@ -149,7 +149,7 @@ function WaitingForConnection({ clusterId }: { clusterId: string }) {
       <div className="space-y-3 py-6 text-center">
         <p className="font-medium">Still waiting for the agent to connect…</p>
         <p className="text-sm text-muted-foreground">
-          Check that the manifest was applied (`kubectl -n inari-system get pods`) and that the
+          Check that the agent was installed (`kubectl -n inari-system get pods`) and that the
           cluster has outbound HTTPS access to the control plane.
         </p>
         <Button
@@ -170,20 +170,20 @@ function WaitingForConnection({ clusterId }: { clusterId: string }) {
       <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
       <p className="font-medium">Waiting for the agent to connect…</p>
       <p className="text-sm text-muted-foreground">
-        Apply the manifest above to your cluster. This page updates automatically once the agent
-        dials home.
+        Run the Helm command above to install the agent. This page updates automatically once the
+        agent dials home.
       </p>
       {cluster && <ClusterStatusBadge status={cluster.status} />}
     </div>
   );
 }
 
-// On a resumed registration the one-time token from step 1 is gone, but the
-// server renders a fresh manifest (fresh token embedded) per call, so the
-// user can still install the agent after coming back.
-function ResumedManifest({ clusterId }: { clusterId: string }) {
+// On a resumed registration the one-time token from step 1 is gone, so we
+// issue a fresh one and rebuild the Helm command — the same install UX as a
+// fresh registration.
+function ResumedInstall({ clusterId, orgID }: { clusterId: string; orgID: string }) {
   const { token } = useAuth();
-  const [manifest, setManifest] = React.useState<string | null>(null);
+  const [install, setInstall] = React.useState<{ command: string; expiresAt: string } | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -191,21 +191,25 @@ function ResumedManifest({ clusterId }: { clusterId: string }) {
     setLoading(true);
     setError(null);
     try {
-      setManifest(await getInstallManifest(token, clusterId));
+      const tok = await issueRegistrationToken(token, clusterId);
+      setInstall({ command: buildHelmCommand(orgID, tok.token), expiresAt: tok.expiresAt });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load install manifest");
+      setError(err instanceof Error ? err.message : "Failed to issue a registration token");
     } finally {
       setLoading(false);
     }
   };
 
-  if (manifest) {
+  if (install) {
     return (
       <div className="space-y-2">
-        <pre className="max-h-72 overflow-auto rounded-md bg-muted p-3 font-mono text-xs">
-          {manifest}
+        <div className="flex items-center justify-end">
+          <TokenCountdown expiresAt={install.expiresAt} />
+        </div>
+        <pre className="overflow-auto rounded-md bg-muted p-3 font-mono text-xs">
+          {install.command}
         </pre>
-        <CopyButton value={manifest} label="Copy manifest" />
+        <CopyButton value={install.command} label="Copy command" />
       </div>
     );
   }
@@ -214,7 +218,7 @@ function ResumedManifest({ clusterId }: { clusterId: string }) {
     <div className="space-y-2">
       {error && <p className="text-sm text-destructive">{error}</p>}
       <Button variant="outline" size="sm" onClick={load} disabled={loading}>
-        {loading ? "Loading manifest…" : "Show install manifest"}
+        {loading ? "Issuing token…" : "Show install command"}
       </Button>
     </div>
   );
@@ -233,7 +237,6 @@ export function RegisterWizardPage() {
   const [submitError, setSubmitError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
   const [created, setCreated] = React.useState<CreateClusterResponse | null>(null);
-  const [installTab, setInstallTab] = React.useState<"manifest" | "helm">("manifest");
 
   const resumeId = searchParams.get("cluster");
   const resumed = useAsyncResource(
@@ -330,7 +333,7 @@ export function RegisterWizardPage() {
           <CardHeader>
             <CardTitle>Install the agent</CardTitle>
             <CardDescription>
-              The token below is shown once and embeds cluster identity. Apply the manifest within
+              The token below is shown once and embeds cluster identity. Install the agent within
               the token lifetime.
             </CardDescription>
           </CardHeader>
@@ -345,47 +348,15 @@ export function RegisterWizardPage() {
               </div>
             </div>
 
-            <div className="flex gap-1" role="tablist" aria-label="Install method">
-              <Button
-                role="tab"
-                aria-selected={installTab === "manifest"}
-                variant={installTab === "manifest" ? "secondary" : "ghost"}
-                size="sm"
-                onClick={() => setInstallTab("manifest")}
-              >
-                kubectl manifest
-              </Button>
-              {created.install.helmCommand && (
-                <Button
-                  role="tab"
-                  aria-selected={installTab === "helm"}
-                  variant={installTab === "helm" ? "secondary" : "ghost"}
-                  size="sm"
-                  onClick={() => setInstallTab("helm")}
-                >
-                  Helm
-                </Button>
-              )}
+            <div className="space-y-2">
+              <pre className="overflow-auto rounded-md bg-muted p-3 font-mono text-xs">
+                {created.install.helmCommand}
+              </pre>
+              <CopyButton value={created.install.helmCommand} label="Copy command" />
             </div>
 
-            {installTab === "manifest" ? (
-              <div className="space-y-2">
-                <pre className="max-h-72 overflow-auto rounded-md bg-muted p-3 font-mono text-xs">
-                  {created.install.manifestYaml}
-                </pre>
-                <CopyButton value={created.install.manifestYaml} label="Copy manifest" />
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <pre className="overflow-auto rounded-md bg-muted p-3 font-mono text-xs">
-                  {created.install.helmCommand}
-                </pre>
-                <CopyButton value={created.install.helmCommand!} label="Copy command" />
-              </div>
-            )}
-
             <div className="flex justify-end">
-              <Button onClick={() => setStep(2)}>I&apos;ve applied it — watch for connection</Button>
+              <Button onClick={() => setStep(2)}>I&apos;ve installed it — watch for connection</Button>
             </div>
           </CardContent>
         </Card>
@@ -419,7 +390,9 @@ export function RegisterWizardPage() {
             ) : (
               <>
                 <WaitingForConnection clusterId={clusterId} />
-                {!created && <ResumedManifest clusterId={clusterId} />}
+                {!created && resumed.data && (
+                  <ResumedInstall clusterId={clusterId} orgID={resumed.data.tenant} />
+                )}
                 <div className="flex justify-end">
                   <Button asChild variant="outline">
                     <Link to={tenantLink(tenant, `clusters/${clusterId}`)}>Open cluster detail</Link>

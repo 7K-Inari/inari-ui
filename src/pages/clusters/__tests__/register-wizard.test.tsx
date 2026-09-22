@@ -52,7 +52,7 @@ describe("RegisterWizardPage", () => {
     expect(mockControl.getState().clusters.some((c) => c.name === "Bad_Name")).toBe(false);
   });
 
-  it("registers the cluster under the current tenant and shows the one-time token with install manifest", async () => {
+  it("registers the cluster under the current tenant and shows the one-time token with the Helm install command", async () => {
     const user = userEvent.setup();
     renderWizard();
     await fillDetails(user);
@@ -66,21 +66,13 @@ describe("RegisterWizardPage", () => {
     expect(created.status).toBe("pending");
     expect(created.labels).toEqual({ env: "dev", team: "platform" });
 
-    const manifest = screen.getByText(/kind: Deployment/);
-    expect(manifest.textContent).toContain(tokenEl.textContent!);
-  });
-
-  it("offers a Helm install tab with all mandatory chart values prefilled", async () => {
-    const user = userEvent.setup();
-    renderWizard();
-    await fillDetails(user);
-    const tokenEl = await screen.findByTestId("registration-token");
-    await user.click(screen.getByRole("tab", { name: "Helm" }));
     const command = screen.getByText(/helm install inari-agent/);
     expect(command).toBeInTheDocument();
-    expect(command.textContent).toContain(`--set registration.token=${tokenEl.textContent}`);
-    expect(command.textContent).toContain("--set tenant.slug=acme");
-    expect(command.textContent).toContain("--set agent.gatewayUrl=");
+    expect(command.textContent).toContain(`--set config.registrationToken=${tokenEl.textContent}`);
+    expect(command.textContent).toContain("--set config.tenantID=acme");
+    expect(command.textContent).toContain("--set config.controlPlane=");
+    expect(screen.queryByRole("tab")).not.toBeInTheDocument();
+    expect(screen.queryByText(/kubectl manifest/)).not.toBeInTheDocument();
   });
 
   it("waits for the agent and celebrates when the cluster comes online", async () => {
@@ -140,15 +132,17 @@ describe("RegisterWizardPage", () => {
     );
   });
 
-  it("lets a resumed user fetch a fresh install manifest", async () => {
+  it("lets a resumed user issue a fresh token and see the install command", async () => {
     const user = userEvent.setup();
     mockControl.setClusterStatus("cl-kind-dev", "pending");
     renderWizard("/acme/clusters/new?cluster=cl-kind-dev");
     await screen.findByText("Waiting for the agent to connect…");
-    await user.click(screen.getByRole("button", { name: "Show install manifest" }));
-    expect(await screen.findByText(/kind: Namespace/)).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Show install command" }));
+    const command = await screen.findByText(/helm install inari-agent/);
+    expect(command.textContent).toContain("--set config.registrationToken=");
+    expect(command.textContent).toContain("--set config.tenantID=");
     expect(
-      screen.getByRole("button", { name: "Copy manifest" }),
+      screen.getByRole("button", { name: "Copy command" }),
     ).toBeInTheDocument();
   });
 

@@ -1,9 +1,18 @@
 import { parseExtensionManifest, type InariExtension } from "@7k-inari/ui-plugin-sdk";
 
+import { API_BASE_URL } from "@/api/client";
 import type { UiExtensionRemote } from "@/api/extensions";
 import { getHostRuntime } from "@/ext/host-runtime";
 
 export type ExtensionLoader = (remote: UiExtensionRemote) => Promise<InariExtension>;
+
+// The registry returns a server-relative remoteEntryUrl (served by the
+// control plane itself); Module Federation needs an absolute URL so chunk
+// publicPath resolution works regardless of the current route.
+export function resolveRemoteEntryUrl(remoteEntryUrl: string): string {
+  if (/^https?:\/\//.test(remoteEntryUrl)) return remoteEntryUrl;
+  return new URL(remoteEntryUrl, new URL(API_BASE_URL, window.location.origin)).toString();
+}
 
 interface RemoteExtensionModule {
   default?: InariExtension;
@@ -16,7 +25,7 @@ interface RemoteExtensionModule {
 // broken by a bad remote.
 export const loadExtension: ExtensionLoader = async (remote) => {
   const runtime = getHostRuntime();
-  runtime.registerRemotes([{ name: remote.name, entry: remote.remoteEntryUrl }]);
+  runtime.registerRemotes([{ name: remote.name, entry: resolveRemoteEntryUrl(remote.remoteEntryUrl) }]);
   const mod = (await runtime.loadRemote(`${remote.name}/extension`)) as
     | RemoteExtensionModule
     | InariExtension
