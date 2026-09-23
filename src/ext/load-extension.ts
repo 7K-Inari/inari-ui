@@ -25,7 +25,14 @@ interface RemoteExtensionModule {
 // broken by a bad remote.
 export const loadExtension: ExtensionLoader = async (remote) => {
   const runtime = getHostRuntime();
-  runtime.registerRemotes([{ name: remote.name, entry: resolveRemoteEntryUrl(remote.remoteEntryUrl) }]);
+  // Webpack ModuleFederationPlugin container names must be valid JS
+  // identifiers: a remote registered as "inari-ext-argocd" exposes its
+  // container global as "inari_ext_argocd". entryGlobalName bridges the
+  // registry name (dashes) to the container global (underscores).
+  const entryGlobalName = remote.name.replace(/[^a-zA-Z0-9_$]/g, "_");
+  runtime.registerRemotes([
+    { name: remote.name, entry: resolveRemoteEntryUrl(remote.remoteEntryUrl), entryGlobalName },
+  ]);
   const mod = (await runtime.loadRemote(`${remote.name}/extension`)) as
     | RemoteExtensionModule
     | InariExtension
