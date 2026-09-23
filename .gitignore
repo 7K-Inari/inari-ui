@@ -3,3 +3,4 @@ dist/
 *.local
 .DS_Store
 core.*
+inari-ui-bundle.tar.gz
