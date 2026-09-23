@@ -18,6 +18,17 @@ jobs:
       - run: npm run test
       - run: npm run build
 
+      # The bundle artifact name is load-bearing: the chart's init container
+      # untars /work/inari-ui-bundle.tar.gz and inari-server pulls the OCI
+      # layer by name. Guard the exact name here so publish.yml can't drift.
+      - name: package bundle
+        run: tar -czf inari-ui-bundle.tar.gz -C dist . && test -f inari-ui-bundle.tar.gz
+      - name: assert publish.yml uses the exact bundle name
+        run: |
+          grep -q 'tar -czf inari-ui-bundle.tar.gz' .github/workflows/publish.yml \
+            && grep -q 'inari-ui-bundle.tar.gz:application/vnd.inari.ui.bundle.v1.tar+gzip' .github/workflows/publish.yml \
+            || (echo '::error::bundle artifact must be named exactly inari-ui-bundle.tar.gz in publish.yml'; exit 1)
+
   # Contract drift check: regenerate the TypeScript client types from the
   # pinned OpenAPI snapshot and fail if the committed output differs. This
   # catches hand-edits of generated code (or a forgotten sync) — the class
