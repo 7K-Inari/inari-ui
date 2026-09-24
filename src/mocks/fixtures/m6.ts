@@ -178,6 +178,7 @@ function seedState(): PolicyMockState {
         slug: "acme",
         displayName: "Acme Corp",
         keycloakOrgId: "kc-acme",
+        status: "active",
         createdAt: iso(now - 90 * 86_400_000),
       },
       globex: {
@@ -185,6 +186,7 @@ function seedState(): PolicyMockState {
         slug: "globex",
         displayName: "Globex Inc",
         keycloakOrgId: "kc-globex",
+        status: "active",
         createdAt: iso(now - 60 * 86_400_000),
       },
     },
@@ -218,6 +220,7 @@ function seedState(): PolicyMockState {
           id: "team-platform",
           orgId: "t-acme",
           name: "platform-team",
+          displayName: "Platform Team",
           role: "admin",
           keycloakGroupPath: "/acme/platform-team",
           createdAt: iso(now - 80 * 86_400_000),
@@ -553,6 +556,7 @@ export function createTeamMock(org: string, name: string): Team {
     id: nextId("team"),
     orgId: state.orgs[org]?.id ?? `t-${org}`,
     name,
+    displayName: name,
     // Server default per CreateTeamInputBody: role defaults to viewer.
     role: "viewer",
     keycloakGroupPath: `/${org}/${name}`,

@@ -55,6 +55,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/me/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Platform-level permissions of the authenticated caller */
+        get: operations["getMyPermissions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenants": {
         parameters: {
             query?: never;
@@ -84,7 +101,8 @@ export interface paths {
         get: operations["getTenant"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Decommission a tenant (org admin only; approval-gated, asynchronous) */
+        delete: operations["deleteTenant"];
         options?: never;
         head?: never;
         /** Update the tenant profile (org admin only) */
@@ -188,6 +206,74 @@ export interface paths {
         put?: never;
         /** Approve or reject a pending approval request */
         post: operations["decideApproval"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/audit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Org audit log in the console's shape (filterable by actor/action/objectType/from/to) */
+        get: operations["listAuditLog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/audit-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List org audit events, newest first (filterable by action and actor) */
+        get: operations["listAuditEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/audit/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Org audit log as CSV (same filters as the list) */
+        get: operations["exportAuditLog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/authz/self/extensions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the caller's effective extension invoke permissions */
+        get: operations["selfExtensionPermissions"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -524,6 +610,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenants/{org}/clusters/{id}/access-info": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** OIDC access info for building a kubelogin kubeconfig (no secrets, no API URL) */
+        get: operations["getClusterAccessInfo"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenants/{org}/clusters/{id}/approve": {
         parameters: {
             query?: never;
@@ -661,6 +764,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenants/{org}/deletion/dependencies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Dry-run: list resources blocking tenant deletion (org admin only) */
+        get: operations["tenantDeletionDependencies"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/deletion:retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retry a failed tenant deletion (org admin only) */
+        post: operations["retryTenantDeletion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenants/{org}/deploys": {
         parameters: {
             query?: never;
@@ -748,6 +885,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenants/{org}/extensions/ui": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List UI extensions (Module Federation remotes) */
+        get: operations["listUiExtensions"];
+        put?: never;
+        /** Register or update a UI extension remote */
+        post: operations["registerUiExtension"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/extensions/ui/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Unregister a UI extension remote */
+        delete: operations["unregisterUiExtension"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenants/{org}/extensions/{id}": {
         parameters: {
             query?: never;
@@ -761,6 +933,23 @@ export interface paths {
         post?: never;
         /** Unregister an extension */
         delete: operations["unregisterExtension"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/extensions/{id}/identity/rotate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rotate the extension's gateway identity secret (returned once; also lazily provisions identity for pre-ADR-0008 rows) */
+        post: operations["rotateExtensionIdentity"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -866,6 +1055,59 @@ export interface paths {
         put?: never;
         /** Rotate the client secret; the new value is returned exactly once (org admin only) */
         post: operations["rotateIdentityClientSecret"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/identity/provider": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get the tenant's single identity provider, or null (UI contract; org admin only) */
+        get: operations["getIdentityProviderCompat"];
+        /** Create-or-replace the tenant's single identity provider (UI contract; org admin only) */
+        put: operations["putIdentityProviderCompat"];
+        post?: never;
+        /** Delete the tenant's single identity provider (UI contract; org admin only) */
+        delete: operations["deleteIdentityProviderCompat"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/identity/provider/domains": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Replace the provider's login-routing domain hints (UI contract; org admin only) */
+        put: operations["putProviderDomainsCompat"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/identity/provider/secret:rotate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rotate the provider's write-only client secret (UI contract; org admin only) */
+        post: operations["rotateProviderSecretCompat"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1083,6 +1325,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenants/{org}/platform-resources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List tenant platform resources (keycloak realm/client, dns zone, namespace) */
+        get: operations["listPlatformResources"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/platform-resources/reconcile": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Force re-reconciliation of tenant platform resources (ops) */
+        post: operations["reconcilePlatformResources"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/platform-resources/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one tenant platform resource */
+        get: operations["getPlatformResource"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenants/{org}/policies": {
         parameters: {
             query?: never;
@@ -1127,7 +1420,7 @@ export interface paths {
         };
         /** Get a policy */
         get: operations["getPolicy"];
-        /** Update a policy (bumps version) */
+        /** Update a policy (bumps version; exemptions bind the stable ID, so renames/edits keep them valid) */
         put: operations["updatePolicy"];
         post?: never;
         /** Delete a policy */
@@ -1166,7 +1459,8 @@ export interface paths {
         get: operations["getPolicyPack"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete a policy pack (409 while assigned unless force=true) */
+        delete: operations["deletePolicyPack"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1189,6 +1483,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenants/{org}/policy-packs/{id}/assignments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List a policy pack's assignments */
+        get: operations["listPolicyPackAssignments"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenants/{org}/policy-packs/{id}/assignments/{assignmentId}": {
         parameters: {
             query?: never;
@@ -1201,6 +1512,23 @@ export interface paths {
         post?: never;
         /** Remove a policy pack assignment */
         delete: operations["unassignPolicyPack"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/rbac": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** RBAC matrix: tenant Keycloak groups × cluster roles with current mappings */
+        get: operations["getRBACMatrix"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1343,6 +1671,145 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenants/{org}/scaffold-runs/{runId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a scaffold run with per-phase step states and outputs (UI polls this) */
+        get: operations["getScaffoldRun"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/scaffold-runs/{runId}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cooperatively cancel a scaffold run (retains already-created outputs) */
+        post: operations["cancelScaffoldRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/scaffold-runs/{runId}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Resume a failed scaffold run from its first non-completed step */
+        post: operations["retryScaffoldRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/scaffolds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a scaffold run (UI wizard contract) */
+        post: operations["createScaffold"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/scaffolds/{runId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a scaffold run (UI wizard polling contract) */
+        get: operations["getScaffold"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/secret-stores": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List secret stores (own cluster-scoped plus platform stores) */
+        get: operations["listSecretStores"];
+        put?: never;
+        /** Register a secret store */
+        post: operations["createSecretStore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/secret-stores/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one secret store */
+        get: operations["getSecretStore"];
+        put?: never;
+        post?: never;
+        /** Delete a secret store */
+        delete: operations["deleteSecretStore"];
+        options?: never;
+        head?: never;
+        /** Update a secret store's targets/provider */
+        patch: operations["updateSecretStore"];
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/secret-stores/{name}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Delivery status projection for one secret store */
+        get: operations["getSecretStoreStatus"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenants/{org}/teams": {
         parameters: {
             query?: never;
@@ -1369,7 +1836,8 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        put?: never;
+        /** Update a team's display name (org admin only; name and Keycloak group path are immutable, default teams are protected — ADR-0007) */
+        put: operations["updateTeam"];
         post?: never;
         /** Delete a team (org admin only; default teams are protected) */
         delete: operations["deleteTeam"];
@@ -1408,6 +1876,57 @@ export interface paths {
         post?: never;
         /** Remove a user from a team (platform-engineer/admin only) */
         delete: operations["removeMember"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List software templates visible to the tenant at their effective versions */
+        get: operations["listTemplates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/templates/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a template with its values schema and optional uiSchema */
+        get: operations["getTemplate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/templates/{name}/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a scaffold run (idempotent: identical resubmits return the existing run) */
+        post: operations["createScaffoldRun"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1486,6 +2005,19 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        AWSSMProvider: {
+            authSecretRef: components["schemas"]["SecretRef"];
+            region: string;
+        };
+        AccessInfoOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/AccessInfoOutputBody.json
+             */
+            readonly $schema?: string;
+            accessInfo: components["schemas"]["ClusterAccessInfo"];
+        };
         AccountOutputBody: {
             /**
              * Format: uri
@@ -1587,9 +2119,26 @@ export interface components {
             readonly $schema?: string;
             assignment: components["schemas"]["PolicyAssignment"];
         };
+        AuditEvent: {
+            action: string;
+            actor: string;
+            /** Format: date-time */
+            createdAt: string;
+            id: string;
+            impersonator?: string;
+            objectId: string;
+            objectType: string;
+            orgId: string;
+            payload?: unknown;
+        };
         AutoApproveRule: {
             itemIds: string[] | null;
             kind: string;
+        };
+        AzureKVProvider: {
+            authSecretRef: components["schemas"]["SecretRef"];
+            tenantId?: string;
+            vaultUrl: string;
         };
         BrokeredIdP: {
             alias: string;
@@ -1748,6 +2297,12 @@ export interface components {
             orgId: string;
             state: string;
         };
+        ClusterAccessInfo: {
+            audience: string;
+            issuerUrl: string;
+            kubectlClientId: string;
+            organization: string;
+        };
         ClusterOutputBody: {
             /**
              * Format: uri
@@ -1875,6 +2430,18 @@ export interface components {
             secret?: string;
             url: string;
         };
+        CreateInputBody1: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/CreateInputBody1.json
+             */
+            readonly $schema?: string;
+            name: string;
+            provider: components["schemas"]["SecretStoreProvider"];
+            scope: string;
+            targets: components["schemas"]["SecretStoreTargets"];
+        };
         CreatePackInputBody: {
             /**
              * Format: uri
@@ -1918,6 +2485,54 @@ export interface components {
             name: string;
             stages: components["schemas"]["RolloutStage"][] | null;
             targetRef: string;
+        };
+        CreateRunInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/CreateRunInputBody.json
+             */
+            readonly $schema?: string;
+            displayName?: string;
+            values: {
+                [key: string]: unknown;
+            };
+            /** @description Template version; defaults to the tenant's effective version */
+            version?: string;
+        };
+        CreateRunOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/CreateRunOutputBody.json
+             */
+            readonly $schema?: string;
+            run: components["schemas"]["RunView"];
+        };
+        CreateScaffoldInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/CreateScaffoldInputBody.json
+             */
+            readonly $schema?: string;
+            /** @description Component name; becomes the run display name */
+            name: string;
+            /** @description Wizard answers, validated against the template schema */
+            parameters: {
+                [key: string]: unknown;
+            };
+            /** @description Catalog item ID (or name) of the template */
+            templateId: string;
+        };
+        CreateScaffoldOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/CreateScaffoldOutputBody.json
+             */
+            readonly $schema?: string;
+            scaffold: components["schemas"]["ScaffoldView"];
         };
         CreateTeamInputBody: {
             /**
@@ -1998,6 +2613,42 @@ export interface components {
              */
             readonly $schema?: string;
             approvalId?: string;
+        };
+        DeleteTenantInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/DeleteTenantInputBody.json
+             */
+            readonly $schema?: string;
+            /** @description Revoke non-terminal clusters and delete despite dependencies */
+            force?: boolean;
+            reason?: string;
+        };
+        DeleteTenantOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/DeleteTenantOutputBody.json
+             */
+            readonly $schema?: string;
+            approvalId: string;
+            status: string;
+        };
+        DeletionDependenciesOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/DeletionDependenciesOutputBody.json
+             */
+            readonly $schema?: string;
+            blockers: components["schemas"]["Dependency"][] | null;
+        };
+        Dependency: {
+            id: string;
+            kind: string;
+            name: string;
+            state: string;
         };
         DeployInputBody: {
             /**
@@ -2167,6 +2818,7 @@ export interface components {
         };
         Extension: {
             checksum: string;
+            clientId?: string;
             /** Format: date-time */
             createdAt: string;
             endpoint: string;
@@ -2176,9 +2828,14 @@ export interface components {
             name: string;
             orgId?: string;
             state: string;
+            ui?: components["schemas"]["UiExtensionDescriptor"];
             /** Format: date-time */
             updatedAt: string;
             version: string;
+        };
+        ExtensionCredentials: {
+            clientId: string;
+            secret: string;
         };
         ExtensionOutputBody: {
             /**
@@ -2187,7 +2844,12 @@ export interface components {
              * @example https://example.com/schemas/ExtensionOutputBody.json
              */
             readonly $schema?: string;
+            credentials?: components["schemas"]["ExtensionCredentials"];
             extension: components["schemas"]["Extension"];
+        };
+        GCPSMProvider: {
+            authSecretRef: components["schemas"]["SecretRef"];
+            projectId: string;
         };
         GetOutputBody: {
             /**
@@ -2197,6 +2859,51 @@ export interface components {
              */
             readonly $schema?: string;
             instance: components["schemas"]["InstanceView"];
+        };
+        GetOutputBody1: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/GetOutputBody1.json
+             */
+            readonly $schema?: string;
+            resource: components["schemas"]["ResourceView"];
+        };
+        GetRBACMatrixOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/GetRBACMatrixOutputBody.json
+             */
+            readonly $schema?: string;
+            rbac: components["schemas"]["RbacMatrix"];
+        };
+        GetRunOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/GetRunOutputBody.json
+             */
+            readonly $schema?: string;
+            run: components["schemas"]["RunView"];
+        };
+        GetScaffoldOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/GetScaffoldOutputBody.json
+             */
+            readonly $schema?: string;
+            scaffold: components["schemas"]["ScaffoldView"];
+        };
+        GetTemplateOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/GetTemplateOutputBody.json
+             */
+            readonly $schema?: string;
+            template: components["schemas"]["TemplateDetail"];
         };
         GetZoneOutputBody: {
             /**
@@ -2218,10 +2925,13 @@ export interface components {
              */
             readonly $schema?: string;
             baseBranch?: string;
+            clearGithubApp?: boolean;
             /** @enum {string} */
             commitPolicy: "direct" | "pull_request";
+            githubApp?: components["schemas"]["GitHubAppConfig"];
             /** @description owner/name or https URL of the <tenant>-inari-state repo */
             repo: string;
+            scaffoldGitOrg?: string;
         };
         GitConfigOutputBody: {
             /**
@@ -2231,6 +2941,29 @@ export interface components {
              */
             readonly $schema?: string;
             config: components["schemas"]["TenantGitConfig"];
+            gitProviderStatus?: components["schemas"]["GitProviderStatus"];
+        };
+        GitHubAppConfig: {
+            apiBase?: string;
+            /** Format: int64 */
+            appId: number;
+            /** Format: int64 */
+            installationId: number;
+            keyRef: components["schemas"]["GitHubAppSecretRef"];
+        };
+        GitHubAppSecretRef: {
+            key: string;
+            namespace: string;
+            secretName: string;
+        };
+        GitProviderStatus: {
+            apiBase?: string;
+            authModel: string;
+            /** Format: date-time */
+            checkedAt: string;
+            /** Format: int64 */
+            installationId?: number;
+            state: string;
         };
         IdPClaimMapping: {
             email?: string;
@@ -2313,6 +3046,7 @@ export interface components {
             id: string;
             name: string;
             ociRef?: string;
+            orgId?: string;
             pinnedVersion?: string;
             source: string;
             versions?: components["schemas"]["CatalogItemVersion"][] | null;
@@ -2325,6 +3059,15 @@ export interface components {
              */
             readonly $schema?: string;
             accounts: components["schemas"]["CloudAccount"][] | null;
+        };
+        ListAuditUIOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/ListAuditUIOutputBody.json
+             */
+            readonly $schema?: string;
+            events: components["schemas"]["UiAuditEvent"][] | null;
         };
         ListBrokeredIdPsOutputBody: {
             /**
@@ -2388,6 +3131,15 @@ export interface components {
              */
             readonly $schema?: string;
             driftEvents: components["schemas"]["DriftEvent"][] | null;
+        };
+        ListEventsOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/ListEventsOutputBody.json
+             */
+            readonly $schema?: string;
+            events: components["schemas"]["AuditEvent"][] | null;
         };
         ListExemptionsOutputBody: {
             /**
@@ -2468,7 +3220,7 @@ export interface components {
              * @example https://example.com/schemas/ListOutputBody2.json
              */
             readonly $schema?: string;
-            endpoints: components["schemas"]["NotificationEndpoint"][] | null;
+            resources: components["schemas"]["ResourceView"][] | null;
         };
         ListOutputBody3: {
             /**
@@ -2477,7 +3229,34 @@ export interface components {
              * @example https://example.com/schemas/ListOutputBody3.json
              */
             readonly $schema?: string;
+            endpoints: components["schemas"]["NotificationEndpoint"][] | null;
+        };
+        ListOutputBody4: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/ListOutputBody4.json
+             */
+            readonly $schema?: string;
+            stores: components["schemas"]["SecretStore"][] | null;
+        };
+        ListOutputBody5: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/ListOutputBody5.json
+             */
+            readonly $schema?: string;
             extensions: components["schemas"]["Extension"][] | null;
+        };
+        ListPackAssignmentsOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/ListPackAssignmentsOutputBody.json
+             */
+            readonly $schema?: string;
+            assignments: components["schemas"]["PolicyAssignment"][] | null;
         };
         ListPacksOutputBody: {
             /**
@@ -2515,6 +3294,15 @@ export interface components {
             readonly $schema?: string;
             teams: components["schemas"]["Team"][] | null;
         };
+        ListTemplatesOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/ListTemplatesOutputBody.json
+             */
+            readonly $schema?: string;
+            templates: components["schemas"]["TemplateSummary"][] | null;
+        };
         ListTenantsOutputBody: {
             /**
              * Format: uri
@@ -2532,6 +3320,15 @@ export interface components {
              */
             readonly $schema?: string;
             tokens: components["schemas"]["RegistrationToken"][] | null;
+        };
+        ListUiOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/ListUiOutputBody.json
+             */
+            readonly $schema?: string;
+            extensions: components["schemas"]["UiExtensionRemote"][] | null;
         };
         ListZonesOutputBody: {
             /**
@@ -2556,6 +3353,19 @@ export interface components {
              */
             readonly $schema?: string;
             clusters: components["schemas"]["Cluster"][] | null;
+        };
+        MyPermissionsOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/MyPermissionsOutputBody.json
+             */
+            readonly $schema?: string;
+            /** @description Caller may create tenants (platform:inari org_creator) */
+            canCreateOrganizations: boolean;
+            orgRoles?: {
+                [key: string]: string;
+            };
         };
         NotificationDelivery: {
             /** Format: int64 */
@@ -2614,6 +3424,7 @@ export interface components {
             id: string;
             keycloakOrgId: string;
             slug: string;
+            status: string;
         };
         PackOutputBody: {
             /**
@@ -2689,6 +3500,15 @@ export interface components {
             remediation: string;
             rule: string;
         };
+        ProviderCompatOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/ProviderCompatOutputBody.json
+             */
+            readonly $schema?: string;
+            provider: components["schemas"]["BrokeredIdP"];
+        };
         PutClientScopesInputBody: {
             /**
              * Format: uri
@@ -2708,6 +3528,30 @@ export interface components {
             /** @description Org role to grant */
             role: string;
         };
+        PutProviderCompatInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/PutProviderCompatInputBody.json
+             */
+            readonly $schema?: string;
+            alias: string;
+            claimMapping?: components["schemas"]["ClaimMappingInput"];
+            clientId: string;
+            /** @description Write-only: required on create, rotates on update when set */
+            clientSecret?: string;
+            domainHints?: string[] | null;
+            issuerUrl: string;
+        };
+        PutProviderDomainsInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/PutProviderDomainsInputBody.json
+             */
+            readonly $schema?: string;
+            domainHints: string[] | null;
+        };
         PutRBACMappingsInputBody: {
             /**
              * Format: uri
@@ -2726,6 +3570,38 @@ export interface components {
              */
             readonly $schema?: string;
             changes: components["schemas"]["TeamRoleChange"][] | null;
+        };
+        RbacClusterRole: {
+            description: string;
+            kind: string;
+            name: string;
+        };
+        RbacGroup: {
+            /** Format: int64 */
+            memberCount: number;
+            path: string;
+            team: string;
+        };
+        RbacMapping: {
+            clusterRole: string;
+            groupPath: string;
+        };
+        RbacMatrix: {
+            groups: components["schemas"]["RbacGroup"][] | null;
+            mappings: components["schemas"]["RbacMapping"][] | null;
+            roles: components["schemas"]["RbacClusterRole"][] | null;
+        };
+        ReconcileOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/ReconcileOutputBody.json
+             */
+            readonly $schema?: string;
+            /** Format: int64 */
+            clustersNotified: number;
+            /** Format: int64 */
+            resourcesReRequested: number;
         };
         RegisterInputBody: {
             /**
@@ -2761,6 +3637,25 @@ export interface components {
             manifest?: unknown;
             name: string;
             version: string;
+        };
+        RegisterUiInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/RegisterUiInputBody.json
+             */
+            readonly $schema?: string;
+            checksum?: string;
+            description?: string;
+            enabled?: boolean;
+            name: string;
+            remoteEntry?: string;
+            remoteEntryOci?: string;
+            remoteEntryUrl?: string;
+            requiredPermission?: string;
+            slots?: components["schemas"]["UiSlotDescriptor"][] | null;
+            title?: string;
+            version?: string;
         };
         RegistrationToken: {
             clusterId: string;
@@ -2818,6 +3713,34 @@ export interface components {
             kind: string;
             name: string;
             namespace?: string;
+        };
+        ResourceView: {
+            detail: string;
+            id: string;
+            kind: string;
+            name: string;
+            status: string;
+            tenant: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        RetryDeletionOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/RetryDeletionOutputBody.json
+             */
+            readonly $schema?: string;
+            deletion: components["schemas"]["TenantDeletion"];
+        };
+        RetryRunOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/RetryRunOutputBody.json
+             */
+            readonly $schema?: string;
+            run: components["schemas"]["RunView"];
         };
         RollbackInputBody: {
             /**
@@ -2887,6 +3810,24 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        RotateIdentityOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/RotateIdentityOutputBody.json
+             */
+            readonly $schema?: string;
+            credentials: components["schemas"]["ExtensionCredentials"];
+        };
+        RotateProviderSecretInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/RotateProviderSecretInputBody.json
+             */
+            readonly $schema?: string;
+            clientSecret: string;
+        };
         RotateSecretOutputBody: {
             /**
              * Format: uri
@@ -2896,6 +3837,84 @@ export interface components {
             readonly $schema?: string;
             /** @description Returned exactly once; never stored server-side */
             secret: string;
+        };
+        RunView: {
+            /** Format: date-time */
+            createdAt: string;
+            createdBy: string;
+            displayName: string;
+            error?: string;
+            id: string;
+            outputs?: unknown;
+            phase: string;
+            steps: components["schemas"]["StepView"][] | null;
+            templateName: string;
+            /** Format: date-time */
+            updatedAt: string;
+            version: string;
+        };
+        ScaffoldOutputs: {
+            catalogItemId: string | null;
+            pipelineUrl: string | null;
+            repoUrl: string | null;
+        };
+        ScaffoldView: {
+            /** Format: date-time */
+            createdAt: string;
+            id: string;
+            message: string | null;
+            name: string;
+            outputs: components["schemas"]["ScaffoldOutputs"];
+            phase: string;
+            templateId: string;
+            templateName: string;
+            tenant: string;
+        };
+        SecretRef: {
+            name: string;
+            namespace: string;
+        };
+        SecretStore: {
+            /** Format: date-time */
+            createdAt: string;
+            id: string;
+            name: string;
+            orgId: string;
+            provider: components["schemas"]["SecretStoreProvider"];
+            scope: string;
+            targets: components["schemas"]["SecretStoreTargets"];
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        SecretStoreCondition: {
+            clusterId: string;
+            message?: string;
+            reason: string;
+            status: string;
+            type: string;
+        };
+        SecretStoreProvider: {
+            awsSM?: components["schemas"]["AWSSMProvider"];
+            azurekv?: components["schemas"]["AzureKVProvider"];
+            gcpsm?: components["schemas"]["GCPSMProvider"];
+            vault?: components["schemas"]["VaultProvider"];
+        };
+        SecretStoreStatus: {
+            conditions?: components["schemas"]["SecretStoreCondition"][] | null;
+            delivered: boolean;
+        };
+        SecretStoreTargets: {
+            clusterIds?: string[] | null;
+            clusterSetRef?: string;
+        };
+        SelfPermissionsOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/SelfPermissionsOutputBody.json
+             */
+            readonly $schema?: string;
+            permissions: string[] | null;
         };
         ServiceScopes: {
             audience: string;
@@ -2909,6 +3928,31 @@ export interface components {
              */
             readonly $schema?: string;
             desiredAgentVersion: string;
+        };
+        StatusOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/StatusOutputBody.json
+             */
+            readonly $schema?: string;
+            status: components["schemas"]["SecretStoreStatus"];
+        };
+        StepView: {
+            /** Format: int64 */
+            attempts: number;
+            error?: string;
+            name: string;
+            state: string;
+        };
+        StoreOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/StoreOutputBody.json
+             */
+            readonly $schema?: string;
+            store: components["schemas"]["SecretStore"];
         };
         SyncOutputBody: {
             /**
@@ -2932,6 +3976,7 @@ export interface components {
         Team: {
             /** Format: date-time */
             createdAt: string;
+            displayName: string;
             id: string;
             keycloakGroupPath: string;
             name: string;
@@ -2957,11 +4002,45 @@ export interface components {
             role: string;
             team: string;
         };
+        TemplateDetail: {
+            description: string;
+            displayName: string;
+            id: string;
+            name: string;
+            schema?: unknown;
+            tags?: string[] | null;
+            uiSchema?: unknown;
+            version: string;
+        };
+        TemplateSummary: {
+            description: string;
+            displayName: string;
+            id: string;
+            name: string;
+            tags?: string[] | null;
+            version: string;
+        };
+        TenantDeletion: {
+            approvalId?: string;
+            /** Format: date-time */
+            createdAt: string;
+            force: boolean;
+            lastError?: string;
+            orgId: string;
+            reason?: string;
+            requestedBy: string;
+            state: string;
+            step: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         TenantGitConfig: {
             baseBranch: string;
             commitPolicy: string;
+            githubApp?: components["schemas"]["GitHubAppConfig"];
             orgId: string;
             repo: string;
+            scaffoldGitOrg?: string;
         };
         TenantOutputBody: {
             /**
@@ -2970,6 +4049,7 @@ export interface components {
              * @example https://example.com/schemas/TenantOutputBody.json
              */
             readonly $schema?: string;
+            deletion?: components["schemas"]["TenantDeletion"];
             organization: components["schemas"]["Organization"];
             teams: components["schemas"]["Team"][] | null;
         };
@@ -3031,6 +4111,49 @@ export interface components {
             /** @description Plaintext bootstrap token, returned once */
             token: string;
         };
+        UiAuditEvent: {
+            action: string;
+            actor: string;
+            at: string;
+            detail: string;
+            id: string;
+            objectName: string;
+            objectType: string;
+            tenant: string;
+        };
+        UiExtensionDescriptor: {
+            checksum?: string;
+            description?: string;
+            enabled: boolean;
+            remoteEntry?: string;
+            remoteEntryOci?: string;
+            requiredPermission?: string;
+            slots: components["schemas"]["UiSlotDescriptor"][] | null;
+            title?: string;
+        };
+        UiExtensionOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/UiExtensionOutputBody.json
+             */
+            readonly $schema?: string;
+            extension: components["schemas"]["UiExtensionRemote"];
+        };
+        UiExtensionRemote: {
+            description?: string;
+            enabled: boolean;
+            name: string;
+            remoteEntryUrl: string;
+            requiredPermission?: string;
+            slots: components["schemas"]["UiSlotDescriptor"][] | null;
+            title?: string;
+            version: string;
+        };
+        UiSlotDescriptor: {
+            kind: string;
+            name: string;
+        };
         UpdateBrokeredIdPInputBody: {
             /**
              * Format: uri
@@ -3079,6 +4202,16 @@ export interface components {
             secret?: string;
             url?: string;
         };
+        UpdateInputBody1: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/UpdateInputBody1.json
+             */
+            readonly $schema?: string;
+            provider?: components["schemas"]["SecretStoreProvider"];
+            targets?: components["schemas"]["SecretStoreTargets"];
+        };
         UpdatePolicyInputBody: {
             /**
              * Format: uri
@@ -3087,7 +4220,21 @@ export interface components {
              */
             readonly $schema?: string;
             enabled: boolean;
+            /** @description New policy name (empty keeps the current name; 409 on conflict) */
+            name?: string;
             source: string;
+            /** @description request | render (empty keeps the current target) */
+            target?: string;
+        };
+        UpdateTeamInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/UpdateTeamInputBody.json
+             */
+            readonly $schema?: string;
+            /** @description Human-friendly display name (name and Keycloak group path stay immutable) */
+            displayName: string;
         };
         UpdateTenantInputBody: {
             /**
@@ -3106,6 +4253,11 @@ export interface components {
              */
             readonly $schema?: string;
             toVersion: string;
+        };
+        VaultProvider: {
+            authSecretRef: components["schemas"]["SecretRef"];
+            path?: string;
+            server: string;
         };
         VisibilityInputBody: {
             /**
@@ -3219,6 +4371,35 @@ export interface operations {
             };
         };
     };
+    getMyPermissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MyPermissionsOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     listTenants: {
         parameters: {
             query?: never;
@@ -3300,6 +4481,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TenantOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteTenant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Tenant slug */
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DeleteTenantInputBody"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeleteTenantOutputBody"];
                 };
             };
             /** @description Error */
@@ -3569,6 +4786,152 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DecideOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listAuditLog: {
+        parameters: {
+            query?: {
+                actor?: string;
+                action?: string;
+                objectType?: string;
+                from?: string;
+                to?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListAuditUIOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listAuditEvents: {
+        parameters: {
+            query?: {
+                /** @description Exact action filter, e.g. cluster.created */
+                action?: string;
+                /** @description Exact actor (subject) filter */
+                actor?: string;
+                /** @description Max events to return (default 100, max 500) */
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListEventsOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    exportAuditLog: {
+        parameters: {
+            query?: {
+                actor?: string;
+                action?: string;
+                objectType?: string;
+                from?: string;
+                to?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    "Content-Type"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    selfExtensionPermissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SelfPermissionsOutputBody"];
                 };
             };
             /** @description Error */
@@ -4444,6 +5807,38 @@ export interface operations {
             };
         };
     };
+    getClusterAccessInfo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessInfoOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     approveCluster: {
         parameters: {
             query?: never;
@@ -4733,6 +6128,70 @@ export interface operations {
             };
         };
     };
+    tenantDeletionDependencies: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Tenant slug */
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeletionDependenciesOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    retryTenantDeletion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Tenant slug */
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetryDeletionOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     deployCatalogItem: {
         parameters: {
             query?: never;
@@ -4921,7 +6380,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ListOutputBody3"];
+                    "application/json": components["schemas"]["ListOutputBody5"];
                 };
             };
             /** @description Error */
@@ -4958,6 +6417,102 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ExtensionOutputBody"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listUiExtensions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListUiOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    registerUiExtension: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterUiInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UiExtensionOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    unregisterUiExtension: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {
@@ -5032,6 +6587,38 @@ export interface operations {
             };
         };
     };
+    rotateExtensionIdentity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RotateIdentityOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     verifyExtension: {
         parameters: {
             query?: never;
@@ -5070,7 +6657,6 @@ export interface operations {
             header?: never;
             path: {
                 org: string;
-                id: string;
             };
             cookie?: never;
         };
@@ -5350,6 +6936,171 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["RotateSecretOutputBody"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getIdentityProviderCompat: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Tenant slug */
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderCompatOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    putIdentityProviderCompat: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PutProviderCompatInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderCompatOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteIdentityProviderCompat: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Tenant slug */
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    putProviderDomainsCompat: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PutProviderDomainsInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProviderCompatOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    rotateProviderSecretCompat: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RotateProviderSecretInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {
@@ -5811,7 +7562,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ListOutputBody2"];
+                    "application/json": components["schemas"]["ListOutputBody3"];
                 };
             };
             /** @description Error */
@@ -5977,6 +7728,100 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TestOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listPlatformResources: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListOutputBody2"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    reconcilePlatformResources: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReconcileOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getPlatformResource: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetOutputBody1"];
                 };
             };
             /** @description Error */
@@ -6287,6 +8132,39 @@ export interface operations {
             };
         };
     };
+    deletePolicyPack: {
+        parameters: {
+            query?: {
+                /** @description cascade-unassign active assignments before deleting */
+                force?: boolean;
+            };
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     assignPolicyPack: {
         parameters: {
             query?: never;
@@ -6323,6 +8201,38 @@ export interface operations {
             };
         };
     };
+    listPolicyPackAssignments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListPackAssignmentsOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     unassignPolicyPack: {
         parameters: {
             query?: never;
@@ -6342,6 +8252,37 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getRBACMatrix: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetRBACMatrixOutputBody"];
+                };
             };
             /** @description Error */
             default: {
@@ -6653,6 +8594,363 @@ export interface operations {
             };
         };
     };
+    getScaffoldRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetRunOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    cancelScaffoldRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    retryScaffoldRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RetryRunOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    createScaffold: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateScaffoldInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateScaffoldOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getScaffold: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetScaffoldOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listSecretStores: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListOutputBody4"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    createSecretStore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateInputBody1"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getSecretStore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteSecretStore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    updateSecretStore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateInputBody1"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getSecretStoreStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatusOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     listTeams: {
         parameters: {
             query?: never;
@@ -6698,6 +8996,44 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["CreateTeamInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TeamOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    updateTeam: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Tenant slug */
+                org: string;
+                /** @description Team name */
+                team: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateTeamInputBody"];
             };
         };
         responses: {
@@ -6840,6 +9176,105 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listTemplates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListTemplatesOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetTemplateOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    createScaffoldRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRunInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateRunOutputBody"];
+                };
             };
             /** @description Error */
             default: {
