@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { containerName, resolveRemoteEntryUrl } from "@/ext/load-extension";
+import { loadExtension, resolveRemoteEntryUrl } from "@/ext/load-extension";
+import { argocdExtension, argocdRemote } from "@/mocks/fixtures/extensions";
 
 describe("resolveRemoteEntryUrl", () => {
   it("keeps absolute URLs as-is", () => {
@@ -19,12 +20,36 @@ describe("resolveRemoteEntryUrl", () => {
   });
 });
 
-describe("containerName", () => {
-  // RUNTIME-001 regression: the registry name (dashes) is not the webpack
-  // container global (underscores); the MF runtime resolves by registered name.
-  it("derives the webpack container global from the registry name", () => {
-    expect(containerName("inari-ext-argocd")).toBe("inari_ext_argocd");
-    expect(containerName("plainname")).toBe("plainname");
-    expect(containerName("my.ext-name_v2")).toBe("my_ext_name_v2");
+const registerRemotes = vi.fn();
+const loadRemote = vi.fn();
+
+vi.mock("@/ext/host-runtime", () => ({
+  getHostRuntime: () => ({ registerRemotes, loadRemote }),
+}));
+
+describe("loadExtension entryGlobalName", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("maps the dashed registry name to the webpack container global", async () => {
+    loadRemote.mockResolvedValue(argocdExtension);
+    await loadExtension(argocdRemote);
+    expect(registerRemotes).toHaveBeenCalledWith([
+      {
+        name: "inari-ext-argocd",
+        entry: `${window.location.origin}/extensions/inari-ext-argocd/remoteEntry.js`,
+        entryGlobalName: "inari_ext_argocd",
+      },
+    ]);
+    expect(loadRemote).toHaveBeenCalledWith("inari-ext-argocd/extension");
+  });
+
+  it("leaves identifier-safe names unchanged", async () => {
+    loadRemote.mockResolvedValue(argocdExtension);
+    await loadExtension({ ...argocdRemote, name: "plain" });
+    expect(registerRemotes).toHaveBeenCalledWith([
+      expect.objectContaining({ name: "plain", entryGlobalName: "plain" }),
+    ]);
   });
 });
