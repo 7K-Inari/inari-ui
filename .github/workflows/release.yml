@@ -51,9 +51,35 @@ jobs:
           manifest-file: .release-please-manifest.json
           skip-github-pull-request: true
 
-  publish:
+  # Contract gate: a UI release ships against a released server spec, so the
+  # pin must be a real server version (not edge/main-*) and the snapshot must
+  # cover that exact artifact's paths. Runs only on the release path; the
+  # workflow_dispatch repair path re-publishes already-tagged, frozen code and
+  # must not be blocked here.
+  contract-gate:
     needs: release
-    if: always() && (github.event_name == 'workflow_dispatch' || needs.release.outputs.release_created == 'true')
+    if: github.event_name == 'push' && needs.release.outputs.release_created == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oras-project/setup-oras@v1
+      - uses: mikefarah/yq@v4.44.3
+
+      - name: assert pin is a released server version
+        run: |
+          pin=$(node -p "require('./package.json').inariServerSpecVersion || ''")
+          if [ -z "$pin" ] || [ "$pin" = "edge" ] || [ "${pin#main-}" != "$pin" ]; then
+            echo "::error::release blocked: inariServerSpecVersion is '$pin' — pin a released server spec version first (npm run sync:api -- <X.Y.Z>)"
+            exit 1
+          fi
+          echo "pin=$pin" >> "$GITHUB_ENV"
+
+      - name: assert snapshot covers the pinned server spec
+        run: ./scripts/check-api-drift.sh "$pin"
+
+  publish:
+    needs: [release, contract-gate]
+    if: always() && (github.event_name == 'workflow_dispatch' || (needs.release.outputs.release_created == 'true' && needs.contract-gate.result == 'success'))
     uses: ./.github/workflows/publish.yml
     with:
       version: ${{ github.event_name == 'workflow_dispatch' && inputs.version || needs.release.outputs.version }}
@@ -64,8 +90,8 @@ jobs:
       attestations: write
 
   chart-paths:
-    needs: release
-    if: always() && (github.event_name == 'workflow_dispatch' || needs.release.outputs.release_created == 'true')
+    needs: [release, contract-gate]
+    if: always() && (github.event_name == 'workflow_dispatch' || (needs.release.outputs.release_created == 'true' && needs.contract-gate.result == 'success'))
     runs-on: ubuntu-latest
     outputs:
       paths: ${{ steps.filter.outputs.paths }}
