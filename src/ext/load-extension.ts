@@ -19,14 +19,22 @@ interface RemoteExtensionModule {
   manifest?: unknown;
 }
 
+// Webpack container globals are valid JS identifiers: the registry name
+// ("inari-ext-argocd") is not what the remoteEntry exports ("inari_ext_argocd"),
+// and the MF runtime resolves the container by registered name (RUNTIME-001).
+function containerName(name: string): string {
+  return name.replace(/[^a-zA-Z0-9_$]/g, "_");
+}
+
 // Loads a remote's `./extension` module and validates its manifest against the
 // SDK contract. Any failure (network, invalid manifest, remote crash) throws;
 // callers (registry) catch and mark the extension failed so the shell is never
 // broken by a bad remote.
 export const loadExtension: ExtensionLoader = async (remote) => {
   const runtime = getHostRuntime();
-  runtime.registerRemotes([{ name: remote.name, entry: resolveRemoteEntryUrl(remote.remoteEntryUrl) }]);
-  const mod = (await runtime.loadRemote(`${remote.name}/extension`)) as
+  const mfName = containerName(remote.name);
+  runtime.registerRemotes([{ name: mfName, entry: resolveRemoteEntryUrl(remote.remoteEntryUrl) }]);
+  const mod = (await runtime.loadRemote(`${mfName}/extension`)) as
     | RemoteExtensionModule
     | InariExtension
     | null;

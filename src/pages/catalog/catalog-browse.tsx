@@ -16,13 +16,23 @@ const SOURCE_FILTERS: Array<{ value: CatalogSource | "all"; label: string }> = [
   { value: "curated", label: "Curated" },
   { value: "discovered", label: "Discovered" },
   { value: "platform", label: "Platform" },
+  { value: "template", label: "Template" },
 ];
 
 const SOURCE_BADGE: Record<CatalogSource, { label: string; variant: "default" | "secondary" | "warning" }> = {
   curated: { label: "Curated", variant: "default" },
   discovered: { label: "Discovered", variant: "secondary" },
   platform: { label: "Platform", variant: "warning" },
+  template: { label: "Template", variant: "secondary" },
 };
+
+// Unknown/future sources must never crash the page (the catalog is a
+// projection of the server; new sources land there first).
+const SOURCE_BADGE_FALLBACK = { label: "Unknown", variant: "secondary" as const };
+
+function sourceBadge(source: string) {
+  return SOURCE_BADGE[source as CatalogSource] ?? SOURCE_BADGE_FALLBACK;
+}
 
 export function CatalogBrowsePage() {
   const { tenant } = useTenant();
@@ -93,8 +103,8 @@ export function CatalogBrowsePage() {
                     {item.displayName}
                   </Link>
                 </CardTitle>
-                <Badge variant={SOURCE_BADGE[item.source].variant}>
-                  {SOURCE_BADGE[item.source].label}
+                <Badge variant={sourceBadge(item.source).variant}>
+                  {sourceBadge(item.source).label}
                 </Badge>
               </div>
               <CardDescription>{item.description}</CardDescription>

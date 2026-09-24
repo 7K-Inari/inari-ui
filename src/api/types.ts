@@ -34,7 +34,7 @@ export interface Capability {
   updatedAt: string;
 }
 
-export type CatalogSource = "curated" | "discovered" | "platform";
+export type CatalogSource = "curated" | "discovered" | "platform" | "template";
 
 export interface CatalogItemSummary {
   id: string;
