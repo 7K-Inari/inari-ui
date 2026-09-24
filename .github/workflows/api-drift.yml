@@ -1,0 +1,74 @@
+name: api-drift
+
+# Detects the pinned OpenAPI snapshot (openapi/openapi.yaml) falling behind
+# the published inari-server spec artifact. Weekly sweep plus manual dispatch.
+# On drift the job fails and opens (or comments on) a GitHub issue; the fix is
+# `npm run sync:api -- <server-version>`.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1' # Mondays 06:00 UTC
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'inari-server-openapi OCI tag to compare against'
+        required: true
+        default: edge
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  drift:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oras-project/setup-oras@v1
+      - uses: mikefarah/yq@v4.44.3
+
+      - name: check snapshot against published server spec
+        id: check
+        run: ./scripts/check-api-drift.sh "${{ inputs.ref || 'edge' }}"
+
+      - name: open or update drift issue
+        if: failure() && steps.check.outcome == 'failure'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = 'OpenAPI drift: pinned snapshot is behind the server spec';
+            const body = [
+              'The weekly drift check failed against `ghcr.io/7k-inari/inari-server-openapi:${{ inputs.ref || 'edge' }}`:',
+              'the server spec exposes paths that `openapi/openapi.yaml` does not cover.',
+              '',
+              'Fix:',
+              '```sh',
+              'npm run sync:api -- <server-version>',
+              '```',
+              'then commit `openapi/openapi.yaml`, `package.json`, and',
+              '`src/api/__generated__/schema.ts`. See AGENTS.md ("API contract") for details.',
+              '',
+              `Run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+            ].join('\n');
+            const existing = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+            });
+            const issue = existing.data.find((i) => i.title === title);
+            if (issue) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+              });
+            }
