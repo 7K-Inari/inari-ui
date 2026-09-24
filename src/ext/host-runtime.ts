@@ -1,5 +1,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import * as zod from "zod";
+import * as UiPluginSDK from "@7k-inari/ui-plugin-sdk";
 import { init, type ModuleFederation } from "@module-federation/runtime";
 
 // Module Federation host runtime (§5.8): a single host instance. Remotes are
@@ -25,6 +27,16 @@ export function getHostRuntime(): ModuleFederation {
         version: ReactDOM.version,
         scope: "default",
         lib: () => ReactDOM,
+        shareConfig: { singleton: true, requiredVersion: false },
+      },
+      zod: {
+        scope: "default",
+        lib: () => zod,
+        shareConfig: { singleton: true, requiredVersion: false },
+      },
+      "@7k-inari/ui-plugin-sdk": {
+        scope: "default",
+        lib: () => UiPluginSDK,
         shareConfig: { singleton: true, requiredVersion: false },
       },
     },

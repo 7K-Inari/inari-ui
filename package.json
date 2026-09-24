@@ -14,7 +14,7 @@
     "sync:api": "./scripts/sync-api.sh"
   },
   "dependencies": {
-    "@7k-inari/ui-plugin-sdk": "^0.1.5",
+    "@7k-inari/ui-plugin-sdk": "^0.1.6",
     "@module-federation/runtime": "^2.8.2",
     "@radix-ui/react-avatar": "^1.1.1",
     "@radix-ui/react-dialog": "^1.1.23",
