@@ -22,7 +22,7 @@ interface RemoteExtensionModule {
 // Webpack container globals are valid JS identifiers: the registry name
 // ("inari-ext-argocd") is not what the remoteEntry exports ("inari_ext_argocd"),
 // and the MF runtime resolves the container by registered name (RUNTIME-001).
-function containerName(name: string): string {
+export function containerName(name: string): string {
   return name.replace(/[^a-zA-Z0-9_$]/g, "_");
 }
 
