@@ -1,5 +1,31 @@
 components:
   schemas:
+    AWSSMProvider:
+      additionalProperties: false
+      properties:
+        authSecretRef:
+          $ref: "#/components/schemas/SecretRef"
+        region:
+          type: string
+      required:
+        - region
+        - authSecretRef
+      type: object
+    AccessInfoOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/AccessInfoOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        accessInfo:
+          $ref: "#/components/schemas/ClusterAccessInfo"
+      required:
+        - accessInfo
+      type: object
     AccountOutputBody:
       additionalProperties: false
       properties:
@@ -224,6 +250,36 @@ components:
       required:
         - assignment
       type: object
+    AuditEvent:
+      additionalProperties: false
+      properties:
+        action:
+          type: string
+        actor:
+          type: string
+        createdAt:
+          format: date-time
+          type: string
+        id:
+          type: string
+        impersonator:
+          type: string
+        objectId:
+          type: string
+        objectType:
+          type: string
+        orgId:
+          type: string
+        payload: {}
+      required:
+        - id
+        - orgId
+        - actor
+        - action
+        - objectType
+        - objectId
+        - createdAt
+      type: object
     AutoApproveRule:
       additionalProperties: false
       properties:
@@ -238,6 +294,19 @@ components:
       required:
         - kind
         - itemIds
+      type: object
+    AzureKVProvider:
+      additionalProperties: false
+      properties:
+        authSecretRef:
+          $ref: "#/components/schemas/SecretRef"
+        tenantId:
+          type: string
+        vaultUrl:
+          type: string
+      required:
+        - vaultUrl
+        - authSecretRef
       type: object
     BrokeredIdP:
       additionalProperties: false
@@ -576,6 +645,23 @@ components:
         - state
         - createdAt
       type: object
+    ClusterAccessInfo:
+      additionalProperties: false
+      properties:
+        audience:
+          type: string
+        issuerUrl:
+          type: string
+        kubectlClientId:
+          type: string
+        organization:
+          type: string
+      required:
+        - issuerUrl
+        - kubectlClientId
+        - audience
+        - organization
+      type: object
     ClusterOutputBody:
       additionalProperties: false
       properties:
@@ -831,6 +917,30 @@ components:
         - kind
         - url
       type: object
+    CreateInputBody1:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreateInputBody1.json
+          format: uri
+          readOnly: true
+          type: string
+        name:
+          type: string
+        provider:
+          $ref: "#/components/schemas/SecretStoreProvider"
+        scope:
+          type: string
+        targets:
+          $ref: "#/components/schemas/SecretStoreTargets"
+      required:
+        - name
+        - scope
+        - targets
+        - provider
+      type: object
     CreatePackInputBody:
       additionalProperties: false
       properties:
@@ -916,6 +1026,82 @@ components:
         - targetRef
         - desiredVersion
         - stages
+      type: object
+    CreateRunInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreateRunInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        displayName:
+          type: string
+        values:
+          additionalProperties: {}
+          type: object
+        version:
+          description: Template version; defaults to the tenant's effective version
+          type: string
+      required:
+        - values
+      type: object
+    CreateRunOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreateRunOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        run:
+          $ref: "#/components/schemas/RunView"
+      required:
+        - run
+      type: object
+    CreateScaffoldInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreateScaffoldInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        name:
+          description: Component name; becomes the run display name
+          type: string
+        parameters:
+          additionalProperties: {}
+          description: Wizard answers, validated against the template schema
+          type: object
+        templateId:
+          description: Catalog item ID (or name) of the template
+          type: string
+      required:
+        - templateId
+        - name
+        - parameters
+      type: object
+    CreateScaffoldOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreateScaffoldOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        scaffold:
+          $ref: "#/components/schemas/ScaffoldView"
+      required:
+        - scaffold
       type: object
     CreateTeamInputBody:
       additionalProperties: false
@@ -1058,6 +1244,77 @@ components:
           type: string
         approvalId:
           type: string
+      type: object
+    DeleteTenantInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/DeleteTenantInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        force:
+          description: Revoke non-terminal clusters and delete despite dependencies
+          type: boolean
+        reason:
+          maxLength: 500
+          type: string
+      type: object
+    DeleteTenantOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/DeleteTenantOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        approvalId:
+          type: string
+        status:
+          type: string
+      required:
+        - approvalId
+        - status
+      type: object
+    DeletionDependenciesOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/DeletionDependenciesOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        blockers:
+          items:
+            $ref: "#/components/schemas/Dependency"
+          type:
+            - array
+            - "null"
+      required:
+        - blockers
+      type: object
+    Dependency:
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+        name:
+          type: string
+        state:
+          type: string
+      required:
+        - kind
+        - id
+        - name
+        - state
       type: object
     DeployInputBody:
       additionalProperties: false
@@ -1372,6 +1629,8 @@ components:
       properties:
         checksum:
           type: string
+        clientId:
+          type: string
         createdAt:
           format: date-time
           type: string
@@ -1388,6 +1647,8 @@ components:
           type: string
         state:
           type: string
+        ui:
+          $ref: "#/components/schemas/UiExtensionDescriptor"
         updatedAt:
           format: date-time
           type: string
@@ -1404,6 +1665,17 @@ components:
         - createdAt
         - updatedAt
       type: object
+    ExtensionCredentials:
+      additionalProperties: false
+      properties:
+        clientId:
+          type: string
+        secret:
+          type: string
+      required:
+        - clientId
+        - secret
+      type: object
     ExtensionOutputBody:
       additionalProperties: false
       properties:
@@ -1414,10 +1686,23 @@ components:
           format: uri
           readOnly: true
           type: string
+        credentials:
+          $ref: "#/components/schemas/ExtensionCredentials"
         extension:
           $ref: "#/components/schemas/Extension"
       required:
         - extension
+      type: object
+    GCPSMProvider:
+      additionalProperties: false
+      properties:
+        authSecretRef:
+          $ref: "#/components/schemas/SecretRef"
+        projectId:
+          type: string
+      required:
+        - projectId
+        - authSecretRef
       type: object
     GetOutputBody:
       additionalProperties: false
@@ -1433,6 +1718,81 @@ components:
           $ref: "#/components/schemas/InstanceView"
       required:
         - instance
+      type: object
+    GetOutputBody1:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/GetOutputBody1.json
+          format: uri
+          readOnly: true
+          type: string
+        resource:
+          $ref: "#/components/schemas/ResourceView"
+      required:
+        - resource
+      type: object
+    GetRBACMatrixOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/GetRBACMatrixOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        rbac:
+          $ref: "#/components/schemas/RbacMatrix"
+      required:
+        - rbac
+      type: object
+    GetRunOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/GetRunOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        run:
+          $ref: "#/components/schemas/RunView"
+      required:
+        - run
+      type: object
+    GetScaffoldOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/GetScaffoldOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        scaffold:
+          $ref: "#/components/schemas/ScaffoldView"
+      required:
+        - scaffold
+      type: object
+    GetTemplateOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/GetTemplateOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        template:
+          $ref: "#/components/schemas/TemplateDetail"
+      required:
+        - template
       type: object
     GetZoneOutputBody:
       additionalProperties: false
@@ -1466,14 +1826,20 @@ components:
           type: string
         baseBranch:
           type: string
+        clearGithubApp:
+          type: boolean
         commitPolicy:
           enum:
             - direct
             - pull_request
           type: string
+        githubApp:
+          $ref: "#/components/schemas/GitHubAppConfig"
         repo:
           description: owner/name or https URL of the <tenant>-inari-state repo
           minLength: 1
+          type: string
+        scaffoldGitOrg:
           type: string
       required:
         - repo
@@ -1491,8 +1857,62 @@ components:
           type: string
         config:
           $ref: "#/components/schemas/TenantGitConfig"
+        gitProviderStatus:
+          $ref: "#/components/schemas/GitProviderStatus"
       required:
         - config
+      type: object
+    GitHubAppConfig:
+      additionalProperties: false
+      properties:
+        apiBase:
+          type: string
+        appId:
+          format: int64
+          type: integer
+        installationId:
+          format: int64
+          type: integer
+        keyRef:
+          $ref: "#/components/schemas/GitHubAppSecretRef"
+      required:
+        - appId
+        - installationId
+        - keyRef
+      type: object
+    GitHubAppSecretRef:
+      additionalProperties: false
+      properties:
+        key:
+          type: string
+        namespace:
+          type: string
+        secretName:
+          type: string
+      required:
+        - secretName
+        - namespace
+        - key
+      type: object
+    GitProviderStatus:
+      additionalProperties: false
+      properties:
+        apiBase:
+          type: string
+        authModel:
+          type: string
+        checkedAt:
+          format: date-time
+          type: string
+        installationId:
+          format: int64
+          type: integer
+        state:
+          type: string
+      required:
+        - state
+        - authModel
+        - checkedAt
       type: object
     IdPClaimMapping:
       additionalProperties: false
@@ -1685,6 +2105,8 @@ components:
           type: string
         ociRef:
           type: string
+        orgId:
+          type: string
         pinnedVersion:
           type: string
         source:
@@ -1722,6 +2144,25 @@ components:
             - "null"
       required:
         - accounts
+      type: object
+    ListAuditUIOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListAuditUIOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        events:
+          items:
+            $ref: "#/components/schemas/UiAuditEvent"
+          type:
+            - array
+            - "null"
+      required:
+        - events
       type: object
     ListBrokeredIdPsOutputBody:
       additionalProperties: false
@@ -1855,6 +2296,25 @@ components:
             - "null"
       required:
         - driftEvents
+      type: object
+    ListEventsOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListEventsOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        events:
+          items:
+            $ref: "#/components/schemas/AuditEvent"
+          type:
+            - array
+            - "null"
+      required:
+        - events
       type: object
     ListExemptionsOutputBody:
       additionalProperties: false
@@ -2018,14 +2478,14 @@ components:
           format: uri
           readOnly: true
           type: string
-        endpoints:
+        resources:
           items:
-            $ref: "#/components/schemas/NotificationEndpoint"
+            $ref: "#/components/schemas/ResourceView"
           type:
             - array
             - "null"
       required:
-        - endpoints
+        - resources
       type: object
     ListOutputBody3:
       additionalProperties: false
@@ -2037,6 +2497,44 @@ components:
           format: uri
           readOnly: true
           type: string
+        endpoints:
+          items:
+            $ref: "#/components/schemas/NotificationEndpoint"
+          type:
+            - array
+            - "null"
+      required:
+        - endpoints
+      type: object
+    ListOutputBody4:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListOutputBody4.json
+          format: uri
+          readOnly: true
+          type: string
+        stores:
+          items:
+            $ref: "#/components/schemas/SecretStore"
+          type:
+            - array
+            - "null"
+      required:
+        - stores
+      type: object
+    ListOutputBody5:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListOutputBody5.json
+          format: uri
+          readOnly: true
+          type: string
         extensions:
           items:
             $ref: "#/components/schemas/Extension"
@@ -2045,6 +2543,25 @@ components:
             - "null"
       required:
         - extensions
+      type: object
+    ListPackAssignmentsOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListPackAssignmentsOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        assignments:
+          items:
+            $ref: "#/components/schemas/PolicyAssignment"
+          type:
+            - array
+            - "null"
+      required:
+        - assignments
       type: object
     ListPacksOutputBody:
       additionalProperties: false
@@ -2122,6 +2639,25 @@ components:
       required:
         - teams
       type: object
+    ListTemplatesOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListTemplatesOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        templates:
+          items:
+            $ref: "#/components/schemas/TemplateSummary"
+          type:
+            - array
+            - "null"
+      required:
+        - templates
+      type: object
     ListTenantsOutputBody:
       additionalProperties: false
       properties:
@@ -2159,6 +2695,25 @@ components:
             - "null"
       required:
         - tokens
+      type: object
+    ListUiOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListUiOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        extensions:
+          items:
+            $ref: "#/components/schemas/UiExtensionRemote"
+          type:
+            - array
+            - "null"
+      required:
+        - extensions
       type: object
     ListZonesOutputBody:
       additionalProperties: false
@@ -2214,6 +2769,26 @@ components:
             - "null"
       required:
         - clusters
+      type: object
+    MyPermissionsOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/MyPermissionsOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        canCreateOrganizations:
+          description: Caller may create tenants (platform:inari org_creator)
+          type: boolean
+        orgRoles:
+          additionalProperties:
+            type: string
+          type: object
+      required:
+        - canCreateOrganizations
       type: object
     NotificationDelivery:
       additionalProperties: false
@@ -2358,11 +2933,14 @@ components:
           type: string
         slug:
           type: string
+        status:
+          type: string
       required:
         - id
         - slug
         - displayName
         - keycloakOrgId
+        - status
         - createdAt
       type: object
     PackOutputBody:
@@ -2536,6 +3114,21 @@ components:
         - reason
         - remediation
       type: object
+    ProviderCompatOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ProviderCompatOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        provider:
+          $ref: "#/components/schemas/BrokeredIdP"
+      required:
+        - provider
+      type: object
     PutClientScopesInputBody:
       additionalProperties: false
       properties:
@@ -2570,6 +3163,62 @@ components:
           type: string
       required:
         - role
+      type: object
+    PutProviderCompatInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/PutProviderCompatInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        alias:
+          maxLength: 63
+          minLength: 1
+          pattern: ^[a-z0-9][a-z0-9-]*$
+          type: string
+        claimMapping:
+          $ref: "#/components/schemas/ClaimMappingInput"
+        clientId:
+          minLength: 1
+          type: string
+        clientSecret:
+          description: "Write-only: required on create, rotates on update when set"
+          type: string
+        domainHints:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        issuerUrl:
+          minLength: 1
+          type: string
+      required:
+        - alias
+        - issuerUrl
+        - clientId
+      type: object
+    PutProviderDomainsInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/PutProviderDomainsInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        domainHints:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+      required:
+        - domainHints
       type: object
     PutRBACMappingsInputBody:
       additionalProperties: false
@@ -2609,6 +3258,92 @@ components:
             - "null"
       required:
         - changes
+      type: object
+    RbacClusterRole:
+      additionalProperties: false
+      properties:
+        description:
+          type: string
+        kind:
+          type: string
+        name:
+          type: string
+      required:
+        - name
+        - kind
+        - description
+      type: object
+    RbacGroup:
+      additionalProperties: false
+      properties:
+        memberCount:
+          format: int64
+          type: integer
+        path:
+          type: string
+        team:
+          type: string
+      required:
+        - path
+        - team
+        - memberCount
+      type: object
+    RbacMapping:
+      additionalProperties: false
+      properties:
+        clusterRole:
+          type: string
+        groupPath:
+          type: string
+      required:
+        - groupPath
+        - clusterRole
+      type: object
+    RbacMatrix:
+      additionalProperties: false
+      properties:
+        groups:
+          items:
+            $ref: "#/components/schemas/RbacGroup"
+          type:
+            - array
+            - "null"
+        mappings:
+          items:
+            $ref: "#/components/schemas/RbacMapping"
+          type:
+            - array
+            - "null"
+        roles:
+          items:
+            $ref: "#/components/schemas/RbacClusterRole"
+          type:
+            - array
+            - "null"
+      required:
+        - groups
+        - roles
+        - mappings
+      type: object
+    ReconcileOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ReconcileOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        clustersNotified:
+          format: int64
+          type: integer
+        resourcesReRequested:
+          format: int64
+          type: integer
+      required:
+        - resourcesReRequested
+        - clustersNotified
       type: object
     RegisterInputBody:
       additionalProperties: false
@@ -2669,6 +3404,45 @@ components:
         - version
         - kind
         - endpoint
+      type: object
+    RegisterUiInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RegisterUiInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        checksum:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+        name:
+          type: string
+        remoteEntry:
+          type: string
+        remoteEntryOci:
+          type: string
+        remoteEntryUrl:
+          type: string
+        requiredPermission:
+          type: string
+        slots:
+          items:
+            $ref: "#/components/schemas/UiSlotDescriptor"
+          type:
+            - array
+            - "null"
+        title:
+          type: string
+        version:
+          type: string
+      required:
+        - name
       type: object
     RegistrationToken:
       additionalProperties: false
@@ -2791,6 +3565,63 @@ components:
       required:
         - kind
         - name
+      type: object
+    ResourceView:
+      additionalProperties: false
+      properties:
+        detail:
+          type: string
+        id:
+          type: string
+        kind:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+        tenant:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+        - id
+        - tenant
+        - kind
+        - name
+        - status
+        - detail
+        - updatedAt
+      type: object
+    RetryDeletionOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RetryDeletionOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        deletion:
+          $ref: "#/components/schemas/TenantDeletion"
+      required:
+        - deletion
+      type: object
+    RetryRunOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RetryRunOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        run:
+          $ref: "#/components/schemas/RunView"
+      required:
+        - run
       type: object
     RollbackInputBody:
       additionalProperties: false
@@ -2951,6 +3782,37 @@ components:
         - status
         - updatedAt
       type: object
+    RotateIdentityOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RotateIdentityOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        credentials:
+          $ref: "#/components/schemas/ExtensionCredentials"
+      required:
+        - credentials
+      type: object
+    RotateProviderSecretInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RotateProviderSecretInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        clientSecret:
+          minLength: 1
+          type: string
+      required:
+        - clientSecret
+      type: object
     RotateSecretOutputBody:
       additionalProperties: false
       properties:
@@ -2966,6 +3828,220 @@ components:
           type: string
       required:
         - secret
+      type: object
+    RunView:
+      additionalProperties: false
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        displayName:
+          type: string
+        error:
+          type: string
+        id:
+          type: string
+        outputs: {}
+        phase:
+          type: string
+        steps:
+          items:
+            $ref: "#/components/schemas/StepView"
+          type:
+            - array
+            - "null"
+        templateName:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        version:
+          type: string
+      required:
+        - id
+        - templateName
+        - version
+        - displayName
+        - phase
+        - steps
+        - createdBy
+        - createdAt
+        - updatedAt
+      type: object
+    ScaffoldOutputs:
+      additionalProperties: false
+      properties:
+        catalogItemId:
+          type:
+            - string
+            - "null"
+        pipelineUrl:
+          type:
+            - string
+            - "null"
+        repoUrl:
+          type:
+            - string
+            - "null"
+      required:
+        - repoUrl
+        - pipelineUrl
+        - catalogItemId
+      type: object
+    ScaffoldView:
+      additionalProperties: false
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        id:
+          type: string
+        message:
+          type:
+            - string
+            - "null"
+        name:
+          type: string
+        outputs:
+          $ref: "#/components/schemas/ScaffoldOutputs"
+        phase:
+          type: string
+        templateId:
+          type: string
+        templateName:
+          type: string
+        tenant:
+          type: string
+      required:
+        - id
+        - templateId
+        - templateName
+        - name
+        - tenant
+        - phase
+        - message
+        - outputs
+        - createdAt
+      type: object
+    SecretRef:
+      additionalProperties: false
+      properties:
+        name:
+          type: string
+        namespace:
+          type: string
+      required:
+        - name
+        - namespace
+      type: object
+    SecretStore:
+      additionalProperties: false
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        orgId:
+          type: string
+        provider:
+          $ref: "#/components/schemas/SecretStoreProvider"
+        scope:
+          type: string
+        targets:
+          $ref: "#/components/schemas/SecretStoreTargets"
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+        - id
+        - orgId
+        - name
+        - scope
+        - targets
+        - provider
+        - createdAt
+        - updatedAt
+      type: object
+    SecretStoreCondition:
+      additionalProperties: false
+      properties:
+        clusterId:
+          type: string
+        message:
+          type: string
+        reason:
+          type: string
+        status:
+          type: string
+        type:
+          type: string
+      required:
+        - clusterId
+        - type
+        - status
+        - reason
+      type: object
+    SecretStoreProvider:
+      additionalProperties: false
+      properties:
+        awsSM:
+          $ref: "#/components/schemas/AWSSMProvider"
+        azurekv:
+          $ref: "#/components/schemas/AzureKVProvider"
+        gcpsm:
+          $ref: "#/components/schemas/GCPSMProvider"
+        vault:
+          $ref: "#/components/schemas/VaultProvider"
+      type: object
+    SecretStoreStatus:
+      additionalProperties: false
+      properties:
+        conditions:
+          items:
+            $ref: "#/components/schemas/SecretStoreCondition"
+          type:
+            - array
+            - "null"
+        delivered:
+          type: boolean
+      required:
+        - delivered
+      type: object
+    SecretStoreTargets:
+      additionalProperties: false
+      properties:
+        clusterIds:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        clusterSetRef:
+          type: string
+      type: object
+    SelfPermissionsOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/SelfPermissionsOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        permissions:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+      required:
+        - permissions
       type: object
     ServiceScopes:
       additionalProperties: false
@@ -2996,6 +4072,53 @@ components:
           type: string
       required:
         - desiredAgentVersion
+      type: object
+    StatusOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/StatusOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        status:
+          $ref: "#/components/schemas/SecretStoreStatus"
+      required:
+        - status
+      type: object
+    StepView:
+      additionalProperties: false
+      properties:
+        attempts:
+          format: int64
+          type: integer
+        error:
+          type: string
+        name:
+          type: string
+        state:
+          type: string
+      required:
+        - name
+        - state
+        - attempts
+      type: object
+    StoreOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/StoreOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        store:
+          $ref: "#/components/schemas/SecretStore"
+      required:
+        - store
       type: object
     SyncOutputBody:
       additionalProperties: false
@@ -3038,6 +4161,8 @@ components:
         createdAt:
           format: date-time
           type: string
+        displayName:
+          type: string
         id:
           type: string
         keycloakGroupPath:
@@ -3052,6 +4177,7 @@ components:
         - id
         - orgId
         - name
+        - displayName
         - role
         - keycloakGroupPath
         - createdAt
@@ -3099,6 +4225,94 @@ components:
         - team
         - role
       type: object
+    TemplateDetail:
+      additionalProperties: false
+      properties:
+        description:
+          type: string
+        displayName:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        schema: {}
+        tags:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        uiSchema: {}
+        version:
+          type: string
+      required:
+        - id
+        - name
+        - displayName
+        - description
+        - version
+      type: object
+    TemplateSummary:
+      additionalProperties: false
+      properties:
+        description:
+          type: string
+        displayName:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        tags:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        version:
+          type: string
+      required:
+        - id
+        - name
+        - displayName
+        - description
+        - version
+      type: object
+    TenantDeletion:
+      additionalProperties: false
+      properties:
+        approvalId:
+          type: string
+        createdAt:
+          format: date-time
+          type: string
+        force:
+          type: boolean
+        lastError:
+          type: string
+        orgId:
+          type: string
+        reason:
+          type: string
+        requestedBy:
+          type: string
+        state:
+          type: string
+        step:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+        - orgId
+        - state
+        - step
+        - force
+        - requestedBy
+        - createdAt
+        - updatedAt
+      type: object
     TenantGitConfig:
       additionalProperties: false
       properties:
@@ -3106,9 +4320,13 @@ components:
           type: string
         commitPolicy:
           type: string
+        githubApp:
+          $ref: "#/components/schemas/GitHubAppConfig"
         orgId:
           type: string
         repo:
+          type: string
+        scaffoldGitOrg:
           type: string
       required:
         - orgId
@@ -3126,6 +4344,8 @@ components:
           format: uri
           readOnly: true
           type: string
+        deletion:
+          $ref: "#/components/schemas/TenantDeletion"
         organization:
           $ref: "#/components/schemas/Organization"
         teams:
@@ -3261,6 +4481,118 @@ components:
         - record
         - expiresAt
       type: object
+    UiAuditEvent:
+      additionalProperties: false
+      properties:
+        action:
+          type: string
+        actor:
+          type: string
+        at:
+          type: string
+        detail:
+          type: string
+        id:
+          type: string
+        objectName:
+          type: string
+        objectType:
+          type: string
+        tenant:
+          type: string
+      required:
+        - id
+        - tenant
+        - actor
+        - action
+        - objectType
+        - objectName
+        - detail
+        - at
+      type: object
+    UiExtensionDescriptor:
+      additionalProperties: false
+      properties:
+        checksum:
+          type: string
+        description:
+          type: string
+        enabled:
+          type: boolean
+        remoteEntry:
+          type: string
+        remoteEntryOci:
+          type: string
+        requiredPermission:
+          type: string
+        slots:
+          items:
+            $ref: "#/components/schemas/UiSlotDescriptor"
+          type:
+            - array
+            - "null"
+        title:
+          type: string
+      required:
+        - slots
+        - enabled
+      type: object
+    UiExtensionOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/UiExtensionOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        extension:
+          $ref: "#/components/schemas/UiExtensionRemote"
+      required:
+        - extension
+      type: object
+    UiExtensionRemote:
+      additionalProperties: false
+      properties:
+        description:
+          type: string
+        enabled:
+          type: boolean
+        name:
+          type: string
+        remoteEntryUrl:
+          type: string
+        requiredPermission:
+          type: string
+        slots:
+          items:
+            $ref: "#/components/schemas/UiSlotDescriptor"
+          type:
+            - array
+            - "null"
+        title:
+          type: string
+        version:
+          type: string
+      required:
+        - name
+        - version
+        - remoteEntryUrl
+        - slots
+        - enabled
+      type: object
+    UiSlotDescriptor:
+      additionalProperties: false
+      properties:
+        kind:
+          type: string
+        name:
+          type: string
+      required:
+        - kind
+        - name
+      type: object
     UpdateBrokeredIdPInputBody:
       additionalProperties: false
       properties:
@@ -3352,6 +4684,21 @@ components:
         url:
           type: string
       type: object
+    UpdateInputBody1:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/UpdateInputBody1.json
+          format: uri
+          readOnly: true
+          type: string
+        provider:
+          $ref: "#/components/schemas/SecretStoreProvider"
+        targets:
+          $ref: "#/components/schemas/SecretStoreTargets"
+      type: object
     UpdatePolicyInputBody:
       additionalProperties: false
       properties:
@@ -3364,11 +4711,34 @@ components:
           type: string
         enabled:
           type: boolean
+        name:
+          description: New policy name (empty keeps the current name; 409 on conflict)
+          type: string
         source:
+          type: string
+        target:
+          description: request | render (empty keeps the current target)
           type: string
       required:
         - source
         - enabled
+      type: object
+    UpdateTeamInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/UpdateTeamInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        displayName:
+          description: Human-friendly display name (name and Keycloak group path stay immutable)
+          maxLength: 200
+          type: string
+      required:
+        - displayName
       type: object
     UpdateTenantInputBody:
       additionalProperties: false
@@ -3402,6 +4772,19 @@ components:
           type: string
       required:
         - toVersion
+      type: object
+    VaultProvider:
+      additionalProperties: false
+      properties:
+        authSecretRef:
+          $ref: "#/components/schemas/SecretRef"
+        path:
+          type: string
+        server:
+          type: string
+      required:
+        - server
+        - authSecretRef
       type: object
     VisibilityInputBody:
       additionalProperties: false
@@ -3506,6 +4889,25 @@ paths:
       security:
         - bearer: []
       summary: List pending approvals across all orgs the caller belongs to
+  /api/v1/me/permissions:
+    get:
+      operationId: getMyPermissions
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MyPermissionsOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Platform-level permissions of the authenticated caller
   /api/v1/tenants:
     get:
       operationId: listTenants
@@ -3550,6 +4952,38 @@ paths:
         - bearer: []
       summary: Create a tenant (Keycloak Organization + default teams)
   /api/v1/tenants/{org}:
+    delete:
+      operationId: deleteTenant
+      parameters:
+        - description: Tenant slug
+          in: path
+          name: org
+          required: true
+          schema:
+            description: Tenant slug
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/DeleteTenantInputBody"
+        required: true
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteTenantOutputBody"
+          description: Accepted
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Decommission a tenant (org admin only; approval-gated, asynchronous)
     get:
       operationId: getTenant
       parameters:
@@ -3823,6 +5257,195 @@ paths:
       security:
         - bearer: []
       summary: Approve or reject a pending approval request
+  /api/v1/tenants/{org}/audit:
+    get:
+      operationId: listAuditLog
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: actor
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: action
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: objectType
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: from
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: to
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: limit
+          schema:
+            format: int64
+            type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListAuditUIOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Org audit log in the console's shape (filterable by actor/action/objectType/from/to)
+  /api/v1/tenants/{org}/audit-events:
+    get:
+      operationId: listAuditEvents
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - description: Exact action filter, e.g. cluster.created
+          explode: false
+          in: query
+          name: action
+          schema:
+            description: Exact action filter, e.g. cluster.created
+            type: string
+        - description: Exact actor (subject) filter
+          explode: false
+          in: query
+          name: actor
+          schema:
+            description: Exact actor (subject) filter
+            type: string
+        - description: Max events to return (default 100, max 500)
+          explode: false
+          in: query
+          name: limit
+          schema:
+            description: Max events to return (default 100, max 500)
+            format: int64
+            type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListEventsOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: List org audit events, newest first (filterable by action and actor)
+  /api/v1/tenants/{org}/audit/export:
+    get:
+      operationId: exportAuditLog
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: actor
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: action
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: objectType
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: from
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: to
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: limit
+          schema:
+            format: int64
+            type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                contentEncoding: base64
+                type: string
+          description: OK
+          headers:
+            Content-Type:
+              schema:
+                type: string
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Org audit log as CSV (same filters as the list)
+  /api/v1/tenants/{org}/authz/self/extensions:
+    get:
+      operationId: selfExtensionPermissions
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SelfPermissionsOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: List the caller's effective extension invoke permissions
   /api/v1/tenants/{org}/bulk/approvals:decide:
     post:
       operationId: bulkDecideApprovals
@@ -4611,6 +6234,36 @@ paths:
       security:
         - bearer: []
       summary: Get a cluster
+  /api/v1/tenants/{org}/clusters/{id}/access-info:
+    get:
+      operationId: getClusterAccessInfo
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccessInfoOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: OIDC access info for building a kubelogin kubeconfig (no secrets, no API URL)
   /api/v1/tenants/{org}/clusters/{id}/approve:
     post:
       operationId: approveCluster
@@ -4883,6 +6536,60 @@ paths:
       security:
         - bearer: []
       summary: Uncordon a cluster (returns it to service)
+  /api/v1/tenants/{org}/deletion/dependencies:
+    get:
+      operationId: tenantDeletionDependencies
+      parameters:
+        - description: Tenant slug
+          in: path
+          name: org
+          required: true
+          schema:
+            description: Tenant slug
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeletionDependenciesOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: "Dry-run: list resources blocking tenant deletion (org admin only)"
+  /api/v1/tenants/{org}/deletion:retry:
+    post:
+      operationId: retryTenantDeletion
+      parameters:
+        - description: Tenant slug
+          in: path
+          name: org
+          required: true
+          schema:
+            description: Tenant slug
+            type: string
+      responses:
+        "202":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RetryDeletionOutputBody"
+          description: Accepted
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Retry a failed tenant deletion (org admin only)
   /api/v1/tenants/{org}/deploys:
     post:
       operationId: deployCatalogItem
@@ -5054,7 +6761,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListOutputBody3"
+                $ref: "#/components/schemas/ListOutputBody5"
           description: OK
         default:
           content:
@@ -5095,6 +6802,87 @@ paths:
       security:
         - bearer: []
       summary: Register a backend extension (pending until handshake verifies)
+  /api/v1/tenants/{org}/extensions/ui:
+    get:
+      operationId: listUiExtensions
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListUiOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: List UI extensions (Module Federation remotes)
+    post:
+      operationId: registerUiExtension
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterUiInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UiExtensionOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Register or update a UI extension remote
+  /api/v1/tenants/{org}/extensions/ui/{name}:
+    delete:
+      operationId: unregisterUiExtension
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Unregister a UI extension remote
   /api/v1/tenants/{org}/extensions/{id}:
     delete:
       operationId: unregisterExtension
@@ -5150,6 +6938,36 @@ paths:
       security:
         - bearer: []
       summary: Get an extension
+  /api/v1/tenants/{org}/extensions/{id}/identity/rotate:
+    post:
+      operationId: rotateExtensionIdentity
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RotateIdentityOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Rotate the extension's gateway identity secret (returned once; also lazily provisions identity for pre-ADR-0008 rows)
   /api/v1/tenants/{org}/extensions/{id}/verify:
     post:
       operationId: verifyExtension
@@ -5186,11 +7004,6 @@ paths:
       parameters:
         - in: path
           name: org
-          required: true
-          schema:
-            type: string
-        - in: path
-          name: id
           required: true
           schema:
             type: string
@@ -5449,6 +7262,143 @@ paths:
       security:
         - bearer: []
       summary: Rotate the client secret; the new value is returned exactly once (org admin only)
+  /api/v1/tenants/{org}/identity/provider:
+    delete:
+      operationId: deleteIdentityProviderCompat
+      parameters:
+        - description: Tenant slug
+          in: path
+          name: org
+          required: true
+          schema:
+            description: Tenant slug
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Delete the tenant's single identity provider (UI contract; org admin only)
+    get:
+      operationId: getIdentityProviderCompat
+      parameters:
+        - description: Tenant slug
+          in: path
+          name: org
+          required: true
+          schema:
+            description: Tenant slug
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProviderCompatOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Get the tenant's single identity provider, or null (UI contract; org admin only)
+    put:
+      operationId: putIdentityProviderCompat
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PutProviderCompatInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProviderCompatOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Create-or-replace the tenant's single identity provider (UI contract; org admin only)
+  /api/v1/tenants/{org}/identity/provider/domains:
+    put:
+      operationId: putProviderDomainsCompat
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PutProviderDomainsInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProviderCompatOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Replace the provider's login-routing domain hints (UI contract; org admin only)
+  /api/v1/tenants/{org}/identity/provider/secret:rotate:
+    post:
+      operationId: rotateProviderSecretCompat
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RotateProviderSecretInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Rotate the provider's write-only client secret (UI contract; org admin only)
   /api/v1/tenants/{org}/identity/providers:
     get:
       operationId: listIdentityProviders
@@ -5870,7 +7820,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListOutputBody2"
+                $ref: "#/components/schemas/ListOutputBody3"
           description: OK
         default:
           content:
@@ -6031,6 +7981,86 @@ paths:
       security:
         - bearer: []
       summary: Send a test notification to an endpoint
+  /api/v1/tenants/{org}/platform-resources:
+    get:
+      operationId: listPlatformResources
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListOutputBody2"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: List tenant platform resources (keycloak realm/client, dns zone, namespace)
+  /api/v1/tenants/{org}/platform-resources/reconcile:
+    post:
+      operationId: reconcilePlatformResources
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ReconcileOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Force re-reconciliation of tenant platform resources (ops)
+  /api/v1/tenants/{org}/platform-resources/{id}:
+    get:
+      operationId: getPlatformResource
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetOutputBody1"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Get one tenant platform resource
   /api/v1/tenants/{org}/policies:
     get:
       operationId: listPolicies
@@ -6206,7 +8236,7 @@ paths:
           description: Error
       security:
         - bearer: []
-      summary: Update a policy (bumps version)
+      summary: Update a policy (bumps version; exemptions bind the stable ID, so renames/edits keep them valid)
   /api/v1/tenants/{org}/policy-packs:
     get:
       operationId: listPolicyPacks
@@ -6263,6 +8293,38 @@ paths:
         - bearer: []
       summary: Create a policy pack (kyverno|cel-vap)
   /api/v1/tenants/{org}/policy-packs/{id}:
+    delete:
+      operationId: deletePolicyPack
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - description: cascade-unassign active assignments before deleting
+          explode: false
+          in: query
+          name: force
+          schema:
+            description: cascade-unassign active assignments before deleting
+            type: boolean
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Delete a policy pack (409 while assigned unless force=true)
     get:
       operationId: getPolicyPack
       parameters:
@@ -6328,6 +8390,36 @@ paths:
       security:
         - bearer: []
       summary: Assign a policy pack to a clusterset|tenant|cluster
+  /api/v1/tenants/{org}/policy-packs/{id}/assignments:
+    get:
+      operationId: listPolicyPackAssignments
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListPackAssignmentsOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: List a policy pack's assignments
   /api/v1/tenants/{org}/policy-packs/{id}/assignments/{assignmentId}:
     delete:
       operationId: unassignPolicyPack
@@ -6359,6 +8451,31 @@ paths:
       security:
         - bearer: []
       summary: Remove a policy pack assignment
+  /api/v1/tenants/{org}/rbac:
+    get:
+      operationId: getRBACMatrix
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetRBACMatrixOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: "RBAC matrix: tenant Keycloak groups × cluster roles with current mappings"
   /api/v1/tenants/{org}/rbac/mappings:
     put:
       operationId: putRBACMappings
@@ -6637,6 +8754,328 @@ paths:
       security:
         - bearer: []
       summary: List rollout target status for a stage
+  /api/v1/tenants/{org}/scaffold-runs/{runId}:
+    get:
+      operationId: getScaffoldRun
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: runId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetRunOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Get a scaffold run with per-phase step states and outputs (UI polls this)
+  /api/v1/tenants/{org}/scaffold-runs/{runId}/cancel:
+    post:
+      operationId: cancelScaffoldRun
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: runId
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Cooperatively cancel a scaffold run (retains already-created outputs)
+  /api/v1/tenants/{org}/scaffold-runs/{runId}/retry:
+    post:
+      operationId: retryScaffoldRun
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: runId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RetryRunOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Resume a failed scaffold run from its first non-completed step
+  /api/v1/tenants/{org}/scaffolds:
+    post:
+      operationId: createScaffold
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateScaffoldInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateScaffoldOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Create a scaffold run (UI wizard contract)
+  /api/v1/tenants/{org}/scaffolds/{runId}:
+    get:
+      operationId: getScaffold
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: runId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetScaffoldOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Get a scaffold run (UI wizard polling contract)
+  /api/v1/tenants/{org}/secret-stores:
+    get:
+      operationId: listSecretStores
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListOutputBody4"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: List secret stores (own cluster-scoped plus platform stores)
+    post:
+      operationId: createSecretStore
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInputBody1"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Register a secret store
+  /api/v1/tenants/{org}/secret-stores/{name}:
+    delete:
+      operationId: deleteSecretStore
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Delete a secret store
+    get:
+      operationId: getSecretStore
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Get one secret store
+    patch:
+      operationId: updateSecretStore
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateInputBody1"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StoreOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Update a secret store's targets/provider
+  /api/v1/tenants/{org}/secret-stores/{name}/status:
+    get:
+      operationId: getSecretStoreStatus
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/StatusOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Delivery status projection for one secret store
   /api/v1/tenants/{org}/teams:
     get:
       operationId: listTeams
@@ -6726,6 +9165,45 @@ paths:
       security:
         - bearer: []
       summary: Delete a team (org admin only; default teams are protected)
+    put:
+      operationId: updateTeam
+      parameters:
+        - description: Tenant slug
+          in: path
+          name: org
+          required: true
+          schema:
+            description: Tenant slug
+            type: string
+        - description: Team name
+          in: path
+          name: team
+          required: true
+          schema:
+            description: Team name
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateTeamInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TeamOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Update a team's display name (org admin only; name and Keycloak group path are immutable, default teams are protected — ADR-0007)
   /api/v1/tenants/{org}/teams/{team}/members:
     get:
       operationId: listMembers
@@ -6822,6 +9300,97 @@ paths:
       security:
         - bearer: []
       summary: Remove a user from a team (platform-engineer/admin only)
+  /api/v1/tenants/{org}/templates:
+    get:
+      operationId: listTemplates
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListTemplatesOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: List software templates visible to the tenant at their effective versions
+  /api/v1/tenants/{org}/templates/{name}:
+    get:
+      operationId: getTemplate
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GetTemplateOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Get a template with its values schema and optional uiSchema
+  /api/v1/tenants/{org}/templates/{name}/runs:
+    post:
+      operationId: createScaffoldRun
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: name
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRunInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CreateRunOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: "Create a scaffold run (idempotent: identical resubmits return the existing run)"
   /api/v1/tenants/{org}/zones:
     get:
       operationId: listTenantZones

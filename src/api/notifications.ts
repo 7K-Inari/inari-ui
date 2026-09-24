@@ -13,7 +13,7 @@ export type NotificationDelivery =
   components["schemas"]["NotificationDelivery"];
 
 type EndpointOutputBody = components["schemas"]["EndpointOutputBody"];
-type ListOutputBody = components["schemas"]["ListOutputBody2"];
+type ListOutputBody = components["schemas"]["ListOutputBody3"];
 type TestOutputBody = components["schemas"]["TestOutputBody"];
 
 export type EndpointKind = "slack" | "webhook";
