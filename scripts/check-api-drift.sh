@@ -55,6 +55,13 @@ fi
 paths "$SERVER_SPEC" > "$WORK/server.paths"
 paths "$SNAPSHOT" > "$WORK/snapshot.paths"
 
+# Guard against a vacuous pass: a real OpenAPI spec always has paths, so an
+# empty extraction means yq is broken or the artifact is malformed.
+if [ ! -s "$WORK/server.paths" ]; then
+  echo "::error::extracted zero paths from $SERVER_SPEC — yq failed silently or the spec has no paths" >&2
+  exit 2
+fi
+
 MISSING="$(comm -23 "$WORK/server.paths" "$WORK/snapshot.paths")"
 EXTRA="$(comm -13 "$WORK/server.paths" "$WORK/snapshot.paths")"
 
