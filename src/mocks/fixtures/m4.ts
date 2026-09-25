@@ -1,5 +1,5 @@
 import type { components } from "@/api/__generated__/schema";
-import type { BackendExtensionRecord, UiExtensionRemote } from "@/api/extensions";
+import type { UiExtensionRemoteViewModel } from "@/api/extensions";
 import type { AgentChannel } from "@/api/fleet";
 import type {
   CreateScaffoldRequest,
@@ -21,10 +21,11 @@ type ServerRollout = components["schemas"]["Rollout"];
 type ServerRolloutTarget = components["schemas"]["RolloutTarget"];
 type ServerDriftEvent = components["schemas"]["DriftEvent"];
 type ServerAgentChannel = components["schemas"]["AgentChannel"];
+type ServerExtension = components["schemas"]["Extension"];
 
 interface M4State {
-  uiExtensions: UiExtensionRemote[];
-  backendExtensions: BackendExtensionRecord[];
+  uiExtensions: UiExtensionRemoteViewModel[];
+  backendExtensions: ServerExtension[];
   scaffoldRuns: ScaffoldState[];
   clusterSets: ServerClusterSet[];
   rollouts: RolloutStateInternal[];
@@ -123,15 +124,15 @@ export const m4MockControl = {
   },
 };
 
-export function listUiExtensionMocks(): UiExtensionRemote[] {
+export function listUiExtensionMocks(): UiExtensionRemoteViewModel[] {
   return state.uiExtensions.map((e) => ({ ...e }));
 }
 
 export function addUiExtensionMock(input: {
   name: string;
   remoteEntryUrl: string;
-}): UiExtensionRemote {
-  const remote: UiExtensionRemote = {
+}): UiExtensionRemoteViewModel {
+  const remote: UiExtensionRemoteViewModel = {
     name: input.name,
     version: "0.0.0",
     remoteEntryUrl: input.remoteEntryUrl,
@@ -149,7 +150,7 @@ export function removeUiExtensionMock(name: string): boolean {
   return true;
 }
 
-export function listBackendExtensionMocks(): BackendExtensionRecord[] {
+export function listBackendExtensionMocks(): ServerExtension[] {
   return state.backendExtensions.map((e) => ({ ...e }));
 }
 
