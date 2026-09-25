@@ -3,6 +3,7 @@ import type { components } from "@/api/__generated__/schema";
 import type {
   CatalogItemDetail,
   CatalogItemSummary,
+  CatalogSort,
   CatalogSource,
   CatalogVersion,
   UiHints,
@@ -40,6 +41,8 @@ function mapItem(i: ServerCatalogItem): CatalogItemSummary {
     displayName: i.displayName || i.name,
     description: i.description ?? "",
     source: i.source as CatalogSource,
+    category: i.category ?? "",
+    createdAt: i.createdAt ?? null,
     latestVersion: latest?.version ?? null,
     latestChannel: latest?.channel ?? null,
   };
@@ -64,22 +67,43 @@ function mapItemDetail(i: ServerCatalogItem): CatalogItemDetail {
 }
 
 export interface CatalogFilters {
+  q?: string;
   source?: CatalogSource;
+  category?: string;
+  cluster?: string;
+  sort?: CatalogSort;
+  limit?: number;
+  offset?: number;
+}
+
+export interface CatalogListResult {
+  items: CatalogItemSummary[];
+  total: number;
+}
+
+function catalogQuery(filters: CatalogFilters): string {
+  const p = new URLSearchParams();
+  if (filters.q) p.set("q", filters.q);
+  if (filters.source) p.set("source", filters.source);
+  if (filters.category) p.set("category", filters.category);
+  if (filters.cluster) p.set("cluster", filters.cluster);
+  if (filters.sort && filters.sort !== "name") p.set("sort", filters.sort);
+  if (filters.limit) p.set("limit", String(filters.limit));
+  if (filters.offset) p.set("offset", String(filters.offset));
+  const s = p.toString();
+  return s ? `?${s}` : "";
 }
 
 export async function listCatalogItems(
   token: string | undefined,
   tenant: string,
   filters: CatalogFilters = {},
-): Promise<CatalogItemSummary[]> {
+): Promise<CatalogListResult> {
   const res = await apiFetch<ListCatalogResponse>(
-    `${tenantPath(resolveTenant(tenant))}/catalog`,
+    `${tenantPath(resolveTenant(tenant))}/catalog${catalogQuery(filters)}`,
     { token },
   );
-  let items = (res.items ?? []).map(mapItem);
-  // Server-side filter params don't exist yet; filter client-side.
-  if (filters.source) items = items.filter((i) => i.source === filters.source);
-  return items;
+  return { items: (res.items ?? []).map(mapItem), total: res.total };
 }
 
 export async function getCatalogItem(

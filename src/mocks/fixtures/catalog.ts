@@ -64,6 +64,7 @@ const postgresItem: ItemView = {
   displayName: "PostgreSQL on AWS",
   description: "Managed PostgreSQL via Crossplane RDS with backups and optional HA.",
   source: "curated",
+  category: "database",
   approvalPolicy: "auto",
   pinnedVersion: "1.4.0",
   createdAt: iso(now - 120 * 86_400_000),
@@ -99,6 +100,7 @@ const keycloakRealmItem: ItemView = {
   displayName: "Keycloak Realm",
   description: "Platform-scoped tenant Keycloak realm reconciled by inari-operator.",
   source: "platform",
+  category: "security",
   approvalPolicy: "platform-admin",
   pinnedVersion: "0.9.0",
   createdAt: iso(now - 30 * 86_400_000),
@@ -223,10 +225,49 @@ export const mockCatalogControl = {
   },
 };
 
+// Mirrors the server's browse semantics (ADR-0009): facet filtering, then
+// sort, then pagination over the filtered total.
 export function listCatalogItemsFiltered(filters: {
+  q?: string | null;
   source?: string | null;
-}): ItemView[] {
-  return catalogItems.filter((i) => !filters.source || i.source === filters.source);
+  category?: string | null;
+  sort?: string | null;
+  limit?: number | null;
+  offset?: number | null;
+}): { items: ItemView[]; total: number } {
+  let items = catalogItems.filter(
+    (i) =>
+      (!filters.source || i.source === filters.source) &&
+      (!filters.category || i.category === filters.category) &&
+      (!filters.q ||
+        `${i.name} ${i.displayName} ${i.description ?? ""}`
+          .toLowerCase()
+          .includes(filters.q.toLowerCase())),
+  );
+  const byName = (a: ItemView, b: ItemView) => a.name.localeCompare(b.name);
+  switch (filters.sort) {
+    case "name-desc":
+      items = [...items].sort((a, b) => byName(b, a));
+      break;
+    case "newest":
+      items = [...items].sort(
+        (a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? "") || byName(a, b),
+      );
+      break;
+    case "oldest":
+      items = [...items].sort(
+        (a, b) => (a.createdAt ?? "").localeCompare(b.createdAt ?? "") || byName(a, b),
+      );
+      break;
+    default:
+      items = [...items].sort(byName);
+  }
+  const total = items.length;
+  const offset = filters.offset ?? 0;
+  const limit = filters.limit ?? 0;
+  if (offset > 0) items = items.slice(offset);
+  if (limit > 0) items = items.slice(0, limit);
+  return { items, total };
 }
 
 export function findCatalogItem(id: string): ItemView | undefined {

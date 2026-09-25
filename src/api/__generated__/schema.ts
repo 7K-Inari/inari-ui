@@ -3039,6 +3039,7 @@ export interface components {
         ItemView: {
             approvalPolicy: string;
             capabilityRef?: components["schemas"]["CapabilityRef"];
+            category?: string;
             /** Format: date-time */
             createdAt: string;
             description: string;
@@ -3095,6 +3096,8 @@ export interface components {
              */
             readonly $schema?: string;
             items: components["schemas"]["ItemView"][] | null;
+            /** Format: int64 */
+            total: number;
         };
         ListChannelsOutputBody: {
             /**
@@ -5090,6 +5093,18 @@ export interface operations {
             query?: {
                 /** @description Cluster ID; intersects discovered capabilities */
                 cluster?: string;
+                /** @description Free-text search over name, display name, and description */
+                q?: string;
+                /** @description Filter by item source */
+                source?: "curated" | "discovered" | "platform" | "template";
+                /** @description Filter by package category (discovered projections have no category) */
+                category?: string;
+                /** @description Sort order (whitelisted server-side) */
+                sort?: "name" | "name-desc" | "newest" | "oldest";
+                /** @description Page size; 0 returns all matches */
+                limit?: number;
+                /** @description Page offset into the filtered, sorted result */
+                offset?: number;
             };
             header?: never;
             path: {

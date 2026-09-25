@@ -36,12 +36,18 @@ export interface Capability {
 
 export type CatalogSource = "curated" | "discovered" | "platform" | "template";
 
+// Sort values accepted by the browse API (whitelisted server-side).
+export type CatalogSort = "name" | "name-desc" | "newest" | "oldest";
+
 export interface CatalogItemSummary {
   id: string;
   name: string;
   displayName: string;
   description: string;
   source: CatalogSource;
+  // Package category facet; empty for uncategorized and discovered items.
+  category: string;
+  createdAt: string | null;
   latestVersion: string | null;
   latestChannel: string | null;
 }
