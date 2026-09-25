@@ -143,6 +143,15 @@ describe("templates api (canonical endpoints)", () => {
     expect(called).toBe(true);
   });
 
+  it("treats a null templates array as an empty list", async () => {
+    mockServer.use(
+      http.get("*/api/v1/tenants/:org/templates", () =>
+        HttpResponse.json({ templates: null }),
+      ),
+    );
+    await expect(listTemplates("tok", "acme")).resolves.toEqual([]);
+  });
+
   it("retries a run via POST /scaffold-runs/{runId}/retry and returns the mapped run", async () => {
     mockServer.use(
       http.post("*/api/v1/tenants/:org/scaffold-runs/:runId/retry", () => {

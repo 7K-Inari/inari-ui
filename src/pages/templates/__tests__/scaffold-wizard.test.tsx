@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
@@ -141,5 +142,55 @@ describe("ScaffoldWizardPage", () => {
     expect(
       screen.getByText(/Use lowercase letters, numbers, and dashes/),
     ).toBeInTheDocument();
+  });
+
+  it("surfaces a server error when run creation is rejected (422)", async () => {
+    const user = userEvent.setup();
+    mockServer.use(
+      http.post("*/api/v1/tenants/:org/templates/:name/runs", () =>
+        HttpResponse.json(
+          { title: "Error", status: 422, detail: "values failed schema validation" },
+          { status: 422 },
+        ),
+      ),
+    );
+    renderWizard();
+    await screen.findByText("tenant-acme");
+    await user.type(screen.getByLabelText("Service name"), "payments-api");
+    await user.type(screen.getByLabelText(/Description/), "Payments API service");
+    await user.type(screen.getByLabelText(/Port/), "8080");
+    await user.click(screen.getByRole("button", { name: "Next" }));
+    await screen.findByRole("heading", { name: "Review" });
+    await user.click(screen.getByRole("button", { name: "Scaffold" }));
+    expect(
+      await screen.findByText("values failed schema validation"),
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Scaffold" })).toBeEnabled();
+  });
+
+  it("surfaces an error when cancel fails and keeps the cancel action available", async () => {
+    const user = userEvent.setup();
+    mockServer.use(
+      http.post("*/api/v1/tenants/:org/scaffold-runs/:runId/cancel", () =>
+        HttpResponse.json(
+          { title: "Error", status: 409, detail: "run already completed" },
+          { status: 409 },
+        ),
+      ),
+    );
+    renderWizard();
+    await screen.findByText("tenant-acme");
+    await user.type(screen.getByLabelText("Service name"), "payments-api");
+    await user.type(screen.getByLabelText(/Description/), "Payments API service");
+    await user.type(screen.getByLabelText(/Port/), "8080");
+    await user.click(screen.getByRole("button", { name: "Next" }));
+    await screen.findByRole("heading", { name: "Review" });
+    await user.click(screen.getByRole("button", { name: "Scaffold" }));
+
+    const cancelButton = await screen.findByRole("button", { name: "Cancel run" });
+    await user.click(cancelButton);
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "run already completed",
+    );
   });
 });
