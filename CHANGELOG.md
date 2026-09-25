@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.1.0](https://github.com/7K-Inari/inari-ui/compare/v2.0.0...v2.1.0) (2026-09-25)
+
+
+### Features
+
+* **catalog:** filter bar with search, facets, sort, and list view ([cb6b078](https://github.com/7K-Inari/inari-ui/commit/cb6b07852881d945208e8df4f448660e4c748032))
+* **catalog:** filter bar with search, facets, sort, and list view ([f4f0fb8](https://github.com/7K-Inari/inari-ui/commit/f4f0fb8d14a5afdbff209e7a68ecf6e255a1afc9))
+* **chart:** HA guardrails for inari-console (liveness probe, PDB, pod spreading) ([7d5037e](https://github.com/7K-Inari/inari-ui/commit/7d5037e017324f8833081f17373fb634f45dbdcc))
+* **chart:** HA guardrails for inari-console (liveness probe, PDB, pod spreading) ([6d53854](https://github.com/7K-Inari/inari-ui/commit/6d53854e72227c9453fa7b606c8a2dbb8ae881f0))
+
+
+### Bug Fixes
+
+* **chart:** make HA unittest suite compatible with helm-unittest v0.8.2 ([943dc0e](https://github.com/7K-Inari/inari-ui/commit/943dc0e736b54bd7bf4c8d023206b7f33eeb7c6e))
+
 ## [2.0.0](https://github.com/7K-Inari/inari-ui/compare/v1.6.1...v2.0.0) (2026-09-25)
 
 
