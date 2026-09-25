@@ -137,6 +137,50 @@ describe("AuditLogPage", () => {
     }
   });
 
+  it("paginates long event lists and resets to the first page on filter apply", async () => {
+    const { http, HttpResponse } = await import("msw");
+    const events = Array.from({ length: 60 }, (_, i) => ({
+      id: `ev-${i}`,
+      tenant: "acme",
+      actor: i < 55 ? "jane@acme.example" : "platform-admin@inari.dev",
+      action: `action.${String(i).padStart(2, "0")}`,
+      objectType: "instance",
+      objectName: `obj-${i}`,
+      detail: `detail ${i}`,
+      at: new Date(Date.now() - i * 1000).toISOString(),
+    }));
+    mockServer.use(
+      http.get("*/api/v1/tenants/acme/audit", ({ request }) => {
+        const actor = new URL(request.url).searchParams.get("actor");
+        return HttpResponse.json({
+          events: actor ? events.filter((e) => e.actor.includes(actor)) : events,
+        });
+      }),
+    );
+    const user = userEvent.setup();
+    renderPage();
+    expect(await screen.findByText("action.00")).toBeInTheDocument();
+    expect(screen.getByText("Page 1 of 2 (60 events)")).toBeInTheDocument();
+    expect(screen.queryByText("action.50")).not.toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Next" }));
+    expect(await screen.findByText("action.50")).toBeInTheDocument();
+    expect(screen.getByText("Page 2 of 2 (60 events)")).toBeInTheDocument();
+    expect(screen.queryByText("action.00")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Next" })).toBeDisabled();
+
+    await user.click(screen.getByRole("button", { name: "Previous" }));
+    expect(await screen.findByText("action.00")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Next" }));
+    await screen.findByText("action.50");
+    await user.type(screen.getByLabelText("Actor"), "platform-admin");
+    await user.click(screen.getByRole("button", { name: "Apply" }));
+    await waitFor(() => expect(screen.queryByText("action.00")).not.toBeInTheDocument());
+    expect(screen.getByText("action.55")).toBeInTheDocument();
+    expect(screen.queryByText(/Page \d+ of \d+/)).not.toBeInTheDocument();
+  });
+
   it("surfaces an error when the export fails", async () => {
     const { http, HttpResponse } = await import("msw");
     mockServer.use(

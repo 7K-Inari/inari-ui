@@ -1,6 +1,7 @@
 import { Download } from "lucide-react";
 import * as React from "react";
 
+import type { paths } from "@/api/__generated__/schema";
 import { exportAuditEvents, listAuditEvents } from "@/api/audit";
 import type { AuditFilters } from "@/api/audit";
 import { useAsyncResource } from "@/api/hooks";
@@ -13,7 +14,10 @@ import { Label } from "@/components/ui/label";
 import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 
+type AuditListQuery = paths["/api/v1/tenants/{org}/audit"]["get"]["parameters"]["query"];
+
 const EMPTY_FILTERS: AuditFilters = {};
+const PAGE_SIZE: NonNullable<NonNullable<AuditListQuery>["limit"]> = 50;
 
 export function AuditLogPage() {
   const { tenant } = useTenant();
@@ -22,6 +26,7 @@ export function AuditLogPage() {
   const [filters, setFilters] = React.useState<AuditFilters>(EMPTY_FILTERS);
   const [exporting, setExporting] = React.useState(false);
   const [exportError, setExportError] = React.useState<string | null>(null);
+  const [page, setPage] = React.useState(0);
 
   const { data: events, loading, error } = useAsyncResource(
     (t) => listAuditEvents(t, tenant, filters),
@@ -29,10 +34,12 @@ export function AuditLogPage() {
   );
 
   function apply() {
+    setPage(0);
     setFilters({ ...draft });
   }
 
   function reset() {
+    setPage(0);
     setDraft(EMPTY_FILTERS);
     setFilters(EMPTY_FILTERS);
   }
@@ -60,6 +67,9 @@ export function AuditLogPage() {
   }
 
   const items = events ?? [];
+  const pageCount = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount - 1);
+  const pageItems = items.slice(currentPage * PAGE_SIZE, (currentPage + 1) * PAGE_SIZE);
 
   return (
     <div className="space-y-4">
@@ -155,7 +165,7 @@ export function AuditLogPage() {
         </Card>
       )}
 
-      {items.length > 0 && (
+      {pageItems.length > 0 && (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
@@ -168,7 +178,7 @@ export function AuditLogPage() {
               </tr>
             </thead>
             <tbody>
-              {items.map((event) => (
+              {pageItems.map((event) => (
                 <tr key={event.id} className="border-t hover:bg-muted/30">
                   <td className="px-4 py-2 text-muted-foreground">
                     <span title={event.at}>{formatRelative(event.at)}</span>
@@ -187,6 +197,32 @@ export function AuditLogPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {items.length > PAGE_SIZE && (
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <span>
+            Page {currentPage + 1} of {pageCount} ({items.length} events)
+          </span>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={currentPage === 0}
+              onClick={() => setPage((p) => Math.max(0, p - 1))}
+            >
+              Previous
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={currentPage >= pageCount - 1}
+              onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
+            >
+              Next
+            </Button>
+          </div>
         </div>
       )}
     </div>
