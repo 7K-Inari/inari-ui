@@ -1,7 +1,7 @@
 replicaCount: 1
 bundle:
   repository: ghcr.io/7k-inari/inari-ui-bundle
-  tag: 1.6.1
+  tag: 2.0.0
 keycloakUrl: http://localhost:8080
 keycloakRealm: inari
 keycloakClientId: inari-ui

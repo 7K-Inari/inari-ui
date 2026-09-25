@@ -1,5 +1,77 @@
 # Changelog
 
+## [2.0.0](https://github.com/7K-Inari/inari-ui/compare/v1.6.1...v2.0.0) (2026-09-25)
+
+
+### ⚠ BREAKING CHANGES
+
+* **clusters:** helm-only agent install; drop kubectl manifest from register wizard ([#52](https://github.com/7K-Inari/inari-ui/issues/52))
+
+### Features
+
+* **api:** add caller-scoped listApprovalsInbox for the v1.6.0 aggregate ([265fa8a](https://github.com/7K-Inari/inari-ui/commit/265fa8a72c37af4133585216996f43a3fe4d0742))
+* **api:** codegen client types from pinned OpenAPI contract; align UI with the real server surface ([124c300](https://github.com/7K-Inari/inari-ui/commit/124c300b78837c08bc02c89dc4580f9851019e1c))
+* **api:** codegen client types from pinned OpenAPI contract; align UI with the real server surface ([b932a46](https://github.com/7K-Inari/inari-ui/commit/b932a46225829e9f19384cf56b793059c2be9fd4))
+* **api:** migrate templates client to canonical scaffold-runs endpoints ([#63](https://github.com/7K-Inari/inari-ui/issues/63)) ([4cd47a8](https://github.com/7K-Inari/inari-ui/commit/4cd47a844cce2613d4e69538da47fb21922579b3))
+* **audit:** audit-log viewer pagination + typecheck repair ([#65](https://github.com/7K-Inari/inari-ui/issues/65)) ([62cc607](https://github.com/7K-Inari/inari-ui/commit/62cc60717072b4e6495ce75987202bded429215e))
+* **clusters:** helm-only agent install; drop kubectl manifest from register wizard ([#52](https://github.com/7K-Inari/inari-ui/issues/52)) ([dd4242c](https://github.com/7K-Inari/inari-ui/commit/dd4242c55a26c0485f3d58bcfa25154326e685fc))
+* **overview:** add all-tenants home with org fan-out sections ([911ec98](https://github.com/7K-Inari/inari-ui/commit/911ec98a2695a8d7c732db70be950f94ea6a62fa))
+* **overview:** add per-tenant overview page with cluster health and pending approvals cards ([2fe526d](https://github.com/7K-Inari/inari-ui/commit/2fe526dcdf17446a4239bc97f36ad77e1d28cbe7))
+* **overview:** add resource health and drift cards to per-tenant overview ([5543500](https://github.com/7K-Inari/inari-ui/commit/5543500a2e2dabe22fbb8de17c44e4d7bfa4fa07))
+* **overview:** add resource health and drift cards to per-tenant overview ([3f05f2d](https://github.com/7K-Inari/inari-ui/commit/3f05f2d73df79c96cc16c3a6eac2814be54b378b))
+* **overview:** all-tenants home with org fan-out sections ([05552a7](https://github.com/7K-Inari/inari-ui/commit/05552a74c1088dfb52d680d03564bdda3c0bfdbc))
+* **overview:** recent activity card, quick-actions gating, inline approve/reject ([84cc16c](https://github.com/7K-Inari/inari-ui/commit/84cc16c715a5ff146d1fdd824f64227f0906f811))
+* **overview:** recent activity card, quick-actions gating, inline approve/reject ([31cf439](https://github.com/7K-Inari/inari-ui/commit/31cf4396e9c41f980cf119c646fa0fbc8badef56))
+* **overview:** swap all-tenants approvals to the caller-scoped inbox aggregate ([aea46b8](https://github.com/7K-Inari/inari-ui/commit/aea46b877320d82b613166d505ce55b0f65a28df))
+* **overview:** swap all-tenants approvals to the caller-scoped inbox aggregate ([3ef19d7](https://github.com/7K-Inari/inari-ui/commit/3ef19d7a62c62f9f71df6549a69976d7f1eae0c4))
+* **secret-stores:** tenant-scoped ESO Secret Stores management page ([#64](https://github.com/7K-Inari/inari-ui/issues/64)) ([ae77eeb](https://github.com/7K-Inari/inari-ui/commit/ae77eeb48263d025a1885d9fec81efaa55536aeb))
+* **settings:** add IdP brokering page with write-only secret (M6.W6) ([88de849](https://github.com/7K-Inari/inari-ui/commit/88de849017b6e4872d5d5f6bed3cfb637a105a78))
+* **settings:** add org domains page with 409 claim-conflict handling (M6.W6) ([8457c9c](https://github.com/7K-Inari/inari-ui/commit/8457c9c2a41132b2e6da271842235629f8d60b82))
+* **settings:** add SAML as second IdP provider for SSO brokering (M6.W8) ([4a8ec8c](https://github.com/7K-Inari/inari-ui/commit/4a8ec8c3573c74d92e4dc08d462537a8faa78821))
+* **settings:** add SAML as second IdP provider for SSO brokering (M6.W8) ([8991f69](https://github.com/7K-Inari/inari-ui/commit/8991f69f5daf76e9ffb72aaf9769a19fde9456d5))
+* **settings:** ESO secret-stores registry screen ([bec113b](https://github.com/7K-Inari/inari-ui/commit/bec113bd7923c26b433d5c0f2ce573b2169bdfa7))
+* **settings:** ESO secret-stores registry screen ([fb8c906](https://github.com/7K-Inari/inari-ui/commit/fb8c906f95f01cb905e9f127e8d282ad34678871))
+* **settings:** identity and approvals-config screens ([1c20c13](https://github.com/7K-Inari/inari-ui/commit/1c20c13a7c4444bcf5027bebc8480eecee0a928c))
+* **settings:** identity and approvals-config screens ([465419e](https://github.com/7K-Inari/inari-ui/commit/465419e7b02a2eb709f21b2024a8440f4457ae37))
+* **settings:** IdP brokering + login-routing domains screens (M6.W6) ([7936286](https://github.com/7K-Inari/inari-ui/commit/79362868c25f6088f227de2a6a29ffb09430c556))
+* **settings:** org profile, members, teams, visibility, registration tokens screens ([6ae6341](https://github.com/7K-Inari/inari-ui/commit/6ae6341b723700e516f9ccfa1bd1642a74771479))
+* **settings:** org profile, members, teams, visibility, registration tokens screens ([e05e283](https://github.com/7K-Inari/inari-ui/commit/e05e2836342ce52c7772bce1115f3bc69efa67b9))
+* **settings:** settings subtree scaffold + policies and git screens ([ba590ad](https://github.com/7K-Inari/inari-ui/commit/ba590ad2409e39c5d97e81d59082d2d1535faf48))
+* **settings:** settings subtree scaffold + policies and git screens ([df921e3](https://github.com/7K-Inari/inari-ui/commit/df921e3899c9a2021f442e367113be7f0b0b32c0))
+* **settings:** tenant notifications settings page ([#50](https://github.com/7K-Inari/inari-ui/issues/50)) ([2b346b5](https://github.com/7K-Inari/inari-ui/commit/2b346b51206f0186338949c33bddd3efa4b11649))
+
+
+### Bug Fixes
+
+* **auth:** request organization:* scope on login ([#49](https://github.com/7K-Inari/inari-ui/issues/49)) ([5c315fc](https://github.com/7K-Inari/inari-ui/commit/5c315fc436e4a252a2fe7aeac7d44f4da42a6214))
+* **build:** use absolute base URL so deep routes load real assets ([f861ccc](https://github.com/7K-Inari/inari-ui/commit/f861ccc4dfb3a58a7a4babe29aad7a74a0a927f2))
+* **build:** use absolute base URL so deep routes load real assets ([f58e11b](https://github.com/7K-Inari/inari-ui/commit/f58e11b1396b896e91b337e6661dbd50760c2327))
+* **catalog:** show version and channel per item, handle versionless items ([629cff7](https://github.com/7K-Inari/inari-ui/commit/629cff708530ed4139603c9fd9412576b7261e00))
+* **catalog:** show version and channel per item, handle versionless items ([2c329ff](https://github.com/7K-Inari/inari-ui/commit/2c329ffed908698babcbeb8baff6e858ff3e745d))
+* **clusters:** stop sending description on create — not in the API schema ([22e1fca](https://github.com/7K-Inari/inari-ui/commit/22e1fca25ba65e8ebaefdc86eb996ff7b2773244))
+* **clusters:** stop sending description on create — not in the API schema ([4e65c0e](https://github.com/7K-Inari/inari-ui/commit/4e65c0e70103a8148e72e2e4261b9bdfc00abdf1))
+* **console:** eliminate intermittent white screens (asset caching + root error boundary) ([4c03450](https://github.com/7K-Inari/inari-ui/commit/4c034504c536fd0ef9f0d0bb2140a90d02e5209e))
+* **console:** MF host shares zod+SDK singletons; catalog template badge; container-name derivation ([#59](https://github.com/7K-Inari/inari-ui/issues/59)) ([d579eb1](https://github.com/7K-Inari/inari-ui/commit/d579eb1d0dab94147ad966a2be1e98265147d7d6))
+* **console:** stop white-screening on stale cached index.html after deploys ([101e59c](https://github.com/7K-Inari/inari-ui/commit/101e59cb6cd220dfa533a06d6de8fccc18a99da4))
+* **extensions:** entryGlobalName for dashed remote names ([#55](https://github.com/7K-Inari/inari-ui/issues/55)) ([fb706df](https://github.com/7K-Inari/inari-ui/commit/fb706dfd8babdec14d9cdb4e182e34dfd54f6fb0))
+* **extensions:** load server-served UI remotes; tenant notifications settings page ([#54](https://github.com/7K-Inari/inari-ui/issues/54)) ([dfb8a5d](https://github.com/7K-Inari/inari-ui/commit/dfb8a5dcea2af3779777208cdf374fa00b48a709))
+* **overview:** hide all-tenants activity card when every org is forbidden ([fe90f54](https://github.com/7K-Inari/inari-ui/commit/fe90f5489316254c07e55c29a11090af8f45a662))
+* **overview:** link drift card to fleet drift tab ([20eda44](https://github.com/7K-Inari/inari-ui/commit/20eda4442a4a2f4e693fced25480be27abbad415))
+* **overview:** settle org fan-out entries independently ([2f06040](https://github.com/7K-Inari/inari-ui/commit/2f060401c271140e2bce7e63de6ab1c2d7fae4ed))
+* server-driven org capabilities, catalog latest-version selection ([#51](https://github.com/7K-Inari/inari-ui/issues/51)) ([80621eb](https://github.com/7K-Inari/inari-ui/commit/80621ebbf0a36def2d670ab722d8a2f086f95bb1))
+* **settings:** QA fixes for expiry display, git form races, and mock id collisions ([68a0b5d](https://github.com/7K-Inari/inari-ui/commit/68a0b5da0b5fad249ccaf76b82c70ebf00ee878e))
+* **settings:** scope provider fields to selected type on secret-store save ([129dffa](https://github.com/7K-Inari/inari-ui/commit/129dffa6671b0c0e49dc36b1a92af196ec1bd508))
+* **shell:** add root error boundary so render errors degrade gracefully ([bad6828](https://github.com/7K-Inari/inari-ui/commit/bad6828f670b632d191b2d3e9279a09307c2de30))
+* **tenants:** align create-tenant payload and envelope with tenancy API ([62cc0be](https://github.com/7K-Inari/inari-ui/commit/62cc0bed0e0ddba1f86d082b2256f244d2a748c3))
+* **tenants:** align create-tenant payload and envelope with tenancy API ([399b659](https://github.com/7K-Inari/inari-ui/commit/399b659b1a6971fc3414fcb5f5f11fcf00224dae))
+
+
+### Code Refactoring
+
+* **api:** migrate platform/rbac/idp/me/secrets adapters to generated OpenAPI types ([#66](https://github.com/7K-Inari/inari-ui/issues/66)) ([30ad56f](https://github.com/7K-Inari/inari-ui/commit/30ad56f7f0702a7588f9c0a6aea508fc0d6bdae8))
+* **clusters:** export shared clusterHealth state-to-status helper ([601e389](https://github.com/7K-Inari/inari-ui/commit/601e38920778297d2fc9f7f2d4b9651a71121628))
+* **extensions:** type wire shapes from generated OpenAPI schema ([#62](https://github.com/7K-Inari/inari-ui/issues/62)) ([c5f2cae](https://github.com/7K-Inari/inari-ui/commit/c5f2cae538a032ea4a2211dc9e746095b24e5ff6))
+
 ## [1.6.1](https://github.com/7K-Inari/inari-ui/compare/v1.6.0...v1.6.1) (2026-09-05)
 
 
