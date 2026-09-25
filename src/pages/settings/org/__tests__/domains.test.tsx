@@ -57,7 +57,6 @@ function seedProvider(
   domainHints: string[] = ["acme.example", "*.subs.acme.example"],
 ) {
   putIdpProviderMock("acme", {
-    provider: "oidc",
     alias: "acme-sso",
     issuerUrl: "https://idp.acme.example",
     clientId: "inari-acme",

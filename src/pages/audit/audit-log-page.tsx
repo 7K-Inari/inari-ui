@@ -58,7 +58,7 @@ export function AuditLogPage() {
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setTimeout(() => URL.revokeObjectURL?.(url), 1000);
     } catch (err) {
       setExportError(err instanceof Error ? err.message : "Export failed");
     } finally {

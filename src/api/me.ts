@@ -1,12 +1,13 @@
 import { apiFetch } from "@/api/client";
+import type { components } from "@/api/__generated__/schema";
 
 // Global permissions are computed server-side by the OpenFGA-backed
 // authorization brain (M1.W2); the UI only consumes this projection.
-//
-// TODO(server): the server currently exposes only `canCreateOrganizations`
-// (internal/tenancy/me.go). `tenants` is a forward-compatible seam for a
-// per-tenant permission projection: parse it when present, treat its absence
-// as "unknown" (never as denial) until the server ships it.
+type MyPermissionsOutputBody = components["schemas"]["MyPermissionsOutputBody"];
+
+// Forward-compatible seam for a per-tenant permission projection the server
+// has not shipped yet: parse it when present, treat its absence as "unknown"
+// (never as denial).
 export interface TenantPermissions {
   canDecideApprovals?: boolean;
   canRegisterClusters?: boolean;
@@ -14,6 +15,7 @@ export interface TenantPermissions {
   canDeploy?: boolean;
 }
 
+// UI view model over MyPermissionsOutputBody plus the unshipped `tenants` seam.
 export interface MyPermissions {
   canCreateOrganizations: boolean;
   tenants?: Record<string, TenantPermissions>;
@@ -48,7 +50,7 @@ function parseTenantPermissions(raw: unknown): Record<string, TenantPermissions>
 export async function fetchMyPermissions(
   token: string | undefined,
 ): Promise<MyPermissions> {
-  const res = await apiFetch<{ canCreateOrganizations?: unknown; tenants?: unknown; orgRoles?: unknown }>(
+  const res = await apiFetch<MyPermissionsOutputBody & { tenants?: unknown }>(
     `/me/permissions`,
     { token },
   );

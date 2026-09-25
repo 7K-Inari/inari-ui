@@ -130,11 +130,17 @@ export function PlatformPage() {
               </thead>
               <tbody>
                 {resources.data.map((r) => {
-                  const status = RESOURCE_STATUS[r.status];
+                  // Contract types kind/status as plain strings; fall back to
+                  // the raw value for anything outside the known sets.
+                  const kind = r.kind as PlatformResourceKind;
+                  const status = RESOURCE_STATUS[r.status as PlatformResourceStatus] ?? {
+                    label: r.status,
+                    variant: "secondary" as const,
+                  };
                   return (
                     <tr key={r.id} className="border-t hover:bg-muted/30">
                       <td className="px-4 py-2">
-                        <Badge variant="outline">{KIND_LABELS[r.kind]}</Badge>
+                        <Badge variant="outline">{KIND_LABELS[kind] ?? r.kind}</Badge>
                       </td>
                       <td className="px-4 py-2 font-medium">{r.name}</td>
                       <td className="px-4 py-2">

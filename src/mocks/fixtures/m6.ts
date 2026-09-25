@@ -2,9 +2,8 @@ import type { components } from "@/api/__generated__/schema";
 import type { NotificationEndpoint } from "@/api/notifications";
 import type { OidcClient, OidcClientInput, OidcScope } from "@/api/identity";
 import type {
-  IdpProvider,
-  IdpProviderInput,
-  SamlMetadataImport,
+  OidcProvider,
+  OidcProviderInput,
 } from "@/api/idp";
 import type { ApprovalConfig } from "@/api/policies";
 import type {
@@ -65,7 +64,7 @@ export interface PolicyMockState {
   oidcClients: Record<string, OidcClient[]>;
   approvalConfigs: Record<string, ApprovalConfig>;
   secretStores: Record<string, SecretStore[]>;
-  idpProviders: Record<string, IdpProvider>;
+  idpProviders: Record<string, OidcProvider>;
   notificationEndpoints: Record<string, NotificationEndpoint[]>;
   // Domains claimed across all orgs, for login routing 409s.
   claimedDomains: Record<string, string>;
@@ -876,143 +875,46 @@ export function secretStoreStatusFor(
 
 // ---- M6.W6: IdP brokering + login-routing domains ----
 
-export function idpProviderFor(org: string): IdpProvider | null {
+export function idpProviderFor(org: string): OidcProvider | null {
   return state.idpProviders[org] ?? null;
 }
 
 export function putIdpProviderMock(
   org: string,
-  body: IdpProviderInput,
-): IdpProvider {
+  body: OidcProviderInput,
+): OidcProvider {
   const existing = state.idpProviders[org];
-  const nowIso = new Date().toISOString();
-  const base = {
+  const provider: OidcProvider = {
     alias: body.alias,
-    claimMapping: body.claimMapping,
+    claimMapping: body.claimMapping ?? {},
+    clientId: body.clientId,
     domainHints: body.domainHints ?? [],
-    createdAt: existing?.createdAt ?? nowIso,
-    updatedAt: nowIso,
+    issuerUrl: body.issuerUrl,
+    createdAt: existing?.createdAt ?? new Date().toISOString(),
   };
-  const provider: IdpProvider =
-    body.provider === "saml"
-      ? {
-          ...base,
-          provider: "saml",
-          entityId: body.entityId,
-          ssoUrl: body.ssoUrl,
-          nameIdFormat:
-            body.nameIdFormat ??
-            "urn:oasis:names:tc:SAML:1.1:nameid-format:persistent",
-          signingCertificate:
-            body.signingCertificate ??
-            (existing?.provider === "saml"
-              ? existing.signingCertificate
-              : undefined),
-          certExpiresAt:
-            existing?.provider === "saml" ? existing.certExpiresAt : undefined,
-          wantAuthnRequestsSigned: body.wantAuthnRequestsSigned ?? false,
-          wantAssertionsSigned: body.wantAssertionsSigned ?? false,
-        }
-      : {
-          ...base,
-          provider: "oidc",
-          issuerUrl: body.issuerUrl,
-          clientId: body.clientId,
-          // Secret is write-only: create with one sets it; edits without one keep it.
-          secretConfigured:
-            existing?.provider === "oidc"
-              ? existing.secretConfigured || Boolean(body.clientSecret)
-              : Boolean(body.clientSecret),
-        };
   for (const d of existing?.domainHints ?? []) delete state.claimedDomains[d];
   state.idpProviders[org] = provider;
-  for (const d of provider.domainHints) state.claimedDomains[d] = org;
+  for (const d of provider.domainHints ?? []) state.claimedDomains[d] = org;
   return provider;
 }
 
 export function rotateIdpSecretMock(
   org: string,
   clientSecret: string,
-): IdpProvider | null {
+): OidcProvider | null {
   const provider = state.idpProviders[org];
-  if (!provider || provider.provider !== "oidc" || !clientSecret) return null;
-  provider.secretConfigured = true;
-  provider.updatedAt = new Date().toISOString();
+  if (!provider || !clientSecret) return null;
+  // The secret is write-only: rotation leaves no readable trace on the
+  // provider projection.
   return provider;
 }
 
 export function deleteIdpProviderMock(org: string): boolean {
   const provider = state.idpProviders[org];
   if (!provider) return false;
-  for (const d of provider.domainHints) delete state.claimedDomains[d];
+  for (const d of provider.domainHints ?? []) delete state.claimedDomains[d];
   delete state.idpProviders[org];
   return true;
-}
-
-// Canned metadata returned when importing via metadataUrl (fetch mocked away).
-export const MOCK_SAML_METADATA_XML = [
-  `<?xml version="1.0" encoding="UTF-8"?>`,
-  `<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="https://idp.acme.example/saml/metadata">`,
-  `  <md:IDPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">`,
-  `    <md:KeyDescriptor use="signing"><ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#"><ds:X509Data><ds:X509Certificate>MIIDFAKECERT</ds:X509Certificate></ds:X509Data></ds:KeyInfo></md:KeyDescriptor>`,
-  `    <md:NameIDFormat>urn:oasis:names:tc:SAML:1.1:nameid-format:persistent</md:NameIDFormat>`,
-  `    <md:SingleSignOnService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" Location="https://idp.acme.example/saml/sso"/>`,
-  `  </md:IDPSSODescriptor>`,
-  `</md:EntityDescriptor>`,
-].join("\n");
-
-// Parses SAML IdP metadata XML into provider config (mock of KC import-config).
-// Returns null when the XML has no recognizable EntityDescriptor.
-export function parseSamlMetadataMock(xml: string): SamlMetadataImport | null {
-  const entityId = xml.match(/entityID="([^"]+)"/)?.[1];
-  const ssoUrl =
-    xml.match(
-      /<md:SingleSignOnService[^>]*Binding="[^"]*HTTP-Redirect"[^>]*Location="([^"]+)"/,
-    )?.[1] ?? xml.match(/<md:SingleSignOnService[^>]*Location="([^"]+)"/)?.[1];
-  if (!entityId || !ssoUrl) return null;
-  const nameIdFormat = xml.match(
-    /<md:NameIDFormat>([^<]+)<\/md:NameIDFormat>/,
-  )?.[1];
-  const cert = xml.match(
-    /<ds:X509Certificate>([^<]+)<\/ds:X509Certificate>/,
-  )?.[1];
-  return {
-    entityId,
-    ssoUrl,
-    nameIdFormat,
-    signingCertificate: cert
-      ? `-----BEGIN CERTIFICATE-----\n${cert}\n-----END CERTIFICATE-----`
-      : undefined,
-  };
-}
-
-// Uploads (replaces) the IdP signing certificate on a SAML provider.
-export function uploadIdpCertificateMock(
-  org: string,
-  certificate: string,
-): IdpProvider | null {
-  const provider = state.idpProviders[org];
-  if (!provider || provider.provider !== "saml") return null;
-  provider.signingCertificate = certificate;
-  provider.certExpiresAt = new Date(
-    Date.now() + 365 * 24 * 3600 * 1000,
-  ).toISOString();
-  provider.updatedAt = new Date().toISOString();
-  return provider;
-}
-
-// SP descriptor XML handed to tenants so they can configure their IdP.
-export function spDescriptorXmlMock(org: string): string | null {
-  const provider = state.idpProviders[org];
-  if (!provider || provider.provider !== "saml") return null;
-  return [
-    `<?xml version="1.0" encoding="UTF-8"?>`,
-    `<md:EntityDescriptor xmlns:md="urn:oasis:names:tc:SAML:2.0:metadata" entityID="https://sso.inari.example/realms/${org}">`,
-    `  <md:SPSSODescriptor protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol">`,
-    `    <md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://sso.inari.example/realms/${org}/broker/${provider.alias}/endpoint" index="0"/>`,
-    `  </md:SPSSODescriptor>`,
-    `</md:EntityDescriptor>`,
-  ].join("\n");
 }
 
 // Returns the conflicting domain when another org has claimed it.
@@ -1030,15 +932,15 @@ export function domainClaimConflict(
 export function putDomainHintsMock(
   org: string,
   domainHints: string[],
-): IdpProvider | null {
+): OidcProvider | null {
   const provider = state.idpProviders[org];
   if (!provider) return null;
-  for (const d of provider.domainHints) delete state.claimedDomains[d];
+  for (const d of provider.domainHints ?? []) delete state.claimedDomains[d];
   provider.domainHints = domainHints;
-  provider.updatedAt = new Date().toISOString();
   for (const d of domainHints) state.claimedDomains[d] = org;
   return provider;
 }
+
 
 // ---- Notification endpoints (inari-server internal/notifications) ----
 
