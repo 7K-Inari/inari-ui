@@ -10,7 +10,9 @@ afterAll(() => mockServer.close());
 
 function stubPermissions(body: unknown) {
   mockServer.use(
-    http.get("*/api/v1/me/permissions", () => HttpResponse.json(body)),
+    http.get("*/api/v1/me/permissions", () =>
+      HttpResponse.json(body as Record<string, unknown>),
+    ),
   );
 }
 
