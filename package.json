@@ -64,5 +64,5 @@
       "public"
     ]
   },
-  "inariServerSpecVersion": "edge"
+  "inariServerSpecVersion": "3.0.0"
 }
