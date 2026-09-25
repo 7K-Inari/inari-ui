@@ -4,6 +4,8 @@ import {
   addUiExtension,
   listBackendExtensions,
   removeUiExtension,
+  rotateExtensionIdentity,
+  type ExtensionCredentials,
 } from "@/api/extensions";
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
@@ -93,6 +95,18 @@ export function ExtensionsPage() {
     (t) => listBackendExtensions(t, tenant),
     [tenant],
   );
+  const [rotateError, setRotateError] = React.useState<string | null>(null);
+  const [rotated, setRotated] = React.useState<{
+    name: string;
+    credentials: ExtensionCredentials;
+  } | null>(null);
+
+  // The rotated secret is tenant-scoped and single-use: drop it when the
+  // tenant context changes so a stale secret never leaks across tenants.
+  React.useEffect(() => {
+    setRotated(null);
+    setRotateError(null);
+  }, [tenant]);
 
   return (
     <div className="space-y-6">
@@ -200,25 +214,75 @@ export function ExtensionsPage() {
                 <tr>
                   <th className="py-1 pr-4 font-medium">Name</th>
                   <th className="py-1 pr-4 font-medium">Version</th>
-                  <th className="py-1 pr-4 font-medium">Description</th>
-                  <th className="py-1 font-medium">Health</th>
+                  <th className="py-1 pr-4 font-medium">State</th>
+                  <th className="py-1 pr-4 font-medium">Health</th>
+                  <th className="py-1 font-medium" />
                 </tr>
               </thead>
               <tbody>
                 {(backend.data ?? []).map((ext) => (
-                  <tr key={ext.name} className="border-t">
+                  <tr key={ext.id} className="border-t">
                     <td className="py-2 pr-4 font-mono text-xs">{ext.name}</td>
                     <td className="py-2 pr-4 font-mono text-xs">{ext.version}</td>
-                    <td className="py-2 pr-4 text-muted-foreground">{ext.description}</td>
-                    <td className="py-2">
+                    <td className="py-2 pr-4 font-mono text-xs text-muted-foreground">
+                      {ext.state}
+                    </td>
+                    <td className="py-2 pr-4">
                       <Badge variant={ext.healthy ? "success" : "destructive"}>
                         {ext.healthy ? "healthy" : "unhealthy"}
                       </Badge>
+                    </td>
+                    <td className="py-2 text-right">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={async () => {
+                          setRotateError(null);
+                          setRotated(null);
+                          try {
+                            const credentials = await rotateExtensionIdentity(
+                              token,
+                              tenant,
+                              ext.id,
+                            );
+                            setRotated({ name: ext.name, credentials });
+                          } catch (err) {
+                            setRotateError(
+                              err instanceof ApiError
+                                ? err.message
+                                : "Failed to rotate extension identity",
+                            );
+                          }
+                        }}
+                      >
+                        Rotate identity
+                      </Button>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+          )}
+          {rotateError && (
+            <p className="mt-3 text-sm text-destructive" role="alert">
+              {rotateError}
+            </p>
+          )}
+          {rotated && (
+            <div
+              className="rounded-md border border-border bg-muted/40 p-3 text-sm"
+              role="status"
+            >
+              <p className="font-medium">
+                New identity secret for {rotated.name} — shown once, store it now:
+              </p>
+              <p className="mt-1 font-mono text-xs">
+                clientId: {rotated.credentials.clientId}
+              </p>
+              <p className="font-mono text-xs">
+                secret: {rotated.credentials.secret}
+              </p>
+            </div>
           )}
         </CardContent>
       </Card>

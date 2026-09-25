@@ -6,7 +6,8 @@ import {
   type InariExtension,
 } from "@7k-inari/ui-plugin-sdk";
 
-import type { BackendExtensionRecord, UiExtensionRemote } from "@/api/extensions";
+import type { components } from "@/api/__generated__/schema";
+import type { UiExtensionRemoteViewModel } from "@/api/extensions";
 
 // The inari-ext-argocd reference extension (§5.8 "first-party eats the same
 // dogfood"). Used by MSW handlers and component tests: the registry loads its
@@ -53,7 +54,9 @@ export const argocdExtension: InariExtension = createExtension({
   ],
 });
 
-export const argocdRemote: UiExtensionRemote = {
+type ServerExtension = components["schemas"]["Extension"];
+
+export const argocdRemote: UiExtensionRemoteViewModel = {
   name: "inari-ext-argocd",
   version: "0.1.0",
   title: "ArgoCD",
@@ -67,11 +70,16 @@ export const argocdRemote: UiExtensionRemote = {
   enabled: true,
 };
 
-// Raw registry record, mirroring the server contract (state, not healthy) —
+// Raw registry record, mirroring the huma wire contract (state, not healthy) —
 // the client maps ready → healthy.
-export const argocdBackendExtension: BackendExtensionRecord = {
+export const argocdBackendExtension: ServerExtension = {
+  id: "ext-argocd",
   name: "inari-ext-argocd",
   version: "0.1.0",
-  description: "ArgoCD actions backend plugin.",
+  kind: "backend",
+  endpoint: "https://argocd-extension.extensions.svc:8443",
+  checksum: "sha256:9f2c1d4b",
   state: "ready",
+  createdAt: "2026-01-15T10:00:00Z",
+  updatedAt: "2026-01-15T10:00:00Z",
 };

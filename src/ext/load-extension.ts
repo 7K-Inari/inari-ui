@@ -1,10 +1,10 @@
 import { parseExtensionManifest, type InariExtension } from "@7k-inari/ui-plugin-sdk";
 
 import { API_BASE_URL } from "@/api/client";
-import type { UiExtensionRemote } from "@/api/extensions";
+import type { UiExtensionRemoteViewModel } from "@/api/extensions";
 import { getHostRuntime } from "@/ext/host-runtime";
 
-export type ExtensionLoader = (remote: UiExtensionRemote) => Promise<InariExtension>;
+export type ExtensionLoader = (remote: UiExtensionRemoteViewModel) => Promise<InariExtension>;
 
 // The registry returns a server-relative remoteEntryUrl (served by the
 // control plane itself); Module Federation needs an absolute URL so chunk

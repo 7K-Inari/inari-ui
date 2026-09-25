@@ -775,6 +775,18 @@ export const handlers = [
     return HttpResponse.json({ extensions: listBackendExtensionMocks() });
   }),
 
+  http.post(`${BASE}/extensions/:id/identity/rotate`, ({ params }) => {
+    if (!listBackendExtensionMocks().some((e) => e.id === params.id)) {
+      return humaError(404, "extension not found");
+    }
+    return HttpResponse.json({
+      credentials: {
+        clientId: `ext-${params.id}`,
+        secret: "mock-one-time-secret",
+      },
+    });
+  }),
+
   http.get(`${BASE}/authz/self/extensions`, () => {
     return HttpResponse.json({ permissions: selfExtensionPermissions });
   }),
