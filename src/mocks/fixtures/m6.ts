@@ -8,10 +8,11 @@ import type {
 } from "@/api/idp";
 import type { ApprovalConfig } from "@/api/policies";
 import type {
+  CreateSecretStoreInput,
   SecretStore,
-  SecretStoreInput,
   SecretStoreStatus,
-} from "@/api/secrets";
+  UpdateSecretStoreInput,
+} from "@/api/secret-stores";
 
 type PolicyPack = components["schemas"]["PolicyPack"];
 type PolicyAssignment = components["schemas"]["PolicyAssignment"];
@@ -301,34 +302,40 @@ function seedState(): PolicyMockState {
     secretStores: {
       acme: [
         {
+          id: "ss-inari-platform",
           name: "inari-platform",
           orgId: "acme",
           scope: "platform",
-          clusterIds: ["*"],
+          targets: { clusterIds: ["*"] },
           provider: {
-            type: "awsSM",
-            region: "us-east-1",
-            authSecretRef: {
-              name: "inari-platform-creds",
-              namespace: "inari-system",
+            awsSM: {
+              region: "us-east-1",
+              authSecretRef: {
+                name: "inari-platform-creds",
+                namespace: "inari-system",
+              },
             },
           },
           createdAt: iso(now - 120 * 86_400_000),
+          updatedAt: iso(now - 120 * 86_400_000),
         },
         {
+          id: "ss-acme-vault",
           name: "acme-vault",
           orgId: "acme",
           scope: "cluster",
-          clusterIds: ["cl-kind-dev"],
+          targets: { clusterIds: ["cl-kind-dev"] },
           provider: {
-            type: "vault",
-            url: "https://vault.acme.example",
-            authSecretRef: {
-              name: "eso-vault-token",
-              namespace: "external-secrets",
+            vault: {
+              server: "https://vault.acme.example",
+              authSecretRef: {
+                name: "eso-vault-token",
+                namespace: "external-secrets",
+              },
             },
           },
           createdAt: iso(now - 15 * 86_400_000),
+          updatedAt: iso(now - 15 * 86_400_000),
         },
       ],
       globex: [],
@@ -795,16 +802,19 @@ export function findSecretStore(org: string, name: string): SecretStore | null {
 
 export function createSecretStoreMock(
   org: string,
-  body: SecretStoreInput,
+  body: CreateSecretStoreInput,
 ): SecretStore {
   const stores = (state.secretStores[org] ??= []);
+  const nowIso = new Date().toISOString();
   const store: SecretStore = {
+    id: `ss-${body.name}`,
     name: body.name,
     orgId: org,
-    scope: "cluster",
-    clusterIds: body.clusterIds ?? [],
+    scope: body.scope ?? "cluster",
+    targets: body.targets ?? {},
     provider: body.provider,
-    createdAt: new Date().toISOString(),
+    createdAt: nowIso,
+    updatedAt: nowIso,
   };
   stores.push(store);
   return store;
@@ -813,12 +823,13 @@ export function createSecretStoreMock(
 export function updateSecretStoreMock(
   org: string,
   name: string,
-  body: SecretStoreInput,
+  body: UpdateSecretStoreInput,
 ): SecretStore | null {
   const store = findSecretStore(org, name);
   if (!store) return null;
-  store.clusterIds = body.clusterIds ?? [];
-  store.provider = body.provider;
+  if (body.provider) store.provider = body.provider;
+  if (body.targets) store.targets = body.targets;
+  store.updatedAt = new Date().toISOString();
   return store;
 }
 
@@ -835,30 +846,29 @@ export function secretStoreStatusFor(
 ): SecretStoreStatus | null {
   const store = findSecretStore(org, name);
   if (!store) return null;
+  const clusterId = store.targets.clusterIds?.[0] ?? "*";
   if (store.scope === "platform") {
     return {
-      name: store.name,
       delivered: true,
       conditions: [
         {
+          clusterId,
           type: "Ready",
           status: "True",
           reason: "Reconciled",
-          lastTransitionTime: store.createdAt,
         },
       ],
     };
   }
   return {
-    name: store.name,
     delivered: false,
     conditions: [
       {
+        clusterId,
         type: "Ready",
         status: "False",
         reason: "WaitingForAgent",
         message: "Waiting for the cluster agent to reconcile the SecretStore.",
-        lastTransitionTime: store.createdAt,
       },
     ],
   };

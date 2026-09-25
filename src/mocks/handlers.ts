@@ -138,7 +138,10 @@ import {
 import type { NotificationEndpointInput } from "@/mocks/fixtures/m6";
 import type { OidcClientInput } from "@/api/identity";
 import type { IdpProviderInput } from "@/api/idp";
-import type { SecretStoreInput } from "@/api/secrets";
+import type {
+  CreateSecretStoreInput,
+  UpdateSecretStoreInput,
+} from "@/api/secret-stores";
 
 type CreatePackInputBody = components["schemas"]["CreatePackInputBody"];
 type AssignPackInputBody = components["schemas"]["AssignPackInputBody"];
@@ -1412,13 +1415,13 @@ export const handlers = [
     });
   }),
 
-  // ---- M6.W4: ESO secret-store registry (proposed routes) ----
+  // ---- M6.W4: ESO secret-store registry ----
   http.get(`${BASE}/secret-stores`, ({ params }) =>
     HttpResponse.json({ stores: secretStoresFor(params.org as string) }),
   ),
 
   http.post(`${BASE}/secret-stores`, async ({ params, request }) => {
-    const body = (await request.json()) as SecretStoreInput;
+    const body = (await request.json()) as CreateSecretStoreInput;
     if (!body.name) {
       return humaError(422, "validation failed (name is required)");
     }
@@ -1439,7 +1442,7 @@ export const handlers = [
     if (existing.scope === "platform") {
       return humaError(403, "platform-scoped secret stores are read-only");
     }
-    const body = (await request.json()) as SecretStoreInput;
+    const body = (await request.json()) as UpdateSecretStoreInput;
     const store = updateSecretStoreMock(
       params.org as string,
       params.name as string,
