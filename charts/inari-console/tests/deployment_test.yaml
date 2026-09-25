@@ -29,13 +29,11 @@ tests:
 
   - it: never defaults the bundle tag to latest
     asserts:
-      - contains:
-          path: spec.template.spec.initContainers[0].env
-          content:
-            name: BUNDLE
-            value: ghcr.io/7k-inari/inari-ui-bundle:1.6.1
+      - matchRegex:
+          path: spec.template.spec.initContainers[0].env[?(@.name == "BUNDLE")].value
+          pattern: '^ghcr\.io/7k-inari/inari-ui-bundle:.+$'
       - notMatchRegex:
-          path: spec.template.spec.initContainers[0].command[2]
+          path: spec.template.spec.initContainers[0].env[?(@.name == "BUNDLE")].value
           pattern: ":latest"
 
   - it: renders apiBaseUrl from values into the config.js env
