@@ -1,7 +1,11 @@
 import type { components } from "@/api/__generated__/schema";
 import type { UiExtensionRemoteViewModel } from "@/api/extensions";
 import type { AgentChannel } from "@/api/fleet";
-import { argocdBackendExtension, argocdRemote } from "@/mocks/fixtures/extensions";
+import {
+  argocdBackendExtension,
+  argocdRemote,
+  type ServerExtension,
+} from "@/mocks/fixtures/extensions";
 
 // M4 fixtures: extension registry, templates/scaffolds, fleet (ClusterSets,
 // rollouts + targets, drift, agent channels). Scaffold and fleet fixtures
