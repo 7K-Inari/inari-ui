@@ -92,6 +92,46 @@ describe("ScaffoldWizardPage", () => {
     );
   }, 15_000);
 
+  it("cancels a running scaffold from the status step", async () => {
+    const user = userEvent.setup();
+    renderWizard();
+    await screen.findByText("tenant-acme");
+    await user.type(screen.getByLabelText("Service name"), "payments-api");
+    await user.type(screen.getByLabelText(/Description/), "Payments API service");
+    await user.type(screen.getByLabelText(/Port/), "8080");
+    await user.click(screen.getByRole("button", { name: "Next" }));
+    await screen.findByRole("heading", { name: "Review" });
+    await user.click(screen.getByRole("button", { name: "Scaffold" }));
+
+    // While running, per-step progress and a cancel action are available.
+    expect(await screen.findByLabelText("Scaffold steps")).toBeInTheDocument();
+    const cancelButton = await screen.findByRole("button", { name: "Cancel run" });
+    await user.click(cancelButton);
+
+    expect(await screen.findByText("Scaffold cancelled", {}, { timeout: 10_000 })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Cancel run" })).not.toBeInTheDocument();
+  }, 15_000);
+
+  it("surfaces a retry action when the scaffold run fails", async () => {
+    const user = userEvent.setup();
+    m4MockControl.failScaffoldRuns();
+    renderWizard();
+    await screen.findByText("tenant-acme");
+    await user.type(screen.getByLabelText("Service name"), "payments-api");
+    await user.type(screen.getByLabelText(/Description/), "Payments API service");
+    await user.type(screen.getByLabelText(/Port/), "8080");
+    await user.click(screen.getByRole("button", { name: "Next" }));
+    await screen.findByRole("heading", { name: "Review" });
+    await user.click(screen.getByRole("button", { name: "Scaffold" }));
+
+    expect(await screen.findByText("Scaffold failed", {}, { timeout: 10_000 })).toBeInTheDocument();
+    expect(screen.getByText("simulated scaffold failure")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "Retry" }));
+    expect(await screen.findByText("Scaffold complete", {}, { timeout: 15_000 })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open repository" })).toBeInTheDocument();
+  }, 25_000);
+
   it("rejects invalid service names", async () => {
     const user = userEvent.setup();
     renderWizard();

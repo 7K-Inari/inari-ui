@@ -1,14 +1,16 @@
 import * as React from "react";
 import { Link, useParams } from "react-router-dom";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, Circle, Loader2, XCircle } from "lucide-react";
 
 import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
 import {
-  createScaffold,
-  getScaffold,
+  cancelScaffoldRun,
+  createScaffoldRun,
+  getScaffoldRun,
   getTemplate,
-  type ScaffoldRun,
+  retryScaffoldRun,
+  type ScaffoldRunViewModel,
 } from "@/api/templates";
 import { useAuth } from "@/auth/auth-context";
 import { SchemaForm, type SchemaFormHandle } from "@/components/schema-form/schema-form";
@@ -52,16 +54,42 @@ function StepIndicator({ current }: { current: number }) {
   );
 }
 
+function StepList({ run }: { run: ScaffoldRunViewModel }) {
+  if (run.steps.length === 0) return null;
+  return (
+    <ul className="w-full max-w-md space-y-1 text-left text-sm" aria-label="Scaffold steps">
+      {run.steps.map((step) => (
+        <li key={step.name} className="flex items-center gap-2">
+          {step.state === "completed" ? (
+            <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden />
+          ) : step.state === "failed" ? (
+            <XCircle className="h-4 w-4 text-destructive" aria-hidden />
+          ) : step.state === "running" ? (
+            <Loader2 className="h-4 w-4 animate-spin text-primary" aria-hidden />
+          ) : (
+            <Circle className="h-4 w-4 text-muted-foreground" aria-hidden />
+          )}
+          <span className="flex-1">{step.name}</span>
+          <span className="text-xs text-muted-foreground">{step.state}</span>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function ScaffoldStatus({ scaffoldId }: { scaffoldId: string }) {
   const { tenant } = useTenant();
+  const { token } = useAuth();
   const [stopped, setStopped] = React.useState(false);
-  const { data: run } = useAsyncResource(
-    (token) => getScaffold(token, tenant, scaffoldId),
+  const [actionError, setActionError] = React.useState<string | null>(null);
+  const [acting, setActing] = React.useState(false);
+  const { data: run, refetch } = useAsyncResource(
+    (t) => getScaffoldRun(t, tenant, scaffoldId),
     [scaffoldId, tenant],
     { refetchIntervalMs: 1_000, enabled: !stopped },
   );
   React.useEffect(() => {
-    if (run?.phase === "completed" || run?.phase === "failed") setStopped(true);
+    if (run?.terminal) setStopped(true);
   }, [run]);
 
   if (!run) {
@@ -72,11 +100,56 @@ function ScaffoldStatus({ scaffoldId }: { scaffoldId: string }) {
     );
   }
 
-  if (run.phase === "failed") {
+  const cancel = async () => {
+    setActing(true);
+    setActionError(null);
+    try {
+      await cancelScaffoldRun(token, tenant, scaffoldId);
+      setStopped(false);
+      refetch();
+    } catch (err) {
+      setActionError(
+        err instanceof ApiError ? err.message : "Failed to cancel the scaffold run",
+      );
+    } finally {
+      setActing(false);
+    }
+  };
+
+  const retry = async () => {
+    setActing(true);
+    setActionError(null);
+    try {
+      await retryScaffoldRun(token, tenant, scaffoldId);
+      setStopped(false);
+      refetch();
+    } catch (err) {
+      setActionError(
+        err instanceof ApiError ? err.message : "Failed to retry the scaffold run",
+      );
+    } finally {
+      setActing(false);
+    }
+  };
+
+  if (run.failed) {
     return (
-      <div className="py-6 text-center">
+      <div className="flex flex-col items-center gap-3 py-6 text-center">
         <p className="font-medium text-destructive">Scaffold failed</p>
-        {run.message && <p className="text-sm text-muted-foreground">{run.message}</p>}
+        {(run.error ?? run.steps.find((s) => s.error)?.error) && (
+          <p className="text-sm text-muted-foreground">
+            {run.error ?? run.steps.find((s) => s.error)?.error}
+          </p>
+        )}
+        <StepList run={run} />
+        {actionError && (
+          <p className="text-sm text-destructive" role="alert">
+            {actionError}
+          </p>
+        )}
+        <Button onClick={retry} disabled={acting} size="sm">
+          {acting ? "Retrying…" : "Retry"}
+        </Button>
       </div>
     );
   }
@@ -86,13 +159,30 @@ function ScaffoldStatus({ scaffoldId }: { scaffoldId: string }) {
     <div className="flex flex-col items-center gap-3 py-6 text-center">
       {terminal ? (
         <CheckCircle2 className="h-10 w-10 text-emerald-600" aria-hidden />
+      ) : run.phase === "cancelled" ? (
+        <XCircle className="h-10 w-10 text-muted-foreground" aria-hidden />
       ) : (
         <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
       )}
       <p className="font-medium">
-        {terminal ? "Scaffold complete" : `Scaffolding — ${run.phase}`}
+        {terminal
+          ? "Scaffold complete"
+          : run.phase === "cancelled"
+            ? "Scaffold cancelled"
+            : `Scaffolding — ${run.phase}`}
       </p>
       <Badge variant={terminal ? "success" : "warning"}>{run.phase}</Badge>
+      <StepList run={run} />
+      {actionError && (
+        <p className="text-sm text-destructive" role="alert">
+          {actionError}
+        </p>
+      )}
+      {!run.terminal && (
+        <Button variant="outline" size="sm" onClick={cancel} disabled={acting}>
+          {acting ? "Cancelling…" : "Cancel run"}
+        </Button>
+      )}
       <div className="flex flex-wrap justify-center gap-2">
         {run.outputs.repoUrl && (
           <Button asChild variant="outline" size="sm">
@@ -135,7 +225,7 @@ export function ScaffoldWizardPage() {
   const [nameError, setNameError] = React.useState<string | null>(null);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
-  const [run, setRun] = React.useState<ScaffoldRun | null>(null);
+  const [run, setRun] = React.useState<ScaffoldRunViewModel | null>(null);
   const [formData, setFormData] = React.useState<Record<string, unknown>>({});
   const formRef = React.useRef<SchemaFormHandle>(null);
 
@@ -171,10 +261,9 @@ export function ScaffoldWizardPage() {
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const created = await createScaffold(token, tenant, {
-        templateId: tpl.id,
-        name,
-        parameters: formData,
+      const created = await createScaffoldRun(token, tenant, tpl.name, {
+        displayName: name,
+        values: formData,
       });
       setRun(created);
       setStep(2);

@@ -1,19 +1,13 @@
 import type { components } from "@/api/__generated__/schema";
 import type { BackendExtensionRecord, UiExtensionRemote } from "@/api/extensions";
 import type { AgentChannel } from "@/api/fleet";
-import type {
-  CreateScaffoldRequest,
-  ScaffoldOutputs,
-  ScaffoldPhase,
-  ScaffoldRun,
-  TemplateDetail,
-} from "@/api/templates";
 import { argocdBackendExtension, argocdRemote } from "@/mocks/fixtures/extensions";
 
 // M4 fixtures: extension registry, templates/scaffolds, fleet (ClusterSets,
-// rollouts + targets, drift, agent channels). Fleet fixtures speak the huma
-// wire shapes directly (src/api/fleet.ts mappers are the source of truth).
-// Poll-based mocks advance on each read, mirroring createDeployMock/pollDeployMock.
+// rollouts + targets, drift, agent channels). Scaffold and fleet fixtures
+// speak the huma wire shapes directly (src/api mappers are the source of
+// truth). Poll-based mocks advance on each read, mirroring
+// createDeployMock/pollDeployMock.
 
 type ServerCluster = components["schemas"]["Cluster"];
 type ServerClusterSet = components["schemas"]["ClusterSet"];
@@ -21,6 +15,11 @@ type ServerRollout = components["schemas"]["Rollout"];
 type ServerRolloutTarget = components["schemas"]["RolloutTarget"];
 type ServerDriftEvent = components["schemas"]["DriftEvent"];
 type ServerAgentChannel = components["schemas"]["AgentChannel"];
+type ServerTemplateDetail = components["schemas"]["TemplateDetail"];
+type ServerTemplateSummary = components["schemas"]["TemplateSummary"];
+type ServerRunView = components["schemas"]["RunView"];
+type ServerStepView = components["schemas"]["StepView"];
+type ServerCreateRunInputBody = components["schemas"]["CreateRunInputBody"];
 
 interface M4State {
   uiExtensions: UiExtensionRemote[];
@@ -120,6 +119,10 @@ let state: M4State = seedState();
 export const m4MockControl = {
   reset() {
     state = seedState();
+    scaffoldControl.failRuns = false;
+  },
+  failScaffoldRuns() {
+    scaffoldControl.failRuns = true;
   },
 };
 
@@ -160,7 +163,7 @@ export const selfExtensionPermissions = [
 
 /* ---- templates / scaffolds ---- */
 
-const templates: TemplateDetail[] = [
+const templates: ServerTemplateDetail[] = [
   {
     id: "web-service",
     name: "web-service",
@@ -181,75 +184,154 @@ const templates: TemplateDetail[] = [
   },
 ];
 
-export function listTemplateMocks(): TemplateDetail[] {
-  return templates.map((t) => ({ ...t }));
+export function listTemplateMocks(): ServerTemplateSummary[] {
+  return templates.map((t) => ({
+    id: t.id,
+    name: t.name,
+    displayName: t.displayName,
+    description: t.description,
+    tags: t.tags,
+    version: t.version,
+  }));
 }
 
-export function findTemplateMock(id: string): TemplateDetail | undefined {
-  const t = templates.find((tpl) => tpl.id === id);
+export function findTemplateMock(name: string): ServerTemplateDetail | undefined {
+  const t = templates.find((tpl) => tpl.name === name);
   return t ? { ...t } : undefined;
 }
 
-const SCAFFOLD_PHASES: ScaffoldPhase[] = [
-  "pending",
-  "rendering",
-  "creating-repo",
-  "creating-pipeline",
-  "registering-catalog",
-  "binding-rbac",
-  "completed",
+// Canonical scaffold runs: RunView wire shape with per-step states. Each poll
+// completes one step; m4MockControl.failScaffoldRuns() makes the next
+// non-completed step fail so the retry path is exercisable.
+
+const RUN_STEP_NAMES = [
+  "render",
+  "create-repo",
+  "create-pipeline",
+  "register-catalog",
+  "bind-rbac",
 ];
 
-interface ScaffoldState extends ScaffoldRun {
+interface ScaffoldState {
+  run: ServerRunView;
   polls: number;
 }
 
-function scaffoldOutputs(run: ScaffoldState): ScaffoldOutputs {
+interface ScaffoldControlState {
+  failRuns: boolean;
+}
+
+const scaffoldControl: ScaffoldControlState = { failRuns: false };
+
+export function scaffoldMockControl() {
+  return scaffoldControl;
+}
+
+function completedSteps(run: ServerRunView): number {
+  return (run.steps ?? []).filter((s) => s.state === "completed").length;
+}
+
+function scaffoldOutputs(run: ServerRunView, serviceName: string) {
+  const done = completedSteps(run);
   return {
     repoUrl:
-      SCAFFOLD_PHASES.indexOf(run.phase) >= SCAFFOLD_PHASES.indexOf("creating-pipeline")
-        ? `https://github.com/acme/${run.name}`
+      done >= RUN_STEP_NAMES.indexOf("create-repo") + 1
+        ? `https://github.com/acme/${serviceName}`
         : null,
     pipelineUrl:
-      SCAFFOLD_PHASES.indexOf(run.phase) >= SCAFFOLD_PHASES.indexOf("registering-catalog")
-        ? `https://github.com/acme/${run.name}/actions`
+      done >= RUN_STEP_NAMES.indexOf("create-pipeline") + 1
+        ? `https://github.com/acme/${serviceName}/actions`
         : null,
     catalogItemId:
-      run.phase === "completed" || run.phase === "binding-rbac"
-        ? `discovered-${run.name}`
+      done >= RUN_STEP_NAMES.indexOf("register-catalog") + 1
+        ? `discovered-${serviceName}`
         : null,
   };
 }
 
-export function createScaffoldMock(tenant: string, body: CreateScaffoldRequest): ScaffoldRun {
-  const template = findTemplateMock(body.templateId);
-  const run: ScaffoldState = {
+export function createScaffoldRunMock(
+  templateName: string,
+  body: ServerCreateRunInputBody,
+): ServerRunView {
+  const template = findTemplateMock(templateName);
+  const now = new Date().toISOString();
+  const run: ServerRunView = {
     id: `scaf-${Math.random().toString(36).slice(2, 10)}`,
-    templateId: body.templateId,
-    templateName: template?.displayName ?? body.templateId,
-    name: body.name,
-    tenant,
+    templateName,
+    version: template?.version ?? "0.0.0",
+    displayName: body.displayName ?? templateName,
     phase: "pending",
-    message: null,
+    steps: RUN_STEP_NAMES.map(
+      (name): ServerStepView => ({ name, state: "pending", attempts: 0 }),
+    ),
     outputs: { repoUrl: null, pipelineUrl: null, catalogItemId: null },
-    createdAt: new Date().toISOString(),
-    polls: 0,
+    createdBy: "console-user",
+    createdAt: now,
+    updatedAt: now,
   };
-  state.scaffoldRuns.push(run);
-  const rest = { ...run } as Partial<ScaffoldState>;
-  delete rest.polls;
-  return rest as ScaffoldRun;
+  state.scaffoldRuns.push({ run, polls: 0 });
+  return { ...run };
 }
 
-export function pollScaffoldMock(id: string): ScaffoldRun | undefined {
-  const run = state.scaffoldRuns.find((r) => r.id === id);
-  if (!run) return undefined;
-  run.polls += 1;
-  run.phase = SCAFFOLD_PHASES[Math.min(run.polls, SCAFFOLD_PHASES.length - 1)];
-  run.outputs = scaffoldOutputs(run);
-  const rest = { ...run } as Partial<ScaffoldState>;
-  delete rest.polls;
-  return rest as ScaffoldRun;
+export function pollScaffoldRunMock(id: string): ServerRunView | undefined {
+  const entry = state.scaffoldRuns.find((r) => r.run.id === id);
+  if (!entry) return undefined;
+  const { run } = entry;
+  if (run.phase === "cancelled" || run.phase === "completed" || run.phase === "failed") {
+    return { ...run };
+  }
+  entry.polls += 1;
+  const steps = (run.steps ?? []).map((s) => ({ ...s }));
+  const nextIdx = steps.findIndex((s) => s.state !== "completed");
+  if (nextIdx === -1) {
+    run.phase = "completed";
+  } else if (scaffoldControl.failRuns) {
+    steps[nextIdx] = {
+      ...steps[nextIdx],
+      state: "failed",
+      attempts: steps[nextIdx].attempts + 1,
+      error: "simulated scaffold failure",
+    };
+    run.phase = "failed";
+    run.error = "simulated scaffold failure";
+    scaffoldControl.failRuns = false;
+  } else {
+    steps[nextIdx] = {
+      ...steps[nextIdx],
+      state: "completed",
+      attempts: steps[nextIdx].attempts + 1,
+    };
+    run.phase = nextIdx === steps.length - 1 ? "completed" : "running";
+  }
+  run.steps = steps;
+  run.outputs = scaffoldOutputs(run, run.displayName);
+  run.updatedAt = new Date().toISOString();
+  return { ...run };
+}
+
+export function cancelScaffoldRunMock(id: string): ServerRunView | undefined {
+  const entry = state.scaffoldRuns.find((r) => r.run.id === id);
+  if (!entry) return undefined;
+  const { run } = entry;
+  if (run.phase !== "completed" && run.phase !== "failed") {
+    run.phase = "cancelled";
+    run.updatedAt = new Date().toISOString();
+  }
+  return { ...run };
+}
+
+export function retryScaffoldRunMock(id: string): ServerRunView | undefined {
+  const entry = state.scaffoldRuns.find((r) => r.run.id === id);
+  if (!entry) return undefined;
+  const { run } = entry;
+  if (run.phase !== "failed") return undefined;
+  run.phase = "running";
+  delete run.error;
+  run.steps = (run.steps ?? []).map((s) =>
+    s.state === "failed" ? { name: s.name, state: "pending", attempts: s.attempts } : { ...s },
+  );
+  run.updatedAt = new Date().toISOString();
+  return { ...run };
 }
 
 /* ---- fleet: ClusterSets ---- */
