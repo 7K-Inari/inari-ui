@@ -267,6 +267,7 @@ describe("EsoStoresPage", () => {
     expect(screen.getByText("inari-platform")).toBeInTheDocument();
     expect(screen.queryByText("delivered")).not.toBeInTheDocument();
     expect(screen.queryByText("pending")).not.toBeInTheDocument();
+    expect((await screen.findAllByText("status unavailable")).length).toBe(2);
   });
 
   it("renders platform-scoped stores read-only even for admins", async () => {

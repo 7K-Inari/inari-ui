@@ -191,12 +191,22 @@ function targetsLabel(store: SecretStore): string {
 }
 
 function StoreStatusBadge({ tenant, name }: { tenant: string; name: string }) {
-  const { data: status } = useAsyncResource(
+  const { data: status, error } = useAsyncResource(
     (t) => getSecretStoreStatus(t, tenant, name),
     [tenant, name],
     { refetchIntervalMs: 10_000 },
   );
   if (!status) {
+    if (error) {
+      return (
+        <span
+          className="text-xs text-destructive"
+          title={`Failed to load status: ${error.message}`}
+        >
+          status unavailable
+        </span>
+      );
+    }
     return <span className="text-xs text-muted-foreground">…</span>;
   }
   if (status.delivered) {
@@ -230,7 +240,16 @@ export function EsoStoresPage() {
   const [editing, setEditing] = React.useState<SecretStore | "new" | null>(null);
   const [formData, setFormData] = React.useState<Record<string, unknown>>({});
   const [actionError, setActionError] = React.useState<string | null>(null);
+  const [submitting, setSubmitting] = React.useState(false);
   const formRef = React.useRef<SchemaFormHandle>(null);
+
+  // The route param changes on tenant switch without remounting — close any
+  // open form so a save can't target the newly selected org with stale data.
+  React.useEffect(() => {
+    setEditing(null);
+    setFormData({});
+    setActionError(null);
+  }, [tenant]);
 
   const fail = (err: unknown, fallback: string) =>
     setActionError(err instanceof ApiError ? err.message : fallback);
@@ -255,6 +274,7 @@ export function EsoStoresPage() {
     }
     if (!valid) return;
     setActionError(null);
+    setSubmitting(true);
     try {
       if (editing === "new") {
         await createSecretStore(token, tenant, toCreateInput(formData));
@@ -265,6 +285,8 @@ export function EsoStoresPage() {
       refetch();
     } catch (err) {
       fail(err, "Failed to save secret store");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -356,8 +378,12 @@ export function EsoStoresPage() {
               formData={formData}
               onChange={setFormData}
             />
-            <Button onClick={submit}>
-              {editing === "new" ? "Create store" : "Save store"}
+            <Button onClick={submit} disabled={submitting}>
+              {submitting
+                ? "Saving…"
+                : editing === "new"
+                  ? "Create store"
+                  : "Save store"}
             </Button>
           </CardContent>
         </Card>
