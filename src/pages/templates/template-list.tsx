@@ -60,7 +60,7 @@ export function TemplateListPage() {
                 ))}
               </div>
               <Button asChild size="sm">
-                <Link to={tenantLink(tenant, `templates/${template.id}/scaffold`)}>
+                <Link to={tenantLink(tenant, `templates/${template.name}/scaffold`)}>
                   Scaffold
                 </Link>
               </Button>

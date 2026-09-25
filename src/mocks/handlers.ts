@@ -50,8 +50,9 @@ import {
 
 import {
   addUiExtensionMock,
+  cancelScaffoldRunMock,
   createClusterSetMock,
-  createScaffoldMock,
+  createScaffoldRunMock,
   deleteClusterSetMock,
   findTemplateMock,
   getClusterSetMock,
@@ -66,7 +67,8 @@ import {
   listTemplateMocks,
   listUiExtensionMocks,
   pollRolloutMock,
-  pollScaffoldMock,
+  pollScaffoldRunMock,
+  retryScaffoldRunMock,
   removeUiExtensionMock,
   rollbackRolloutMock,
   selfExtensionPermissions,
@@ -133,7 +135,10 @@ import {
 import type { NotificationEndpointInput } from "@/mocks/fixtures/m6";
 import type { OidcClientInput } from "@/api/identity";
 import type { OidcProviderInput } from "@/api/idp";
-import type { SecretStoreInput } from "@/api/secrets";
+import type {
+  CreateSecretStoreInput,
+  UpdateSecretStoreInput,
+} from "@/api/secret-stores";
 
 type CreatePackInputBody = components["schemas"]["CreatePackInputBody"];
 type AssignPackInputBody = components["schemas"]["AssignPackInputBody"];
@@ -779,6 +784,18 @@ export const handlers = [
     return HttpResponse.json({ extensions: listBackendExtensionMocks() });
   }),
 
+  http.post(`${BASE}/extensions/:id/identity/rotate`, ({ params }) => {
+    if (!listBackendExtensionMocks().some((e) => e.id === params.id)) {
+      return humaError(404, "extension not found");
+    }
+    return HttpResponse.json({
+      credentials: {
+        clientId: `ext-${params.id}`,
+        secret: "mock-one-time-secret",
+      },
+    });
+  }),
+
   http.get(`${BASE}/authz/self/extensions`, () => {
     return HttpResponse.json({ permissions: selfExtensionPermissions });
   }),
@@ -788,36 +805,51 @@ export const handlers = [
     return HttpResponse.json({ templates: listTemplateMocks() });
   }),
 
-  http.get(`${BASE}/templates/:id`, ({ params }) => {
-    const template = findTemplateMock(params.id as string);
+  http.get(`${BASE}/templates/:name`, ({ params }) => {
+    const template = findTemplateMock(params.name as string);
     if (!template) return humaError(404, "template not found");
     return HttpResponse.json({ template });
   }),
 
-  http.post(`${BASE}/scaffolds`, async ({ params, request }) => {
+  http.post(`${BASE}/templates/:name/runs`, async ({ params, request }) => {
     const body = (await request.json()) as {
-      templateId?: string;
-      name?: string;
-      parameters?: Record<string, unknown>;
+      displayName?: string;
+      values?: Record<string, unknown>;
+      version?: string;
     };
-    if (!body.templateId || !findTemplateMock(body.templateId)) {
-      return humaError(400, "unknown template");
+    if (!findTemplateMock(params.name as string)) {
+      return humaError(404, "unknown template");
     }
-    if (!body.name || !/^[a-z0-9][a-z0-9-]*$/.test(body.name)) {
-      return humaError(400, "name must be lowercase alphanumeric with dashes");
+    if (body.values === undefined || typeof body.values !== "object") {
+      return humaError(422, "values are required");
     }
-    const scaffold = createScaffoldMock(params.org as string, {
-      templateId: body.templateId,
-      name: body.name,
-      parameters: body.parameters ?? {},
+    if (body.displayName && !/^[a-z0-9][a-z0-9-]*$/.test(body.displayName)) {
+      return humaError(422, "displayName must be lowercase alphanumeric with dashes");
+    }
+    const run = createScaffoldRunMock(params.name as string, {
+      values: body.values,
+      ...(body.displayName !== undefined ? { displayName: body.displayName } : {}),
+      ...(body.version !== undefined ? { version: body.version } : {}),
     });
-    return HttpResponse.json({ scaffold }, { status: 201 });
+    return HttpResponse.json({ run }, { status: 200 });
   }),
 
-  http.get(`${BASE}/scaffolds/:id`, ({ params }) => {
-    const scaffold = pollScaffoldMock(params.id as string);
-    if (!scaffold) return humaError(404, "scaffold run not found");
-    return HttpResponse.json({ scaffold });
+  http.get(`${BASE}/scaffold-runs/:runId`, ({ params }) => {
+    const run = pollScaffoldRunMock(params.runId as string);
+    if (!run) return humaError(404, "scaffold run not found");
+    return HttpResponse.json({ run });
+  }),
+
+  http.post(`${BASE}/scaffold-runs/:runId/cancel`, ({ params }) => {
+    const run = cancelScaffoldRunMock(params.runId as string);
+    if (!run) return humaError(404, "scaffold run not found");
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.post(`${BASE}/scaffold-runs/:runId/retry`, ({ params }) => {
+    const run = retryScaffoldRunMock(params.runId as string);
+    if (!run) return humaError(409, "scaffold run is not failed");
+    return HttpResponse.json({ run });
   }),
 
   // ---- fleet (M4) ----
@@ -1360,27 +1392,14 @@ export const handlers = [
   ),
 
   http.post(`${BASE}/secret-stores`, async ({ params, request }) => {
-    const body = (await request.json()) as {
-      name?: string;
-      scope?: string;
-      provider?: SecretStoreInput["provider"];
-      targets?: { clusterIds?: string[] | null };
-    };
-    if (!body.name || !body.scope || !body.provider || !body.targets) {
-      return humaError(
-        422,
-        "validation failed (name, scope, provider, targets are required)",
-      );
+    const body = (await request.json()) as CreateSecretStoreInput;
+    if (!body.name) {
+      return humaError(422, "validation failed (name is required)");
     }
     if (findSecretStore(params.org as string, body.name)) {
       return humaError(409, `secret store "${body.name}" already exists`);
     }
-    const store = createSecretStoreMock(params.org as string, {
-      name: body.name,
-      scope: body.scope as SecretStoreInput["scope"],
-      provider: body.provider,
-      clusterIds: body.targets.clusterIds ?? [],
-    });
+    const store = createSecretStoreMock(params.org as string, body);
     return HttpResponse.json({ store }, { status: 201 });
   }),
 
@@ -1394,16 +1413,12 @@ export const handlers = [
     if (existing.scope === "platform") {
       return humaError(403, "platform-scoped secret stores are read-only");
     }
-    const body = (await request.json()) as {
-      provider?: SecretStoreInput["provider"];
-      targets?: { clusterIds?: string[] | null };
-    };
-    const store = updateSecretStoreMock(params.org as string, params.name as string, {
-      name: existing.name,
-      scope: existing.scope as SecretStoreInput["scope"],
-      provider: body.provider ?? existing.provider,
-      clusterIds: body.targets?.clusterIds ?? existing.targets.clusterIds ?? [],
-    });
+    const body = (await request.json()) as UpdateSecretStoreInput;
+    const store = updateSecretStoreMock(
+      params.org as string,
+      params.name as string,
+      body,
+    );
     return HttpResponse.json({ store });
   }),
 

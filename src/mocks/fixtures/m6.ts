@@ -7,10 +7,11 @@ import type {
 } from "@/api/idp";
 import type { ApprovalConfig } from "@/api/policies";
 import type {
+  CreateSecretStoreInput,
   SecretStore,
-  SecretStoreInput,
   SecretStoreStatus,
-} from "@/api/secrets";
+  UpdateSecretStoreInput,
+} from "@/api/secret-stores";
 
 type PolicyPack = components["schemas"]["PolicyPack"];
 type PolicyAssignment = components["schemas"]["PolicyAssignment"];
@@ -800,16 +801,16 @@ export function findSecretStore(org: string, name: string): SecretStore | null {
 
 export function createSecretStoreMock(
   org: string,
-  body: SecretStoreInput,
+  body: CreateSecretStoreInput,
 ): SecretStore {
   const stores = (state.secretStores[org] ??= []);
   const nowIso = new Date().toISOString();
   const store: SecretStore = {
-    id: nextId("ss"),
+    id: `ss-${body.name}`,
     name: body.name,
     orgId: org,
-    scope: body.scope,
-    targets: { clusterIds: body.clusterIds },
+    scope: body.scope ?? "cluster",
+    targets: body.targets ?? {},
     provider: body.provider,
     createdAt: nowIso,
     updatedAt: nowIso,
@@ -821,12 +822,12 @@ export function createSecretStoreMock(
 export function updateSecretStoreMock(
   org: string,
   name: string,
-  body: SecretStoreInput,
+  body: UpdateSecretStoreInput,
 ): SecretStore | null {
   const store = findSecretStore(org, name);
   if (!store) return null;
-  store.targets = { clusterIds: body.clusterIds };
-  store.provider = body.provider;
+  if (body.provider) store.provider = body.provider;
+  if (body.targets) store.targets = body.targets;
   store.updatedAt = new Date().toISOString();
   return store;
 }
@@ -850,10 +851,10 @@ export function secretStoreStatusFor(
       delivered: true,
       conditions: [
         {
+          clusterId,
           type: "Ready",
           status: "True",
           reason: "Reconciled",
-          clusterId,
         },
       ],
     };
@@ -862,10 +863,10 @@ export function secretStoreStatusFor(
     delivered: false,
     conditions: [
       {
+        clusterId,
         type: "Ready",
         status: "False",
         reason: "WaitingForAgent",
-        clusterId,
         message: "Waiting for the cluster agent to reconcile the SecretStore.",
       },
     ],
