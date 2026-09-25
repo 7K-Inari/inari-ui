@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import type { UiExtensionRemote } from "@/api/extensions";
+import type { UiExtensionRemoteViewModel } from "@/api/extensions";
 import { ExtensionsProvider, useExtensions, useSlots } from "@/ext/registry";
 import { argocdExtension, argocdRemote } from "@/mocks/fixtures/extensions";
 
@@ -54,7 +54,7 @@ describe("ExtensionsProvider", () => {
   });
 
   it("skips disabled remotes", async () => {
-    const disabled: UiExtensionRemote = { ...argocdRemote, enabled: false };
+    const disabled: UiExtensionRemoteViewModel = { ...argocdRemote, enabled: false };
     render(
       <ExtensionsProvider initialRemotes={[disabled]} loader={argocdLoader}>
         <Probe />

@@ -1,6 +1,6 @@
 import { apiFetch } from "@/api/client";
 import { resolveTenant } from "@/tenant/current";
-import type { UiExtensionRemote } from "@/api/extensions";
+import type { UiExtensionRemoteViewModel } from "@/api/extensions";
 
 // Extension RBAC (§5.8): plugin endpoints are protected by the
 // `extensions, invoke, <name>` verb. The server exposes the caller's effective
@@ -24,13 +24,13 @@ export async function getSelfExtensionPermissions(
 
 export function canInvokeExtension(
   permissions: string[],
-  remote: Pick<UiExtensionRemote, "name" | "requiredPermission">,
+  remote: Pick<UiExtensionRemoteViewModel, "name" | "requiredPermission">,
 ): boolean {
   const required = remote.requiredPermission ?? `extensions:invoke:${remote.name}`;
   return permissions.includes(required) || permissions.includes("extensions:invoke:*");
 }
 
-export function filterAllowedExtensions<T extends Pick<UiExtensionRemote, "name" | "requiredPermission">>(
+export function filterAllowedExtensions<T extends Pick<UiExtensionRemoteViewModel, "name" | "requiredPermission">>(
   permissions: string[] | null,
   remotes: T[],
 ): T[] {

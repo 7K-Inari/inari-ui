@@ -4,7 +4,7 @@ import type { AnySlotContribution, InariExtension } from "@7k-inari/ui-plugin-sd
 import {
   listUiExtensions,
   type SlotKind,
-  type UiExtensionRemote,
+  type UiExtensionRemoteViewModel,
 } from "@/api/extensions";
 import { useAuth } from "@/auth/auth-context";
 import { loadExtension, type ExtensionLoader } from "@/ext/load-extension";
@@ -14,7 +14,7 @@ import { useTenant } from "@/tenant/tenant-context";
 export type ExtensionLoadState = "loading" | "ready" | "failed";
 
 export interface ExtensionEntry {
-  remote: UiExtensionRemote;
+  remote: UiExtensionRemoteViewModel;
   state: ExtensionLoadState;
   extension?: InariExtension;
   error?: string;
@@ -40,7 +40,7 @@ export interface ExtensionsProviderProps {
   // Test seam: override the remote loader.
   loader?: ExtensionLoader;
   // Test seam: skip the network fetch entirely.
-  initialRemotes?: UiExtensionRemote[];
+  initialRemotes?: UiExtensionRemoteViewModel[];
 }
 
 export function ExtensionsProvider({
@@ -60,7 +60,7 @@ export function ExtensionsProvider({
     setEntries([]);
 
     async function run() {
-      let remotes: UiExtensionRemote[];
+      let remotes: UiExtensionRemoteViewModel[];
       let permissions: string[] | null = null;
       try {
         if (initialRemotes) {

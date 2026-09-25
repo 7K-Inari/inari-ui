@@ -47,7 +47,9 @@ describe("ExtensionsPage", () => {
     expect((await screen.findAllByText("inari-ext-argocd")).length).toBeGreaterThan(0);
     expect(screen.getByText("cluster-tab")).toBeInTheDocument();
     expect(screen.getAllByText("instance-action")).toHaveLength(2);
-    expect(await screen.findByText("ready")).toBeInTheDocument();
+    // "ready" appears both as the load-state badge and the backend registry
+    // state column.
+    expect((await screen.findAllByText("ready")).length).toBeGreaterThan(0);
   });
 
   it("lists backend extensions with health", async () => {
@@ -79,6 +81,67 @@ describe("ExtensionsPage", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "name must be lowercase alphanumeric with dashes",
     );
+  });
+
+  it("rotates a backend extension identity and shows the one-time secret", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("healthy");
+    await user.click(screen.getByRole("button", { name: "Rotate identity" }));
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "mock-one-time-secret",
+    );
+  });
+
+  it("surfaces an error when identity rotation fails", async () => {
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.post("*/api/v1/tenants/:org/extensions/:id/identity/rotate", () =>
+        HttpResponse.json(
+          { title: "Conflict", status: 409, detail: "rotation already in progress" },
+          { status: 409 },
+        ),
+      ),
+    );
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("healthy");
+    await user.click(screen.getByRole("button", { name: "Rotate identity" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("rotation already in progress");
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    // The error belongs to the backend extensions card, not the UI card.
+    const backendCard = screen
+      .getByText("Backend extensions")
+      .closest("div")!.parentElement!;
+    expect(backendCard).toContainElement(alert);
+  });
+
+  it("clears the previous secret when a subsequent rotation fails", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("healthy");
+    await user.click(screen.getByRole("button", { name: "Rotate identity" }));
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      "mock-one-time-secret",
+    );
+
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.post("*/api/v1/tenants/:org/extensions/:id/identity/rotate", () =>
+        HttpResponse.json(
+          { title: "Conflict", status: 409, detail: "rotation already in progress" },
+          { status: 409 },
+        ),
+      ),
+    );
+    await user.click(screen.getByRole("button", { name: "Rotate identity" }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "rotation already in progress",
+    );
+    // The stale (now-invalid) secret must not remain on screen.
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(screen.queryByText(/mock-one-time-secret/)).not.toBeInTheDocument();
   });
 
   it("removes an installed extension", async () => {
