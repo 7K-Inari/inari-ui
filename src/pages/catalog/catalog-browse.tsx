@@ -86,8 +86,10 @@ export function CatalogBrowsePage() {
     return [...set].sort();
   }, [facets.data]);
 
-  function update(patch: Partial<ReturnType<typeof readParams>>) {
-    const next = { ...state, ...patch };
+  // Stable identity: the filter bar's debounce effect depends on onChange,
+  // so an unstable callback would reset the debounce on every parent render.
+  const update = React.useCallback((patch: Partial<ReturnType<typeof readParams>>) => {
+    const next = { ...readParams(searchParams), ...patch };
     // Any filter/sort change resets pagination; view/page changes keep it.
     if (!("page" in patch) && !("view" in patch)) next.page = 0;
     const params = new URLSearchParams();
@@ -99,7 +101,7 @@ export function CatalogBrowsePage() {
     if (next.view !== "grid") params.set("view", next.view);
     if (next.page > 0) params.set("page", String(next.page));
     setSearchParams(params);
-  }
+  }, [searchParams, setSearchParams]);
 
   const items = result.data?.items ?? [];
   const total = result.data?.total ?? 0;
