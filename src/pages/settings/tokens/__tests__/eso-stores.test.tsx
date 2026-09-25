@@ -228,6 +228,47 @@ describe("EsoStoresPage", () => {
     ).toBe(false);
   });
 
+  it("surfaces a delete failure and keeps the store", async () => {
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.delete("*/api/v1/tenants/:org/secret-stores/:name", () =>
+        HttpResponse.json(
+          { title: "Error", status: 500, detail: "delete boom" },
+          { status: 500 },
+        ),
+      ),
+    );
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("acme-vault");
+    const row = screen.getByText("acme-vault").closest("tr")!;
+    await user.click(within(row).getByRole("button", { name: "Delete" }));
+    expect(await screen.findByText(/delete boom/)).toBeInTheDocument();
+    expect(
+      policyMockControl
+        .getState()
+        .secretStores.acme.some((s) => s.name === "acme-vault"),
+    ).toBe(true);
+  });
+
+  it("keeps the list usable when the status endpoint fails", async () => {
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.get("*/api/v1/tenants/:org/secret-stores/:name/status", () =>
+        HttpResponse.json(
+          { title: "Error", status: 500, detail: "status boom" },
+          { status: 500 },
+        ),
+      ),
+    );
+    renderPage();
+    expect(await screen.findByText("acme-vault")).toBeInTheDocument();
+    expect(screen.getByText("inari-platform")).toBeInTheDocument();
+    expect(screen.queryByText("delivered")).not.toBeInTheDocument();
+    expect(screen.queryByText("pending")).not.toBeInTheDocument();
+  });
+
   it("renders platform-scoped stores read-only even for admins", async () => {
     renderPage();
     await screen.findByText("inari-platform");
