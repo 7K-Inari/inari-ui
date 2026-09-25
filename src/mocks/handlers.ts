@@ -44,7 +44,6 @@ import {
   providerConfigManifestFor,
   rbacMatrixFor,
   requestDecommissionMock,
-  setRbacMappingMock,
   setRbacMappingsMock,
   validateAccount,
 } from "@/mocks/fixtures/m3";
@@ -122,13 +121,9 @@ import {
   deleteIdpProviderMock,
   domainClaimConflict,
   idpProviderFor,
-  MOCK_SAML_METADATA_XML,
-  parseSamlMetadataMock,
   putDomainHintsMock,
   putIdpProviderMock,
   rotateIdpSecretMock,
-  spDescriptorXmlMock,
-  uploadIdpCertificateMock,
   createNotificationEndpointMock,
   deleteNotificationEndpointMock,
   findNotificationEndpoint,
@@ -137,7 +132,7 @@ import {
 } from "@/mocks/fixtures/m6";
 import type { NotificationEndpointInput } from "@/mocks/fixtures/m6";
 import type { OidcClientInput } from "@/api/identity";
-import type { IdpProviderInput } from "@/api/idp";
+import type { OidcProviderInput } from "@/api/idp";
 import type { SecretStoreInput } from "@/api/secrets";
 
 type CreatePackInputBody = components["schemas"]["CreatePackInputBody"];
@@ -584,27 +579,36 @@ export const handlers = [
 
   http.put(`${BASE}/rbac/mappings`, async ({ params, request }) => {
     const body = (await request.json()) as {
-      groupPath?: string;
-      clusterRole?: string;
-      mapped?: boolean;
-      mappings?: { groupPath: string; clusterRole: string }[];
+      mappings?: { team: string; role: string }[];
     };
-    // M6.W3: declarative whole-set replace — the submitted array IS the new
-    // desired mapping set (not a delta).
-    if (Array.isArray(body.mappings)) {
-      setRbacMappingsMock(params.org as string, body.mappings);
-      return HttpResponse.json({ ok: true });
+    // Contract: declarative whole-set replace of team→role mappings, applied
+    // atomically. Translate team slugs back to group paths for mock state.
+    if (!Array.isArray(body.mappings)) {
+      return humaError(422, "validation failed (mappings is required)");
     }
-    if (!body.groupPath || !body.clusterRole) {
-      return humaError(400, "groupPath and clusterRole are required");
-    }
-    setRbacMappingMock(
-      params.org as string,
-      body.groupPath,
-      body.clusterRole,
-      Boolean(body.mapped),
-    );
-    return HttpResponse.json({ ok: true });
+    const org = params.org as string;
+    const groups = rbacMatrixFor(org).groups;
+    const mappings = body.mappings.map((m) => ({
+      groupPath:
+        groups.find((g) => g.team === m.team)?.path ?? `tenant-${org}/${m.team}`,
+      clusterRole: m.role,
+    }));
+    const before = rbacMatrixFor(org).mappings;
+    setRbacMappingsMock(org, mappings);
+    const roleByPath = new Map(mappings.map((m) => [m.groupPath, m.clusterRole]));
+    const changes = groups
+      .filter(
+        (g) =>
+          roleByPath.get(g.path) !==
+          before.find((b) => b.groupPath === g.path)?.clusterRole,
+      )
+      .map((g) => ({
+        teamId: g.team,
+        name: g.team,
+        oldRole: before.find((b) => b.groupPath === g.path)?.clusterRole ?? "",
+        newRole: roleByPath.get(g.path) ?? "",
+      }));
+    return HttpResponse.json({ changes });
   }),
 
   // ---- approvals inbox aggregate (server v1.6.0, caller-scoped) ----
@@ -1227,40 +1231,26 @@ export const handlers = [
     HttpResponse.json({ scopes: oidcScopesCatalog }),
   ),
 
-  // ---- M6.W6: IdP brokering + domains (proposed routes) ----
+  // ---- M6.W6: IdP brokering + domains ----
   http.get(`${BASE}/identity/provider`, ({ params }) =>
     HttpResponse.json({ provider: idpProviderFor(params.org as string) }),
   ),
 
   http.put(`${BASE}/identity/provider`, async ({ params, request }) => {
-    const body = (await request.json()) as IdpProviderInput;
-    if (!body.alias || !body.claimMapping) {
-      return humaError(
-        422,
-        "validation failed (alias, claimMapping are required)",
-      );
-    }
-    if (body.provider === "saml") {
-      if (!body.entityId || !body.ssoUrl) {
-        return humaError(
-          422,
-          "validation failed (entityId, ssoUrl are required)",
-        );
-      }
-    } else if (!body.issuerUrl || !body.clientId) {
-      return humaError(
-        422,
-        "validation failed (issuerUrl, clientId are required)",
-      );
-    }
-    if (!Array.isArray(body.domainHints)) {
-      return humaError(422, "validation failed (domainHints must be an array)");
-    }
+    const body = (await request.json()) as OidcProviderInput;
     if (
-      body.provider === "oidc" &&
-      !idpProviderFor(params.org as string) &&
-      !body.clientSecret
+      !body.alias ||
+      !body.issuerUrl ||
+      !body.clientId ||
+      !body.claimMapping ||
+      !Array.isArray(body.domainHints)
     ) {
+      return humaError(
+        422,
+        "validation failed (alias, issuerUrl, clientId, claimMapping, domainHints are required)",
+      );
+    }
+    if (!idpProviderFor(params.org as string) && !body.clientSecret) {
       return humaError(
         422,
         "validation failed (clientSecret is required on create)",
@@ -1280,52 +1270,6 @@ export const handlers = [
     return HttpResponse.json({ provider });
   }),
 
-  http.post(`${BASE}/identity/provider/import-config`, async ({ request }) => {
-    const body = (await request.json()) as {
-      metadataUrl?: string;
-      metadataXml?: string;
-    };
-    const xml =
-      body.metadataXml ??
-      (body.metadataUrl ? MOCK_SAML_METADATA_XML : undefined);
-    const config = xml ? parseSamlMetadataMock(xml) : null;
-    if (!config) {
-      return humaError(
-        422,
-        "could not parse SAML metadata: no EntityDescriptor with a SingleSignOnService",
-      );
-    }
-    return HttpResponse.json({ config });
-  }),
-
-  http.post(
-    `${BASE}/identity/provider/certificate`,
-    async ({ params, request }) => {
-      const body = (await request.json()) as { certificate?: string };
-      if (!body.certificate?.includes("BEGIN CERTIFICATE")) {
-        return humaError(
-          422,
-          "validation failed (certificate must be PEM encoded)",
-        );
-      }
-      const provider = uploadIdpCertificateMock(
-        params.org as string,
-        body.certificate,
-      );
-      if (!provider)
-        return humaError(404, "no SAML identity provider configured");
-      return HttpResponse.json({ provider });
-    },
-  ),
-
-  http.get(`${BASE}/identity/provider/export`, ({ params }) => {
-    const xml = spDescriptorXmlMock(params.org as string);
-    if (!xml) return humaError(404, "no SAML identity provider configured");
-    return new HttpResponse(xml, {
-      headers: { "Content-Type": "application/samlmetadata+xml" },
-    });
-  }),
-
   http.post(
     `${BASE}/identity/provider/secret:rotate`,
     async ({ params, request }) => {
@@ -1333,11 +1277,9 @@ export const handlers = [
       if (!body.clientSecret) {
         return humaError(422, "validation failed (clientSecret is required)");
       }
-      const provider = rotateIdpSecretMock(
-        params.org as string,
-        body.clientSecret,
-      );
-      if (!provider) return humaError(404, "no identity provider configured");
+      if (!rotateIdpSecretMock(params.org as string, body.clientSecret)) {
+        return humaError(404, "no identity provider configured");
+      }
       return new HttpResponse(null, { status: 204 });
     },
   ),

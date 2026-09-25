@@ -68,11 +68,11 @@ describe("RbacMappingSettingsPage", () => {
     await user.click(cell);
     await user.click(screen.getByRole("button", { name: "Save mappings" }));
     await waitFor(() => expect(bodies).toHaveLength(1));
-    const body = bodies[0] as { mappings: { groupPath: string; clusterRole: string }[] };
+    const body = bodies[0] as { mappings: { team: string; role: string }[] };
     expect(Array.isArray(body.mappings)).toBe(true);
     expect(body.mappings).toContainEqual({
-      groupPath: "tenant-acme/data",
-      clusterRole: "tenant-acme-viewer",
+      team: "data",
+      role: "tenant-acme-viewer",
     });
   });
 
