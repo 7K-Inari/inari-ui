@@ -54,7 +54,7 @@ export const argocdExtension: InariExtension = createExtension({
   ],
 });
 
-type ServerExtension = components["schemas"]["Extension"];
+export type ServerExtension = components["schemas"]["Extension"];
 
 export const argocdRemote: UiExtensionRemoteViewModel = {
   name: "inari-ext-argocd",
