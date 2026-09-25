@@ -66,10 +66,12 @@ describe("EsoStoresPage", () => {
     const created = policyMockControl
       .getState()
       .secretStores.acme.find((s) => s.name === "east-sm");
-    expect(created?.provider.type).toBe("awsSM");
-    expect(created?.provider.authSecretRef).toEqual({
-      name: "eso-aws-creds",
-      namespace: "external-secrets",
+    expect(created?.provider.awsSM).toEqual({
+      region: "",
+      authSecretRef: {
+        name: "eso-aws-creds",
+        namespace: "external-secrets",
+      },
     });
   });
 
@@ -126,7 +128,7 @@ describe("EsoStoresPage", () => {
     const updated = policyMockControl
       .getState()
       .secretStores.acme.find((s) => s.name === "acme-vault");
-    expect(updated?.provider.url).toBe("https://vault-eu.acme.example");
+    expect(updated?.provider.vault?.server).toBe("https://vault-eu.acme.example");
   });
 
   it("deletes an org-owned store after confirmation", async () => {
@@ -223,8 +225,10 @@ describe("EsoStoresPage", () => {
       .getState()
       .secretStores.acme.find((s) => s.name === "acme-vault");
     expect(updated?.provider).toEqual({
-      type: "awsSM",
-      authSecretRef: { name: "eso-vault-token", namespace: "external-secrets" },
+      awsSM: {
+        region: "",
+        authSecretRef: { name: "eso-vault-token", namespace: "external-secrets" },
+      },
     });
   });
 });

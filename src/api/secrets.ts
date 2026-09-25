@@ -2,14 +2,9 @@ import { apiFetch } from "@/api/client";
 import type { components } from "@/api/__generated__/schema";
 import { resolveTenant } from "@/tenant/current";
 
-// Registration tokens: issuing is contract-covered (POST
-// /tenants/{org}/clusters/{id}/tokens → TokenOutputBody); listing and
-// revocation are proposed huma routes not yet in the pinned contract (1.6.0).
-// TODO(contract-sync): drop the local response envelopes once the server
-// release lands (npm run sync:api).
-
 export type RegistrationToken = components["schemas"]["RegistrationToken"];
 type TokenOutputBody = components["schemas"]["TokenOutputBody"];
+type ListTokensOutputBody = components["schemas"]["ListTokensOutputBody"];
 
 export type IssuedToken = TokenOutputBody;
 
@@ -33,10 +28,9 @@ export async function listRegistrationTokens(
   tenant: string,
   clusterId: string,
 ): Promise<RegistrationToken[]> {
-  const res = await apiFetch<{ tokens: RegistrationToken[] | null }>(
-    tokensPath(tenant, clusterId),
-    { token },
-  );
+  const res = await apiFetch<ListTokensOutputBody>(tokensPath(tenant, clusterId), {
+    token,
+  });
   return res.tokens ?? [];
 }
 
@@ -52,55 +46,43 @@ export async function revokeRegistrationToken(
   );
 }
 
-// M6.W4: ESO SecretStore registry (design §3.2). Proposed huma routes not yet
-// in the pinned contract; shapes below are mocked by MSW until the W4 server
-// release lands.
-// TODO(contract-sync): swap for generated schemas after npm run sync:api.
-// Credentials are cluster-side k8s Secret references only — the hub never
-// accepts raw provider credentials (platform principle 2).
+// M6.W4: ESO SecretStore registry (design §3.2). Credentials are cluster-side
+// k8s Secret references only — the hub never accepts raw provider credentials
+// (platform principle 2).
 
+export type SecretStore = components["schemas"]["SecretStore"];
+export type SecretStoreProvider = components["schemas"]["SecretStoreProvider"];
+export type SecretStoreTargets = components["schemas"]["SecretStoreTargets"];
+export type SecretStoreStatus = components["schemas"]["SecretStoreStatus"];
+export type SecretStoreCondition = components["schemas"]["SecretStoreCondition"];
+export type SecretStoreAuthSecretRef = components["schemas"]["SecretRef"];
+type CreateStoreInputBody = components["schemas"]["CreateInputBody1"];
+type UpdateStoreInputBody = components["schemas"]["UpdateInputBody1"];
+type ListStoresOutputBody = components["schemas"]["ListOutputBody4"];
+type StoreOutputBody = components["schemas"]["StoreOutputBody"];
+type StatusOutputBody = components["schemas"]["StatusOutputBody"];
+
+// UI-known literal sets; the contract types scope as a plain string.
+export type SecretStoreScope = "platform" | "cluster";
 export type SecretStoreProviderType = "awsSM" | "vault" | "gcpsm" | "azurekv";
 
-export interface SecretStoreAuthSecretRef {
-  name: string;
-  namespace: string;
-}
-
-export interface SecretStoreProvider {
-  type: SecretStoreProviderType;
-  region?: string;
-  url?: string;
-  projectId?: string;
-  authSecretRef: SecretStoreAuthSecretRef;
-}
-
-export interface SecretStore {
-  name: string;
-  orgId: string;
-  scope: "platform" | "cluster";
-  clusterIds: string[];
-  provider: SecretStoreProvider;
-  createdAt: string;
-}
-
+// Create payload view model: the page composes a full store definition; the
+// adapter maps it onto CreateInputBody1.
 export interface SecretStoreInput {
   name: string;
+  scope: SecretStoreScope;
   clusterIds: string[];
   provider: SecretStoreProvider;
 }
 
-export interface SecretStoreCondition {
-  type: string;
-  status: string;
-  reason?: string;
-  message?: string;
-  lastTransitionTime?: string;
-}
-
-export interface SecretStoreStatus {
-  name: string;
-  delivered: boolean;
-  conditions: SecretStoreCondition[];
+export function secretStoreProviderType(
+  provider: SecretStoreProvider,
+): SecretStoreProviderType | undefined {
+  if (provider.awsSM) return "awsSM";
+  if (provider.vault) return "vault";
+  if (provider.gcpsm) return "gcpsm";
+  if (provider.azurekv) return "azurekv";
+  return undefined;
 }
 
 function storesPath(tenant: string): string {
@@ -111,19 +93,24 @@ export async function listSecretStores(
   token: string | undefined,
   tenant: string,
 ): Promise<SecretStore[]> {
-  const res = await apiFetch<{ stores: SecretStore[] | null }>(
-    storesPath(tenant),
-    { token },
-  );
+  const res = await apiFetch<ListStoresOutputBody>(storesPath(tenant), {
+    token,
+  });
   return res.stores ?? [];
 }
 
 export async function createSecretStore(
   token: string | undefined,
   tenant: string,
-  body: SecretStoreInput,
+  input: SecretStoreInput,
 ): Promise<SecretStore> {
-  const res = await apiFetch<{ store: SecretStore }>(storesPath(tenant), {
+  const body: CreateStoreInputBody = {
+    name: input.name,
+    scope: input.scope,
+    provider: input.provider,
+    targets: { clusterIds: input.clusterIds },
+  };
+  const res = await apiFetch<StoreOutputBody>(storesPath(tenant), {
     token,
     method: "POST",
     body,
@@ -135,9 +122,13 @@ export async function updateSecretStore(
   token: string | undefined,
   tenant: string,
   name: string,
-  body: SecretStoreInput,
+  input: SecretStoreInput,
 ): Promise<SecretStore> {
-  const res = await apiFetch<{ store: SecretStore }>(
+  const body: UpdateStoreInputBody = {
+    provider: input.provider,
+    targets: { clusterIds: input.clusterIds },
+  };
+  const res = await apiFetch<StoreOutputBody>(
     `${storesPath(tenant)}/${encodeURIComponent(name)}`,
     { token, method: "PATCH", body },
   );
@@ -160,7 +151,7 @@ export async function getSecretStoreStatus(
   tenant: string,
   name: string,
 ): Promise<SecretStoreStatus> {
-  const res = await apiFetch<{ status: SecretStoreStatus }>(
+  const res = await apiFetch<StatusOutputBody>(
     `${storesPath(tenant)}/${encodeURIComponent(name)}/status`,
     { token },
   );

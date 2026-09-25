@@ -1354,20 +1354,33 @@ export const handlers = [
     });
   }),
 
-  // ---- M6.W4: ESO secret-store registry (proposed routes) ----
+  // ---- M6.W4: ESO secret-store registry ----
   http.get(`${BASE}/secret-stores`, ({ params }) =>
     HttpResponse.json({ stores: secretStoresFor(params.org as string) }),
   ),
 
   http.post(`${BASE}/secret-stores`, async ({ params, request }) => {
-    const body = (await request.json()) as SecretStoreInput;
-    if (!body.name) {
-      return humaError(422, "validation failed (name is required)");
+    const body = (await request.json()) as {
+      name?: string;
+      scope?: string;
+      provider?: SecretStoreInput["provider"];
+      targets?: { clusterIds?: string[] | null };
+    };
+    if (!body.name || !body.scope || !body.provider || !body.targets) {
+      return humaError(
+        422,
+        "validation failed (name, scope, provider, targets are required)",
+      );
     }
     if (findSecretStore(params.org as string, body.name)) {
       return humaError(409, `secret store "${body.name}" already exists`);
     }
-    const store = createSecretStoreMock(params.org as string, body);
+    const store = createSecretStoreMock(params.org as string, {
+      name: body.name,
+      scope: body.scope as SecretStoreInput["scope"],
+      provider: body.provider,
+      clusterIds: body.targets.clusterIds ?? [],
+    });
     return HttpResponse.json({ store }, { status: 201 });
   }),
 
@@ -1381,12 +1394,16 @@ export const handlers = [
     if (existing.scope === "platform") {
       return humaError(403, "platform-scoped secret stores are read-only");
     }
-    const body = (await request.json()) as SecretStoreInput;
-    const store = updateSecretStoreMock(
-      params.org as string,
-      params.name as string,
-      body,
-    );
+    const body = (await request.json()) as {
+      provider?: SecretStoreInput["provider"];
+      targets?: { clusterIds?: string[] | null };
+    };
+    const store = updateSecretStoreMock(params.org as string, params.name as string, {
+      name: existing.name,
+      scope: existing.scope as SecretStoreInput["scope"],
+      provider: body.provider ?? existing.provider,
+      clusterIds: body.targets?.clusterIds ?? existing.targets.clusterIds ?? [],
+    });
     return HttpResponse.json({ store });
   }),
 

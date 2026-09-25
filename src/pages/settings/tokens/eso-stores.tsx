@@ -7,9 +7,11 @@ import {
   deleteSecretStore,
   getSecretStoreStatus,
   listSecretStores,
+  secretStoreProviderType,
   updateSecretStore,
   type SecretStore,
   type SecretStoreInput,
+  type SecretStoreProvider,
   type SecretStoreProviderType,
 } from "@/api/secrets";
 import { useAuth } from "@/auth/auth-context";
@@ -70,37 +72,59 @@ const STORE_SCHEMA: Record<string, unknown> = {
   },
 };
 
+// Flat form state ↔ nested provider union (awsSM/vault/gcpsm/azurekv config
+// objects keyed by provider type in the contract).
+function providerToForm(provider: SecretStoreProvider): Record<string, unknown> {
+  const type = secretStoreProviderType(provider);
+  const config =
+    provider.awsSM ?? provider.vault ?? provider.gcpsm ?? provider.azurekv;
+  return {
+    type,
+    region: provider.awsSM?.region,
+    url: provider.vault?.server ?? provider.azurekv?.vaultUrl,
+    projectId: provider.gcpsm?.projectId,
+    authSecretRef: config?.authSecretRef,
+  };
+}
+
+function providerToWire(data: Record<string, unknown>): SecretStoreProvider {
+  const ref = (data.authSecretRef ?? {}) as Record<string, unknown>;
+  const authSecretRef = {
+    name: String(ref.name ?? ""),
+    namespace: String(ref.namespace ?? ""),
+  };
+  const type = String(data.type ?? "") as SecretStoreProviderType;
+  switch (type) {
+    case "awsSM":
+      return { awsSM: { region: String(data.region ?? ""), authSecretRef } };
+    case "vault":
+      return { vault: { server: String(data.url ?? ""), authSecretRef } };
+    case "gcpsm":
+      return { gcpsm: { projectId: String(data.projectId ?? ""), authSecretRef } };
+    case "azurekv":
+      return { azurekv: { vaultUrl: String(data.url ?? ""), authSecretRef } };
+    default:
+      return {};
+  }
+}
+
 function toFormData(store: SecretStore): Record<string, unknown> {
   return {
     name: store.name,
-    clusterIds: store.clusterIds,
-    provider: { ...store.provider },
+    clusterIds: store.targets.clusterIds ?? [],
+    provider: providerToForm(store.provider),
   };
 }
 
 function toInput(data: Record<string, unknown>): SecretStoreInput {
   const provider = (data.provider ?? {}) as Record<string, unknown>;
-  const ref = (provider.authSecretRef ?? {}) as Record<string, unknown>;
-  const type = String(provider.type ?? "") as SecretStoreProviderType;
-  // Keep only the fields relevant to the selected provider type — otherwise
-  // switching type on edit leaks stale values (e.g. a vault url onto awsSM).
-  const field = (key: string, relevant: boolean) =>
-    relevant && provider[key] ? String(provider[key]) : undefined;
   return {
     name: String(data.name ?? ""),
+    scope: "cluster",
     clusterIds: Array.isArray(data.clusterIds)
       ? (data.clusterIds as unknown[]).map(String)
       : [],
-    provider: {
-      type,
-      region: field("region", type === "awsSM"),
-      url: field("url", type === "vault" || type === "azurekv"),
-      projectId: field("projectId", type === "gcpsm"),
-      authSecretRef: {
-        name: String(ref.name ?? ""),
-        namespace: String(ref.namespace ?? ""),
-      },
-    },
+    provider: providerToWire(provider),
   };
 }
 
@@ -116,7 +140,7 @@ function StoreStatusBadge({ tenant, name }: { tenant: string; name: string }) {
   if (status.delivered) {
     return <Badge variant="success">delivered</Badge>;
   }
-  const reason = status.conditions.find((c) => c.type === "Ready")?.reason;
+  const reason = (status.conditions ?? []).find((c) => c.type === "Ready")?.reason;
   return (
     <span className="inline-flex items-center gap-1.5">
       <Badge variant="warning">pending</Badge>
@@ -274,9 +298,11 @@ export function EsoStoresPage() {
                         <Badge variant="muted">Cluster</Badge>
                       )}
                     </td>
-                    <td className="px-4 py-2 font-mono text-xs">{store.provider.type}</td>
                     <td className="px-4 py-2 font-mono text-xs">
-                      {store.clusterIds.join(", ") || "—"}
+                      {secretStoreProviderType(store.provider) ?? "?"}
+                    </td>
+                    <td className="px-4 py-2 font-mono text-xs">
+                      {(store.targets.clusterIds ?? []).join(", ") || "—"}
                     </td>
                     <td className="px-4 py-2">
                       <StoreStatusBadge tenant={tenant} name={store.name} />

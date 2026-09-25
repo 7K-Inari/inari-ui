@@ -300,34 +300,40 @@ function seedState(): PolicyMockState {
     secretStores: {
       acme: [
         {
+          id: "ss-inari-platform",
           name: "inari-platform",
           orgId: "acme",
           scope: "platform",
-          clusterIds: ["*"],
+          targets: { clusterIds: ["*"] },
           provider: {
-            type: "awsSM",
-            region: "us-east-1",
-            authSecretRef: {
-              name: "inari-platform-creds",
-              namespace: "inari-system",
+            awsSM: {
+              region: "us-east-1",
+              authSecretRef: {
+                name: "inari-platform-creds",
+                namespace: "inari-system",
+              },
             },
           },
           createdAt: iso(now - 120 * 86_400_000),
+          updatedAt: iso(now - 120 * 86_400_000),
         },
         {
+          id: "ss-acme-vault",
           name: "acme-vault",
           orgId: "acme",
           scope: "cluster",
-          clusterIds: ["cl-kind-dev"],
+          targets: { clusterIds: ["cl-kind-dev"] },
           provider: {
-            type: "vault",
-            url: "https://vault.acme.example",
-            authSecretRef: {
-              name: "eso-vault-token",
-              namespace: "external-secrets",
+            vault: {
+              server: "https://vault.acme.example",
+              authSecretRef: {
+                name: "eso-vault-token",
+                namespace: "external-secrets",
+              },
             },
           },
           createdAt: iso(now - 15 * 86_400_000),
+          updatedAt: iso(now - 15 * 86_400_000),
         },
       ],
       globex: [],
@@ -797,13 +803,16 @@ export function createSecretStoreMock(
   body: SecretStoreInput,
 ): SecretStore {
   const stores = (state.secretStores[org] ??= []);
+  const nowIso = new Date().toISOString();
   const store: SecretStore = {
+    id: nextId("ss"),
     name: body.name,
     orgId: org,
-    scope: "cluster",
-    clusterIds: body.clusterIds ?? [],
+    scope: body.scope,
+    targets: { clusterIds: body.clusterIds },
     provider: body.provider,
-    createdAt: new Date().toISOString(),
+    createdAt: nowIso,
+    updatedAt: nowIso,
   };
   stores.push(store);
   return store;
@@ -816,8 +825,9 @@ export function updateSecretStoreMock(
 ): SecretStore | null {
   const store = findSecretStore(org, name);
   if (!store) return null;
-  store.clusterIds = body.clusterIds ?? [];
+  store.targets = { clusterIds: body.clusterIds };
   store.provider = body.provider;
+  store.updatedAt = new Date().toISOString();
   return store;
 }
 
@@ -834,30 +844,29 @@ export function secretStoreStatusFor(
 ): SecretStoreStatus | null {
   const store = findSecretStore(org, name);
   if (!store) return null;
+  const clusterId = store.targets.clusterIds?.[0] ?? "*";
   if (store.scope === "platform") {
     return {
-      name: store.name,
       delivered: true,
       conditions: [
         {
           type: "Ready",
           status: "True",
           reason: "Reconciled",
-          lastTransitionTime: store.createdAt,
+          clusterId,
         },
       ],
     };
   }
   return {
-    name: store.name,
     delivered: false,
     conditions: [
       {
         type: "Ready",
         status: "False",
         reason: "WaitingForAgent",
+        clusterId,
         message: "Waiting for the cluster agent to reconcile the SecretStore.",
-        lastTransitionTime: store.createdAt,
       },
     ],
   };
