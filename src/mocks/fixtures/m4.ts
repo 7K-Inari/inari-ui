@@ -20,6 +20,7 @@ type ServerTemplateSummary = components["schemas"]["TemplateSummary"];
 type ServerRunView = components["schemas"]["RunView"];
 type ServerStepView = components["schemas"]["StepView"];
 type ServerCreateRunInputBody = components["schemas"]["CreateRunInputBody"];
+type ServerExtension = components["schemas"]["Extension"];
 
 interface M4State {
   uiExtensions: UiExtensionRemoteViewModel[];
