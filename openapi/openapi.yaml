@@ -2092,6 +2092,8 @@ components:
           type: string
         capabilityRef:
           $ref: "#/components/schemas/CapabilityRef"
+        category:
+          type: string
         createdAt:
           format: date-time
           type: string
@@ -2218,8 +2220,12 @@ components:
           type:
             - array
             - "null"
+        total:
+          format: int64
+          type: integer
       required:
         - items
+        - total
       type: object
     ListChannelsOutputBody:
       additionalProperties: false
@@ -5586,6 +5592,64 @@ paths:
           schema:
             description: Cluster ID; intersects discovered capabilities
             type: string
+        - description: Free-text search over name, display name, and description
+          explode: false
+          in: query
+          name: q
+          schema:
+            description: Free-text search over name, display name, and description
+            type: string
+        - description: Filter by item source
+          explode: false
+          in: query
+          name: source
+          schema:
+            description: Filter by item source
+            enum:
+              - curated
+              - discovered
+              - platform
+              - template
+            type: string
+        - description: Filter by package category (discovered projections have no category)
+          explode: false
+          in: query
+          name: category
+          schema:
+            description: Filter by package category (discovered projections have no category)
+            type: string
+        - description: Sort order (whitelisted server-side)
+          explode: false
+          in: query
+          name: sort
+          schema:
+            default: name
+            description: Sort order (whitelisted server-side)
+            enum:
+              - name
+              - name-desc
+              - newest
+              - oldest
+            type: string
+        - description: Page size; 0 returns all matches
+          explode: false
+          in: query
+          name: limit
+          schema:
+            description: Page size; 0 returns all matches
+            format: int64
+            maximum: 200
+            minimum: 0
+            type: integer
+        - description: Page offset into the filtered, sorted result
+          explode: false
+          in: query
+          name: offset
+          schema:
+            description: Page offset into the filtered, sorted result
+            format: int64
+            minimum: 0
+            type: integer
       responses:
         "200":
           content:

@@ -156,6 +156,8 @@ describe("blueprint slot wiring (inari-ext-argocd)", () => {
       displayName: "Web Service",
       description: "",
       source: "curated",
+      category: "",
+      createdAt: null,
       latestVersion: "1.2.0",
       latestChannel: "stable",
     };

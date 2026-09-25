@@ -335,10 +335,15 @@ export const handlers = [
   // ---- catalog ----
   http.get(`${BASE}/catalog`, ({ request }) => {
     const url = new URL(request.url);
-    const items = listCatalogItemsFiltered({
+    const { items, total } = listCatalogItemsFiltered({
+      q: url.searchParams.get("q"),
       source: url.searchParams.get("source"),
+      category: url.searchParams.get("category"),
+      sort: url.searchParams.get("sort"),
+      limit: Number(url.searchParams.get("limit") ?? "0"),
+      offset: Number(url.searchParams.get("offset") ?? "0"),
     });
-    return HttpResponse.json({ items: items.map(toServerItem) });
+    return HttpResponse.json({ items: items.map(toServerItem), total });
   }),
 
   http.get(`${BASE}/catalog/:item`, ({ params }) => {

@@ -58,16 +58,16 @@ export function PlatformPage() {
         {!apps.error && apps.loading && !apps.data && (
           <p className="text-sm text-muted-foreground">Loading platform apps…</p>
         )}
-        {!apps.error && apps.data && apps.data.length === 0 && (
+        {!apps.error && apps.data && apps.data.items.length === 0 && (
           <Card>
             <CardContent className="py-8 text-center text-sm text-muted-foreground">
               No platform apps discovered yet.
             </CardContent>
           </Card>
         )}
-        {apps.data && apps.data.length > 0 && (
+        {apps.data && apps.data.items.length > 0 && (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {apps.data.map((item) => (
+            {apps.data.items.map((item) => (
               <Card key={item.id}>
                 <CardHeader className="pb-2">
                   <div className="flex items-center justify-between gap-2">
