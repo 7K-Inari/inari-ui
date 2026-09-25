@@ -6,9 +6,8 @@ templates:
   - pdb.yaml
 tests:
   - it: default renders a liveness probe on the nginx container and keeps readiness unchanged
-    documentSelector:
-      path: kind
-      value: Deployment
+    templates:
+      - deployment.yaml
     asserts:
       - equal:
           path: spec.template.spec.containers[0].livenessProbe.httpGet.path
@@ -30,9 +29,8 @@ tests:
           path: /healthz
           port: http
         periodSeconds: 5
-    documentSelector:
-      path: kind
-      value: Deployment
+    templates:
+      - deployment.yaml
     asserts:
       - equal:
           path: spec.template.spec.containers[0].livenessProbe.httpGet.path
@@ -42,9 +40,8 @@ tests:
           value: 5
 
   - it: default renders no affinity or topologySpreadConstraints
-    documentSelector:
-      path: kind
-      value: Deployment
+    templates:
+      - deployment.yaml
     asserts:
       - notExists:
           path: spec.template.spec.affinity
@@ -72,9 +69,8 @@ tests:
   - it: replicaCount 2 renders a PDB with minAvailable 1 and the deployment selector
     set:
       replicaCount: 2
-    documentSelector:
-      path: kind
-      value: PodDisruptionBudget
+    templates:
+      - pdb.yaml
     asserts:
       - isKind:
           of: PodDisruptionBudget
@@ -103,9 +99,8 @@ tests:
       replicaCount: 3
       pdb:
         minAvailable: 2
-    documentSelector:
-      path: kind
-      value: PodDisruptionBudget
+    templates:
+      - pdb.yaml
     asserts:
       - equal:
           path: spec.minAvailable
@@ -132,9 +127,8 @@ tests:
             matchLabels:
               app.kubernetes.io/name: inari-console
               app.kubernetes.io/instance: inari-console
-    documentSelector:
-      path: kind
-      value: Deployment
+    templates:
+      - deployment.yaml
     asserts:
       - equal:
           path: spec.template.spec.affinity.podAntiAffinity.preferredDuringSchedulingIgnoredDuringExecution[0].podAffinityTerm.topologyKey
