@@ -11,6 +11,7 @@ Stack: React, TypeScript, Vite, Tailwind, shadcn/ui, RJSF, Module Federation
 - Auth: OIDC against platform Keycloak `inari` realm (organization scope; per-service audiences) (§5.4).
 - Static bundle, served by inari-server (§6).
 - IA/navigation and v1 screen build order: plan §8.2–8.3; extension slots: §8.4.
+- kubectl-proxy e2e access (cluster detail **Connect** tab, `src/pages/clusters/connect-tab.tsx`): feature gating is server-driven — global via `GET /api/v1/features` (`INARI_DISABLE_KUBECTL_PROXY`), per-cluster via `kubectlProxyEnabled` on cluster payloads; the console never combines the flags itself. The reachability probe polls `http://127.0.0.1:<port>/version` directly from the browser (the control plane cannot reach the user's localhost); probe failures always mean "still waiting", never a hard error. The per-cluster toggle (`updateClusterSettings` → PATCH) is shown only for `org-admin`/`platform-engineer` org roles.
 
 ## Conventions
 - Conventional Commits; SemVer releases; console bundle OCI artifacts cosign-signed.
