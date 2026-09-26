@@ -12,9 +12,16 @@ export interface ClusterSummary {
   capabilityCount: number;
   lastSeenAt: string | null;
   createdAt: string;
+  // Per-cluster opt-out of kubectl-proxy e2e access (server Cluster schema).
+  kubectlProxyDisabled: boolean;
 }
 
-export type ClusterDetail = ClusterSummary;
+export interface ClusterDetail extends ClusterSummary {
+  // Effective enablement computed by the server:
+  // !INARI_DISABLE_KUBECTL_PROXY && !kubectlProxyDisabled. Clients must not
+  // re-derive precedence from the raw flags.
+  kubectlProxyEnabled: boolean;
+}
 
 export type CapabilityKind =
   | "crd"

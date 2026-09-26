@@ -3,7 +3,9 @@ import { http, HttpResponse } from "msw";
 import {
   capabilitiesFor,
   findCluster,
+  kubectlProxyEnabledFor,
   listForTenant,
+  mockControl,
   registerCluster,
   removeCluster,
 } from "@/mocks/fixtures";
@@ -169,6 +171,7 @@ function toServerCluster(c: ClusterSummary | ClusterDetail) {
         : c.status === "pending"
           ? "pending_registration"
           : c.status,
+    kubectlProxyDisabled: c.kubectlProxyDisabled,
     lastSeenAt: c.lastSeenAt,
     createdAt: c.createdAt,
   };
@@ -297,6 +300,13 @@ export const handlers = [
   // ---- global permissions (OpenFGA projection, M1.W2) ----
   http.get("*/api/v1/me/permissions", () =>
     HttpResponse.json({ canCreateOrganizations: true }),
+  ),
+
+  // ---- server-driven feature flags (kubectl-proxy e2e access) ----
+  http.get("*/api/v1/features", () =>
+    HttpResponse.json({
+      kubectlProxy: { enabled: mockControl.getState().kubectlProxyEnabled },
+    }),
   ),
 
   // ---- tenants (platform-scoped, not under /tenants/:org) ----
@@ -493,7 +503,43 @@ export const handlers = [
   http.get(`${BASE}/clusters/:id`, ({ params }) => {
     const cluster = findCluster(params.id as string);
     if (!cluster) return humaError(404, "cluster not found");
-    return HttpResponse.json({ cluster: toServerCluster(cluster) });
+    return HttpResponse.json({
+      cluster: toServerCluster(cluster),
+      kubectlProxyEnabled: kubectlProxyEnabledFor(cluster),
+    });
+  }),
+
+  // Mirror the cluster-registry huma schema: strict properties.
+  http.patch(`${BASE}/clusters/:id`, async ({ params, request }) => {
+    const cluster = findCluster(params.id as string);
+    if (!cluster) return humaError(404, "cluster not found");
+    const body = (await request.json()) as { kubectlProxyDisabled?: boolean } &
+      Record<string, unknown>;
+    const extra = Object.keys(body).filter((k) => k !== "kubectlProxyDisabled");
+    if (extra.length > 0) {
+      return humaError(422, `validation failed (unexpected property ${extra[0]})`);
+    }
+    if (typeof body.kubectlProxyDisabled !== "boolean") {
+      return humaError(422, "validation failed (kubectlProxyDisabled must be a boolean)");
+    }
+    cluster.kubectlProxyDisabled = body.kubectlProxyDisabled;
+    return HttpResponse.json({
+      cluster: toServerCluster(cluster),
+      kubectlProxyEnabled: kubectlProxyEnabledFor(cluster),
+    });
+  }),
+
+  http.get(`${BASE}/clusters/:id/access-info`, ({ params }) => {
+    const cluster = findCluster(params.id as string);
+    if (!cluster) return humaError(404, "cluster not found");
+    return HttpResponse.json({
+      accessInfo: {
+        issuerUrl: "http://keycloak.local/realms/inari",
+        kubectlClientId: `${cluster.tenant}-kubectl`,
+        audience: "kubernetes",
+        organization: cluster.tenant,
+      },
+    });
   }),
 
   // Only pending registrations can be cancelled; anything else is a conflict.

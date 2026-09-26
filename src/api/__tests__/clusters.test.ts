@@ -2,6 +2,8 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { ApiError } from "@/api/client";
 import {
+  getAccessInfo,
+  updateClusterSettings,
   clusterHealth,
   createCluster,
   deleteCluster,
@@ -146,5 +148,68 @@ describe("clusters api", () => {
     const err = await deleteCluster("tok", "cl-nope", "acme").catch((e) => e);
     expect(err).toBeInstanceOf(ApiError);
     expect(err.status).toBe(404);
+  });
+});
+
+describe("kubectl-proxy access", () => {
+  it("getCluster carries the server-computed effective enablement", async () => {
+    const cluster = await getCluster("tok", "cl-kind-dev");
+    expect(cluster.kubectlProxyDisabled).toBe(false);
+    expect(cluster.kubectlProxyEnabled).toBe(true);
+  });
+
+  it("getCluster reflects per-cluster disable", async () => {
+    mockControl.setClusterKubectlProxyDisabled("cl-kind-dev", true);
+    const cluster = await getCluster("tok", "cl-kind-dev");
+    expect(cluster.kubectlProxyDisabled).toBe(true);
+    expect(cluster.kubectlProxyEnabled).toBe(false);
+  });
+
+  it("getCluster reflects the global kill switch", async () => {
+    mockControl.setKubectlProxyEnabled(false);
+    const cluster = await getCluster("tok", "cl-kind-dev");
+    expect(cluster.kubectlProxyDisabled).toBe(false);
+    expect(cluster.kubectlProxyEnabled).toBe(false);
+  });
+
+  it("getAccessInfo returns the kubelogin kubeconfig inputs", async () => {
+    const info = await getAccessInfo("tok", "cl-kind-dev");
+    expect(info.issuerUrl).toContain("keycloak");
+    expect(info.kubectlClientId).toBe("acme-kubectl");
+    expect(info.audience).toBe("kubernetes");
+    expect(info.organization).toBe("acme");
+  });
+
+  it("updateClusterSettings PATCHes the per-cluster disable flag", async () => {
+    let seenBody: unknown = null;
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.patch("*/api/v1/tenants/acme/clusters/cl-kind-dev", async ({ request }) => {
+        seenBody = await request.json();
+        return HttpResponse.json({
+          cluster: {
+            id: "cl-kind-dev",
+            orgId: "acme",
+            name: "kind-dev",
+            state: "active",
+            kubectlProxyDisabled: true,
+            createdAt: new Date().toISOString(),
+          },
+          kubectlProxyEnabled: false,
+        });
+      }),
+    );
+    const updated = await updateClusterSettings("tok", "cl-kind-dev", true);
+    expect(seenBody).toEqual({ kubectlProxyDisabled: true });
+    expect(updated.kubectlProxyDisabled).toBe(true);
+    expect(updated.kubectlProxyEnabled).toBe(false);
+  });
+
+  it("updateClusterSettings round-trips through the mock backend", async () => {
+    const updated = await updateClusterSettings("tok", "cl-kind-dev", true);
+    expect(updated.kubectlProxyDisabled).toBe(true);
+    expect(updated.kubectlProxyEnabled).toBe(false);
+    const fetched = await getCluster("tok", "cl-kind-dev");
+    expect(fetched.kubectlProxyDisabled).toBe(true);
   });
 });

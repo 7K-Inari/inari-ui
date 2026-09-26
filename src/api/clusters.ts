@@ -39,7 +39,7 @@ export function clusterHealth(state: string): ClusterStatus {
   }
 }
 
-function mapCluster(c: ServerCluster): ClusterDetail {
+function mapCluster(c: ServerCluster): ClusterSummary {
   return {
     id: c.id,
     name: c.name,
@@ -50,6 +50,7 @@ function mapCluster(c: ServerCluster): ClusterDetail {
     capabilityCount: 0, // not part of the list payload; the detail page loads capabilities
     lastSeenAt: c.lastSeenAt ?? null,
     createdAt: c.createdAt,
+    kubectlProxyDisabled: c.kubectlProxyDisabled,
   };
 }
 
@@ -92,11 +93,43 @@ export async function getCluster(
   id: string,
   tenant?: string,
 ): Promise<ClusterDetail> {
-  const res = await apiFetch<{ cluster: ServerCluster }>(
+  const res = await apiFetch<{ cluster: ServerCluster; kubectlProxyEnabled: boolean }>(
     `${tenantPath(resolveTenant(tenant))}/clusters/${encodeURIComponent(id)}`,
     { token },
   );
-  return mapCluster(res.cluster);
+  return { ...mapCluster(res.cluster), kubectlProxyEnabled: res.kubectlProxyEnabled };
+}
+
+export type ClusterAccessInfo = components["schemas"]["ClusterAccessInfo"];
+
+// Kubelogin kubeconfig inputs for the kubectl-proxy setup flow. The server
+// never returns the API-server URL (pull-only) — the user's own kubeconfig
+// supplies it.
+export async function getAccessInfo(
+  token: string | undefined,
+  id: string,
+  tenant?: string,
+): Promise<ClusterAccessInfo> {
+  const res = await apiFetch<components["schemas"]["AccessInfoOutputBody"]>(
+    `${tenantPath(resolveTenant(tenant))}/clusters/${encodeURIComponent(id)}/access-info`,
+    { token },
+  );
+  return res.accessInfo;
+}
+
+// Flips the per-cluster kubectl-proxy opt-out. The response carries the
+// server-computed effective enablement (global kill switch ANDed in).
+export async function updateClusterSettings(
+  token: string | undefined,
+  id: string,
+  kubectlProxyDisabled: boolean,
+  tenant?: string,
+): Promise<ClusterDetail> {
+  const res = await apiFetch<{ cluster: ServerCluster; kubectlProxyEnabled: boolean }>(
+    `${tenantPath(resolveTenant(tenant))}/clusters/${encodeURIComponent(id)}`,
+    { token, method: "PATCH", body: { kubectlProxyDisabled } },
+  );
+  return { ...mapCluster(res.cluster), kubectlProxyEnabled: res.kubectlProxyEnabled };
 }
 
 export async function getCapabilities(
@@ -133,14 +166,14 @@ export async function createCluster(
   body: CreateClusterRequest,
 ): Promise<CreateClusterResponse> {
   const org = resolveTenant(tenant);
-  const created = await apiFetch<{ cluster: ServerCluster }>(
+  const created = await apiFetch<{ cluster: ServerCluster; kubectlProxyEnabled: boolean }>(
     `${tenantPath(org)}/clusters`,
     { token, method: "POST", body },
   );
   // Issue the one-time registration token so the wizard can show it once.
   const tok = await issueRegistrationToken(token, created.cluster.id, org);
   return {
-    cluster: mapCluster(created.cluster),
+    cluster: { ...mapCluster(created.cluster), kubectlProxyEnabled: created.kubectlProxyEnabled },
     registrationToken: tok.token,
     tokenExpiresAt: tok.expiresAt,
     install: {

@@ -19,6 +19,8 @@ export const connectedCluster: ClusterDetail = {
   capabilityCount: 8,
   lastSeenAt: iso(now - 30_000),
   createdAt: iso(now - 86_400_000),
+  kubectlProxyDisabled: false,
+  kubectlProxyEnabled: true,
 };
 
 export const degradedCluster: ClusterDetail = {
@@ -31,6 +33,8 @@ export const degradedCluster: ClusterDetail = {
   capabilityCount: 21,
   lastSeenAt: iso(now - 900_000),
   createdAt: iso(now - 30 * 86_400_000),
+  kubectlProxyDisabled: false,
+  kubectlProxyEnabled: true,
 };
 
 export const otherTenantCluster: ClusterDetail = {
@@ -43,6 +47,8 @@ export const otherTenantCluster: ClusterDetail = {
   capabilityCount: 12,
   lastSeenAt: iso(now - 60_000),
   createdAt: iso(now - 7 * 86_400_000),
+  kubectlProxyDisabled: false,
+  kubectlProxyEnabled: true,
 };
 
 export const kindCapabilities: Capability[] = [
@@ -123,6 +129,8 @@ export const kindCapabilities: Capability[] = [
 export interface MockState {
   clusters: ClusterDetail[];
   capabilities: Record<string, Capability[]>;
+  // Global kubectl-proxy kill switch (mirrors INARI_DISABLE_KUBECTL_PROXY).
+  kubectlProxyEnabled: boolean;
 }
 
 function seedState(): MockState {
@@ -133,10 +141,16 @@ function seedState(): MockState {
       [degradedCluster.id]: [],
       [otherTenantCluster.id]: [],
     },
+    kubectlProxyEnabled: true,
   };
 }
 
 let state: MockState = seedState();
+
+// Effective enablement as the server computes it: !global && !cluster.
+export function kubectlProxyEnabledFor(c: ClusterDetail): boolean {
+  return state.kubectlProxyEnabled && !c.kubectlProxyDisabled;
+}
 
 export const mockControl = {
   reset() {
@@ -147,6 +161,15 @@ export const mockControl = {
     if (cluster) {
       cluster.status = status;
       cluster.lastSeenAt = new Date().toISOString();
+    }
+  },
+  setKubectlProxyEnabled(enabled: boolean) {
+    state.kubectlProxyEnabled = enabled;
+  },
+  setClusterKubectlProxyDisabled(id: string, disabled: boolean) {
+    const cluster = state.clusters.find((c) => c.id === id);
+    if (cluster) {
+      cluster.kubectlProxyDisabled = disabled;
     }
   },
   getState(): MockState {
@@ -165,6 +188,7 @@ function toSummary(c: ClusterDetail): ClusterSummary {
     capabilityCount: c.capabilityCount,
     lastSeenAt: c.lastSeenAt,
     createdAt: c.createdAt,
+    kubectlProxyDisabled: c.kubectlProxyDisabled,
   };
 }
 
@@ -207,6 +231,8 @@ export function registerCluster(
     capabilityCount: 0,
     lastSeenAt: null,
     createdAt: new Date().toISOString(),
+    kubectlProxyDisabled: false,
+    kubectlProxyEnabled: state.kubectlProxyEnabled,
   };
   state.clusters.push(cluster);
   state.capabilities[id] = [];

@@ -621,6 +621,8 @@ components:
           type: string
         keycloakClientId:
           type: string
+        kubectlProxyDisabled:
+          type: boolean
         kubernetesVersion:
           type: string
         labels:
@@ -643,6 +645,7 @@ components:
         - orgId
         - name
         - state
+        - kubectlProxyDisabled
         - createdAt
       type: object
     ClusterAccessInfo:
@@ -674,8 +677,11 @@ components:
           type: string
         cluster:
           $ref: "#/components/schemas/Cluster"
+        kubectlProxyEnabled:
+          type: boolean
       required:
         - cluster
+        - kubectlProxyEnabled
       type: object
     ClusterSet:
       additionalProperties: false
@@ -1693,6 +1699,21 @@ components:
       required:
         - extension
       type: object
+    FeaturesOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/FeaturesOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        kubectlProxy:
+          $ref: "#/components/schemas/KubectlProxyStruct"
+      required:
+        - kubectlProxy
+      type: object
     GCPSMProvider:
       additionalProperties: false
       properties:
@@ -2127,6 +2148,15 @@ components:
         - description
         - approvalPolicy
         - createdAt
+      type: object
+    KubectlProxyStruct:
+      additionalProperties: false
+      properties:
+        enabled:
+          description: False when INARI_DISABLE_KUBECTL_PROXY is set on the control plane
+          type: boolean
+      required:
+        - enabled
       type: object
     ListAccountsOutputBody:
       additionalProperties: false
@@ -4623,6 +4653,22 @@ components:
         issuerUrl:
           type: string
       type: object
+    UpdateClusterSettingsInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/UpdateClusterSettingsInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        kubectlProxyDisabled:
+          description: Per-cluster opt-out of kubectl-proxy e2e access
+          type: boolean
+      required:
+        - kubectlProxyDisabled
+      type: object
     UpdateConfigInputBody:
       additionalProperties: false
       properties:
@@ -4895,6 +4941,25 @@ paths:
       security:
         - bearer: []
       summary: List pending approvals across all orgs the caller belongs to
+  /api/v1/features:
+    get:
+      operationId: getFeatures
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/FeaturesOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Global feature flags for the console (kubectl-proxy e2e access)
   /api/v1/me/permissions:
     get:
       operationId: getMyPermissions
@@ -6298,6 +6363,41 @@ paths:
       security:
         - bearer: []
       summary: Get a cluster
+    patch:
+      operationId: updateClusterSettings
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateClusterSettingsInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ClusterOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Update per-cluster settings (kubectl-proxy e2e access opt-out)
   /api/v1/tenants/{org}/clusters/{id}/access-info:
     get:
       operationId: getClusterAccessInfo

@@ -55,6 +55,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/features": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Global feature flags for the console (kubectl-proxy e2e access) */
+        get: operations["getFeatures"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/me/permissions": {
         parameters: {
             query?: never;
@@ -607,7 +624,8 @@ export interface paths {
         delete: operations["deleteCluster"];
         options?: never;
         head?: never;
-        patch?: never;
+        /** Update per-cluster settings (kubectl-proxy e2e access opt-out) */
+        patch: operations["updateClusterSettings"];
         trace?: never;
     };
     "/api/v1/tenants/{org}/clusters/{id}/access-info": {
@@ -2286,6 +2304,7 @@ export interface components {
             distribution?: string;
             id: string;
             keycloakClientId?: string;
+            kubectlProxyDisabled: boolean;
             kubernetesVersion?: string;
             labels?: {
                 [key: string]: string;
@@ -2311,6 +2330,7 @@ export interface components {
              */
             readonly $schema?: string;
             cluster: components["schemas"]["Cluster"];
+            kubectlProxyEnabled: boolean;
         };
         ClusterSet: {
             /** Format: date-time */
@@ -2847,6 +2867,15 @@ export interface components {
             credentials?: components["schemas"]["ExtensionCredentials"];
             extension: components["schemas"]["Extension"];
         };
+        FeaturesOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/FeaturesOutputBody.json
+             */
+            readonly $schema?: string;
+            kubectlProxy: components["schemas"]["KubectlProxyStruct"];
+        };
         GCPSMProvider: {
             authSecretRef: components["schemas"]["SecretRef"];
             projectId: string;
@@ -3051,6 +3080,10 @@ export interface components {
             pinnedVersion?: string;
             source: string;
             versions?: components["schemas"]["CatalogItemVersion"][] | null;
+        };
+        KubectlProxyStruct: {
+            /** @description False when INARI_DISABLE_KUBECTL_PROXY is set on the control plane */
+            enabled: boolean;
         };
         ListAccountsOutputBody: {
             /**
@@ -4171,6 +4204,16 @@ export interface components {
             domainHints?: string[];
             issuerUrl?: string;
         };
+        UpdateClusterSettingsInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/UpdateClusterSettingsInputBody.json
+             */
+            readonly $schema?: string;
+            /** @description Per-cluster opt-out of kubectl-proxy e2e access */
+            kubectlProxyDisabled: boolean;
+        };
         UpdateConfigInputBody: {
             /**
              * Format: uri
@@ -4361,6 +4404,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["InboxOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getFeatures: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FeaturesOutputBody"];
                 };
             };
             /** @description Error */
@@ -5810,6 +5882,42 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    updateClusterSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateClusterSettingsInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClusterOutputBody"];
+                };
             };
             /** @description Error */
             default: {

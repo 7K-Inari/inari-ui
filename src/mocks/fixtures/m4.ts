@@ -380,6 +380,7 @@ export function listClusterSetMembersMock(id: string): ServerCluster[] {
         orgId: "acme",
         name: "edge-1",
         state: "active",
+        kubectlProxyDisabled: false,
         createdAt: new Date(Date.now() - 40 * 86400_000).toISOString(),
       },
     ],
@@ -389,6 +390,7 @@ export function listClusterSetMembersMock(id: string): ServerCluster[] {
         orgId: "acme",
         name: "eu-1",
         state: "active",
+        kubectlProxyDisabled: false,
         createdAt: new Date(Date.now() - 30 * 86400_000).toISOString(),
       },
       {
@@ -396,6 +398,7 @@ export function listClusterSetMembersMock(id: string): ServerCluster[] {
         orgId: "acme",
         name: "eu-2",
         state: "active",
+        kubectlProxyDisabled: false,
         createdAt: new Date(Date.now() - 30 * 86400_000).toISOString(),
       },
     ],
