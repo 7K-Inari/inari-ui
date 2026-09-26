@@ -42,6 +42,11 @@ function useProxyReachability(port: string): Reachability {
   React.useEffect(() => {
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
+    // An empty port would normalize to :80 in fetch — never probe it.
+    if (!port) {
+      setState({ status: "unreachable" });
+      return;
+    }
     setState({ status: "checking" });
     const probe = async () => {
       try {

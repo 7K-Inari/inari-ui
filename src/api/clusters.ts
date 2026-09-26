@@ -93,7 +93,7 @@ export async function getCluster(
   id: string,
   tenant?: string,
 ): Promise<ClusterDetail> {
-  const res = await apiFetch<{ cluster: ServerCluster; kubectlProxyEnabled: boolean }>(
+  const res = await apiFetch<components["schemas"]["ClusterOutputBody"]>(
     `${tenantPath(resolveTenant(tenant))}/clusters/${encodeURIComponent(id)}`,
     { token },
   );
@@ -125,7 +125,7 @@ export async function updateClusterSettings(
   kubectlProxyDisabled: boolean,
   tenant?: string,
 ): Promise<ClusterDetail> {
-  const res = await apiFetch<{ cluster: ServerCluster; kubectlProxyEnabled: boolean }>(
+  const res = await apiFetch<components["schemas"]["ClusterOutputBody"]>(
     `${tenantPath(resolveTenant(tenant))}/clusters/${encodeURIComponent(id)}`,
     { token, method: "PATCH", body: { kubectlProxyDisabled } },
   );
@@ -166,7 +166,7 @@ export async function createCluster(
   body: CreateClusterRequest,
 ): Promise<CreateClusterResponse> {
   const org = resolveTenant(tenant);
-  const created = await apiFetch<{ cluster: ServerCluster; kubectlProxyEnabled: boolean }>(
+  const created = await apiFetch<components["schemas"]["ClusterOutputBody"]>(
     `${tenantPath(org)}/clusters`,
     { token, method: "POST", body },
   );
