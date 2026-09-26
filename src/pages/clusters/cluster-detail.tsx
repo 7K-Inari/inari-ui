@@ -3,8 +3,10 @@ import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom"
 
 import { deleteCluster, getCapabilities, getCluster } from "@/api/clusters";
 import { ApiError } from "@/api/client";
+import { getFeatures } from "@/api/features";
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
+import { usePermissions } from "@/auth/permissions-context";
 import type { CapabilityKind, ManagementMode } from "@/api/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +18,8 @@ import { useClusterTabSlots } from "@/ext/slots";
 import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
+import { ConnectTab } from "@/pages/clusters/connect-tab";
+import { canManageKubectlProxy } from "@/pages/clusters/kubectl-proxy";
 import { ClusterStatusBadge } from "@/pages/clusters/status-badge";
 
 const KIND_LABELS: Record<CapabilityKind, string> = {
@@ -181,17 +185,12 @@ const BUILTIN_TABS = [
 export function ClusterDetailPage() {
   const { tenant } = useTenant();
   const { token } = useAuth();
+  const { orgRoles } = usePermissions();
   const navigate = useNavigate();
   const { clusterId } = useParams<{ clusterId: string }>();
   const [actionError, setActionError] = React.useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const extensionTabs = useClusterTabSlots();
-  const allTabs = [
-    ...BUILTIN_TABS.map((t) => ({ id: t.id, label: t.label })),
-    ...extensionTabs.map((t) => ({ id: t.id, label: t.title })),
-  ];
-  const requestedTab = searchParams.get("tab") ?? "capabilities";
-  const tab = allTabs.some((t) => t.id === requestedTab) ? requestedTab : "capabilities";
 
   const {
     data: cluster,
@@ -201,6 +200,24 @@ export function ClusterDetailPage() {
     enabled: !!clusterId,
     refetchIntervalMs: 15_000,
   });
+  const { data: features } = useAsyncResource((t) => getFeatures(t), []);
+
+  // The Connect tab surfaces only when the feature is on globally and the
+  // cluster allows it — editors still see it on disabled clusters so they
+  // can re-enable. Precedence itself is computed server-side.
+  const connectVisible =
+    features?.kubectlProxy.enabled === true &&
+    cluster !== null &&
+    cluster !== undefined &&
+    (cluster.kubectlProxyEnabled || canManageKubectlProxy(orgRoles, tenant));
+
+  const allTabs = [
+    ...BUILTIN_TABS.map((t) => ({ id: t.id, label: t.label })),
+    ...(connectVisible ? [{ id: "connect", label: "Connect" }] : []),
+    ...extensionTabs.map((t) => ({ id: t.id, label: t.title })),
+  ];
+  const requestedTab = searchParams.get("tab") ?? "capabilities";
+  const tab = allTabs.some((t) => t.id === requestedTab) ? requestedTab : "capabilities";
 
   if (error) {
     return (
@@ -286,6 +303,7 @@ export function ClusterDetailPage() {
 
       {tab === "capabilities" && <CapabilitiesTab clusterId={cluster.id} />}
       {tab === "overview" && <OverviewTab clusterId={cluster.id} />}
+      {tab === "connect" && connectVisible && <ConnectTab clusterId={cluster.id} />}
       {extensionTabs
         .filter((t) => t.id === tab)
         .map((t) => (

@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { http, HttpResponse } from "msw";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -15,9 +16,19 @@ vi.mock("@/tenant/tenant-context", () => ({
   useTenant: () => ({ tenant: "acme" }),
 }));
 
+let mockOrgRoles: Record<string, string> | undefined = { acme: "platform-engineer" };
+vi.mock("@/auth/permissions-context", () => ({
+  usePermissions: () => ({ canCreateOrganizations: false, orgRoles: mockOrgRoles }),
+}));
+
 beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
 afterEach(() => mockServer.resetHandlers());
-beforeEach(() => mockControl.reset());
+beforeEach(() => {
+  mockControl.reset();
+  mockOrgRoles = { acme: "platform-engineer" };
+  // The Connect tab probes the local proxy from the browser; keep it down.
+  mockServer.use(http.get(/\/version$/, () => HttpResponse.error()));
+});
 afterAll(() => mockServer.close());
 
 function renderDetail(id = "cl-kind-dev", query = "") {
@@ -152,5 +163,36 @@ describe("ClusterDetailPage", () => {
     await user.click(screen.getByRole("button", { name: "Cancel registration" }));
     expect(await screen.findByText(/forbidden/)).toBeInTheDocument();
     vi.restoreAllMocks();
+  });
+});
+
+describe("Connect tab gating", () => {
+  it("shows the Connect tab and the proxy setup by default", async () => {
+    const user = userEvent.setup();
+    renderDetail();
+    const tab = await screen.findByRole("tab", { name: "Connect" });
+    await user.click(tab);
+    expect(await screen.findByText(/kubectl proxy --port=8001/)).toBeInTheDocument();
+  });
+
+  it("hides the Connect tab under the global kill switch", async () => {
+    mockControl.setKubectlProxyEnabled(false);
+    renderDetail();
+    await screen.findByRole("heading", { name: "kind-dev" });
+    expect(screen.queryByRole("tab", { name: "Connect" })).not.toBeInTheDocument();
+  });
+
+  it("keeps the Connect tab for editors when the cluster disabled the proxy", async () => {
+    mockControl.setClusterKubectlProxyDisabled("cl-kind-dev", true);
+    renderDetail();
+    expect(await screen.findByRole("tab", { name: "Connect" })).toBeInTheDocument();
+  });
+
+  it("hides the Connect tab for read-only users when the cluster disabled the proxy", async () => {
+    mockOrgRoles = { acme: "viewer" };
+    mockControl.setClusterKubectlProxyDisabled("cl-kind-dev", true);
+    renderDetail();
+    await screen.findByRole("heading", { name: "kind-dev" });
+    expect(screen.queryByRole("tab", { name: "Connect" })).not.toBeInTheDocument();
   });
 });
