@@ -90,6 +90,21 @@ describe("ConnectTab", () => {
     expect(await screen.findByText(/proxy reachable/i)).toBeInTheDocument();
   });
 
+  it("does not probe while the port input is empty", async () => {
+    const fetchSpy = vi.spyOn(globalThis, "fetch");
+    const user = userEvent.setup();
+    renderTab();
+    const portInput = await screen.findByLabelText(/proxy port/i);
+    // Wait for the initial 8001 probe to settle, then stop counting it.
+    await screen.findByText(/waiting for the proxy/i);
+    fetchSpy.mockClear();
+    await user.clear(portInput);
+    await new Promise((r) => setTimeout(r, 200));
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(screen.getByText(/waiting for the proxy/i)).toBeInTheDocument();
+    fetchSpy.mockRestore();
+  });
+
   it("shows a notice and hides the setup when the global kill switch is on", async () => {
     mockControl.setKubectlProxyEnabled(false);
     renderTab();
