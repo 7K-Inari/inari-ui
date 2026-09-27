@@ -161,7 +161,7 @@ export function GitConnectionsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
-  const fail =(err: unknown, fallback: string) =>
+  const fail = (err: unknown, fallback: string) =>
     setActionError(err instanceof ApiError ? err.message : fallback);
 
   const connect = async (provider: GitProviderViewModel) => {
