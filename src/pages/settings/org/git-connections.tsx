@@ -226,7 +226,7 @@ export function GitConnectionsPage() {
         </Card>
       )}
 
-      {!error && data && providers.length === 0 && (
+      {!error && !loading && data && providers.length === 0 && (
         <Card>
           <CardContent className="py-12 text-center text-sm text-muted-foreground">
             No Git providers are configured for this organization.
@@ -234,7 +234,7 @@ export function GitConnectionsPage() {
         </Card>
       )}
 
-      {providers.length > 0 && (
+      {!loading && providers.length > 0 && (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-left text-xs text-muted-foreground">

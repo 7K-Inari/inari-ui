@@ -196,6 +196,10 @@ describe("GitConnectionsPage", () => {
       </MemoryRouter>,
     );
 
+    // The previous tenant's rows must not render while the new tenant's
+    // data is still loading (synchronous check before the fetch resolves).
+    expect(screen.queryByText("ada-dev")).not.toBeInTheDocument();
+
     await waitFor(() =>
       expect(screen.queryByText("ada-dev")).not.toBeInTheDocument(),
     );
