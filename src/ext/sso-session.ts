@@ -107,6 +107,8 @@ export interface PendingSso {
   tenant: string;
   nonce: string;
   returnTo: string;
+  // Kept so a failed round-trip can be retried from the callback page.
+  ssoLoginBaseUrl?: string;
 }
 
 export function peekPendingSso(storage: Storage = sessionStorage): PendingSso | null {
@@ -118,7 +120,8 @@ export function peekPendingSso(storage: Storage = sessionStorage): PendingSso | 
       typeof parsed.extensionId !== "string" ||
       typeof parsed.tenant !== "string" ||
       typeof parsed.nonce !== "string" ||
-      typeof parsed.returnTo !== "string"
+      typeof parsed.returnTo !== "string" ||
+      (parsed.ssoLoginBaseUrl !== undefined && typeof parsed.ssoLoginBaseUrl !== "string")
     ) {
       return null;
     }
@@ -162,6 +165,7 @@ export function beginExtensionSsoRedirect(options: BeginSsoOptions, deps: BeginS
     tenant: options.tenant,
     nonce,
     returnTo: options.returnTo,
+    ssoLoginBaseUrl: options.ssoLoginBaseUrl,
   };
   storage.setItem(PENDING_SSO_KEY, JSON.stringify(pending));
   const returnUrl = new URL(ssoCallbackPath(options.tenant, nonce), window.location.origin);
@@ -197,9 +201,10 @@ export async function completeExtensionSsoCallback(
   const material = hashParams.get("session");
   const nonce = params.get("nonce");
 
-  // Scrub material from the URL before doing anything else.
+  // Scrub material from the URL before doing anything else. The pending
+  // marker stays until a successful handoff so the callback page can offer a
+  // retry on failure.
   window.history.replaceState(null, "", window.location.pathname);
-  storage.removeItem(PENDING_SSO_KEY);
 
   if (nonce !== pending.nonce) {
     throw new ExtensionAuthError("session", "Extension sign-in could not be verified");
@@ -213,6 +218,7 @@ export async function completeExtensionSsoCallback(
     nonce: pending.nonce,
   });
   void session;
+  storage.removeItem(PENDING_SSO_KEY);
   markExtensionSession(pending.tenant, pending.extensionId);
   return pending.returnTo;
 }

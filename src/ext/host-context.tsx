@@ -13,6 +13,29 @@ import {
 import { useAuth } from "@/auth/auth-context";
 import { useTenant } from "@/tenant/tenant-context";
 import { ALL_TENANTS } from "@/tenant/tenant-link";
+import { beginExtensionSsoRedirect, hasExtensionSession } from "@/ext/sso-session";
+
+// Shell-side session bootstrap seam for `oidc-sso-session` extensions (W4).
+// The SDK ApiClient (W4, parallel) calls `bootstrapSession` on typed
+// session-expired responses; the shell owns the zero-prompt round-trip and
+// never exposes session material to extension code.
+export interface ExtensionSessionState {
+  hasSession: (extensionId: string) => boolean;
+  // Starts the SSO round-trip. On a cache hit this resolves immediately;
+  // otherwise the browser navigates away and the promise never settles.
+  bootstrapSession: (
+    extensionId: string,
+    options: { ssoLoginBaseUrl: string; returnTo?: string },
+  ) => Promise<void>;
+}
+
+const ExtensionSessionContext = React.createContext<ExtensionSessionState | null>(null);
+
+export function useExtensionSession(): ExtensionSessionState {
+  const ctx = React.useContext(ExtensionSessionContext);
+  if (!ctx) throw new Error("useExtensionSession must be used within ExtensionHostProviders");
+  return ctx;
+}
 
 // Builds the SlotContext passed to Page slot components.
 export function useSdkSlotContext(): SlotContext {
@@ -74,9 +97,37 @@ export function ExtensionHostProviders({ children }: { children: React.ReactNode
     };
   }, [tenant]);
 
+  const extensionSession = React.useMemo<ExtensionSessionState>(
+    () => ({
+      hasSession: (extensionId) =>
+        tenant.tenant !== ALL_TENANTS && hasExtensionSession(tenant.tenant, extensionId),
+      bootstrapSession: (extensionId, options) => {
+        if (tenant.tenant === ALL_TENANTS) {
+          return Promise.reject(
+            new Error("extension sessions require a specific tenant context"),
+          );
+        }
+        if (hasExtensionSession(tenant.tenant, extensionId)) return Promise.resolve();
+        beginExtensionSsoRedirect({
+          tenant: tenant.tenant,
+          extensionId,
+          ssoLoginBaseUrl: options.ssoLoginBaseUrl,
+          returnTo:
+            options.returnTo ?? `${window.location.pathname}${window.location.search}`,
+        });
+        return new Promise<void>(() => {});
+      },
+    }),
+    [tenant],
+  );
+
   return (
     <SdkAuthProvider value={sdkAuth}>
-      <SdkTenantProvider value={sdkTenant}>{children}</SdkTenantProvider>
+      <SdkTenantProvider value={sdkTenant}>
+        <ExtensionSessionContext.Provider value={extensionSession}>
+          {children}
+        </ExtensionSessionContext.Provider>
+      </SdkTenantProvider>
     </SdkAuthProvider>
   );
 }

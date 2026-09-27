@@ -4,6 +4,7 @@ import { RequireAuth } from "@/auth/require-auth";
 import { ExtensionHostProviders, useSdkSlotContext } from "@/ext/host-context";
 import { ExtensionsProvider } from "@/ext/registry";
 import { ExtensionPageHost } from "@/ext/slots";
+import { ExtensionSsoCallbackPage } from "@/ext/sso-callback";
 import { AppShell } from "@/layout/app-shell";
 import { AllTenantsHome } from "@/pages/overview/all-tenants-home";
 import { OverviewPage } from "@/pages/overview/overview-page";
@@ -76,6 +77,7 @@ export function AppRoutes() {
       <Routes>
         <Route path="/" element={<Navigate to={`/${ALL_TENANTS}/overview`} replace />} />
         <Route path="/create-organization" element={<CreateOrganizationPage />} />
+        <Route path="/:tenant/ext-sso/callback" element={<ExtensionSsoCallbackPage />} />
         <Route path="/:tenant" element={<TenantRoutes />}>
           <Route index element={<Navigate to="overview" replace />} />
           <Route
