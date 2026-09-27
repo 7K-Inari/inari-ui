@@ -5,12 +5,16 @@ export const API_BASE_URL: string = config.apiBaseUrl;
 export class ApiError extends Error {
   status: number;
   remediation?: string;
+  // Server-typed error code (huma ErrorModel extension), e.g.
+  // "extension_session_required" / "extension_downstream_denied" (W4 SSO).
+  code?: string;
 
-  constructor(status: number, message: string, remediation?: string) {
+  constructor(status: number, message: string, remediation?: string, code?: string) {
     super(message);
     this.name = "ApiError";
     this.status = status;
     this.remediation = remediation;
+    this.code = code;
   }
 
   // Request-time OPA denials are surfaced as 422/403 with a policy detail and
@@ -45,12 +49,14 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
   if (!res.ok) {
     let message = `Request failed with status ${res.status}`;
     let remediation: string | undefined;
+    let code: string | undefined;
     try {
       // Huma ErrorModel: { title, status, detail, errors?: [{message}] }
       const data = (await res.json()) as {
         message?: string;
         detail?: string;
         remediation?: string;
+        code?: string;
         errors?: { message?: string }[];
       };
       if (data.detail) message = data.detail;
@@ -59,10 +65,11 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
         message = `${message} (${data.errors[0].message})`;
       }
       if (typeof data.remediation === "string") remediation = data.remediation;
+      if (typeof data.code === "string") code = data.code;
     } catch {
       // keep default message
     }
-    throw new ApiError(res.status, message, remediation);
+    throw new ApiError(res.status, message, remediation, code);
   }
 
   const contentType = res.headers.get("content-type") ?? "";

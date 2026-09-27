@@ -801,6 +801,13 @@ export const handlers = [
     });
   }),
 
+  // ---- extension SSO sessions (W4) ----
+  http.post(`${BASE}/extensions/:id/session`, ({ params }) => {
+    return HttpResponse.json({
+      session: { extensionId: params.id, state: "active", expiresAt: null },
+    });
+  }),
+
   http.get(`${BASE}/authz/self/extensions`, () => {
     return HttpResponse.json({ permissions: selfExtensionPermissions });
   }),

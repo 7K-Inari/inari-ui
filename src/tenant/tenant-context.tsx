@@ -10,6 +10,7 @@ import {
   type Organization,
 } from "@/auth/orgs";
 import { ALL_TENANTS, isValidTenant } from "@/tenant/tenant-link";
+import { clearExtensionSessions } from "@/ext/sso-session";
 import { setCurrentTenant } from "@/tenant/current";
 
 const RECENTS_KEY = "inari-tenant-recents";
@@ -97,6 +98,9 @@ export function TenantProvider({ children }: { children: React.ReactNode }) {
 
   React.useEffect(() => {
     setCurrentTenant(tenant);
+    // Extension SSO sessions are tenant-scoped; drop the in-memory cache on
+    // any tenant switch.
+    clearExtensionSessions();
   }, [tenant]);
 
   React.useEffect(() => {

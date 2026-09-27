@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { handleAuthInitFailure, initKeycloak, keycloak, stopTokenRefresh } from "@/auth/keycloak";
+import { clearExtensionSessions } from "@/ext/sso-session";
 
 export interface AuthState {
   initialized: boolean;
@@ -70,7 +71,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     token,
     parsedToken,
     login: () => keycloak.login(),
-    logout: () => keycloak.logout(),
+    logout: () => {
+      clearExtensionSessions();
+      keycloak.logout();
+    },
     retry: () => {
       setInitialized(false);
       setError(null);
