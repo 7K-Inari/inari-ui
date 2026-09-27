@@ -13,7 +13,11 @@ import {
 import { useAuth } from "@/auth/auth-context";
 import { useTenant } from "@/tenant/tenant-context";
 import { ALL_TENANTS } from "@/tenant/tenant-link";
-import { beginExtensionSsoRedirect, hasExtensionSession } from "@/ext/sso-session";
+import {
+  beginExtensionSsoRedirect,
+  clearExtensionSession,
+  hasExtensionSession,
+} from "@/ext/sso-session";
 
 // Shell-side session bootstrap seam for `oidc-sso-session` extensions (W4).
 // The SDK ApiClient (W4, parallel) calls `bootstrapSession` on typed
@@ -23,9 +27,11 @@ export interface ExtensionSessionState {
   hasSession: (extensionId: string) => boolean;
   // Starts the SSO round-trip. On a cache hit this resolves immediately;
   // otherwise the browser navigates away and the promise never settles.
+  // Pass `force: true` when reacting to a server-typed session-expired error:
+  // the cached entry is stale and must be dropped so the round-trip re-runs.
   bootstrapSession: (
     extensionId: string,
-    options: { ssoLoginBaseUrl: string; returnTo?: string },
+    options: { ssoLoginBaseUrl: string; returnTo?: string; force?: boolean },
   ) => Promise<void>;
 }
 
@@ -107,6 +113,7 @@ export function ExtensionHostProviders({ children }: { children: React.ReactNode
             new Error("extension sessions require a specific tenant context"),
           );
         }
+        if (options.force) clearExtensionSession(tenant.tenant, extensionId);
         if (hasExtensionSession(tenant.tenant, extensionId)) return Promise.resolve();
         beginExtensionSsoRedirect({
           tenant: tenant.tenant,

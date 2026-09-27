@@ -8,6 +8,7 @@ import {
   beginExtensionSsoRedirect,
   buildExtensionSsoLoginUrl,
   classifyExtensionError,
+  clearExtensionSession,
   clearExtensionSessions,
   completeExtensionSsoCallback,
   hasExtensionSession,
@@ -115,6 +116,19 @@ describe("withExtensionSessionRetry", () => {
     await expect(
       withExtensionSessionRetry(() => Promise.reject(new Error("boom")), { reauth: vi.fn() }),
     ).rejects.toMatchObject({ name: "ExtensionAuthError", kind: "unknown" });
+  });
+
+  it("surfaces a classified failure when reauth itself rejects", async () => {
+    const action = vi.fn().mockRejectedValue(new ApiError(401, "expired"));
+    const reauth = vi
+      .fn()
+      .mockRejectedValue(new Error("extension sessions require a specific tenant context"));
+    await expect(withExtensionSessionRetry(action, { reauth })).rejects.toMatchObject({
+      name: "ExtensionAuthError",
+      kind: "unknown",
+      message: "extension sessions require a specific tenant context",
+    });
+    expect(action).toHaveBeenCalledTimes(1);
   });
 });
 
@@ -233,5 +247,19 @@ describe("completeExtensionSsoCallback", () => {
     expect(hasExtensionSession("acme", "ext-argocd")).toBe(true);
     clearExtensionSessions("acme");
     expect(hasExtensionSession("acme", "ext-argocd")).toBe(false);
+  });
+
+  it("drops a single stale session so a forced re-bootstrap re-runs the round-trip", async () => {
+    seedPending(pending());
+    window.history.replaceState(null, "", "/acme/ext-sso/callback?nonce=n-1#session=m");
+    await completeExtensionSsoCallback("tok", { postSession: vi.fn().mockResolvedValue(SESSION) });
+    seedPending(pending({ extensionId: "ext-other", nonce: "n-2" }));
+    window.history.replaceState(null, "", "/acme/ext-sso/callback?nonce=n-2#session=m2");
+    await completeExtensionSsoCallback("tok", { postSession: vi.fn().mockResolvedValue(SESSION) });
+    expect(hasExtensionSession("acme", "ext-argocd")).toBe(true);
+    expect(hasExtensionSession("acme", "ext-other")).toBe(true);
+    clearExtensionSession("acme", "ext-argocd");
+    expect(hasExtensionSession("acme", "ext-argocd")).toBe(false);
+    expect(hasExtensionSession("acme", "ext-other")).toBe(true);
   });
 });

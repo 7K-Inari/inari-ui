@@ -96,6 +96,13 @@ function markExtensionSession(tenant: string, extensionId: string): void {
   sessions.add(sessionKey(tenant, extensionId));
 }
 
+// Drops one cached session. Used when the server reports that session expired,
+// so the next bootstrap attempt performs a real round-trip instead of
+// resolving against the stale cache entry.
+export function clearExtensionSession(tenant: string, extensionId: string): void {
+  sessions.delete(sessionKey(tenant, extensionId));
+}
+
 export function clearExtensionSessions(tenant?: string): void {
   if (tenant === undefined) {
     sessions.clear();
