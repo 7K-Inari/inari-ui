@@ -25,6 +25,19 @@ type ServerRunView = components["schemas"]["RunView"];
 type ServerStepView = components["schemas"]["StepView"];
 type ServerCreateRunInputBody = components["schemas"]["CreateRunInputBody"];
 
+// W6 template identity fields, ahead of the pinned contract (mirrors the
+// wire extensions in src/api/templates.ts).
+type WireTemplateDetail = ServerTemplateDetail & { scope?: "user" | "platform" };
+type WireTemplateSummary = ServerTemplateSummary & { scope?: "user" | "platform" };
+
+export interface WireRunIdentity {
+  commitIdentity?: { kind: "user" | "platform_app"; provider?: string; login?: string };
+  usedFallback?: boolean;
+  fallbackPolicy?: "platform_app" | "block";
+}
+
+type WireRunView = ServerRunView & WireRunIdentity;
+
 interface M4State {
   uiExtensions: UiExtensionRemoteViewModel[];
   backendExtensions: ServerExtension[];
@@ -124,9 +137,13 @@ export const m4MockControl = {
   reset() {
     state = seedState();
     scaffoldControl.failRuns = false;
+    scaffoldControl.fallbackPolicy = "platform_app";
   },
   failScaffoldRuns() {
     scaffoldControl.failRuns = true;
+  },
+  setFallbackPolicy(policy: "platform_app" | "block") {
+    scaffoldControl.fallbackPolicy = policy;
   },
 };
 
@@ -167,7 +184,7 @@ export const selfExtensionPermissions = [
 
 /* ---- templates / scaffolds ---- */
 
-const templates: ServerTemplateDetail[] = [
+const templates: WireTemplateDetail[] = [
   {
     id: "web-service",
     name: "web-service",
@@ -176,6 +193,7 @@ const templates: ServerTemplateDetail[] = [
       "Golden-path web service: repo, CI pipeline, catalog entry, and tenant RBAC in one flow.",
     tags: ["golden-path", "service"],
     version: "1.4.0",
+    scope: "platform",
     schema: {
       type: "object",
       required: ["description", "port"],
@@ -186,9 +204,26 @@ const templates: ServerTemplateDetail[] = [
       },
     },
   },
+  {
+    id: "personal-site",
+    name: "personal-site",
+    displayName: "Personal Site",
+    description:
+      "User-scope template: commits with the runner's personal git identity.",
+    tags: ["personal"],
+    version: "0.2.0",
+    scope: "user",
+    schema: {
+      type: "object",
+      required: ["description"],
+      properties: {
+        description: { type: "string", title: "Description" },
+      },
+    },
+  },
 ];
 
-export function listTemplateMocks(): ServerTemplateSummary[] {
+export function listTemplateMocks(): WireTemplateSummary[] {
   return templates.map((t) => ({
     id: t.id,
     name: t.name,
@@ -196,10 +231,11 @@ export function listTemplateMocks(): ServerTemplateSummary[] {
     description: t.description,
     tags: t.tags,
     version: t.version,
+    ...(t.scope ? { scope: t.scope } : {}),
   }));
 }
 
-export function findTemplateMock(name: string): ServerTemplateDetail | undefined {
+export function findTemplateMock(name: string): WireTemplateDetail | undefined {
   const t = templates.find((tpl) => tpl.name === name);
   return t ? { ...t } : undefined;
 }
@@ -217,15 +253,22 @@ const RUN_STEP_NAMES = [
 ];
 
 interface ScaffoldState {
-  run: ServerRunView;
+  run: WireRunView;
   polls: number;
 }
 
 interface ScaffoldControlState {
   failRuns: boolean;
+  // Tenant fallback policy for user-scope templates without a connected git
+  // account (W6): platform_app = commit as the platform App (audited);
+  // block = the POST /templates/{name}/runs handler returns 409.
+  fallbackPolicy: "platform_app" | "block";
 }
 
-const scaffoldControl: ScaffoldControlState = { failRuns: false };
+const scaffoldControl: ScaffoldControlState = {
+  failRuns: false,
+  fallbackPolicy: "platform_app",
+};
 
 export function scaffoldMockControl() {
   return scaffoldControl;
@@ -256,10 +299,11 @@ function scaffoldOutputs(run: ServerRunView, serviceName: string) {
 export function createScaffoldRunMock(
   templateName: string,
   body: ServerCreateRunInputBody,
-): ServerRunView {
+  identity: WireRunIdentity = {},
+): WireRunView {
   const template = findTemplateMock(templateName);
   const now = new Date().toISOString();
-  const run: ServerRunView = {
+  const run: WireRunView = {
     id: `scaf-${Math.random().toString(36).slice(2, 10)}`,
     templateName,
     version: template?.version ?? "0.0.0",
@@ -272,12 +316,13 @@ export function createScaffoldRunMock(
     createdBy: "console-user",
     createdAt: now,
     updatedAt: now,
+    ...identity,
   };
   state.scaffoldRuns.push({ run, polls: 0 });
   return { ...run };
 }
 
-export function pollScaffoldRunMock(id: string): ServerRunView | undefined {
+export function pollScaffoldRunMock(id: string): WireRunView | undefined {
   const entry = state.scaffoldRuns.find((r) => r.run.id === id);
   if (!entry) return undefined;
   const { run } = entry;

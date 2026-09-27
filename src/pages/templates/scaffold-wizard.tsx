@@ -4,6 +4,7 @@ import { CheckCircle2, Circle, Loader2, XCircle } from "lucide-react";
 
 import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
+import { listGitConnections } from "@/api/git-connections";
 import {
   cancelScaffoldRun,
   createScaffoldRun,
@@ -14,6 +15,11 @@ import {
 } from "@/api/templates";
 import { useAuth } from "@/auth/auth-context";
 import { SchemaForm, type SchemaFormHandle } from "@/components/schema-form/schema-form";
+import { FallbackBlockedError } from "@/components/templates/fallback-blocked-error";
+import {
+  RunIdentityBadge,
+  RunIdentityNotice,
+} from "@/components/templates/run-identity-notice";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -136,6 +142,7 @@ function ScaffoldStatus({ scaffoldId }: { scaffoldId: string }) {
     return (
       <div className="flex flex-col items-center gap-3 py-6 text-center">
         <p className="font-medium text-destructive">Scaffold failed</p>
+        <RunIdentityBadge run={run} />
         {(run.error ?? run.steps.find((s) => s.error)?.error) && (
           <p className="text-sm text-muted-foreground">
             {run.error ?? run.steps.find((s) => s.error)?.error}
@@ -172,6 +179,7 @@ function ScaffoldStatus({ scaffoldId }: { scaffoldId: string }) {
             : `Scaffolding — ${run.phase}`}
       </p>
       <Badge variant={terminal ? "success" : "warning"}>{run.phase}</Badge>
+      <RunIdentityBadge run={run} />
       <StepList run={run} />
       {actionError && (
         <p className="text-sm text-destructive" role="alert">
@@ -224,10 +232,18 @@ export function ScaffoldWizardPage() {
   const [name, setName] = React.useState("");
   const [nameError, setNameError] = React.useState<string | null>(null);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
+  const [fallbackBlock, setFallbackBlock] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
   const [run, setRun] = React.useState<ScaffoldRunViewModel | null>(null);
   const [formData, setFormData] = React.useState<Record<string, unknown>>({});
   const formRef = React.useRef<SchemaFormHandle>(null);
+
+  const isUserScope = template.data?.scope === "user";
+  const gitConnections = useAsyncResource(
+    (t) => listGitConnections(t, tenant),
+    [tenant],
+    { enabled: isUserScope },
+  );
 
   if (template.error) {
     return (
@@ -260,6 +276,7 @@ export function ScaffoldWizardPage() {
   const submit = async () => {
     setSubmitting(true);
     setSubmitError(null);
+    setFallbackBlock(null);
     try {
       const created = await createScaffoldRun(token, tenant, tpl.name, {
         displayName: name,
@@ -268,9 +285,15 @@ export function ScaffoldWizardPage() {
       setRun(created);
       setStep(2);
     } catch (err) {
-      setSubmitError(
-        err instanceof ApiError ? err.message : "Failed to start the scaffold",
-      );
+      // 409 = fallback-block: the template needs a personal git connection
+      // and the tenant fallback policy blocks the platform App identity.
+      if (err instanceof ApiError && err.status === 409) {
+        setFallbackBlock(err.message);
+      } else {
+        setSubmitError(
+          err instanceof ApiError ? err.message : "Failed to start the scaffold",
+        );
+      }
     } finally {
       setSubmitting(false);
     }
@@ -304,6 +327,11 @@ export function ScaffoldWizardPage() {
               <dt className="text-muted-foreground">RBAC group</dt>
               <dd className="font-mono text-xs">tenant-{tenant}</dd>
             </dl>
+            <RunIdentityNotice
+              scope={tpl.scope}
+              connections={gitConnections.data?.connections}
+              tenant={tenant}
+            />
             <div className="space-y-1.5">
               <Label htmlFor="service-name">Service name</Label>
               <Input
@@ -351,9 +379,17 @@ export function ScaffoldWizardPage() {
               <dt className="text-muted-foreground">Namespace</dt>
               <dd>{tenant}</dd>
             </dl>
+            <RunIdentityNotice
+              scope={tpl.scope}
+              connections={gitConnections.data?.connections}
+              tenant={tenant}
+            />
             <pre className="max-h-72 overflow-auto rounded-md bg-muted p-3 font-mono text-xs">
               {JSON.stringify(formData, null, 2)}
             </pre>
+            {fallbackBlock !== null && (
+              <FallbackBlockedError tenant={tenant} detail={fallbackBlock} />
+            )}
             {submitError && (
               <p className="text-sm text-destructive" role="alert">
                 {submitError}

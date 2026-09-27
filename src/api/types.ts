@@ -36,6 +36,26 @@ export interface Capability {
 
 export type CatalogSource = "curated" | "discovered" | "platform" | "template";
 
+// Template identity scope (W6): "user" templates commit as the runner's
+// per-user git social login; "platform" templates commit as the platform
+// App/bot. Absent on the wire means the pre-W6 behavior (platform).
+export type TemplateScope = "user" | "platform";
+
+export type CommitIdentityKind = "user" | "platform_app";
+
+// Metadata-only: provider/login identify the committer; tokens never leave
+// the server.
+export interface CommitIdentity {
+  kind: CommitIdentityKind;
+  provider: string | null;
+  login: string | null;
+}
+
+// Tenant fallback policy for user-scope templates without a connected git
+// account: platform_app = fall back to the platform App (audited);
+// block = reject with 409.
+export type TemplateFallbackPolicy = "platform_app" | "block";
+
 // Sort values accepted by the browse API (whitelisted server-side).
 export type CatalogSort = "name" | "name-desc" | "newest" | "oldest";
 
@@ -50,6 +70,8 @@ export interface CatalogItemSummary {
   createdAt: string | null;
   latestVersion: string | null;
   latestChannel: string | null;
+  // Present only when the server payload carries a template identity scope.
+  scope?: TemplateScope;
 }
 
 export interface CatalogVersion {

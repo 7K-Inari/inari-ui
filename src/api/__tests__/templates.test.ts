@@ -16,6 +16,14 @@ import { mockServer } from "@/mocks/server";
 
 type RunView = components["schemas"]["RunView"];
 
+// W6 identity fields, ahead of the pinned contract (mirrors the wire
+// extensions in src/api/templates.ts).
+type WireRunView = RunView & {
+  commitIdentity?: { kind?: string; provider?: string; login?: string } | null;
+  usedFallback?: boolean;
+  fallbackPolicy?: string | null;
+};
+
 beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
 afterEach(() => {
   mockServer.resetHandlers();
@@ -84,6 +92,62 @@ describe("mapRunView", () => {
     expect(run.steps).toEqual([]);
     expect(run.outputs.repoUrl).toBeNull();
   });
+
+  it("keeps createdBy and defaults identity fields when the wire omits them", () => {
+    const run = mapRunView(runView());
+    expect(run.createdBy).toBe("user@example.com");
+    expect(run.commitIdentity).toBeNull();
+    expect(run.usedFallback).toBe(false);
+    expect(run.fallbackPolicy).toBeNull();
+  });
+
+  it("maps W6 identity metadata (commitIdentity, usedFallback, fallbackPolicy)", () => {
+    const wire: WireRunView = {
+      ...runView(),
+      commitIdentity: { kind: "platform_app" },
+      usedFallback: true,
+      fallbackPolicy: "platform_app",
+    };
+    const run = mapRunView(wire);
+    expect(run.commitIdentity).toEqual({
+      kind: "platform_app",
+      provider: null,
+      login: null,
+    });
+    expect(run.usedFallback).toBe(true);
+    expect(run.fallbackPolicy).toBe("platform_app");
+  });
+
+  it("maps a user commit identity with provider and login", () => {
+    const wire: WireRunView = {
+      ...runView(),
+      commitIdentity: { kind: "user", provider: "github", login: "ada-dev" },
+    };
+    const run = mapRunView(wire);
+    expect(run.commitIdentity).toEqual({
+      kind: "user",
+      provider: "github",
+      login: "ada-dev",
+    });
+    expect(run.usedFallback).toBe(false);
+  });
+
+  it("drops malformed identity metadata and never carries token fields", () => {
+    const run = mapRunView({
+      ...runView(),
+      commitIdentity: { kind: "user", login: 42, token: "gho_secret" },
+      usedFallback: "yes",
+      fallbackPolicy: "sometimes",
+    } as unknown as RunView);
+    expect(run.commitIdentity).toEqual({
+      kind: "user",
+      provider: null,
+      login: null,
+    });
+    expect(run.usedFallback).toBe(false);
+    expect(run.fallbackPolicy).toBeNull();
+    expect(JSON.stringify(run)).not.toContain("gho_secret");
+  });
 });
 
 describe("templates api (canonical endpoints)", () => {
@@ -91,6 +155,33 @@ describe("templates api (canonical endpoints)", () => {
     const templates = await listTemplates("tok", "acme");
     expect(templates[0].name).toBe("web-service");
     expect(templates[0].tags).toContain("golden-path");
+  });
+
+  it("defaults template scope to platform when the wire omits it", async () => {
+    const templates = await listTemplates("tok", "acme");
+    expect(templates[0].scope).toBe("platform");
+  });
+
+  it("maps a user template scope from the wire", async () => {
+    mockServer.use(
+      http.get("*/api/v1/tenants/:org/templates", () =>
+        HttpResponse.json({
+          templates: [
+            {
+              id: "personal-site",
+              name: "personal-site",
+              displayName: "Personal Site",
+              description: "Commits as your git identity.",
+              tags: [],
+              version: "0.1.0",
+              scope: "user",
+            },
+          ],
+        }),
+      ),
+    );
+    const templates = await listTemplates("tok", "acme");
+    expect(templates[0].scope).toBe("user");
   });
 
   it("gets a template with a typed schema via GET /templates/{name}", async () => {

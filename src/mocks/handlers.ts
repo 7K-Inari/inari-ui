@@ -66,11 +66,13 @@ import {
   listRolloutTargetsMock,
   listTemplateMocks,
   listUiExtensionMocks,
+  type WireRunIdentity,
   pollRolloutMock,
   pollScaffoldRunMock,
   retryScaffoldRunMock,
   removeUiExtensionMock,
   rollbackRolloutMock,
+  scaffoldMockControl,
   selfExtensionPermissions,
   setAgentChannelMock,
 } from "@/mocks/fixtures/m4";
@@ -834,7 +836,8 @@ export const handlers = [
       values?: Record<string, unknown>;
       version?: string;
     };
-    if (!findTemplateMock(params.name as string)) {
+    const template = findTemplateMock(params.name as string);
+    if (!template) {
       return humaError(404, "unknown template");
     }
     if (body.values === undefined || typeof body.values !== "object") {
@@ -843,11 +846,40 @@ export const handlers = [
     if (body.displayName && !/^[a-z0-9][a-z0-9-]*$/.test(body.displayName)) {
       return humaError(422, "displayName must be lowercase alphanumeric with dashes");
     }
-    const run = createScaffoldRunMock(params.name as string, {
-      values: body.values,
-      ...(body.displayName !== undefined ? { displayName: body.displayName } : {}),
-      ...(body.version !== undefined ? { version: body.version } : {}),
-    });
+    // W6 identity resolution: user-scope templates commit as the runner's
+    // connected git account; without one, the tenant fallback policy decides
+    // between the audited platform App fallback and a 409 fallback-block.
+    const identity: WireRunIdentity = {};
+    if (template.scope === "user") {
+      const connection = gitConnectionsFor(params.org as string)[0];
+      if (connection) {
+        identity.commitIdentity = {
+          kind: "user",
+          provider: connection.provider,
+          login: connection.login,
+        };
+      } else if (scaffoldMockControl().fallbackPolicy === "block") {
+        return humaError(
+          409,
+          "template requires a personal git connection and the tenant fallback policy blocks the platform App identity",
+        );
+      } else {
+        identity.commitIdentity = { kind: "platform_app" };
+        identity.usedFallback = true;
+        identity.fallbackPolicy = "platform_app";
+      }
+    } else {
+      identity.commitIdentity = { kind: "platform_app" };
+    }
+    const run = createScaffoldRunMock(
+      params.name as string,
+      {
+        values: body.values,
+        ...(body.displayName !== undefined ? { displayName: body.displayName } : {}),
+        ...(body.version !== undefined ? { version: body.version } : {}),
+      },
+      identity,
+    );
     return HttpResponse.json({ run }, { status: 200 });
   }),
 

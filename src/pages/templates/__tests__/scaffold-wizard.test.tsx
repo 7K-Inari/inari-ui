@@ -56,10 +56,9 @@ describe("TemplateListPage", () => {
     renderList();
     expect(await screen.findByText("Web Service")).toBeInTheDocument();
     expect(screen.getByText("golden-path")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Scaffold" })).toHaveAttribute(
-      "href",
-      "/acme/templates/web-service/scaffold",
-    );
+    expect(
+      screen.getAllByRole("link", { name: "Scaffold" })[0],
+    ).toHaveAttribute("href", "/acme/templates/web-service/scaffold");
   });
 });
 
