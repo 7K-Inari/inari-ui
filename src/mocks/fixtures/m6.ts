@@ -68,6 +68,28 @@ export interface PolicyMockState {
   notificationEndpoints: Record<string, NotificationEndpoint[]>;
   // Domains claimed across all orgs, for login routing 409s.
   claimedDomains: Record<string, string>;
+  gitConnections: Record<string, MockGitConnection[]>;
+  gitProviders: Record<string, MockGitProvider[]>;
+  gitAuthorizeError: { status: number; detail: string } | null;
+  gitDisconnectError: { status: number; detail: string } | null;
+}
+
+// M1.W5: usergit wire shapes (per-user Git connections). Mirrors the W4
+// server contract; metadata-only — tokens never appear here. Swap for
+// generated types after contract sync.
+export interface MockGitConnection {
+  provider: string;
+  login: string;
+  scopes?: string[];
+  apiBase?: string | null;
+  createdAt: string;
+  lastUsedAt?: string | null;
+}
+
+export interface MockGitProvider {
+  id: string;
+  enabled: boolean;
+  apiBase?: string | null;
 }
 
 export const baselinePack: PolicyPack = {
@@ -367,6 +389,27 @@ function seedState(): PolicyMockState {
     },
     // globex has already claimed example.com; acme starts with no IdP.
     claimedDomains: { "example.com": "globex" },
+    gitConnections: {
+      acme: [
+        {
+          provider: "github",
+          login: "ada-dev",
+          scopes: ["repo", "read:org"],
+          createdAt: iso(now - 20 * 86_400_000),
+          lastUsedAt: iso(now - 3_600_000),
+        },
+      ],
+    },
+    gitProviders: {
+      acme: [
+        { id: "github", enabled: true },
+        { id: "gitlab", enabled: false },
+        { id: "forgejo", enabled: false },
+      ],
+      globex: [{ id: "github", enabled: true }],
+    },
+    gitAuthorizeError: null,
+    gitDisconnectError: null,
   };
 }
 
@@ -496,6 +539,40 @@ export function setGitConfigMock(
   };
   state.gitConfigs[org] = config;
   return config;
+}
+
+// ---- M1.W5: per-user git connections ----
+
+export function gitConnectionsFor(org: string): MockGitConnection[] {
+  return state.gitConnections[org] ?? [];
+}
+
+export function gitProvidersFor(org: string): MockGitProvider[] {
+  return state.gitProviders[org] ?? [];
+}
+
+export function connectGitProviderMock(
+  org: string,
+  provider: string,
+): MockGitConnection {
+  const existing = gitConnectionsFor(org).find((c) => c.provider === provider);
+  if (existing) return existing;
+  const connection: MockGitConnection = {
+    provider,
+    login: `${provider}-user`,
+    scopes: ["repo"],
+    createdAt: new Date().toISOString(),
+  };
+  state.gitConnections[org] = [...gitConnectionsFor(org), connection];
+  return connection;
+}
+
+export function disconnectGitProviderMock(org: string, provider: string): boolean {
+  const before = gitConnectionsFor(org).length;
+  state.gitConnections[org] = gitConnectionsFor(org).filter(
+    (c) => c.provider !== provider,
+  );
+  return gitConnectionsFor(org).length < before;
 }
 
 // ---- M6.W2: org profile / members / teams / visibility / tokens ----
