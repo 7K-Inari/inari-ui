@@ -142,6 +142,7 @@ function ScaffoldStatus({ scaffoldId }: { scaffoldId: string }) {
     return (
       <div className="flex flex-col items-center gap-3 py-6 text-center">
         <p className="font-medium text-destructive">Scaffold failed</p>
+        <RunIdentityBadge run={run} />
         {(run.error ?? run.steps.find((s) => s.error)?.error) && (
           <p className="text-sm text-muted-foreground">
             {run.error ?? run.steps.find((s) => s.error)?.error}

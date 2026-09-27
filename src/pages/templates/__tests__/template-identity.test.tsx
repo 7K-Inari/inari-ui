@@ -214,6 +214,23 @@ describe("scaffold run identity and fallback", () => {
     expect(screen.getByText(/The run is audited\./)).toBeInTheDocument();
   });
 
+  it("shows the audited fallback identity even when the run fails", async () => {
+    const user = userEvent.setup();
+    currentTenant = "globex";
+    m4MockControl.failScaffoldRuns();
+    renderWizard("personal-site");
+    await reachReviewStep(user);
+    await user.click(screen.getByRole("button", { name: "Scaffold" }));
+
+    expect(
+      await screen.findByText("Scaffold failed", {}, { timeout: 10_000 }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Commits as")).toBeInTheDocument();
+    expect(screen.getByText("Platform App")).toBeInTheDocument();
+    expect(screen.getByText("fallback")).toBeInTheDocument();
+    expect(screen.getByText(/The run is audited\./)).toBeInTheDocument();
+  }, 15_000);
+
   it("never renders token material in the identity UI", async () => {
     const user = userEvent.setup();
     renderWizard("personal-site");
