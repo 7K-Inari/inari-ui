@@ -1,9 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
-import {
-  getExtensionSessionState,
-  postExtensionSession,
-} from "@/api/extension-session";
+import { postExtensionSession } from "@/api/extension-session";
 import { mockControl } from "@/mocks/fixtures";
 import { mockServer } from "@/mocks/server";
 
@@ -42,18 +39,5 @@ describe("extension-session api", () => {
       state: "active",
       expiresAt: "2026-01-01T01:00:00Z",
     });
-  });
-
-  it("gets the extension session state", async () => {
-    const { http, HttpResponse } = await import("msw");
-    mockServer.use(
-      http.get("*/api/v1/tenants/:org/extensions/:id/session", () =>
-        HttpResponse.json({
-          session: { extensionId: "ext-1", state: "active", expiresAt: null },
-        }),
-      ),
-    );
-    const session = await getExtensionSessionState("tok", "acme", "ext-1");
-    expect(session).toEqual({ extensionId: "ext-1", state: "active", expiresAt: null });
   });
 });

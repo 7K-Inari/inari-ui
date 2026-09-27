@@ -45,18 +45,6 @@ function toSessionViewModel(w: WireExtensionSession): ExtensionSessionViewModel 
   };
 }
 
-export async function getExtensionSessionState(
-  token: string | undefined,
-  tenant: string,
-  extensionId: string,
-): Promise<ExtensionSessionViewModel> {
-  const res = await apiFetch<WireExtensionSessionOutputBody>(
-    `/tenants/${encodeURIComponent(resolveTenant(tenant))}/extensions/${encodeURIComponent(extensionId)}/session`,
-    { token },
-  );
-  return toSessionViewModel(res.session);
-}
-
 // Hands freshly-bootstrapped third-party session material to the server. The
 // material must be used for this call only — never stored or logged.
 export async function postExtensionSession(

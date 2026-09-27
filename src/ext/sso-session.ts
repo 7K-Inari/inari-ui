@@ -68,7 +68,11 @@ export async function withExtensionSessionRetry<T>(
   } catch (err) {
     if (classifyExtensionError(err) !== "session") throw toExtensionAuthError(err);
   }
-  await options.reauth();
+  try {
+    await options.reauth();
+  } catch (err) {
+    throw toExtensionAuthError(err);
+  }
   try {
     return await action();
   } catch (err) {

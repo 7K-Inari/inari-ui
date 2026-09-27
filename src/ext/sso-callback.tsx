@@ -49,8 +49,12 @@ export function ExtensionSsoCallbackPage() {
     });
   }, []);
 
+  const canRetry = React.useMemo(
+    () => error !== null && peekPendingSso()?.ssoLoginBaseUrl !== undefined,
+    [error],
+  );
+
   if (error) {
-    const canRetry = peekPendingSso()?.ssoLoginBaseUrl !== undefined;
     return (
       <div className="mx-auto mt-16 max-w-md">
         <ExtensionAuthErrorNotice error={error} onRetry={canRetry ? retry : undefined} />
