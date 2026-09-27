@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import type { CatalogViewMode } from "@/components/catalog/catalog-filter-bar";
 import { CatalogFilterBar } from "@/components/catalog/catalog-filter-bar";
+import { TemplateScopeBadge } from "@/components/templates/template-scope-badge";
 import { CatalogCardSlots } from "@/ext/slots";
 import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
@@ -193,6 +194,12 @@ export function CatalogBrowsePage() {
                       <Badge variant={sourceBadge(item.source).variant}>
                         {sourceBadge(item.source).label}
                       </Badge>
+                      {item.scope && (
+                        <>
+                          {" "}
+                          <TemplateScopeBadge scope={item.scope} />
+                        </>
+                      )}
                     </td>
                     <td className="px-4 py-2">{item.category || "—"}</td>
                     <td className="px-4 py-2">
@@ -253,6 +260,7 @@ function CatalogCard({ item, tenant }: { item: CatalogItemSummary; tenant: strin
         <CardDescription>{item.description}</CardDescription>
       </CardHeader>
       <CardContent className="mt-auto flex flex-wrap items-center gap-2 pt-0 text-xs text-muted-foreground">
+        {item.scope && <TemplateScopeBadge scope={item.scope} />}
         {item.category && <Badge variant="muted">{item.category}</Badge>}
         {item.latestVersion ? (
           <>

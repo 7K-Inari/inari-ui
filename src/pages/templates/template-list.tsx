@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 
 import { listTemplates } from "@/api/templates";
 import { useAsyncResource } from "@/api/hooks";
+import { TemplateScopeBadge } from "@/components/templates/template-scope-badge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -53,6 +54,7 @@ export function TemplateListPage() {
             </CardHeader>
             <CardContent className="mt-auto flex items-center justify-between gap-2 pt-0">
               <div className="flex flex-wrap gap-1">
+                <TemplateScopeBadge scope={template.scope} />
                 {template.tags.map((tag) => (
                   <Badge key={tag} variant="muted">
                     {tag}

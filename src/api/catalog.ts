@@ -22,6 +22,18 @@ type ServerCatalogItem = components["schemas"]["ItemView"];
 type ListCatalogResponse = components["schemas"]["ListCatalogOutputBody"];
 type CatalogItemResponse = components["schemas"]["ItemOutputBody"];
 
+// TODO(contract-sync): the pinned OpenAPI snapshot does not yet include the
+// W6 template identity scope on ItemView; mirror the W6 contract here until
+// `npm run sync:api -- <w6-server-version>` lands.
+interface WireItemScopeField {
+  scope?: string;
+}
+
+function wireScope(i: ServerCatalogItem): "user" | "platform" | undefined {
+  const scope = (i as ServerCatalogItem & WireItemScopeField).scope;
+  return scope === "user" || scope === "platform" ? scope : undefined;
+}
+
 function mapVersion(v: ServerCatalogItemVersion): CatalogVersion {
   return {
     version: v.version,
@@ -45,6 +57,7 @@ function mapItem(i: ServerCatalogItem): CatalogItemSummary {
     createdAt: i.createdAt ?? null,
     latestVersion: latest?.version ?? null,
     latestChannel: latest?.channel ?? null,
+    ...(wireScope(i) ? { scope: wireScope(i) } : {}),
   };
 }
 

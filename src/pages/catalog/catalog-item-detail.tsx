@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { SchemaForm } from "@/components/schema-form/schema-form";
+import { TemplateScopeBadge } from "@/components/templates/template-scope-badge";
 import { applyHintsToSchema, hintsToUiSchema } from "@/components/schema-form/ui-hints";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
@@ -52,6 +53,7 @@ export function CatalogItemDetailPage() {
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-semibold tracking-tight">{item.displayName}</h1>
             <Badge variant="secondary">{item.source}</Badge>
+            {item.scope && <TemplateScopeBadge scope={item.scope} />}
             {item.approvalPolicy !== "auto" && (
               <Badge variant="warning">Approval required</Badge>
             )}

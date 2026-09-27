@@ -1,5 +1,10 @@
 import type { components } from "@/api/__generated__/schema";
 import { apiFetch } from "@/api/client";
+import type {
+  CommitIdentity,
+  TemplateFallbackPolicy,
+  TemplateScope,
+} from "@/api/types";
 import { resolveTenant } from "@/tenant/current";
 
 // Scaffolding/templates (§7.3 #5): repo + pipeline + catalog entry + tenant
@@ -18,6 +23,51 @@ type CreateRunOutputBody = components["schemas"]["CreateRunOutputBody"];
 type GetRunOutputBody = components["schemas"]["GetRunOutputBody"];
 type RetryRunOutputBody = components["schemas"]["RetryRunOutputBody"];
 
+// TODO(contract-sync): the pinned OpenAPI snapshot does not yet include the
+// W6 template identity fields (scope on TemplateSummary/TemplateDetail;
+// commitIdentity/usedFallback/fallbackPolicy on RunView). The wire shapes
+// below mirror the W6 contract; after `npm run sync:api -- <w6-server-version>`
+// replace them with components["schemas"][...] imports from
+// @/api/__generated__/schema.
+interface WireTemplateScopeField {
+  scope?: string;
+}
+
+interface WireCommitIdentity {
+  kind?: string;
+  provider?: string;
+  login?: string;
+}
+
+interface WireRunIdentityFields {
+  commitIdentity?: WireCommitIdentity | null;
+  usedFallback?: boolean;
+  fallbackPolicy?: string | null;
+}
+
+function mapScope(value: string | undefined): TemplateScope {
+  return value === "user" ? "user" : "platform";
+}
+
+function mapCommitIdentity(
+  value: WireCommitIdentity | null | undefined,
+): CommitIdentity | null {
+  if (!value || (value.kind !== "user" && value.kind !== "platform_app")) {
+    return null;
+  }
+  return {
+    kind: value.kind,
+    provider: typeof value.provider === "string" ? value.provider : null,
+    login: typeof value.login === "string" ? value.login : null,
+  };
+}
+
+function mapFallbackPolicy(
+  value: string | null | undefined,
+): TemplateFallbackPolicy | null {
+  return value === "platform_app" || value === "block" ? value : null;
+}
+
 export interface TemplateSummaryViewModel {
   id: string;
   name: string;
@@ -25,6 +75,7 @@ export interface TemplateSummaryViewModel {
   description: string;
   tags: string[];
   version: string;
+  scope: TemplateScope;
 }
 
 export interface TemplateDetailViewModel extends TemplateSummaryViewModel {
@@ -54,6 +105,10 @@ export interface ScaffoldRunViewModel {
   steps: ScaffoldStepViewModel[];
   outputs: ScaffoldOutputs;
   error: string | null;
+  createdBy: string;
+  commitIdentity: CommitIdentity | null;
+  usedFallback: boolean;
+  fallbackPolicy: TemplateFallbackPolicy | null;
   createdAt: string;
   updatedAt: string;
   terminal: boolean;
@@ -74,6 +129,7 @@ function mapTemplateSummary(t: ServerTemplateSummary): TemplateSummaryViewModel 
     description: t.description,
     tags: t.tags ?? [],
     version: t.version,
+    scope: mapScope((t as ServerTemplateSummary & WireTemplateScopeField).scope),
   };
 }
 
@@ -89,6 +145,7 @@ function stringOrNull(value: unknown): string | null {
 
 export function mapRunView(run: RunView): ScaffoldRunViewModel {
   const outputs = asRecord(run.outputs);
+  const identity = run as RunView & WireRunIdentityFields;
   const failed = run.phase === "failed" || Boolean(run.error);
   const terminal =
     failed || run.phase === "completed" || run.phase === "cancelled";
@@ -110,6 +167,10 @@ export function mapRunView(run: RunView): ScaffoldRunViewModel {
       catalogItemId: stringOrNull(outputs.catalogItemId),
     },
     error: run.error ?? null,
+    createdBy: run.createdBy,
+    commitIdentity: mapCommitIdentity(identity.commitIdentity),
+    usedFallback: identity.usedFallback === true,
+    fallbackPolicy: mapFallbackPolicy(identity.fallbackPolicy),
     createdAt: run.createdAt,
     updatedAt: run.updatedAt,
     terminal,
