@@ -1,4 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  DownstreamDeniedError,
+  ExtensionFailureError,
+  ExchangeFailedError,
+  FgaDeniedError,
+  SessionExpiredError,
+} from "@7k-inari/ui-plugin-sdk";
 
 import { ApiError } from "@/api/client";
 import type { ExtensionSessionViewModel } from "@/api/extension-session";
@@ -64,6 +71,18 @@ describe("classifyExtensionError", () => {
   it("classifies anything else as unknown", () => {
     expect(classifyExtensionError(new ApiError(500, "boom"))).toBe("unknown");
     expect(classifyExtensionError(new Error("boom"))).toBe("unknown");
+  });
+
+  it("maps SDK invokeExtension error kinds onto the shell taxonomy", () => {
+    expect(classifyExtensionError(new SessionExpiredError(401, "expired"))).toBe("session");
+    expect(classifyExtensionError(new ExchangeFailedError(500, "exchange failed"))).toBe(
+      "session",
+    );
+    expect(classifyExtensionError(new DownstreamDeniedError(403, "rbac: denied"))).toBe(
+      "downstream-denied",
+    );
+    expect(classifyExtensionError(new FgaDeniedError(403, "fga denied"))).toBe("policy");
+    expect(classifyExtensionError(new ExtensionFailureError(500, "boom"))).toBe("unknown");
   });
 });
 

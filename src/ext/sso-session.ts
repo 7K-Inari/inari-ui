@@ -1,3 +1,5 @@
+import { isExtensionApiError } from "@7k-inari/ui-plugin-sdk";
+
 import { ApiError } from "@/api/client";
 import {
   postExtensionSession,
@@ -37,6 +39,22 @@ export class ExtensionAuthError extends Error {
 }
 
 export function classifyExtensionError(err: unknown): ExtensionErrorKind {
+  // SDK ApiClient errors (0.1.7): the SDK owns wire parsing and typed-error
+  // classification for `invokeExtension`; the shell only maps its kinds onto
+  // the shell-side rendering taxonomy.
+  if (isExtensionApiError(err)) {
+    switch (err.kind) {
+      case "session-expired":
+      case "exchange-failed":
+        return "session";
+      case "downstream-denied":
+        return "downstream-denied";
+      case "fga-denied":
+        return "policy";
+      default:
+        return "unknown";
+    }
+  }
   if (err instanceof ApiError) {
     if (err.code && SESSION_ERROR_CODES.has(err.code)) return "session";
     if (err.code === DOWNSTREAM_DENIED_CODE) return "downstream-denied";
@@ -51,6 +69,9 @@ function toExtensionAuthError(err: unknown): ExtensionAuthError {
   const kind = classifyExtensionError(err);
   if (err instanceof ApiError) {
     return new ExtensionAuthError(kind, err.message, err.status, err.remediation);
+  }
+  if (isExtensionApiError(err)) {
+    return new ExtensionAuthError(kind, err.message, err.status);
   }
   return new ExtensionAuthError(kind, err instanceof Error ? err.message : String(err));
 }

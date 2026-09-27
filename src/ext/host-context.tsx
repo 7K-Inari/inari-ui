@@ -17,12 +17,13 @@ import {
   beginExtensionSsoRedirect,
   clearExtensionSession,
   hasExtensionSession,
+  withExtensionSessionRetry,
 } from "@/ext/sso-session";
 
 // Shell-side session bootstrap seam for `oidc-sso-session` extensions (W4).
-// The SDK ApiClient (W4, parallel) calls `bootstrapSession` on typed
-// session-expired responses; the shell owns the zero-prompt round-trip and
-// never exposes session material to extension code.
+// The SDK ApiClient (0.1.7) owns wire parsing and typed-error classification
+// for `invokeExtension`; the shell owns the zero-prompt round-trip, the
+// retry-once policy, and never exposes session material to extension code.
 export interface ExtensionSessionState {
   hasSession: (extensionId: string) => boolean;
   // Starts the SSO round-trip. On a cache hit this resolves immediately;
@@ -33,6 +34,14 @@ export interface ExtensionSessionState {
     extensionId: string,
     options: { ssoLoginBaseUrl: string; returnTo?: string; force?: boolean },
   ) => Promise<void>;
+  // Runs an extension action (typically an SDK `invokeExtension` call). On
+  // first use without a cached session this bootstraps first; on a typed
+  // session-expired error it force-re-bootstraps and retries exactly once.
+  runWithSession: <T>(
+    extensionId: string,
+    options: { ssoLoginBaseUrl: string; returnTo?: string },
+    action: () => Promise<T>,
+  ) => Promise<T>;
 }
 
 const ExtensionSessionContext = React.createContext<ExtensionSessionState | null>(null);
@@ -43,11 +52,20 @@ export function useExtensionSession(): ExtensionSessionState {
   return ctx;
 }
 
+// SlotContext passed to Page slot components: the SDK contract plus the
+// shell-owned extension-session seam (bootstrap + retry-once) so extensions
+// can run session-aware actions without reimplementing them.
+export type HostSlotContext = SlotContext & { extensionSession: ExtensionSessionState };
+
 // Builds the SlotContext passed to Page slot components.
-export function useSdkSlotContext(): SlotContext {
+export function useSdkSlotContext(): HostSlotContext {
   const auth = useSdkAuth();
   const tenant = useSdkTenant();
-  return React.useMemo(() => ({ auth, tenant }), [auth, tenant]);
+  const extensionSession = useExtensionSession();
+  return React.useMemo(
+    () => ({ auth, tenant, extensionSession }),
+    [auth, tenant, extensionSession],
+  );
 }
 
 // Bridges the shell's auth/tenant state into the SDK host contexts so
@@ -103,30 +121,40 @@ export function ExtensionHostProviders({ children }: { children: React.ReactNode
     };
   }, [tenant]);
 
-  const extensionSession = React.useMemo<ExtensionSessionState>(
-    () => ({
+  const extensionSession = React.useMemo<ExtensionSessionState>(() => {
+    const bootstrap: ExtensionSessionState["bootstrapSession"] = (extensionId, options) => {
+      if (tenant.tenant === ALL_TENANTS) {
+        return Promise.reject(new Error("extension sessions require a specific tenant context"));
+      }
+      if (options.force) clearExtensionSession(tenant.tenant, extensionId);
+      if (hasExtensionSession(tenant.tenant, extensionId)) return Promise.resolve();
+      beginExtensionSsoRedirect({
+        tenant: tenant.tenant,
+        extensionId,
+        ssoLoginBaseUrl: options.ssoLoginBaseUrl,
+        returnTo: options.returnTo ?? `${window.location.pathname}${window.location.search}`,
+      });
+      // Real navigation unloads the page, so this promise never settles. If
+      // the session is already observable (test doubles, same-tab completion)
+      // resolve instead of hanging the caller.
+      if (hasExtensionSession(tenant.tenant, extensionId)) return Promise.resolve();
+      return new Promise<void>(() => {});
+    };
+    return {
       hasSession: (extensionId) =>
         tenant.tenant !== ALL_TENANTS && hasExtensionSession(tenant.tenant, extensionId),
-      bootstrapSession: (extensionId, options) => {
-        if (tenant.tenant === ALL_TENANTS) {
-          return Promise.reject(
-            new Error("extension sessions require a specific tenant context"),
-          );
+      bootstrapSession: bootstrap,
+      runWithSession: (extensionId, options, action) => {
+        if (tenant.tenant !== ALL_TENANTS && !hasExtensionSession(tenant.tenant, extensionId)) {
+          // First use: bootstrap before the action ever runs (navigates away).
+          return bootstrap(extensionId, options).then(action);
         }
-        if (options.force) clearExtensionSession(tenant.tenant, extensionId);
-        if (hasExtensionSession(tenant.tenant, extensionId)) return Promise.resolve();
-        beginExtensionSsoRedirect({
-          tenant: tenant.tenant,
-          extensionId,
-          ssoLoginBaseUrl: options.ssoLoginBaseUrl,
-          returnTo:
-            options.returnTo ?? `${window.location.pathname}${window.location.search}`,
+        return withExtensionSessionRetry(action, {
+          reauth: () => bootstrap(extensionId, { ...options, force: true }),
         });
-        return new Promise<void>(() => {});
       },
-    }),
-    [tenant],
-  );
+    };
+  }, [tenant]);
 
   return (
     <SdkAuthProvider value={sdkAuth}>
