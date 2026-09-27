@@ -88,6 +88,11 @@ import {
   exemptionsFor,
   getOrgMock,
   gitConfigFor,
+  connectGitProviderMock,
+  disconnectGitProviderMock,
+  gitConnectionsFor,
+  gitProvidersFor,
+  policyMockControl,
   listOrgsMock,
   orgMembersFor,
   packsFor,
@@ -1086,6 +1091,42 @@ export const handlers = [
     }
     const config = setGitConfigMock(params.org as string, body);
     void config;
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // ---- M1.W5: per-user git connections (W4 usergit endpoints) ----
+  http.get(`${BASE}/git-connections`, ({ params }) => {
+    const org = params.org as string;
+    return HttpResponse.json({
+      connections: gitConnectionsFor(org),
+      providers: gitProvidersFor(org),
+    });
+  }),
+
+  http.get(`${BASE}/git-connections/:provider/authorize`, ({ params }) => {
+    const org = params.org as string;
+    const provider = params.provider as string;
+    const failure = policyMockControl.getState().gitAuthorizeError;
+    if (failure) return humaError(failure.status, failure.detail);
+    const known = gitProvidersFor(org).find((p) => p.id === provider);
+    if (!known) return humaError(404, "git provider not configured");
+    if (!known.enabled) {
+      return humaError(403, `git provider "${provider}" is disabled`);
+    }
+    connectGitProviderMock(org, provider);
+    return HttpResponse.json({
+      authorizeUrl: `https://git-provider.example/${provider}/authorize?org=${org}`,
+    });
+  }),
+
+  http.delete(`${BASE}/git-connections/:provider`, ({ params }) => {
+    const org = params.org as string;
+    const provider = params.provider as string;
+    const failure = policyMockControl.getState().gitDisconnectError;
+    if (failure) return humaError(failure.status, failure.detail);
+    if (!disconnectGitProviderMock(org, provider)) {
+      return humaError(404, "git connection not found");
+    }
     return new HttpResponse(null, { status: 204 });
   }),
 
