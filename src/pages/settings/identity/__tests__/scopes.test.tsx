@@ -43,8 +43,8 @@ function renderPage() {
 describe("OidcScopesPage", () => {
   it("renders the scopes catalog and client assignments", async () => {
     renderPage();
-    expect(await screen.findByText("clusters:read")).toBeInTheDocument();
-    expect(screen.getAllByText("deploys:write").length).toBeGreaterThan(0);
+    expect((await screen.findAllByText("inari-catalog")).length).toBeGreaterThan(0);
+    expect(screen.getByText("read, deploy")).toBeInTheDocument();
     expect(screen.getByText("ci-deployer")).toBeInTheDocument();
   });
 
@@ -55,13 +55,13 @@ describe("OidcScopesPage", () => {
         putBody = (await request.json()) as { scopes?: string[] };
         return HttpResponse.json({
           client: {
-            id: "oc-cli",
-            orgId: "acme",
+            clientId: "org-acme-inari-cli",
             name: "inari-cli",
+            type: "public",
+            audiences: ["inari-server"],
             redirectUris: [],
-            grantTypes: [],
-            isPublic: true,
             scopes: putBody.scopes ?? [],
+            status: "active",
             createdAt: new Date().toISOString(),
           },
         });
@@ -71,8 +71,8 @@ describe("OidcScopesPage", () => {
     renderPage();
     await screen.findByText("inari-cli");
     await user.click(screen.getAllByRole("button", { name: "Assign scopes" })[0]);
-    await user.click(screen.getByRole("checkbox", { name: "deploys:write" }));
+    await user.click(screen.getByRole("checkbox", { name: "inari-catalog:deploy" }));
     await user.click(screen.getByRole("button", { name: "Save scopes" }));
-    expect(putBody).toEqual({ scopes: ["clusters:read", "catalog:read", "deploys:write"] });
+    expect(putBody).toEqual({ scopes: ["inari-server:read", "inari-catalog:read", "inari-catalog:deploy"] });
   });
 });

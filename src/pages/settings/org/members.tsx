@@ -30,8 +30,7 @@ function InviteForm({
 }) {
   const { token } = useAuth();
   const [email, setEmail] = React.useState("");
-  const [displayName, setDisplayName] = React.useState("");
-  const [role, setRole] = React.useState("member");
+  const [role, setRole] = React.useState("viewer");
   const [saving, setSaving] = React.useState(false);
   const [actionError, setActionError] = React.useState<string | null>(null);
 
@@ -40,13 +39,9 @@ function InviteForm({
     setActionError(null);
     setSaving(true);
     try {
-      // The Keycloak subject is derived from the email in the mock; the
-      // server resolves invites to a user id.
-      await putOrgMember(token, tenant, email, {
-        email,
-        displayName: displayName || undefined,
-        role,
-      });
+      // The server resolves an email subject to the Keycloak user id
+      // (inari-server tenancy.resolveMemberSubject).
+      await putOrgMember(token, tenant, email, { role });
       onDone();
     } catch (err) {
       setActionError(
@@ -64,25 +59,15 @@ function InviteForm({
       </CardHeader>
       <CardContent>
         <form className="max-w-xl space-y-3" onSubmit={submit}>
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="invite-email">Email</Label>
-              <Input
-                id="invite-email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="invite-name">Display name</Label>
-              <Input
-                id="invite-name"
-                value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
-              />
-            </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="invite-email">Email</Label>
+            <Input
+              id="invite-email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="invite-role">Role</Label>
@@ -92,9 +77,10 @@ function InviteForm({
               value={role}
               onChange={(e) => setRole(e.target.value)}
             >
-              <option value="member">member</option>
-              <option value="admin">admin</option>
               <option value="viewer">viewer</option>
+              <option value="developer">developer</option>
+              <option value="platform-engineer">platform-engineer</option>
+              <option value="org-admin">org-admin</option>
             </select>
           </div>
           {actionError && <p className="text-sm text-destructive">{actionError}</p>}
@@ -126,11 +112,7 @@ function MemberRow({
     setActionError(null);
     setBusy(true);
     try {
-      await putOrgMember(token, tenant, member.userId, {
-        email: member.email,
-        displayName: member.displayName,
-        role,
-      });
+      await putOrgMember(token, tenant, member.userId, { role });
       onChanged();
     } catch (err) {
       setActionError(
@@ -169,8 +151,9 @@ function MemberRow({
             disabled={busy}
             onChange={(e) => changeRole(e.target.value)}
           >
-            <option value="admin">admin</option>
-            <option value="member">member</option>
+            <option value="org-admin">org-admin</option>
+            <option value="platform-engineer">platform-engineer</option>
+            <option value="developer">developer</option>
             <option value="viewer">viewer</option>
           </select>
         ) : (

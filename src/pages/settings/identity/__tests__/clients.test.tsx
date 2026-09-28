@@ -54,7 +54,7 @@ describe("OidcClientsPage", () => {
     await user.type(screen.getByLabelText(/Name/), "agent-east");
     await user.click(screen.getByRole("button", { name: "Create client" }));
     expect(await screen.findByRole("dialog", { name: "Client secret" })).toBeInTheDocument();
-    expect(screen.getByText(/sec-oc-gen\d+-onetime/)).toBeInTheDocument();
+    expect(screen.getByText(/sec-org-acme-agent-east-onetime/)).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Done" }));
     expect(await screen.findByText("agent-east")).toBeInTheDocument();
   });
@@ -66,7 +66,7 @@ describe("OidcClientsPage", () => {
     await screen.findByText("ci-deployer");
     await user.click(screen.getByRole("button", { name: "Rotate secret" }));
     expect(await screen.findByRole("dialog", { name: "Client secret" })).toBeInTheDocument();
-    expect(screen.getByText("sec-oc-ci-rotated")).toBeInTheDocument();
+    expect(screen.getByText("sec-org-acme-ci-deployer-rotated")).toBeInTheDocument();
   });
 
   it("hides write controls for an org viewer", async () => {

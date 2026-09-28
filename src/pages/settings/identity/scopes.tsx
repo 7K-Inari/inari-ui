@@ -54,7 +54,7 @@ export function OidcScopesPage() {
     if (!assigning) return;
     setActionError(null);
     try {
-      await putClientScopes(token, tenant, assigning.id, [...selected]);
+      await putClientScopes(token, tenant, assigning.clientId, [...selected]);
       setAssigning(null);
       refetchClients();
     } catch (err) {
@@ -92,23 +92,19 @@ export function OidcScopesPage() {
           <table className="w-full text-sm">
             <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
               <tr>
-                <th className="px-4 py-2 font-medium">Scope</th>
                 <th className="px-4 py-2 font-medium">Audience</th>
-                <th className="px-4 py-2 font-medium">Description</th>
+                <th className="px-4 py-2 font-medium">Scopes</th>
               </tr>
             </thead>
             <tbody>
-              {scopes.map((scope) => (
-                <tr key={scope.name} className="border-t hover:bg-muted/30">
-                  <td className="px-4 py-2 font-mono text-xs">{scope.name}</td>
+              {scopes.map((entry) => (
+                <tr key={entry.audience} className="border-t hover:bg-muted/30">
                   <td className="px-4 py-2">
-                    {scope.audience ? (
-                      <Badge variant="muted">{scope.audience}</Badge>
-                    ) : (
-                      "—"
-                    )}
+                    <Badge variant="muted">{entry.audience}</Badge>
                   </td>
-                  <td className="px-4 py-2 text-sm">{scope.description}</td>
+                  <td className="px-4 py-2 font-mono text-xs">
+                    {entry.scopes.join(", ")}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -130,7 +126,7 @@ export function OidcScopesPage() {
               </thead>
               <tbody>
                 {clients.map((client) => (
-                  <React.Fragment key={client.id}>
+                  <React.Fragment key={client.clientId}>
                     <tr className="border-t hover:bg-muted/30">
                       <td className="px-4 py-2 font-medium">{client.name}</td>
                       <td className="px-4 py-2 font-mono text-xs">
@@ -142,7 +138,7 @@ export function OidcScopesPage() {
                             variant="ghost"
                             size="sm"
                             onClick={() =>
-                              assigning?.id === client.id
+                              assigning?.clientId === client.clientId
                                 ? setAssigning(null)
                                 : openAssign(client)
                             }
@@ -152,23 +148,25 @@ export function OidcScopesPage() {
                         </CapabilityGate>
                       </td>
                     </tr>
-                    {assigning?.id === client.id && (
+                    {assigning?.clientId === client.clientId && (
                       <tr className="border-t bg-muted/20">
                         <td colSpan={3} className="px-4 py-3">
                           <div className="flex flex-wrap items-start gap-4">
                             <div className="space-y-1.5">
-                              {(scopes ?? []).map((scope) => (
+                              {(scopes ?? []).flatMap((entry) =>
+                                entry.scopes.map((s) => `${entry.audience}:${s}`),
+                              ).map((name) => (
                                 <label
-                                  key={scope.name}
+                                  key={name}
                                   className="flex items-center gap-2 text-sm"
                                 >
                                   <input
                                     type="checkbox"
                                     className="h-4 w-4 rounded border-input accent-primary"
-                                    checked={selected.has(scope.name)}
-                                    onChange={() => toggle(scope.name)}
+                                    checked={selected.has(name)}
+                                    onChange={() => toggle(name)}
                                   />
-                                  <span className="font-mono text-xs">{scope.name}</span>
+                                  <span className="font-mono text-xs">{name}</span>
                                 </label>
                               ))}
                             </div>

@@ -28,41 +28,49 @@ import { useTenant } from "@/tenant/tenant-context";
 
 const CLIENT_SCHEMA: Record<string, unknown> = {
   type: "object",
-  required: ["name"],
+  required: ["name", "type"],
   properties: {
     name: { type: "string", title: "Name" },
-    description: { type: "string", title: "Description" },
+    type: {
+      type: "string",
+      title: "Type",
+      enum: ["service", "public"],
+      default: "service",
+    },
     redirectUris: {
       type: "array",
       title: "Redirect URIs",
       items: { type: "string" },
       default: [],
     },
-    grantTypes: {
+    audiences: {
       type: "array",
-      title: "Grant types",
-      items: {
-        type: "string",
-        enum: ["authorization_code", "client_credentials", "refresh_token"],
-      },
-      uniqueItems: true,
+      title: "Audiences",
+      items: { type: "string" },
       default: [],
     },
-    isPublic: { type: "boolean", title: "Public client (no secret)", default: false },
+    scopes: {
+      type: "array",
+      title: "Scopes",
+      items: { type: "string" },
+      default: [],
+    },
   },
 };
 
 function toInput(data: Record<string, unknown>): OidcClientInput {
   return {
     name: String(data.name ?? ""),
-    description: data.description ? String(data.description) : undefined,
+    type: data.type === "public" ? "public" : "service",
     redirectUris: Array.isArray(data.redirectUris)
       ? (data.redirectUris as unknown[]).map(String)
       : [],
-    grantTypes: Array.isArray(data.grantTypes)
-      ? (data.grantTypes as unknown[]).map(String)
+    audiences: Array.isArray(data.audiences)
+      ? (data.audiences as unknown[]).map(String)
       : [],
-    isPublic: Boolean(data.isPublic),
+    scopes: Array.isArray(data.scopes)
+      ? (data.scopes as unknown[]).map(String)
+      : [],
   };
 }
 
@@ -87,7 +95,7 @@ export function OidcClientsPage() {
     setActionError(err instanceof ApiError ? err.message : fallback);
 
   const openCreate = () => {
-    setFormData({ redirectUris: [], grantTypes: [], isPublic: false });
+    setFormData({ type: "service", redirectUris: [], audiences: [], scopes: [] });
     setEditing("new");
     setActionError(null);
   };
@@ -95,10 +103,10 @@ export function OidcClientsPage() {
   const openEdit = (client: OidcClient) => {
     setFormData({
       name: client.name,
-      description: client.description,
-      redirectUris: client.redirectUris,
-      grantTypes: client.grantTypes,
-      isPublic: client.isPublic,
+      type: client.type,
+      redirectUris: client.redirectUris ?? [],
+      audiences: client.audiences ?? [],
+      scopes: client.scopes ?? [],
     });
     setEditing(client);
     setActionError(null);
@@ -112,7 +120,7 @@ export function OidcClientsPage() {
         const res = await createOidcClient(token, tenant, toInput(formData));
         if (res.secret) setSecret(res.secret);
       } else if (editing) {
-        await updateOidcClient(token, tenant, editing.id, toInput(formData));
+        await updateOidcClient(token, tenant, editing.clientId, toInput(formData));
       }
       setEditing(null);
       refetch();
@@ -127,20 +135,20 @@ export function OidcClientsPage() {
     }
     setActionError(null);
     try {
-      setSecret(await rotateClientSecret(token, tenant, client.id));
+      setSecret(await rotateClientSecret(token, tenant, client.clientId));
     } catch (err) {
       fail(err, "Failed to rotate secret");
     }
   };
 
   const remove = async (client: OidcClient) => {
-    if (!window.confirm(`Delete client "${client.name}"?`)) return;
+    if (!window.confirm(`Disable client "${client.name}"?`)) return;
     setActionError(null);
     try {
-      await deleteOidcClient(token, tenant, client.id);
+      await deleteOidcClient(token, tenant, client.clientId);
       refetch();
     } catch (err) {
-      fail(err, "Failed to delete client");
+      fail(err, "Failed to disable client");
     }
   };
 
@@ -214,7 +222,7 @@ export function OidcClientsPage() {
               <tr>
                 <th className="px-4 py-2 font-medium">Name</th>
                 <th className="px-4 py-2 font-medium">Type</th>
-                <th className="px-4 py-2 font-medium">Grant types</th>
+                <th className="px-4 py-2 font-medium">Audiences</th>
                 <th className="px-4 py-2 font-medium">Scopes</th>
                 <th className="px-4 py-2 font-medium">Created</th>
                 <th className="px-4 py-2 font-medium">Actions</th>
@@ -222,20 +230,20 @@ export function OidcClientsPage() {
             </thead>
             <tbody>
               {clients.map((client) => (
-                <tr key={client.id} className="border-t hover:bg-muted/30">
+                <tr key={client.clientId} className="border-t hover:bg-muted/30">
                   <td className="px-4 py-2 font-medium">{client.name}</td>
                   <td className="px-4 py-2">
-                    {client.isPublic ? (
+                    {client.type === "public" ? (
                       <Badge variant="secondary">Public</Badge>
                     ) : (
-                      <Badge variant="muted">Confidential</Badge>
+                      <Badge variant="muted">Service</Badge>
                     )}
                   </td>
                   <td className="px-4 py-2 font-mono text-xs">
-                    {client.grantTypes.join(", ") || "—"}
+                    {(client.audiences ?? []).join(", ") || "—"}
                   </td>
                   <td className="px-4 py-2 font-mono text-xs">
-                    {client.scopes.join(", ") || "—"}
+                    {(client.scopes ?? []).join(", ") || "—"}
                   </td>
                   <td className="px-4 py-2 text-xs text-muted-foreground">
                     {formatRelative(client.createdAt)}
@@ -246,13 +254,13 @@ export function OidcClientsPage() {
                         <Button variant="ghost" size="sm" onClick={() => openEdit(client)}>
                           Edit
                         </Button>
-                        {!client.isPublic && (
+                        {client.type === "service" && (
                           <Button variant="ghost" size="sm" onClick={() => rotate(client)}>
                             Rotate secret
                           </Button>
                         )}
                         <Button variant="ghost" size="sm" onClick={() => remove(client)}>
-                          Delete
+                          Disable
                         </Button>
                       </div>
                     </CapabilityGate>
