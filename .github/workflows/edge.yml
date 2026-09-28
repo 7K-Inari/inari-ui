@@ -1,0 +1,108 @@
+name: edge
+
+# Per-merge edge releases: every push to main builds the console bundle and
+# pushes it as ghcr.io/7k-inari/inari-ui-bundle:<pending>-edge.<shortsha>
+# (plus the moving :edge tag), then cuts a GitHub prerelease. Skipped on
+# release merges — the stable release.yml run covers that commit.
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  IMAGE: ghcr.io/7k-inari/inari-ui-bundle
+
+concurrency:
+  group: edge-main
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.gate.outputs.skip }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - name: Skip on release merges
+        id: gate
+        run: |
+          set -euo pipefail
+          msg="$(git log -1 --pretty=%s)"
+          parent2=""
+          if [ "$(git rev-list --parents -n1 HEAD | wc -w)" -gt 2 ]; then
+            parent2="$(git log -1 --pretty=%s HEAD^2)"
+          fi
+          if echo "$msg" | grep -qiE '^chore(\(.*\))?: release' \
+             || echo "$parent2" | grep -qiE '^chore(\(.*\))?: release'; then
+            echo "release merge detected ($msg) — skipping edge"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  version:
+    needs: gate
+    if: needs.gate.outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      edge: ${{ steps.v.outputs.edge }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Resolve edge version
+        id: v
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: echo "edge=$(scripts/resolve-edge-version.sh .)" >> "$GITHUB_OUTPUT"
+
+  bundle:
+    needs: version
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: package bundle
+        run: tar -czf inari-ui-bundle.tar.gz -C dist .
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: oras-project/setup-oras@v1
+
+      - name: push bundle to GHCR
+        env:
+          EDGE: ${{ needs.version.outputs.edge }}
+        run: |
+          for tag in "edge" "${EDGE}"; do
+            oras push "${IMAGE}:${tag}" \
+              inari-ui-bundle.tar.gz:application/vnd.inari.ui.bundle.v1.tar+gzip
+          done
+
+  prerelease:
+    needs: [version, bundle]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create edge prerelease
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EDGE: ${{ needs.version.outputs.edge }}
+        run: |
+          gh release create "v${EDGE}" \
+            --prerelease \
+            --title "edge ${EDGE}" \
+            --notes "Edge build from ${GITHUB_SHA}. Bundle: \`${{ env.IMAGE }}:${EDGE}\` (also \`:edge\`). Superseded by the next stable vX.Y.Z release."
