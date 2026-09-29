@@ -1,3 +1,4 @@
+import { http, HttpResponse } from "msw";
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import {
@@ -64,5 +65,48 @@ describe("git connections api", () => {
 
   it("rejects the all-tenants scope", async () => {
     await expect(listGitConnections("tok", "all")).rejects.toThrow(/tenant/i);
+  });
+
+  // Pins the live-run 7045f491 contract: the server sends providerLogin and
+  // scopes as a space/comma-separated string; the adapter maps them.
+  it("maps the server wire shape (providerLogin, scopes string)", async () => {
+    mockServer.use(
+      http.get("*/api/v1/tenants/acme/git-connections", () =>
+        HttpResponse.json({
+          connections: [
+            {
+              provider: "github",
+              providerLogin: "octo-dev",
+              scopes: "repo read:user",
+              createdAt: new Date().toISOString(),
+            },
+            {
+              provider: "gitlab",
+              providerLogin: "g-lab",
+              scopes: "api,read_repository",
+              apiBase: "https://gitlab.example/api/v4",
+              createdAt: new Date().toISOString(),
+            },
+            {
+              provider: "forgejo",
+              providerLogin: "f-jo",
+              scopes: "",
+              createdAt: new Date().toISOString(),
+            },
+          ],
+          providers: [],
+        }),
+      ),
+    );
+    const { connections } = await listGitConnections("tok", "acme");
+    expect(connections).toEqual([
+      expect.objectContaining({ login: "octo-dev", scopes: ["repo", "read:user"], apiBase: null }),
+      expect.objectContaining({
+        login: "g-lab",
+        scopes: ["api", "read_repository"],
+        apiBase: "https://gitlab.example/api/v4",
+      }),
+      expect.objectContaining({ login: "f-jo", scopes: [], apiBase: null }),
+    ]);
   });
 });
