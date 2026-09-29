@@ -1,5 +1,31 @@
 # Changelog
 
+## [2.1.0](https://github.com/7K-Inari/inari-ui/compare/v2.0.0...v2.1.0) (2026-09-29)
+
+
+### Features
+
+* **catalog:** filter bar with search, facets, sort, and list view ([cb6b078](https://github.com/7K-Inari/inari-ui/commit/cb6b07852881d945208e8df4f448660e4c748032))
+* **catalog:** filter bar with search, facets, sort, and list view ([f4f0fb8](https://github.com/7K-Inari/inari-ui/commit/f4f0fb8d14a5afdbff209e7a68ecf6e255a1afc9))
+* **chart:** HA guardrails for inari-console (liveness probe, PDB, pod spreading) ([7d5037e](https://github.com/7K-Inari/inari-ui/commit/7d5037e017324f8833081f17373fb634f45dbdcc))
+* **chart:** HA guardrails for inari-console (liveness probe, PDB, pod spreading) ([6d53854](https://github.com/7K-Inari/inari-ui/commit/6d53854e72227c9453fa7b606c8a2dbb8ae881f0))
+* **ext:** extension SSO session core — adapter, classifier, retry-once, zero-prompt redirect ([7c8398c](https://github.com/7K-Inari/inari-ui/commit/7c8398cb3fb862f61f5b69aeaa373f8249b1343b))
+* **ext:** integrate SDK 0.1.7 typed errors and expose runWithSession seam ([2d4e469](https://github.com/7K-Inari/inari-ui/commit/2d4e469794b156d211f3202dc8a085ab3ca51ed1))
+* **ext:** SSO callback route, denial UI, host session seam, tenant/logout cache clearing ([7867b58](https://github.com/7K-Inari/inari-ui/commit/7867b58abff7c68b1b45b481c8db1653faf2b3a3))
+* **ext:** zero-prompt SSO bootstrap and re-auth surfacing for oidc-sso-session extensions (W4) ([05b3663](https://github.com/7K-Inari/inari-ui/commit/05b36639a7631099d4680f951ca5d5583aa9b040))
+* **settings:** git connections api adapter + mocks (W5) ([d923114](https://github.com/7K-Inari/inari-ui/commit/d923114ec1a391b7dbb0dc5c91636fb1fd1500b2))
+* **settings:** git connections page (W5) ([b4ba7da](https://github.com/7K-Inari/inari-ui/commit/b4ba7da935966bbcbd276b659cf7dd6fef6610f9))
+* **settings:** git connections page with connect/disconnect UX (W5) ([07aa05c](https://github.com/7K-Inari/inari-ui/commit/07aa05c6a1f1224fd960aef405fd57cfc1e75ea9))
+* **templates:** badge template identity scope and surface git fallback UX ([#76](https://github.com/7K-Inari/inari-ui/issues/76)) ([54c41a6](https://github.com/7K-Inari/inari-ui/commit/54c41a6f1e0849a6b8690157d009dd17a1fad9f0))
+
+
+### Bug Fixes
+
+* **chart:** make HA unittest suite compatible with helm-unittest v0.8.2 ([943dc0e](https://github.com/7K-Inari/inari-ui/commit/943dc0e736b54bd7bf4c8d023206b7f33eeb7c6e))
+* **ext:** force re-bootstrap on typed session-expired (drop stale cache) ([49c46dc](https://github.com/7K-Inari/inari-ui/commit/49c46dce93531b55bd172f3c4f8ed8303b7ca53b))
+* **settings:** align identity-clients + member-invite clients with the server contract ([#78](https://github.com/7K-Inari/inari-ui/issues/78)) ([7e4458d](https://github.com/7K-Inari/inari-ui/commit/7e4458d444966f97ee8e6039bb1f22abcd083943))
+* **settings:** hide stale git connections while refetching on tenant switch ([500c8ae](https://github.com/7K-Inari/inari-ui/commit/500c8ae70db986292661a13d8fbf902b200599d5))
+
 ## [2.0.0](https://github.com/7K-Inari/inari-ui/compare/v1.6.1...v2.0.0) (2026-09-25)
 
 
