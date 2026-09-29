@@ -856,7 +856,7 @@ export const handlers = [
         identity.commitIdentity = {
           kind: "user",
           provider: connection.provider,
-          login: connection.login,
+          login: connection.providerLogin,
         };
       } else if (scaffoldMockControl().fallbackPolicy === "block") {
         return humaError(

@@ -79,8 +79,8 @@ export interface PolicyMockState {
 // generated types after contract sync.
 export interface MockGitConnection {
   provider: string;
-  login: string;
-  scopes?: string[];
+  providerLogin: string;
+  scopes?: string;
   apiBase?: string | null;
   createdAt: string;
   lastUsedAt?: string | null;
@@ -391,8 +391,8 @@ function seedState(): PolicyMockState {
       acme: [
         {
           provider: "github",
-          login: "ada-dev",
-          scopes: ["repo", "read:org"],
+          providerLogin: "ada-dev",
+          scopes: "repo read:org",
           createdAt: iso(now - 20 * 86_400_000),
           lastUsedAt: iso(now - 3_600_000),
         },
@@ -557,8 +557,8 @@ export function connectGitProviderMock(
   if (existing) return existing;
   const connection: MockGitConnection = {
     provider,
-    login: `${provider}-user`,
-    scopes: ["repo"],
+    providerLogin: `${provider}-user`,
+    scopes: "repo",
     createdAt: new Date().toISOString(),
   };
   state.gitConnections[org] = [...gitConnectionsFor(org), connection];
