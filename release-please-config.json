@@ -11,30 +11,7 @@
   ],
   "packages": {
     ".": {
-      "release-type": "node",
-      "extra-files": [
-        {
-          "type": "yaml",
-          "path": "charts/inari-console/Chart.yaml",
-          "jsonpath": "$.appVersion"
-        },
-        {
-          "type": "yaml",
-          "path": "charts/inari-console/values.yaml",
-          "jsonpath": "$.bundle.tag"
-        }
-      ]
-    },
-    "charts/inari-console": {
-      "release-type": "simple",
-      "component": "inari-console",
-      "include-component-in-tag": true,
-      "changelog-path": "CHANGELOG.md",
-      "bump-minor-pre-major": true,
-      "bump-patch-for-minor-pre-major": true,
-      "extra-files": [
-        "Chart.yaml"
-      ]
+      "release-type": "node"
     }
   }
 }
