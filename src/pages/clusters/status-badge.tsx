@@ -7,7 +7,11 @@ const STATUS_CONFIG: Record<
 > = {
   connected: { label: "Connected", variant: "success" },
   pending: { label: "Pending", variant: "warning" },
+  pending_approval: { label: "Pending approval", variant: "warning" },
   degraded: { label: "Degraded", variant: "warning" },
+  cordoned: { label: "Cordoned", variant: "muted" },
+  revoked: { label: "Revoked", variant: "destructive" },
+  decommissioned: { label: "Decommissioned", variant: "muted" },
   disconnected: { label: "Disconnected", variant: "destructive" },
 };
 

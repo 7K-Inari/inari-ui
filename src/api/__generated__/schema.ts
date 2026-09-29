@@ -955,6 +955,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenants/{org}/extensions/{id}/session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Store bootstrapped third-party session material for the calling user (oidc-sso-session) */
+        post: operations["putExtensionSession"];
+        /** Drop the calling user's third-party session (logout/re-auth) */
+        delete: operations["deleteExtensionSession"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenants/{org}/extensions/{id}/verify": {
         parameters: {
             query?: never;
@@ -983,6 +1001,75 @@ export interface paths {
         get: operations["getTenantGitConfig"];
         /** Set the tenant state repo + commit policy (platform engineer) */
         put: operations["setTenantGitConfig"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/git-connections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the caller's own git connections (metadata only) */
+        get: operations["listGitConnections"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/git-connections/{provider}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke the provider grant and delete the connection */
+        delete: operations["disconnectGitConnection"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/git-connections/{provider}/authorize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Start the git OAuth flow (302 or JSON authorizeUrl, per Accept) */
+        get: operations["authorizeGitConnectionGet"];
+        put?: never;
+        /** Start the git OAuth flow (302 to the provider consent URL; 200 {authorizeUrl} for JSON clients) */
+        post: operations["authorizeGitConnection"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/git-connections/{provider}/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** OAuth callback (302 back to the UI) */
+        get: operations["gitConnectionCallback"];
+        put?: never;
         post?: never;
         delete?: never;
         options?: never;
@@ -1196,10 +1283,12 @@ export interface paths {
         get: operations["getInstance"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Undeploy an instance (delete desired state + inventory row) */
+        delete: operations["deleteInstance"];
         options?: never;
         head?: never;
-        patch?: never;
+        /** Update an instance's spec (re-render at the current version) */
+        patch: operations["updateInstance"];
         trace?: never;
     };
     "/api/v1/tenants/{org}/instances/{id}/diff": {
@@ -1213,6 +1302,23 @@ export interface paths {
         get: operations["instanceDiff"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/instances/{id}/rollback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rollback an instance to an explicit earlier catalog version */
+        post: operations["rollbackInstance"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2048,6 +2154,11 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        AgentCompatStatus: {
+            recommendedVersion?: string;
+            supported: boolean;
+            upgradeAvailable: boolean;
+        };
         ApprovalConfig: {
             approvalTtl: string;
             approverGroups?: components["schemas"]["ApproverGroup"][] | null;
@@ -2130,6 +2241,25 @@ export interface components {
             objectType: string;
             orgId: string;
             payload?: unknown;
+        };
+        AuthorizeInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/AuthorizeInputBody.json
+             */
+            readonly $schema?: string;
+            /** @description GHE/self-hosted API base (must be allowlisted); empty = github.com */
+            apiBase?: string;
+        };
+        AuthorizeURLBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/AuthorizeURLBody.json
+             */
+            readonly $schema?: string;
+            authorizeUrl: string;
         };
         AutoApproveRule: {
             itemIds: string[] | null;
@@ -2278,6 +2408,8 @@ export interface components {
             validationError?: string;
         };
         Cluster: {
+            agentCompat?: components["schemas"]["AgentCompatStatus"];
+            agentVersion?: string;
             capabilityChecksum?: string;
             /** Format: date-time */
             connectedAt?: string;
@@ -2342,6 +2474,18 @@ export interface components {
             orgId: string;
             /** Format: date-time */
             updatedAt: string | null;
+        };
+        Connection: {
+            apiBase?: string;
+            /** Format: date-time */
+            createdAt: string;
+            id: string;
+            /** Format: date-time */
+            lastUsedAt?: string;
+            orgId: string;
+            provider: string;
+            providerLogin: string;
+            scopes: string;
         };
         CreateBrokeredIdPInputBody: {
             /**
@@ -2932,6 +3076,7 @@ export interface components {
             /** @description owner/name or https URL of the <tenant>-inari-state repo */
             repo: string;
             scaffoldGitOrg?: string;
+            userTemplateFallback?: string;
         };
         GitConfigOutputBody: {
             /**
@@ -3125,6 +3270,16 @@ export interface components {
              */
             readonly $schema?: string;
             clusters: components["schemas"]["Cluster"][] | null;
+        };
+        ListConnectionsOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/ListConnectionsOutputBody.json
+             */
+            readonly $schema?: string;
+            connections: components["schemas"]["Connection"][] | null;
+            providers: components["schemas"]["ProviderInfo"][] | null;
         };
         ListDriftOutputBody: {
             /**
@@ -3512,6 +3667,11 @@ export interface components {
             readonly $schema?: string;
             provider: components["schemas"]["BrokeredIdP"];
         };
+        ProviderInfo: {
+            apiBase?: string;
+            enabled: boolean;
+            id: string;
+        };
         PutClientScopesInputBody: {
             /**
              * Format: uri
@@ -3754,6 +3914,15 @@ export interface components {
             readonly $schema?: string;
             toVersion: string;
         };
+        RollbackInputBody1: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/RollbackInputBody1.json
+             */
+            readonly $schema?: string;
+            toVersion: string;
+        };
         Rollout: {
             /** Format: date-time */
             createdAt: string;
@@ -3923,6 +4092,38 @@ export interface components {
             audience: string;
             scopes: string[] | null;
         };
+        SessionInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/SessionInputBody.json
+             */
+            readonly $schema?: string;
+            /**
+             * Format: int64
+             * @description override session TTL (capped); defaults to the token's exp claim or 8h
+             */
+            expiresInSeconds?: number;
+            /** @description client-generated replay marker */
+            nonce?: string;
+            /** @description third-party session credential; used for this call only, never echoed */
+            sessionMaterial: string;
+        };
+        SessionOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/SessionOutputBody.json
+             */
+            readonly $schema?: string;
+            session: components["schemas"]["SessionStruct"];
+        };
+        SessionStruct: {
+            /** Format: date-time */
+            expiresAt: string | null;
+            extensionId: string;
+            state: string;
+        };
         SetChannelInputBody: {
             /**
              * Format: uri
@@ -4044,6 +4245,7 @@ export interface components {
             orgId: string;
             repo: string;
             scaffoldGitOrg?: string;
+            userTemplateFallback?: string;
         };
         TenantOutputBody: {
             /**
@@ -4214,6 +4416,15 @@ export interface components {
             readonly $schema?: string;
             provider?: components["schemas"]["SecretStoreProvider"];
             targets?: components["schemas"]["SecretStoreTargets"];
+        };
+        UpdateInstanceInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/UpdateInstanceInputBody.json
+             */
+            readonly $schema?: string;
+            spec: unknown;
         };
         UpdatePolicyInputBody: {
             /**
@@ -6634,6 +6845,72 @@ export interface operations {
             };
         };
     };
+    putExtensionSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SessionInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteExtensionSession: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     verifyExtension: {
         parameters: {
             query?: never;
@@ -6718,6 +6995,178 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listGitConnections: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Tenant slug */
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListConnectionsOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    disconnectGitConnection: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    authorizeGitConnectionGet: {
+        parameters: {
+            query?: never;
+            header?: {
+                Accept?: string;
+            };
+            path: {
+                org: string;
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    Location?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthorizeURLBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    authorizeGitConnection: {
+        parameters: {
+            query?: never;
+            header?: {
+                Accept?: string;
+            };
+            path: {
+                org: string;
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AuthorizeInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    Location?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthorizeURLBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    gitConnectionCallback: {
+        parameters: {
+            query?: {
+                code?: string;
+                state?: string;
+            };
+            header?: never;
+            path: {
+                org: string;
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    Location?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AuthorizeURLBody"];
+                };
             };
             /** @description Error */
             default: {
@@ -7393,6 +7842,74 @@ export interface operations {
             };
         };
     };
+    deleteInstance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeployOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    updateInstance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateInstanceInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeployOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     instanceDiff: {
         parameters: {
             query: {
@@ -7415,6 +7932,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DiffOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    rollbackInstance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RollbackInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeployOutputBody"];
                 };
             };
             /** @description Error */
@@ -8487,7 +9040,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RollbackInputBody"];
+                "application/json": components["schemas"]["RollbackInputBody1"];
             };
         };
         responses: {

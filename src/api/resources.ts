@@ -100,17 +100,7 @@ export async function getUpgradeDiff(
   };
 }
 
-export async function upgradeResource(
-  token: string | undefined,
-  id: string,
-  to: string,
-  tenant?: string,
-): Promise<Deploy> {
-  const org = resolveTenant(tenant);
-  const res = await apiFetch<DeployResponse>(
-    `${tenantPath(org)}/instances/${encodeURIComponent(id)}/upgrade`,
-    { token, method: "POST", body: { toVersion: to } },
-  );
+function mapDeployResult(res: DeployResponse, org: string): Deploy {
   return {
     id: res.deploy.InstanceID,
     tenant: org,
@@ -125,4 +115,69 @@ export async function upgradeResource(
     message: null,
     createdAt: new Date().toISOString(),
   };
+}
+
+export async function upgradeResource(
+  token: string | undefined,
+  id: string,
+  to: string,
+  tenant?: string,
+): Promise<Deploy> {
+  const org = resolveTenant(tenant);
+  const res = await apiFetch<DeployResponse>(
+    `${tenantPath(org)}/instances/${encodeURIComponent(id)}/upgrade`,
+    { token, method: "POST", body: { toVersion: to } },
+  );
+  return mapDeployResult(res, org);
+}
+
+type UpdateInstanceRequest = components["schemas"]["UpdateInstanceInputBody"];
+type RollbackRequest = components["schemas"]["RollbackInputBody"];
+
+// Updates an instance's spec in place (re-renders at the current version).
+export async function updateResourceSpec(
+  token: string | undefined,
+  id: string,
+  spec: Record<string, unknown>,
+  tenant?: string,
+): Promise<Deploy> {
+  const org = resolveTenant(tenant);
+  const body: UpdateInstanceRequest = { spec };
+  const res = await apiFetch<DeployResponse>(
+    `${tenantPath(org)}/instances/${encodeURIComponent(id)}`,
+    { token, method: "PATCH", body },
+  );
+  return mapDeployResult(res, org);
+}
+
+// Rolls an instance back to an explicit earlier catalog version.
+export async function rollbackResource(
+  token: string | undefined,
+  id: string,
+  toVersion: string,
+  tenant?: string,
+): Promise<Deploy> {
+  const org = resolveTenant(tenant);
+  const body: RollbackRequest = { toVersion };
+  const res = await apiFetch<DeployResponse>(
+    `${tenantPath(org)}/instances/${encodeURIComponent(id)}/rollback`,
+    { token, method: "POST", body },
+  );
+  return mapDeployResult(res, org);
+}
+
+// Undeploys an instance: removes its desired state from the tenant repo and
+// deletes the inventory row. May answer pending_approval when the catalog
+// item's policy requires review.
+export async function deleteResource(
+  token: string | undefined,
+  id: string,
+  tenant?: string,
+): Promise<Deploy> {
+  const org = resolveTenant(tenant);
+  const res = await apiFetch<DeployResponse>(
+    `${tenantPath(org)}/instances/${encodeURIComponent(id)}`,
+    { token, method: "DELETE" },
+  );
+  return mapDeployResult(res, org);
 }

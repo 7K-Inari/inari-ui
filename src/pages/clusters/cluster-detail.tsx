@@ -1,14 +1,23 @@
 import * as React from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 
-import { deleteCluster, getCapabilities, getCluster } from "@/api/clusters";
+import {
+  approveCluster,
+  cordonCluster,
+  decommissionCluster,
+  deleteCluster,
+  getCapabilities,
+  getCluster,
+  revokeCluster,
+  uncordonCluster,
+} from "@/api/clusters";
 import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
-import type { CapabilityKind, ManagementMode } from "@/api/types";
+import type { CapabilityKind, ClusterDetail, ManagementMode } from "@/api/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { SlotBoundary } from "@/ext/slot-boundary";
 import { toSdkCluster } from "@/ext/mappers";
@@ -178,6 +187,133 @@ const BUILTIN_TABS = [
   { id: "overview", label: "Overview" },
 ] as const;
 
+function DecommissionCard({
+  cluster,
+  onDecommissioned,
+}: {
+  cluster: ClusterDetail;
+  onDecommissioned: () => void;
+}) {
+  const { token } = useAuth();
+  const { tenant } = useTenant();
+  const [force, setForce] = React.useState(false);
+  const [blocked, setBlocked] = React.useState(false);
+  const [submitting, setSubmitting] = React.useState(false);
+  const [drained, setDrained] = React.useState<string[] | null>(null);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await decommissionCluster(token, cluster.id, { force }, tenant);
+      setDrained(res.drainedInstanceIds);
+      onDecommissioned();
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 409) {
+        setBlocked(true);
+        setError(err.message);
+      } else {
+        setError(err instanceof ApiError ? err.message : "Failed to decommission cluster");
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (drained === null && cluster.status === "decommissioned") return null;
+
+  if (drained !== null) {
+    return (
+      <Card>
+        <CardContent className="py-6 text-sm text-muted-foreground">
+          Cluster decommissioned.
+          {drained.length > 0
+            ? ` Drained ${drained.length} instance${drained.length === 1 ? "" : "s"}: ${drained.join(", ")}.`
+            : " No instances had to be drained."}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Decommission</CardTitle>
+        <CardDescription>
+          Drains all Inari-managed instances off the cluster, disables its identity, and marks it
+          decommissioned. This is irreversible — the cluster must be re-registered to be used
+          again.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={submit} className="space-y-4">
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          {blocked && (
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={force}
+                onChange={(e) => setForce(e.target.checked)}
+              />
+              Force decommission (drain even though shared resources exist)
+            </label>
+          )}
+          <div className="flex justify-end">
+            <Button type="submit" variant="destructive" disabled={submitting}>
+              {submitting ? "Decommissioning…" : "Decommission cluster"}
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
+
+function RevokeCard({ cluster, onRevoked }: { cluster: ClusterDetail; onRevoked: () => void }) {
+  const { token } = useAuth();
+  const { tenant } = useTenant();
+  const [submitting, setSubmitting] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    try {
+      await revokeCluster(token, cluster.id, tenant);
+      onRevoked();
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : "Failed to revoke cluster");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Revoke</CardTitle>
+        <CardDescription>
+          Disables the cluster&apos;s credentials. The agent disconnects immediately and cannot
+          reconnect; the cluster can later be decommissioned.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={submit} className="space-y-4">
+          {error && <p className="text-sm text-destructive">{error}</p>}
+          <div className="flex justify-end">
+            <Button type="submit" variant="destructive" disabled={submitting}>
+              {submitting ? "Revoking…" : "Revoke cluster"}
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function ClusterDetailPage() {
   const { tenant } = useTenant();
   const { token } = useAuth();
@@ -197,6 +333,7 @@ export function ClusterDetailPage() {
     data: cluster,
     loading,
     error,
+    refetch,
   } = useAsyncResource((token) => getCluster(token, clusterId!), [clusterId], {
     enabled: !!clusterId,
     refetchIntervalMs: 15_000,
@@ -218,6 +355,16 @@ export function ClusterDetailPage() {
   }
 
   if (!cluster) return null;
+
+  const lifecycleAction = async (action: () => Promise<unknown>, fallback: string) => {
+    setActionError(null);
+    try {
+      await action();
+      refetch();
+    } catch (err) {
+      setActionError(err instanceof ApiError ? err.message : fallback);
+    }
+  };
 
   const cancelRegistration = async () => {
     if (
@@ -262,6 +409,48 @@ export function ClusterDetailPage() {
             </Button>
           </div>
         )}
+        {cluster.status === "pending_approval" && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              lifecycleAction(
+                () => approveCluster(token, cluster.id, tenant),
+                "Failed to approve cluster",
+              )
+            }
+          >
+            Approve cluster
+          </Button>
+        )}
+        {(cluster.status === "connected" || cluster.status === "degraded") && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              lifecycleAction(
+                () => cordonCluster(token, cluster.id, tenant),
+                "Failed to cordon cluster",
+              )
+            }
+          >
+            Cordon
+          </Button>
+        )}
+        {cluster.status === "cordoned" && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              lifecycleAction(
+                () => uncordonCluster(token, cluster.id, tenant),
+                "Failed to uncordon cluster",
+              )
+            }
+          >
+            Uncordon
+          </Button>
+        )}
       </div>
 
       {actionError && <p className="text-sm text-destructive">{actionError}</p>}
@@ -293,6 +482,15 @@ export function ClusterDetailPage() {
             <t.component cluster={toSdkCluster(cluster)} />
           </SlotBoundary>
         ))}
+
+      {cluster.status !== "pending" && (
+        <div className="space-y-4">
+          {cluster.status !== "revoked" && cluster.status !== "decommissioned" && (
+            <RevokeCard cluster={cluster} onRevoked={refetch} />
+          )}
+          <DecommissionCard cluster={cluster} onDecommissioned={refetch} />
+        </div>
+      )}
     </div>
   );
 }

@@ -2,7 +2,9 @@ import * as React from "react";
 import { Link } from "react-router-dom";
 
 import { useAsyncResource } from "@/api/hooks";
-import { listResources } from "@/api/resources";
+import { deleteResource, listResources } from "@/api/resources";
+import { ApiError } from "@/api/client";
+import { useAuth } from "@/auth/auth-context";
 import type { ResourceHealth } from "@/api/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,12 +33,30 @@ const HEALTH_FILTERS: Array<{ value: ResourceHealth | "all"; label: string }> = 
 
 export function ResourceListPage() {
   const { tenant } = useTenant();
+  const { token } = useAuth();
   const [healthFilter, setHealthFilter] = React.useState<ResourceHealth | "all">("all");
-  const { data: resources, loading, error } = useAsyncResource(
-    (token) => listResources(token, tenant),
-    [tenant],
-    { refetchIntervalMs: 15_000 },
-  );
+  const [actionError, setActionError] = React.useState<string | null>(null);
+  const {
+    data: resources,
+    loading,
+    error,
+    refetch,
+  } = useAsyncResource((token) => listResources(token, tenant), [tenant], {
+    refetchIntervalMs: 15_000,
+  });
+
+  const undeploy = async (id: string, name: string) => {
+    if (!window.confirm(`Undeploy "${name}"? This removes the instance and its desired state.`)) {
+      return;
+    }
+    setActionError(null);
+    try {
+      await deleteResource(token, id, tenant);
+      refetch();
+    } catch (err) {
+      setActionError(err instanceof ApiError ? err.message : "Failed to delete resource");
+    }
+  };
 
   const visible = (resources ?? []).filter(
     (r) => healthFilter === "all" || r.health === healthFilter,
@@ -73,6 +93,8 @@ export function ResourceListPage() {
         </Card>
       )}
 
+      {actionError && <p className="text-sm text-destructive">{actionError}</p>}
+
       {!error && loading && !resources && (
         <p className="text-sm text-muted-foreground">Loading resources…</p>
       )}
@@ -108,6 +130,7 @@ export function ResourceListPage() {
                   <th className="px-4 py-2 font-medium">Status</th>
                   <th className="px-4 py-2 font-medium">Owner team</th>
                   <th className="px-4 py-2 font-medium">Version</th>
+                  <th className="px-4 py-2 font-medium" />
                 </tr>
               </thead>
               <tbody>
@@ -136,6 +159,11 @@ export function ResourceListPage() {
                           {r.updateAvailable.to} available
                         </Badge>
                       )}
+                    </td>
+                    <td className="px-4 py-2 text-right">
+                      <Button variant="outline" size="sm" onClick={() => undeploy(r.id, r.name)}>
+                        Delete
+                      </Button>
                     </td>
                   </tr>
                 ))}

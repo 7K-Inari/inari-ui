@@ -79,3 +79,43 @@ describe("ResourceListPage", () => {
     expect(link).toHaveAttribute("href", "/acme/deploys/ri-orders-db");
   });
 });
+
+describe("row delete", () => {
+  it("deletes a resource after confirmation", async () => {
+    const user = userEvent.setup();
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
+    renderPage();
+    await screen.findByText("orders-db");
+    await user.click(screen.getAllByRole("button", { name: "Delete" })[0]);
+    expect(confirmSpy).toHaveBeenCalled();
+    const { waitFor } = await import("@testing-library/react");
+    await waitFor(() => expect(screen.queryByText("orders-db")).not.toBeInTheDocument());
+    confirmSpy.mockRestore();
+  });
+
+  it("keeps the resource when the confirmation is declined", async () => {
+    const user = userEvent.setup();
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
+    renderPage();
+    await screen.findByText("orders-db");
+    await user.click(screen.getAllByRole("button", { name: "Delete" })[0]);
+    expect(screen.getByText("orders-db")).toBeInTheDocument();
+    confirmSpy.mockRestore();
+  });
+
+  it("surfaces API errors", async () => {
+    const user = userEvent.setup();
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.delete("*/api/v1/tenants/acme/instances/:id", () =>
+        HttpResponse.json({ title: "Error", status: 500, detail: "boom" }, { status: 500 }),
+      ),
+    );
+    renderPage();
+    await screen.findByText("orders-db");
+    await user.click(screen.getAllByRole("button", { name: "Delete" })[0]);
+    expect(await screen.findByText(/boom/)).toBeInTheDocument();
+    vi.restoreAllMocks();
+  });
+});

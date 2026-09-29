@@ -1,20 +1,29 @@
 import { http, HttpResponse } from "msw";
 
 import {
+  approveClusterMock,
   capabilitiesFor,
+  cordonClusterMock,
+  decommissionClusterMock,
   findCluster,
+  isDecommissionBlocked,
   listForTenant,
   registerCluster,
   removeCluster,
+  revokeClusterMock,
+  uncordonClusterMock,
 } from "@/mocks/fixtures";
 import {
   createDeployMock,
+  deleteResourceMock,
   findCatalogItem,
   findResource,
   instanceViewForDeploy,
   listCatalogItemsFiltered,
   listResourcesForTenant,
   pollDeployMock,
+  rollbackResourceMock,
+  updateResourceSpecMock,
   upgradeDiffFor,
   upgradeResourceMock,
 } from "@/mocks/fixtures/catalog";
@@ -441,6 +450,34 @@ export const handlers = [
     );
   }),
 
+  http.patch(`${BASE}/instances/:id`, async ({ params, request }) => {
+    const body = (await request.json()) as { spec?: Record<string, unknown> };
+    if (!body.spec || typeof body.spec !== "object") {
+      return humaError(422, "spec is required");
+    }
+    const deploy = updateResourceSpecMock(params.id as string, body.spec);
+    if (!deploy) return humaError(404, "instance not found");
+    return HttpResponse.json({ deploy: toServerDeployResult(deploy) });
+  }),
+
+  http.post(`${BASE}/instances/:id/rollback`, async ({ params, request }) => {
+    const body = (await request.json()) as { toVersion?: string };
+    const resource = findResource(params.id as string);
+    if (!resource) return humaError(404, "instance not found");
+    if (resource.version === body.toVersion) {
+      return humaError(409, "target version is the current version");
+    }
+    const deploy = rollbackResourceMock(params.id as string, body.toVersion ?? "");
+    if (!deploy) return humaError(404, "catalog item version not found");
+    return HttpResponse.json({ deploy: toServerDeployResult(deploy) });
+  }),
+
+  http.delete(`${BASE}/instances/:id`, ({ params }) => {
+    const deploy = deleteResourceMock(params.id as string);
+    if (!deploy) return humaError(404, "instance not found");
+    return HttpResponse.json({ deploy: toServerDeployResult(deploy) });
+  }),
+
   // ---- clusters ----
   http.get(`${BASE}/clusters`, ({ params }) => {
     return HttpResponse.json({
@@ -511,6 +548,48 @@ export const handlers = [
       return humaError(409, "only pending registrations can be cancelled");
     }
     removeCluster(cluster.id);
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // ---- cluster lifecycle (approve / cordon / uncordon / decommission / revoke) ----
+  http.post(`${BASE}/clusters/:id/approve`, ({ params }) => {
+    const cluster = approveClusterMock(params.id as string);
+    if (!cluster) return humaError(404, "cluster not found");
+    return HttpResponse.json({ cluster: toServerCluster(cluster) });
+  }),
+
+  http.post(`${BASE}/clusters/:id/cordon`, ({ params }) => {
+    const cluster = cordonClusterMock(params.id as string);
+    if (!cluster) return humaError(404, "cluster not found");
+    return HttpResponse.json({ cluster: toServerCluster(cluster) });
+  }),
+
+  http.post(`${BASE}/clusters/:id/uncordon`, ({ params }) => {
+    const cluster = uncordonClusterMock(params.id as string);
+    if (!cluster) return humaError(404, "cluster not found");
+    return HttpResponse.json({ cluster: toServerCluster(cluster) });
+  }),
+
+  http.post(`${BASE}/clusters/:id/decommission`, async ({ params, request }) => {
+    const id = params.id as string;
+    const body = (await request.json().catch(() => ({}))) as { force?: boolean };
+    if (isDecommissionBlocked(id) && !body.force) {
+      return humaError(
+        409,
+        "cluster has shared (non-Inari-managed) resources; retry with force to drain anyway",
+      );
+    }
+    const result = decommissionClusterMock(id);
+    if (!result) return humaError(404, "cluster not found");
+    return HttpResponse.json({
+      cluster: toServerCluster(result.cluster),
+      drainedInstanceIds: result.drained,
+    });
+  }),
+
+  http.post(`${BASE}/clusters/:id/revoke`, ({ params }) => {
+    const cluster = revokeClusterMock(params.id as string);
+    if (!cluster) return humaError(404, "cluster not found");
     return new HttpResponse(null, { status: 204 });
   }),
 

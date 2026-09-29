@@ -383,6 +383,50 @@ export function upgradeDiffFor(id: string, to: string): UpgradeDiff | undefined 
   };
 }
 
+function mutationDeploy(resource: InstanceView, version: string): Deploy {
+  return {
+    id: `dep-${Math.random().toString(36).slice(2, 10)}`,
+    tenant: resource.orgId,
+    itemId: resource.catalogItemId,
+    version,
+    clusterId: resource.clusterId,
+    name: resource.resourceRef.name,
+    phase: "syncing",
+    gitopsMode: "direct-commit",
+    prUrl: null,
+    instanceId: resource.id,
+    message: null,
+    createdAt: new Date().toISOString(),
+  };
+}
+
+export function updateResourceSpecMock(
+  id: string,
+  spec: Record<string, unknown>,
+): Deploy | undefined {
+  const resource = findResource(id);
+  if (!resource) return undefined;
+  resource.spec = spec;
+  resource.updatedAt = new Date().toISOString();
+  return mutationDeploy(resource, resource.version);
+}
+
+export function rollbackResourceMock(id: string, to: string): Deploy | undefined {
+  const resource = findResource(id);
+  if (!resource) return undefined;
+  resource.version = to;
+  resource.newVersionAvailable = false;
+  resource.updatedAt = new Date().toISOString();
+  return mutationDeploy(resource, to);
+}
+
+export function deleteResourceMock(id: string): Deploy | undefined {
+  const idx = state.resources.findIndex((r) => r.id === id);
+  if (idx === -1) return undefined;
+  const [removed] = state.resources.splice(idx, 1);
+  return mutationDeploy(removed, removed.version);
+}
+
 export function upgradeResourceMock(id: string, to: string): Deploy | undefined {
   const resource = findResource(id);
   if (!resource) return undefined;

@@ -2,6 +2,11 @@ import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
 import { ApiError } from "@/api/client";
 import {
+  approveCluster,
+  cordonCluster,
+  decommissionCluster,
+  revokeCluster,
+  uncordonCluster,
   clusterHealth,
   createCluster,
   deleteCluster,
@@ -146,5 +151,52 @@ describe("clusters api", () => {
     const err = await deleteCluster("tok", "cl-nope", "acme").catch((e) => e);
     expect(err).toBeInstanceOf(ApiError);
     expect(err.status).toBe(404);
+  });
+});
+
+describe("cluster lifecycle api", () => {
+  it("maps the new server states to UI statuses", () => {
+    expect(clusterHealth("pending_approval")).toBe("pending_approval");
+    expect(clusterHealth("cordoned")).toBe("cordoned");
+    expect(clusterHealth("revoked")).toBe("revoked");
+    expect(clusterHealth("decommissioned")).toBe("decommissioned");
+  });
+
+  it("approves a pending-approval cluster", async () => {
+    mockControl.setClusterStatus("cl-kind-dev", "pending_approval");
+    const cluster = await approveCluster("tok", "cl-kind-dev");
+    expect(cluster.status).toBe("connected");
+  });
+
+  it("cordons and uncordons a cluster", async () => {
+    expect((await cordonCluster("tok", "cl-kind-dev")).status).toBe("cordoned");
+    expect((await uncordonCluster("tok", "cl-kind-dev")).status).toBe("connected");
+  });
+
+  it("revokes a cluster (204, no body)", async () => {
+    await revokeCluster("tok", "cl-kind-dev");
+    expect(mockControl.getState().clusters.find((c) => c.id === "cl-kind-dev")?.status).toBe(
+      "revoked",
+    );
+  });
+
+  it("decommissions a cluster and returns drained instance IDs", async () => {
+    mockControl.setDecommissionDrain("cl-kind-dev", ["ri-a", "ri-b"]);
+    const res = await decommissionCluster("tok", "cl-kind-dev");
+    expect(res.cluster.status).toBe("decommissioned");
+    expect(res.drainedInstanceIds).toEqual(["ri-a", "ri-b"]);
+  });
+
+  it("surfaces 409 shared-resources on decommission and succeeds with force", async () => {
+    mockControl.setDecommissionBlocked("cl-kind-dev", true);
+    await expect(decommissionCluster("tok", "cl-kind-dev")).rejects.toMatchObject({
+      status: 409,
+    });
+    const res = await decommissionCluster("tok", "cl-kind-dev", { force: true });
+    expect(res.cluster.status).toBe("decommissioned");
+  });
+
+  it("returns 404 for unknown clusters", async () => {
+    await expect(approveCluster("tok", "cl-nope")).rejects.toMatchObject({ status: 404 });
   });
 });

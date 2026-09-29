@@ -1,4 +1,12 @@
-export type ClusterStatus = "pending" | "connected" | "degraded" | "disconnected";
+export type ClusterStatus =
+  | "pending"
+  | "pending_approval"
+  | "connected"
+  | "degraded"
+  | "cordoned"
+  | "revoked"
+  | "decommissioned"
+  | "disconnected";
 
 export type ManagementMode = "adopt" | "observe" | "ignore";
 
