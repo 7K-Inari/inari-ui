@@ -211,8 +211,8 @@ describe("GitConnectionsPage", () => {
   it("never renders token material from server payloads", async () => {
     policyMockControl.getState().gitConnections.acme.push({
       provider: "gitlab",
-      login: "g-lab",
-      scopes: ["api"],
+      providerLogin: "g-lab",
+      scopes: "api",
       apiBase: "https://gitlab.example/api/v4",
       createdAt: new Date().toISOString(),
       // Sentinel fields the server contract must never send; if they ever

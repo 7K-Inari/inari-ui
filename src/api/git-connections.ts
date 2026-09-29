@@ -12,10 +12,13 @@ import { resolveTenant } from "@/tenant/current";
 // `npm run sync:api -- <w4-server-version>` replace them with
 // components["schemas"][...] imports from @/api/__generated__/schema.
 
+// Server contract (inari-server internal/usergit Connection): scopes is a
+// space/comma-separated string; GitHub App user tokens fall back to the
+// requested scopes. apiBase is only set for self-hosted providers (GHE).
 interface WireGitConnection {
   provider: string;
-  login: string;
-  scopes?: string[];
+  providerLogin: string;
+  scopes?: string | string[];
   apiBase?: string | null;
   createdAt: string;
   lastUsedAt?: string | null;
@@ -59,8 +62,10 @@ export interface GitConnectionsViewModel {
 function toConnectionViewModel(w: WireGitConnection): GitConnectionViewModel {
   return {
     provider: w.provider,
-    login: w.login,
-    scopes: w.scopes ?? [],
+    login: w.providerLogin,
+    scopes: Array.isArray(w.scopes)
+      ? w.scopes
+      : (w.scopes ?? "").split(/[\s,]+/).filter(Boolean),
     apiBase: w.apiBase ?? null,
     createdAt: w.createdAt,
     lastUsedAt: w.lastUsedAt ?? null,
