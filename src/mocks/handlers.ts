@@ -1182,19 +1182,13 @@ export const handlers = [
   ),
 
   http.put(`${BASE}/members/:subject`, async ({ params, request }) => {
-    const body = (await request.json()) as {
-      email?: string;
-      displayName?: string;
-      role?: string;
-    };
-    if (!body.email || !body.role) {
-      return humaError(422, "validation failed (email, role are required)");
+    const body = (await request.json()) as { role?: string };
+    if (!body.role) {
+      return humaError(422, "validation failed (role is required)");
     }
     if (!getOrgMock(params.org as string))
       return humaError(404, "organization not found");
     putOrgMemberMock(params.org as string, params.subject as string, {
-      email: body.email,
-      displayName: body.displayName,
       role: body.role,
     });
     return new HttpResponse(null, { status: 204 });
@@ -1306,15 +1300,16 @@ export const handlers = [
     return HttpResponse.json(
       {
         client,
-        secret: client.isPublic
-          ? undefined
-          : { clientId: client.id, secret: `sec-${client.id}-onetime` },
+        secret:
+          client.type === "public"
+            ? undefined
+            : `sec-${client.clientId}-onetime`,
       },
       { status: 201 },
     );
   }),
 
-  http.put(`${BASE}/identity/clients/:id`, async ({ params, request }) => {
+  http.patch(`${BASE}/identity/clients/:id`, async ({ params, request }) => {
     const body = (await request.json()) as OidcClientInput;
     if (!body.name) {
       return humaError(422, "validation failed (name is required)");
@@ -1338,9 +1333,10 @@ export const handlers = [
   http.post(`${BASE}/identity/clients/:id/secret:rotate`, ({ params }) => {
     const client = findOidcClient(params.org as string, params.id as string);
     if (!client) return humaError(404, "client not found");
-    if (client.isPublic) return humaError(422, "public clients have no secret");
+    if (client.type === "public")
+      return humaError(422, "public clients have no secret");
     return HttpResponse.json({
-      secret: { clientId: client.id, secret: `sec-${client.id}-rotated` },
+      secret: `sec-${client.clientId}-rotated`,
     });
   }),
 

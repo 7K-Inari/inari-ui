@@ -1,42 +1,40 @@
 import { apiFetch } from "@/api/client";
 import { resolveTenant } from "@/tenant/current";
 
-// M6.W3: identity settings REST surface (inari-server, huma).
-// TODO(contract-sync): these routes are not yet in the pinned contract
-// (openapi/openapi.yaml); shapes below are proposed wire shapes mocked by MSW.
-// Swap for generated schemas after npm run sync:api.
+// Identity settings REST surface (inari-server, huma). Shapes match the
+// implemented server contract (inari-server internal/types IdentityClient,
+// internal/tenancy/identity_http.go) — verified live 2026-09-28.
+
+export type OidcClientType = "service" | "public";
 
 export interface OidcClient {
-  id: string;
-  orgId: string;
+  clientId: string;
   name: string;
-  description?: string;
-  redirectUris: string[];
-  grantTypes: string[];
-  isPublic: boolean;
+  type: OidcClientType;
+  audiences: string[];
   scopes: string[];
+  redirectUris?: string[];
+  status: "active" | "disabled";
   createdAt: string;
 }
 
 export interface OidcScope {
-  name: string;
-  description: string;
-  audience?: string;
+  audience: string;
+  scopes: string[];
 }
 
 export interface OidcClientInput {
   name: string;
-  description?: string;
+  type: OidcClientType;
+  audiences: string[];
+  scopes: string[];
   redirectUris: string[];
-  grantTypes: string[];
-  isPublic: boolean;
 }
 
 // One-time secret: returned only on create/rotate, never retrievable again.
 export interface ClientSecret {
   clientId: string;
   secret: string;
-  expiresAt?: string;
 }
 
 function tenantPath(tenant: string): string {
@@ -59,22 +57,34 @@ export async function createOidcClient(
   tenant: string,
   body: OidcClientInput,
 ): Promise<{ client: OidcClient; secret: ClientSecret | null }> {
-  const res = await apiFetch<{ client: OidcClient; secret?: ClientSecret }>(
+  const res = await apiFetch<{ client: OidcClient; secret?: string }>(
     `${tenantPath(tenant)}/identity/clients`,
     { token, method: "POST", body },
   );
-  return { client: res.client, secret: res.secret ?? null };
+  return {
+    client: res.client,
+    secret: res.secret ? { clientId: res.client.clientId, secret: res.secret } : null,
+  };
 }
 
 export async function updateOidcClient(
   token: string | undefined,
   tenant: string,
-  id: string,
+  clientId: string,
   body: OidcClientInput,
 ): Promise<OidcClient> {
   const res = await apiFetch<{ client: OidcClient }>(
-    `${tenantPath(tenant)}/identity/clients/${encodeURIComponent(id)}`,
-    { token, method: "PUT", body },
+    `${tenantPath(tenant)}/identity/clients/${encodeURIComponent(clientId)}`,
+    {
+      token,
+      method: "PATCH",
+      body: {
+        name: body.name,
+        audiences: body.audiences,
+        scopes: body.scopes,
+        redirectUris: body.redirectUris,
+      },
+    },
   );
   return res.client;
 }
@@ -82,10 +92,10 @@ export async function updateOidcClient(
 export async function deleteOidcClient(
   token: string | undefined,
   tenant: string,
-  id: string,
+  clientId: string,
 ): Promise<void> {
   await apiFetch<unknown>(
-    `${tenantPath(tenant)}/identity/clients/${encodeURIComponent(id)}`,
+    `${tenantPath(tenant)}/identity/clients/${encodeURIComponent(clientId)}`,
     { token, method: "DELETE" },
   );
 }
@@ -93,13 +103,13 @@ export async function deleteOidcClient(
 export async function rotateClientSecret(
   token: string | undefined,
   tenant: string,
-  id: string,
+  clientId: string,
 ): Promise<ClientSecret> {
-  const res = await apiFetch<{ secret: ClientSecret }>(
-    `${tenantPath(tenant)}/identity/clients/${encodeURIComponent(id)}/secret:rotate`,
+  const res = await apiFetch<{ secret: string }>(
+    `${tenantPath(tenant)}/identity/clients/${encodeURIComponent(clientId)}/secret:rotate`,
     { token, method: "POST" },
   );
-  return res.secret;
+  return { clientId, secret: res.secret };
 }
 
 export async function listOidcScopes(
@@ -116,11 +126,11 @@ export async function listOidcScopes(
 export async function putClientScopes(
   token: string | undefined,
   tenant: string,
-  id: string,
+  clientId: string,
   scopes: string[],
 ): Promise<OidcClient> {
   const res = await apiFetch<{ client: OidcClient }>(
-    `${tenantPath(tenant)}/identity/clients/${encodeURIComponent(id)}/scopes`,
+    `${tenantPath(tenant)}/identity/clients/${encodeURIComponent(clientId)}/scopes`,
     { token, method: "PUT", body: { scopes } },
   );
   return res.client;

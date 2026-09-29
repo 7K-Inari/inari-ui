@@ -30,9 +30,9 @@ type AddMemberRequest = components["schemas"]["AddMemberInputBody"];
 export interface PatchTenantRequest {
   displayName: string;
 }
+// Server contract (setMemberRole): subject is a Keycloak user UUID or email;
+// the body carries only the org role.
 export interface PutOrgMemberRequest {
-  email: string;
-  displayName?: string;
   role: string;
 }
 export interface CreateTeamRequest {

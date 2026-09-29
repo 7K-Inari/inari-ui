@@ -218,13 +218,13 @@ function seedState(): PolicyMockState {
           userId: "u-admin",
           displayName: "Ada Admin",
           email: "ada@acme.example",
-          role: "admin",
+          role: "org-admin",
         },
         {
           userId: "u-dev",
           displayName: "Dev Dorian",
           email: "dorian@acme.example",
-          role: "member",
+          role: "developer",
         },
       ],
       globex: [
@@ -232,7 +232,7 @@ function seedState(): PolicyMockState {
           userId: "u-globex",
           displayName: "Gail Globex",
           email: "gail@globex.example",
-          role: "admin",
+          role: "org-admin",
         },
       ],
     },
@@ -283,25 +283,23 @@ function seedState(): PolicyMockState {
     oidcClients: {
       acme: [
         {
-          id: "oc-cli",
-          orgId: "acme",
+          clientId: "org-acme-inari-cli",
           name: "inari-cli",
-          description: "Public client for the Inari CLI",
+          type: "public",
+          audiences: ["inari-server"],
           redirectUris: ["http://localhost:8976/callback"],
-          grantTypes: ["authorization_code", "refresh_token"],
-          isPublic: true,
-          scopes: ["clusters:read", "catalog:read"],
+          scopes: ["inari-server:read", "inari-catalog:read"],
+          status: "active",
           createdAt: iso(now - 50 * 86_400_000),
         },
         {
-          id: "oc-ci",
-          orgId: "acme",
+          clientId: "org-acme-ci-deployer",
           name: "ci-deployer",
-          description: "Service client for CI pipelines",
+          type: "service",
+          audiences: ["inari-catalog"],
           redirectUris: [],
-          grantTypes: ["client_credentials"],
-          isPublic: false,
-          scopes: ["deploys:write"],
+          scopes: ["inari-catalog:deploy"],
+          status: "active",
           createdAt: iso(now - 20 * 86_400_000),
         },
       ],
@@ -599,23 +597,25 @@ export function orgMembersFor(org: string): MemberView[] {
   return state.orgMembers[org] ?? [];
 }
 
+// subject is a Keycloak UUID for existing members, or an email for invites
+// (the server resolves it via tenancy.resolveMemberSubject).
 export function putOrgMemberMock(
   org: string,
   subject: string,
-  body: { email: string; displayName?: string; role: string },
+  body: { role: string },
 ): MemberView {
   const members = (state.orgMembers[org] ??= []);
-  const existing = members.find((m) => m.userId === subject);
+  const existing = members.find(
+    (m) => m.userId === subject || m.email === subject,
+  );
   if (existing) {
     existing.role = body.role;
-    existing.email = body.email;
-    if (body.displayName) existing.displayName = body.displayName;
     return existing;
   }
   const member: MemberView = {
     userId: subject,
-    displayName: body.displayName ?? body.email,
-    email: body.email,
+    displayName: subject,
+    email: subject,
     role: body.role,
   };
   members.push(member);
@@ -750,27 +750,12 @@ export function revokeRegistrationTokenMock(
 
 // ---- M6.W3: identity (OIDC clients / scopes) and approvals config ----
 
+// Mirrors the server's built-in catalog (internal/config DefaultIdentityScopes).
 export const oidcScopesCatalog: OidcScope[] = [
-  {
-    name: "clusters:read",
-    description: "Read tenant clusters",
-    audience: "inari-clusters",
-  },
-  {
-    name: "clusters:write",
-    description: "Register and remove clusters",
-    audience: "inari-clusters",
-  },
-  {
-    name: "deploys:write",
-    description: "Create and upgrade deploys",
-    audience: "inari-deploys",
-  },
-  {
-    name: "catalog:read",
-    description: "Browse the service catalog",
-    audience: "inari-catalog",
-  },
+  { audience: "inari-server", scopes: ["read", "write"] },
+  { audience: "inari-agent-gateway", scopes: ["connect"] },
+  { audience: "inari-catalog", scopes: ["read", "deploy"] },
+  { audience: "kubernetes", scopes: ["cluster"] },
 ];
 
 export function oidcClientsFor(org: string): OidcClient[] {
@@ -778,7 +763,7 @@ export function oidcClientsFor(org: string): OidcClient[] {
 }
 
 export function findOidcClient(org: string, id: string): OidcClient | null {
-  return oidcClientsFor(org).find((c) => c.id === id) ?? null;
+  return oidcClientsFor(org).find((c) => c.clientId === id) ?? null;
 }
 
 export function createOidcClientMock(
@@ -787,14 +772,13 @@ export function createOidcClientMock(
 ): OidcClient {
   const clients = (state.oidcClients[org] ??= []);
   const client: OidcClient = {
-    id: nextId("oc"),
-    orgId: org,
+    clientId: `org-${org}-${body.name}`,
     name: body.name,
-    description: body.description,
+    type: body.type ?? "service",
+    audiences: body.audiences ?? [],
     redirectUris: body.redirectUris ?? [],
-    grantTypes: body.grantTypes ?? [],
-    isPublic: body.isPublic ?? false,
-    scopes: [],
+    scopes: body.scopes ?? [],
+    status: "active",
     createdAt: new Date().toISOString(),
   };
   clients.push(client);
@@ -809,17 +793,18 @@ export function updateOidcClientMock(
   const client = findOidcClient(org, id);
   if (!client) return null;
   client.name = body.name;
-  client.description = body.description;
+  client.audiences = body.audiences ?? [];
+  client.scopes = body.scopes ?? [];
   client.redirectUris = body.redirectUris ?? [];
-  client.grantTypes = body.grantTypes ?? [];
-  client.isPublic = body.isPublic ?? false;
   return client;
 }
 
+// DELETE disables server-side (row retained for audit); the list endpoint
+// only returns active clients, so filter here.
 export function deleteOidcClientMock(org: string, id: string): boolean {
   const clients = state.oidcClients[org] ?? [];
   const before = clients.length;
-  state.oidcClients[org] = clients.filter((c) => c.id !== id);
+  state.oidcClients[org] = clients.filter((c) => c.clientId !== id);
   return state.oidcClients[org].length < before;
 }
 
