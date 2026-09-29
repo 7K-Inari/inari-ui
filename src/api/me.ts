@@ -13,6 +13,9 @@ export interface TenantPermissions {
   canRegisterClusters?: boolean;
   canConnectCloudAccounts?: boolean;
   canDeploy?: boolean;
+  canManageMembers?: boolean;
+  canManageTeams?: boolean;
+  canManageRbac?: boolean;
 }
 
 // UI view model over MyPermissionsOutputBody plus the unshipped `tenants` seam.
@@ -30,6 +33,9 @@ const TENANT_FLAGS = [
   "canRegisterClusters",
   "canConnectCloudAccounts",
   "canDeploy",
+  "canManageMembers",
+  "canManageTeams",
+  "canManageRbac",
 ] as const;
 
 function parseTenantPermissions(raw: unknown): Record<string, TenantPermissions> | undefined {

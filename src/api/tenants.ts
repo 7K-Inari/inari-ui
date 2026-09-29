@@ -103,13 +103,21 @@ export async function patchTenant(
 
 // ---- org-wide members ----
 
+function searchQuery(q?: string): string {
+  return q ? `?q=${encodeURIComponent(q)}` : "";
+}
+
+// `q` filters members by email/display name server-side (M1.W1 user picker;
+// additive query param mocked until the contract sync lands).
 export async function listOrgMembers(
   token: string | undefined,
   tenant: string,
+  opts?: { q?: string },
 ): Promise<MemberView[]> {
-  const res = await apiFetch<ListMembersResponse>(`${tenantPath(tenant)}/members`, {
-    token,
-  });
+  const res = await apiFetch<ListMembersResponse>(
+    `${tenantPath(tenant)}/members${searchQuery(opts?.q)}`,
+    { token },
+  );
   return res.members ?? [];
 }
 
@@ -178,9 +186,10 @@ export async function listTeamMembers(
   token: string | undefined,
   tenant: string,
   team: string,
+  opts?: { q?: string },
 ): Promise<MemberView[]> {
   const res = await apiFetch<ListMembersResponse>(
-    `${tenantPath(tenant)}/teams/${encodeURIComponent(team)}/members`,
+    `${tenantPath(tenant)}/teams/${encodeURIComponent(team)}/members${searchQuery(opts?.q)}`,
     { token },
   );
   return res.members ?? [];

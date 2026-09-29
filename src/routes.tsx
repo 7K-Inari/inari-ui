@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useParams } from "react-router-dom";
 
 import { RequireAuth } from "@/auth/require-auth";
 import { ExtensionHostProviders, useSdkSlotContext } from "@/ext/host-context";
@@ -26,7 +26,8 @@ import { ResourceListPage } from "@/pages/resources/resource-list";
 import { CloudAccountDetailPage } from "@/pages/cloud-accounts/cloud-account-detail";
 import { CloudAccountListPage } from "@/pages/cloud-accounts/cloud-account-list";
 import { ConnectAccountWizardPage } from "@/pages/cloud-accounts/connect-wizard";
-import { RbacMatrixPage } from "@/pages/rbac/rbac-matrix";
+import { AccessPage } from "@/pages/access/access-page";
+import { PlatformAccessPage } from "@/pages/access/platform-access";
 import { ApprovalsPage } from "@/pages/approvals/approvals-page";
 import { AuditLogPage } from "@/pages/audit/audit-log-page";
 import { PlatformPage } from "@/pages/platform/platform-page";
@@ -37,15 +38,12 @@ import { PolicyPacksPage } from "@/pages/settings/policies/packs";
 import { ApprovalsConfigPage } from "@/pages/settings/policies/approvals-config";
 import { OidcClientsPage } from "@/pages/settings/identity/clients";
 import { OidcScopesPage } from "@/pages/settings/identity/scopes";
-import { RbacMappingSettingsPage } from "@/pages/settings/identity/rbac-mapping";
 import { GitSettingsPage } from "@/pages/settings/org/git";
 import { GitConnectionsPage } from "@/pages/settings/org/git-connections";
-import { MembersPage } from "@/pages/settings/org/members";
 import { OrgProfilePage } from "@/pages/settings/org/org-profile";
 import { IdpBrokeringPage } from "@/pages/settings/org/idp";
 import { OrgDomainsPage } from "@/pages/settings/org/domains";
 import { NotificationsPage } from "@/pages/settings/notifications";
-import { TeamsPage } from "@/pages/settings/org/teams";
 import { VisibilityPage } from "@/pages/settings/policies/visibility";
 import { RegistrationTokensPage } from "@/pages/settings/tokens/registration-tokens";
 import { EsoStoresPage } from "@/pages/settings/tokens/eso-stores";
@@ -72,6 +70,13 @@ function ExtensionPageRoute() {
   return <ExtensionPageHost context={context} />;
 }
 
+// Legacy RBAC/member/team settings routes redirect into the Access console
+// (M1.W1 Phase A consolidation).
+function TenantAccessRedirect({ tab }: { tab: string }) {
+  const { tenant } = useParams();
+  return <Navigate to={`/${tenant}/access/${tab}`} replace />;
+}
+
 export function AppRoutes() {
   return (
     <RequireAuth>
@@ -79,6 +84,7 @@ export function AppRoutes() {
         <Route path="/" element={<Navigate to={`/${ALL_TENANTS}/overview`} replace />} />
         <Route path="/create-organization" element={<CreateOrganizationPage />} />
         <Route path="/:tenant/ext-sso/callback" element={<ExtensionSsoCallbackPage />} />
+        <Route path="/platform/access" element={<PlatformAccessPage />} />
         <Route path="/:tenant" element={<TenantRoutes />}>
           <Route index element={<Navigate to="overview" replace />} />
           <Route
@@ -109,14 +115,16 @@ export function AppRoutes() {
           <Route path="templates/:templateId/scaffold" element={<ScaffoldWizardPage />} />
           <Route path="approvals" element={<ApprovalsPage />} />
           <Route path="audit-log" element={<AuditLogPage />} />
-          <Route path="rbac" element={<RbacMatrixPage />} />
+          <Route path="access" element={<Navigate to="members" replace />} />
+          <Route path="access/:tab" element={<AccessPage />} />
+          <Route path="rbac" element={<Navigate to="access/teams" replace />} />
           <Route path="ext/*" element={<ExtensionPageRoute />} />
           <Route path="extensions" element={<ExtensionsPage />} />
           <Route path="settings" element={<SettingsLayout />}>
             <Route index element={<Navigate to="org/git" replace />} />
             <Route path="org" element={<OrgProfilePage />} />
-            <Route path="org/members" element={<MembersPage />} />
-            <Route path="org/teams" element={<TeamsPage />} />
+            <Route path="org/members" element={<TenantAccessRedirect tab="members" />} />
+            <Route path="org/teams" element={<TenantAccessRedirect tab="teams" />} />
             <Route path="org/git" element={<GitSettingsPage />} />
             <Route path="org/git-connections" element={<GitConnectionsPage />} />
             <Route path="org/idp" element={<IdpBrokeringPage />} />
@@ -124,7 +132,7 @@ export function AppRoutes() {
             <Route path="notifications" element={<NotificationsPage />} />
             <Route path="identity/clients" element={<OidcClientsPage />} />
             <Route path="identity/scopes" element={<OidcScopesPage />} />
-            <Route path="identity/rbac" element={<RbacMappingSettingsPage />} />
+            <Route path="identity/rbac" element={<TenantAccessRedirect tab="teams" />} />
             <Route path="policies/packs" element={<PolicyPacksPage />} />
             <Route path="policies/exemptions" element={<ExemptionsPage />} />
             <Route path="policies/compliance" element={<CompliancePage />} />

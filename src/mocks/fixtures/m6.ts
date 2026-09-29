@@ -57,6 +57,11 @@ export interface PolicyMockState {
   nextEvaluateDecision: PolicyDecision | null;
   orgs: Record<string, Organization>;
   orgMembers: Record<string, MemberView[]>;
+  // M1.W1 RBAC Phase A: platform admins (GET/PUT/DELETE /platform/admins) and
+  // the per-tenant capability projection on GET /me/permissions. Proposed
+  // wire shapes — swap for generated types after contract sync.
+  platformAdmins: MockPlatformAdmin[];
+  tenantCapabilities: Record<string, Record<string, boolean>>;
   teams: Record<string, Team[]>;
   teamMembers: Record<string, MemberView[]>;
   visibility: Record<string, CatalogVisibilityRule[]>;
@@ -90,6 +95,12 @@ export interface MockGitProvider {
   id: string;
   enabled: boolean;
   apiBase?: string | null;
+}
+
+export interface MockPlatformAdmin {
+  subject: string;
+  email?: string;
+  displayName?: string;
 }
 
 export const baselinePack: PolicyPack = {
@@ -408,6 +419,16 @@ function seedState(): PolicyMockState {
     },
     gitAuthorizeError: null,
     gitDisconnectError: null,
+    platformAdmins: [
+      { subject: "u-root", email: "root@inari.dev", displayName: "Root Admin" },
+    ],
+    tenantCapabilities: {
+      acme: {
+        canManageMembers: true,
+        canManageTeams: true,
+        canManageRbac: true,
+      },
+    },
   };
 }
 
@@ -689,6 +710,61 @@ export function removeTeamMemberMock(
   const before = members.length;
   state.teamMembers[key] = members.filter((m) => m.userId !== subject);
   return state.teamMembers[key].length < before;
+}
+
+// ---- M1.W1 RBAC Phase A: platform admins + capability projection ----
+
+// Server-side member search (?q= filters by email or display name,
+// case-insensitive).
+export function searchOrgMembers(org: string, q: string): MemberView[] {
+  const needle = q.trim().toLowerCase();
+  if (!needle) return orgMembersFor(org);
+  return orgMembersFor(org).filter(
+    (m) =>
+      m.email.toLowerCase().includes(needle) ||
+      m.displayName.toLowerCase().includes(needle),
+  );
+}
+
+export function platformAdminsList(): MockPlatformAdmin[] {
+  return state.platformAdmins.map((a) => ({ ...a }));
+}
+
+// subject is a Keycloak UUID or an email (the server resolves emails via the
+// Admin API); the mock stores whatever it is given.
+export function grantPlatformAdminMock(subject: string): MockPlatformAdmin {
+  const existing = state.platformAdmins.find(
+    (a) => a.subject === subject || a.email === subject,
+  );
+  if (existing) return existing;
+  const admin: MockPlatformAdmin = {
+    subject,
+    email: subject.includes("@") ? subject : undefined,
+    displayName: subject,
+  };
+  state.platformAdmins.push(admin);
+  return admin;
+}
+
+export function revokePlatformAdminMock(subject: string): boolean {
+  const before = state.platformAdmins.length;
+  state.platformAdmins = state.platformAdmins.filter(
+    (a) => a.subject !== subject && a.email !== subject,
+  );
+  return state.platformAdmins.length < before;
+}
+
+// Per-tenant capability projection for GET /me/permissions (tenants field).
+export function tenantCapabilitiesProjection(): Record<
+  string,
+  Record<string, boolean>
+> {
+  return Object.fromEntries(
+    Object.entries(state.tenantCapabilities).map(([org, caps]) => [
+      org,
+      { ...caps },
+    ]),
+  );
 }
 
 export function visibilityFor(org: string): CatalogVisibilityRule[] {

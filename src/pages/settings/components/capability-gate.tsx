@@ -7,6 +7,9 @@ import { useTenant } from "@/tenant/tenant-context";
 export interface OrgCapabilities {
   isAdmin: boolean;
   canWriteSettings: boolean;
+  canManageMembers: boolean;
+  canManageTeams: boolean;
+  canManageRbac: boolean;
 }
 
 // The org role comes from the server (`GET /me/permissions` → orgRoles,
@@ -18,7 +21,7 @@ export interface OrgCapabilities {
 export function useOrgCapabilities(): OrgCapabilities {
   const { parsedToken } = useAuth();
   const { tenant } = useTenant();
-  const { orgRoles } = usePermissions();
+  const { orgRoles, tenants } = usePermissions();
 
   const tokenAdmin = React.useMemo(() => {
     const claim = parsedToken?.["organization"];
@@ -40,19 +43,74 @@ export function useOrgCapabilities(): OrgCapabilities {
   const serverRole = orgRoles?.[tenant];
   const isAdmin =
     serverRole !== undefined ? serverRole === "org-admin" : tokenAdmin;
-  return { isAdmin, canWriteSettings: isAdmin };
+
+  // Per-capability flags come from the `tenants` projection on
+  // GET /me/permissions (M1.W1). An absent projection is "unknown", never a
+  // denial: fall back to the admin-derived default so older servers keep the
+  // current behavior (org admins can manage everything).
+  const projection = tenants?.[tenant];
+  return {
+    isAdmin,
+    canWriteSettings: isAdmin,
+    canManageMembers: projection?.canManageMembers ?? isAdmin,
+    canManageTeams: projection?.canManageTeams ?? isAdmin,
+    canManageRbac: projection?.canManageRbac ?? isAdmin,
+  };
 }
+
+export type Capability =
+  | "viewer"
+  | "admin"
+  | "manageMembers"
+  | "manageTeams"
+  | "manageRbac";
+
+const CAPABILITY_REASON: Record<Exclude<Capability, "viewer">, string> = {
+  admin: "Requires org admin",
+  manageMembers: "Requires member management permission",
+  manageTeams: "Requires team management permission",
+  manageRbac: "Requires role management permission",
+};
 
 export function CapabilityGate({
   capability = "admin",
+  mode = "hide",
+  disabledReason,
   children,
   fallback = null,
 }: {
-  capability?: "viewer" | "admin";
+  capability?: Capability;
+  // "hide" unmounts (renders fallback); "disable" renders the children inert
+  // with a tooltip naming the missing permission instead of unmounting.
+  mode?: "hide" | "disable";
+  disabledReason?: string;
   children: React.ReactNode;
   fallback?: React.ReactNode;
 }) {
-  const { isAdmin } = useOrgCapabilities();
-  if (capability === "admin" && !isAdmin) return <>{fallback}</>;
-  return <>{children}</>;
+  const caps = useOrgCapabilities();
+  const allowed =
+    capability === "viewer" ||
+    (capability === "admin"
+      ? caps.isAdmin
+      : capability === "manageMembers"
+        ? caps.canManageMembers
+        : capability === "manageTeams"
+          ? caps.canManageTeams
+          : caps.canManageRbac);
+  if (allowed) return <>{children}</>;
+  if (mode === "disable") {
+    // Unreachable for "viewer" (always allowed), so capability is the
+    // non-viewer subset here.
+    const reason = disabledReason ?? CAPABILITY_REASON[capability];
+    return (
+      <span
+        className="inline-block cursor-not-allowed"
+        title={reason}
+        aria-disabled="true"
+      >
+        <span className="pointer-events-none opacity-50">{children}</span>
+      </span>
+    );
+  }
+  return <>{fallback}</>;
 }
