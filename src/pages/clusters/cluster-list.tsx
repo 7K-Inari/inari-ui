@@ -18,7 +18,11 @@ const STATUS_FILTERS: Array<{ value: ClusterStatus | "all"; label: string }> = [
   { value: "all", label: "All" },
   { value: "connected", label: "Connected" },
   { value: "pending", label: "Pending" },
+  { value: "pending_approval", label: "Pending approval" },
   { value: "degraded", label: "Degraded" },
+  { value: "cordoned", label: "Cordoned" },
+  { value: "revoked", label: "Revoked" },
+  { value: "decommissioned", label: "Decommissioned" },
   { value: "disconnected", label: "Disconnected" },
 ];
 

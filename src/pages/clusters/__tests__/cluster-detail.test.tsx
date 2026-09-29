@@ -154,3 +154,72 @@ describe("ClusterDetailPage", () => {
     vi.restoreAllMocks();
   });
 });
+
+describe("cluster lifecycle", () => {
+  it("approves a pending-approval cluster", async () => {
+    const user = userEvent.setup();
+    mockControl.setClusterStatus("cl-kind-dev", "pending_approval");
+    renderDetail();
+    await screen.findByRole("heading", { name: "kind-dev" });
+    expect(screen.getByTestId("status-pending_approval")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Approve cluster" }));
+    expect(await screen.findByTestId("status-connected")).toBeInTheDocument();
+  });
+
+  it("cordons a connected cluster and uncordons it again", async () => {
+    const user = userEvent.setup();
+    renderDetail();
+    await screen.findByRole("heading", { name: "kind-dev" });
+    await user.click(screen.getByRole("button", { name: "Cordon" }));
+    expect(await screen.findByTestId("status-cordoned")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Uncordon" }));
+    expect(await screen.findByTestId("status-connected")).toBeInTheDocument();
+  });
+
+  it("decommissions a cluster and shows the drained instances", async () => {
+    const user = userEvent.setup();
+    mockControl.setDecommissionDrain("cl-kind-dev", ["ri-a", "ri-b"]);
+    renderDetail();
+    await screen.findByRole("heading", { name: "kind-dev" });
+    await user.click(screen.getByRole("button", { name: "Decommission cluster" }));
+    expect(await screen.findByText(/Cluster decommissioned/)).toBeInTheDocument();
+    expect(screen.getByText(/ri-a, ri-b/)).toBeInTheDocument();
+    expect(await screen.findByTestId("status-decommissioned")).toBeInTheDocument();
+  });
+
+  it("surfaces the 409 shared-resources error and retries with force", async () => {
+    const user = userEvent.setup();
+    mockControl.setDecommissionBlocked("cl-kind-dev", true);
+    renderDetail();
+    await screen.findByRole("heading", { name: "kind-dev" });
+    await user.click(screen.getByRole("button", { name: "Decommission cluster" }));
+    expect(await screen.findByText(/shared \(non-Inari-managed\) resources/)).toBeInTheDocument();
+    await user.click(screen.getByRole("checkbox"));
+    await user.click(screen.getByRole("button", { name: "Decommission cluster" }));
+    expect(await screen.findByText(/Cluster decommissioned/)).toBeInTheDocument();
+  });
+
+  it("revokes a cluster", async () => {
+    const user = userEvent.setup();
+    renderDetail();
+    await screen.findByRole("heading", { name: "kind-dev" });
+    await user.click(screen.getByRole("button", { name: "Revoke cluster" }));
+    expect(await screen.findByTestId("status-revoked")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Revoke cluster" })).not.toBeInTheDocument();
+  });
+
+  it("hides lifecycle cards for pending and decommissioned clusters", async () => {
+    mockControl.setClusterStatus("cl-kind-dev", "pending");
+    const { unmount } = renderDetail();
+    await screen.findByRole("heading", { name: "kind-dev" });
+    expect(screen.queryByRole("button", { name: "Decommission cluster" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Revoke cluster" })).not.toBeInTheDocument();
+    unmount();
+
+    mockControl.setClusterStatus("cl-kind-dev", "decommissioned");
+    renderDetail();
+    await screen.findByRole("heading", { name: "kind-dev" });
+    expect(screen.getByTestId("status-decommissioned")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Decommission cluster" })).not.toBeInTheDocument();
+  });
+});
