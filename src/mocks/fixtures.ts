@@ -123,6 +123,11 @@ export const kindCapabilities: Capability[] = [
 export interface MockState {
   clusters: ClusterDetail[];
   capabilities: Record<string, Capability[]>;
+  // Clusters whose decommission is blocked by shared (non-Inari-managed)
+  // resources — the mock answers 409 until force is passed.
+  decommissionBlocked: string[];
+  // Drained instance IDs reported by a successful decommission, per cluster.
+  decommissionDrain: Record<string, string[]>;
 }
 
 function seedState(): MockState {
@@ -133,6 +138,8 @@ function seedState(): MockState {
       [degradedCluster.id]: [],
       [otherTenantCluster.id]: [],
     },
+    decommissionBlocked: [],
+    decommissionDrain: {},
   };
 }
 
@@ -152,7 +159,52 @@ export const mockControl = {
   getState(): MockState {
     return state;
   },
+  setDecommissionBlocked(id: string, blocked: boolean) {
+    const idx = state.decommissionBlocked.indexOf(id);
+    if (blocked && idx === -1) state.decommissionBlocked.push(id);
+    if (!blocked && idx !== -1) state.decommissionBlocked.splice(idx, 1);
+  },
+  setDecommissionDrain(id: string, instanceIds: string[]) {
+    state.decommissionDrain[id] = instanceIds;
+  },
 };
+
+// Cluster lifecycle transitions (approve/cordon/uncordon/revoke/
+// decommission). Each returns the updated cluster, or undefined when the
+// cluster does not exist.
+function transition(id: string, status: ClusterDetail["status"]): ClusterDetail | undefined {
+  const cluster = findCluster(id);
+  if (!cluster) return undefined;
+  cluster.status = status;
+  cluster.lastSeenAt = new Date().toISOString();
+  return cluster;
+}
+
+export function approveClusterMock(id: string): ClusterDetail | undefined {
+  return transition(id, "connected");
+}
+
+export function cordonClusterMock(id: string): ClusterDetail | undefined {
+  return transition(id, "cordoned");
+}
+
+export function uncordonClusterMock(id: string): ClusterDetail | undefined {
+  return transition(id, "connected");
+}
+
+export function revokeClusterMock(id: string): ClusterDetail | undefined {
+  return transition(id, "revoked");
+}
+
+export function isDecommissionBlocked(id: string): boolean {
+  return state.decommissionBlocked.includes(id);
+}
+
+export function decommissionClusterMock(id: string): { cluster: ClusterDetail; drained: string[] } | undefined {
+  const cluster = transition(id, "decommissioned");
+  if (!cluster) return undefined;
+  return { cluster, drained: state.decommissionDrain[id] ?? [] };
+}
 
 function toSummary(c: ClusterDetail): ClusterSummary {
   return {

@@ -86,6 +86,19 @@ components:
         - createdAt
         - updatedAt
       type: object
+    AgentCompatStatus:
+      additionalProperties: false
+      properties:
+        recommendedVersion:
+          type: string
+        supported:
+          type: boolean
+        upgradeAvailable:
+          type: boolean
+      required:
+        - supported
+        - upgradeAvailable
+      type: object
     ApprovalConfig:
       additionalProperties: false
       properties:
@@ -279,6 +292,35 @@ components:
         - objectType
         - objectId
         - createdAt
+      type: object
+    AuthorizeInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/AuthorizeInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        apiBase:
+          description: GHE/self-hosted API base (must be allowlisted); empty = github.com
+          type: string
+      type: object
+    AuthorizeURLBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/AuthorizeURLBody.json
+          format: uri
+          readOnly: true
+          type: string
+        authorizeUrl:
+          type: string
+      required:
+        - authorizeUrl
       type: object
     AutoApproveRule:
       additionalProperties: false
@@ -607,6 +649,10 @@ components:
     Cluster:
       additionalProperties: false
       properties:
+        agentCompat:
+          $ref: "#/components/schemas/AgentCompatStatus"
+        agentVersion:
+          type: string
         capabilityChecksum:
           type: string
         connectedAt:
@@ -738,6 +784,35 @@ components:
         - config
         - orgId
         - updatedAt
+      type: object
+    Connection:
+      additionalProperties: false
+      properties:
+        apiBase:
+          type: string
+        createdAt:
+          format: date-time
+          type: string
+        id:
+          type: string
+        lastUsedAt:
+          format: date-time
+          type: string
+        orgId:
+          type: string
+        provider:
+          type: string
+        providerLogin:
+          type: string
+        scopes:
+          type: string
+      required:
+        - id
+        - orgId
+        - provider
+        - providerLogin
+        - scopes
+        - createdAt
       type: object
     CreateBrokeredIdPInputBody:
       additionalProperties: false
@@ -1841,6 +1916,8 @@ components:
           type: string
         scaffoldGitOrg:
           type: string
+        userTemplateFallback:
+          type: string
       required:
         - repo
         - commitPolicy
@@ -2283,6 +2360,32 @@ components:
             - "null"
       required:
         - clusters
+      type: object
+    ListConnectionsOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListConnectionsOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        connections:
+          items:
+            $ref: "#/components/schemas/Connection"
+          type:
+            - array
+            - "null"
+        providers:
+          items:
+            $ref: "#/components/schemas/ProviderInfo"
+          type:
+            - array
+            - "null"
+      required:
+        - connections
+        - providers
       type: object
     ListDriftOutputBody:
       additionalProperties: false
@@ -3135,6 +3238,19 @@ components:
       required:
         - provider
       type: object
+    ProviderInfo:
+      additionalProperties: false
+      properties:
+        apiBase:
+          type: string
+        enabled:
+          type: boolean
+        id:
+          type: string
+      required:
+        - id
+        - enabled
+      type: object
     PutClientScopesInputBody:
       additionalProperties: false
       properties:
@@ -3640,6 +3756,22 @@ components:
           readOnly: true
           type: string
         toVersion:
+          minLength: 1
+          type: string
+      required:
+        - toVersion
+      type: object
+    RollbackInputBody1:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RollbackInputBody1.json
+          format: uri
+          readOnly: true
+          type: string
+        toVersion:
           type: string
       required:
         - toVersion
@@ -4064,6 +4196,61 @@ components:
         - audience
         - scopes
       type: object
+    SessionInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/SessionInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        expiresInSeconds:
+          description: override session TTL (capped); defaults to the token's exp claim or 8h
+          format: int64
+          type: integer
+        nonce:
+          description: client-generated replay marker
+          type: string
+        sessionMaterial:
+          description: third-party session credential; used for this call only, never echoed
+          type: string
+      required:
+        - sessionMaterial
+      type: object
+    SessionOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/SessionOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        session:
+          $ref: "#/components/schemas/SessionStruct"
+      required:
+        - session
+      type: object
+    SessionStruct:
+      additionalProperties: false
+      properties:
+        expiresAt:
+          format: date-time
+          type:
+            - string
+            - "null"
+        extensionId:
+          type: string
+        state:
+          type: string
+      required:
+        - extensionId
+        - state
+        - expiresAt
+      type: object
     SetChannelInputBody:
       additionalProperties: false
       properties:
@@ -4333,6 +4520,8 @@ components:
         repo:
           type: string
         scaffoldGitOrg:
+          type: string
+        userTemplateFallback:
           type: string
       required:
         - orgId
@@ -4704,6 +4893,20 @@ components:
           $ref: "#/components/schemas/SecretStoreProvider"
         targets:
           $ref: "#/components/schemas/SecretStoreTargets"
+      type: object
+    UpdateInstanceInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/UpdateInstanceInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        spec: {}
+      required:
+        - spec
       type: object
     UpdatePolicyInputBody:
       additionalProperties: false
@@ -7032,6 +7235,67 @@ paths:
       security:
         - bearer: []
       summary: Rotate the extension's gateway identity secret (returned once; also lazily provisions identity for pre-ADR-0008 rows)
+  /api/v1/tenants/{org}/extensions/{id}/session:
+    delete:
+      operationId: deleteExtensionSession
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Drop the calling user's third-party session (logout/re-auth)
+    post:
+      operationId: putExtensionSession
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SessionInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SessionOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Store bootstrapped third-party session material for the calling user (oidc-sso-session)
   /api/v1/tenants/{org}/extensions/{id}/verify:
     post:
       operationId: verifyExtension
@@ -7113,6 +7377,182 @@ paths:
       security:
         - bearer: []
       summary: Set the tenant state repo + commit policy (platform engineer)
+  /api/v1/tenants/{org}/git-connections:
+    get:
+      operationId: listGitConnections
+      parameters:
+        - description: Tenant slug
+          in: path
+          name: org
+          required: true
+          schema:
+            description: Tenant slug
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListConnectionsOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: List the caller's own git connections (metadata only)
+  /api/v1/tenants/{org}/git-connections/{provider}:
+    delete:
+      operationId: disconnectGitConnection
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: provider
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Revoke the provider grant and delete the connection
+  /api/v1/tenants/{org}/git-connections/{provider}/authorize:
+    get:
+      operationId: authorizeGitConnectionGet
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: provider
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: Accept
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthorizeURLBody"
+          description: OK
+          headers:
+            Location:
+              schema:
+                type: string
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Start the git OAuth flow (302 or JSON authorizeUrl, per Accept)
+    post:
+      operationId: authorizeGitConnection
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: provider
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: Accept
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthorizeInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthorizeURLBody"
+          description: OK
+          headers:
+            Location:
+              schema:
+                type: string
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Start the git OAuth flow (302 to the provider consent URL; 200 {authorizeUrl} for JSON clients)
+  /api/v1/tenants/{org}/git-connections/{provider}/callback:
+    get:
+      operationId: gitConnectionCallback
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: provider
+          required: true
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: code
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: state
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthorizeURLBody"
+          description: OK
+          headers:
+            Location:
+              schema:
+                type: string
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      summary: OAuth callback (302 back to the UI)
   /api/v1/tenants/{org}/identity/clients:
     get:
       operationId: listIdentityClients
@@ -7683,6 +8123,35 @@ paths:
         - bearer: []
       summary: List resource instances (filterable by cluster, item, health, owner team)
   /api/v1/tenants/{org}/instances/{id}:
+    delete:
+      operationId: deleteInstance
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeployOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Undeploy an instance (delete desired state + inventory row)
     get:
       operationId: getInstance
       parameters:
@@ -7712,6 +8181,41 @@ paths:
       security:
         - bearer: []
       summary: Get one resource instance with version badge
+    patch:
+      operationId: updateInstance
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateInstanceInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeployOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Update an instance's spec (re-render at the current version)
   /api/v1/tenants/{org}/instances/{id}/diff:
     get:
       operationId: instanceDiff
@@ -7750,6 +8254,42 @@ paths:
       security:
         - bearer: []
       summary: Diff preview data for an upgrade
+  /api/v1/tenants/{org}/instances/{id}/rollback:
+    post:
+      operationId: rollbackInstance
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RollbackInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeployOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Rollback an instance to an explicit earlier catalog version
   /api/v1/tenants/{org}/instances/{id}/upgrade:
     post:
       operationId: upgradeInstance
@@ -8704,7 +9244,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/RollbackInputBody"
+              $ref: "#/components/schemas/RollbackInputBody1"
         required: true
       responses:
         "200":

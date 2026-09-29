@@ -34,6 +34,14 @@ export function clusterHealth(state: string): ClusterStatus {
       return "degraded";
     case "pending_registration":
       return "pending";
+    case "pending_approval":
+      return "pending_approval";
+    case "cordoned":
+      return "cordoned";
+    case "revoked":
+      return "revoked";
+    case "decommissioned":
+      return "decommissioned";
     default:
       return "disconnected";
   }
@@ -174,5 +182,89 @@ export function deleteCluster(
   return apiFetch<void>(
     `${tenantPath(resolveTenant(tenant))}/clusters/${encodeURIComponent(id)}`,
     { token, method: "DELETE" },
+  );
+}
+
+type ClusterResponse = components["schemas"]["ClusterOutputBody"];
+type DecommissionRequest = components["schemas"]["DecommissionInputBody"];
+type DecommissionResponse = components["schemas"]["DecommissionOutputBody"];
+
+// Approves a cluster stuck in pending_approval (registration reviewed by an
+// operator).
+export async function approveCluster(
+  token: string | undefined,
+  id: string,
+  tenant?: string,
+): Promise<ClusterDetail> {
+  const res = await apiFetch<ClusterResponse>(
+    `${tenantPath(resolveTenant(tenant))}/clusters/${encodeURIComponent(id)}/approve`,
+    { token, method: "POST" },
+  );
+  return mapCluster(res.cluster);
+}
+
+// Cordons a cluster: it stays registered but is taken out of service for new
+// deploys.
+export async function cordonCluster(
+  token: string | undefined,
+  id: string,
+  tenant?: string,
+): Promise<ClusterDetail> {
+  const res = await apiFetch<ClusterResponse>(
+    `${tenantPath(resolveTenant(tenant))}/clusters/${encodeURIComponent(id)}/cordon`,
+    { token, method: "POST" },
+  );
+  return mapCluster(res.cluster);
+}
+
+export async function uncordonCluster(
+  token: string | undefined,
+  id: string,
+  tenant?: string,
+): Promise<ClusterDetail> {
+  const res = await apiFetch<ClusterResponse>(
+    `${tenantPath(resolveTenant(tenant))}/clusters/${encodeURIComponent(id)}/uncordon`,
+    { token, method: "POST" },
+  );
+  return mapCluster(res.cluster);
+}
+
+export interface DecommissionResult {
+  cluster: ClusterDetail;
+  drainedInstanceIds: string[];
+}
+
+// Decommissions a cluster: drains its Inari-managed instances, disables the
+// cluster's identity, and marks it decommissioned (terminal). The server
+// answers 409 when non-Inari-managed resources block the drain; retry with
+// force to override.
+export async function decommissionCluster(
+  token: string | undefined,
+  id: string,
+  opts: { force?: boolean } = {},
+  tenant?: string,
+): Promise<DecommissionResult> {
+  const body: DecommissionRequest = {};
+  if (opts.force) body.force = true;
+  const res = await apiFetch<DecommissionResponse>(
+    `${tenantPath(resolveTenant(tenant))}/clusters/${encodeURIComponent(id)}/decommission`,
+    { token, method: "POST", body },
+  );
+  return {
+    cluster: mapCluster(res.cluster),
+    drainedInstanceIds: res.drainedInstanceIds ?? [],
+  };
+}
+
+// Revokes a cluster's credentials (its Keycloak client is disabled). The
+// cluster disconnects immediately and must later be decommissioned.
+export function revokeCluster(
+  token: string | undefined,
+  id: string,
+  tenant?: string,
+): Promise<void> {
+  return apiFetch<void>(
+    `${tenantPath(resolveTenant(tenant))}/clusters/${encodeURIComponent(id)}/revoke`,
+    { token, method: "POST" },
   );
 }
