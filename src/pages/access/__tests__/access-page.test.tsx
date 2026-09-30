@@ -80,9 +80,9 @@ describe("AccessPage", () => {
       "page",
     );
     expect(await screen.findByText("Platform Team")).toBeInTheDocument();
-    expect(
-      screen.getByRole("radio", { name: "Platform Team: Operator" }),
-    ).toBeChecked();
+    expect(screen.getByLabelText("Role for Platform Team")).toHaveValue(
+      "role-operator",
+    );
   });
 
   it("shows identity settings links on the Identity tab", async () => {

@@ -76,6 +76,18 @@ async function putMappings(
   return res.changes ?? [];
 }
 
+// Role-entity write path (ADR-0013): callers that already hold role entities
+// (the Teams & Roles matrix) submit team→roleId directly — no ClusterRole
+// round-trip through the read projection. Teams omitted from the set are
+// unmapped (declarative whole-set replace).
+export async function putTeamRoleMappings(
+  token: string | undefined,
+  tenant: string,
+  mappings: TeamRoleMapping[],
+): Promise<TeamRoleChange[]> {
+  return putMappings(token, tenant, { mappings });
+}
+
 // Declarative whole-set replace (M6.W3 settings editor): the settings page
 // submits the full desired mapping set in one call rather than N sequential
 // per-cell writes.

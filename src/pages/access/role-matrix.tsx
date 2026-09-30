@@ -1,27 +1,36 @@
 import * as React from "react";
+import { Link } from "react-router-dom";
 
 import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
-import {
-  getRbacMatrix,
-  putRbacMappings,
-  type RbacMapping,
-} from "@/api/rbac";
+import { getRbacMatrix, putTeamRoleMappings } from "@/api/rbac";
+import { listRoles } from "@/api/roles";
 import { useAuth } from "@/auth/auth-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { roleDisplay, teamDisplayName } from "@/pages/access/role-catalog";
+import { teamDisplayName } from "@/pages/access/role-catalog";
 import {
   CapabilityGate,
   useOrgCapabilities,
 } from "@/pages/settings/components/capability-gate";
+import { resolveTenant } from "@/tenant/current";
 import { useTenant } from "@/tenant/tenant-context";
+import { tenantLink } from "@/tenant/tenant-link";
 
-// Sentinel for the per-row "No role" radio option: a team with no mapping
-// holds no tenant ClusterRole.
+// Sentinel for the per-row "No role" option: a team with no mapping holds no
+// tenant ClusterRole.
 const NO_ROLE = "";
 
+const selectClass =
+  "flex h-9 w-full max-w-xs rounded-md border border-input bg-background px-3 text-sm";
+
+// Role engine (ADR-0013): rows are teams, the per-row select lists the org's
+// role entities (built-in + custom from GET /roles) and the write is the
+// generalized team→roleId bulk PUT. The read projection still speaks
+// synthesized ClusterRole names (`tenant-<slug>-<role.Name>`), so current
+// assignments are recovered by stripping the tenant prefix and matching the
+// role by name.
 export function RoleMatrix() {
   const { tenant } = useTenant();
   const { token } = useAuth();
@@ -32,12 +41,18 @@ export function RoleMatrix() {
     error,
     refetch,
   } = useAsyncResource((t) => getRbacMatrix(t, tenant), [tenant]);
+  const { data: roles } = useAsyncResource((t) => listRoles(t, tenant), [tenant]);
 
-  // Draft state: one role per team (radio semantics — the server rejects
-  // duplicate teams with 400). null = pristine, mirrors the server state.
-  // The draft is tagged with its tenant: a tenant switch re-renders without
-  // unmounting, and a stale draft from the previous tenant would otherwise
-  // show every team as "No role" and wipe the new tenant's mappings on Save.
+  const roleByName = React.useMemo(
+    () => new Map((roles ?? []).map((r) => [r.name, r])),
+    [roles],
+  );
+
+  // Draft state: one roleId per team. null = pristine, mirrors the server
+  // state. The draft is tagged with its tenant: a tenant switch re-renders
+  // without unmounting, and a stale draft from the previous tenant would
+  // otherwise show every team as "No role" and wipe the new tenant's
+  // mappings on Save.
   const [draftState, setDraftState] = React.useState<{
     tenant: string;
     values: Record<string, string>;
@@ -49,17 +64,22 @@ export function RoleMatrix() {
   const effective = React.useMemo(() => {
     if (draft) return draft;
     const base: Record<string, string> = {};
+    const prefix = `tenant-${resolveTenant(tenant)}-`;
     for (const group of matrix?.groups ?? []) {
-      base[group.path] =
+      const clusterRole =
         matrix?.mappings.find((m) => m.groupPath === group.path)?.clusterRole ??
-        NO_ROLE;
+        "";
+      const name = clusterRole.startsWith(prefix)
+        ? clusterRole.slice(prefix.length)
+        : clusterRole;
+      base[group.path] = roleByName.get(name)?.id ?? NO_ROLE;
     }
     return base;
-  }, [draft, matrix]);
+  }, [draft, matrix, roleByName, tenant]);
   const dirty = draft !== null;
 
-  const select = (groupPath: string, clusterRole: string) => {
-    setDraftState({ tenant, values: { ...effective, [groupPath]: clusterRole } });
+  const select = (groupPath: string, roleId: string) => {
+    setDraftState({ tenant, values: { ...effective, [groupPath]: roleId } });
     setActionError(null);
   };
 
@@ -69,11 +89,11 @@ export function RoleMatrix() {
     setActionError(null);
     // Whole-set replace: exactly one mapping per team, teams on "No role"
     // are omitted (unmapped).
-    const mappings: RbacMapping[] = matrix.groups
-      .map((g) => ({ groupPath: g.path, clusterRole: draft[g.path] ?? NO_ROLE }))
-      .filter((m) => m.clusterRole !== NO_ROLE);
+    const mappings = matrix.groups
+      .map((g) => ({ team: g.team, roleId: draft[g.path] ?? NO_ROLE }))
+      .filter((m) => m.roleId !== NO_ROLE);
     try {
-      await putRbacMappings(token, tenant, mappings);
+      await putTeamRoleMappings(token, tenant, mappings);
       setDraftState(null);
       refetch();
     } catch (err) {
@@ -116,7 +136,8 @@ export function RoleMatrix() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          Assign each team a role. Saving applies all assignments in one request.
+          Assign each team a role. Saving applies all assignments in one
+          request. <Link to={tenantLink(tenant, "access/roles")} className="underline">Manage roles</Link>
         </p>
         <div className="flex items-center gap-2">
           {dirty && (
@@ -143,58 +164,40 @@ export function RoleMatrix() {
           <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
             <tr>
               <th className="px-4 py-2 font-medium">Team</th>
-              <th className="px-4 py-2 font-medium">No role</th>
-              {matrix.roles.map((role) => {
-                const display = roleDisplay(role);
-                return (
-                  <th
-                    key={role.name}
-                    className="px-4 py-2 font-medium"
-                    title={display.description || role.name}
-                  >
-                    {display.name}
-                  </th>
-                );
-              })}
+              <th className="px-4 py-2 font-medium">Role</th>
             </tr>
           </thead>
           <tbody>
-            {matrix.groups.map((group) => (
-              <tr key={group.path} className="border-t hover:bg-muted/30">
-                <td className="px-4 py-2">
-                  <span className="font-medium">{teamDisplayName(group)}</span>{" "}
-                  <Badge variant="muted">{group.memberCount} members</Badge>
-                </td>
-                <td className="px-4 py-2">
-                  <input
-                    type="radio"
-                    name={`role-${group.path}`}
-                    className="h-4 w-4 border-input accent-primary"
-                    aria-label={`${teamDisplayName(group)}: No role`}
-                    checked={(effective[group.path] ?? NO_ROLE) === NO_ROLE}
-                    disabled={!canManageRbac || saving}
-                    onChange={() => select(group.path, NO_ROLE)}
-                  />
-                </td>
-                {matrix.roles.map((role) => {
-                  const display = roleDisplay(role);
-                  return (
-                    <td key={role.name} className="px-4 py-2">
-                      <input
-                        type="radio"
-                        name={`role-${group.path}`}
-                        className="h-4 w-4 border-input accent-primary"
-                        aria-label={`${teamDisplayName(group)}: ${display.name}`}
-                        title={display.description || role.name}
-                        checked={effective[group.path] === role.name}
-                        disabled={!canManageRbac || saving}
-                        onChange={() => select(group.path, role.name)}
-                      />
-                    </td>
-                  );
-                })}
-              </tr>
-            ))}
+            {matrix.groups.map((group) => {
+              const display = teamDisplayName(group);
+              const value = effective[group.path] ?? NO_ROLE;
+              const role = (roles ?? []).find((r) => r.id === value);
+              return (
+                <tr key={group.path} className="border-t hover:bg-muted/30">
+                  <td className="px-4 py-2">
+                    <span className="font-medium">{display}</span>{" "}
+                    <Badge variant="muted">{group.memberCount} members</Badge>
+                  </td>
+                  <td className="px-4 py-2">
+                    <select
+                      aria-label={`Role for ${display}`}
+                      className={selectClass}
+                      value={value}
+                      disabled={!canManageRbac || saving}
+                      title={role?.description || undefined}
+                      onChange={(e) => select(group.path, e.target.value)}
+                    >
+                      <option value={NO_ROLE}>No role</option>
+                      {(roles ?? []).map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.displayName || r.name}
+                        </option>
+                      ))}
+                    </select>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
