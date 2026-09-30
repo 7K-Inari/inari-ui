@@ -6,7 +6,7 @@ import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } 
 
 import type { MyPermissions } from "@/api/me";
 import { RoleMatrix } from "@/pages/access/role-matrix";
-import { m3MockControl } from "@/mocks/fixtures/m3";
+import { m3MockControl, setRbacMappingsMock } from "@/mocks/fixtures/m3";
 import { policyMockControl } from "@/mocks/fixtures/m6";
 import { mockServer } from "@/mocks/server";
 
@@ -243,5 +243,45 @@ describe("RoleMatrix", () => {
       .closest("[aria-disabled]");
     expect(wrapper).toHaveAttribute("aria-disabled", "true");
     expect(wrapper).toHaveAttribute("title", "Requires role management permission");
+  });
+
+  it("keeps an unresolvable ClusterRole visible and round-trips it on Save", async () => {
+    const user = userEvent.setup();
+    const bodies: unknown[] = [];
+    mockServer.use(
+      http.put("*/api/v1/tenants/:org/rbac/mappings", async ({ request }) => {
+        bodies.push(await request.json());
+        return HttpResponse.json({ changes: [] });
+      }),
+    );
+    // A mapping whose ClusterRole suffix matches no role entity (e.g. the
+    // custom role was deleted elsewhere).
+    m3MockControl.reset();
+    setRbacMappingsMock("acme", [
+      { groupPath: "tenant-acme/platform-team", clusterRole: "tenant-acme-operator" },
+      { groupPath: "tenant-acme/developers", clusterRole: "tenant-acme-viewer" },
+      { groupPath: "tenant-acme/data", clusterRole: "tenant-acme-ghost" },
+    ]);
+
+    renderMatrix();
+    const select = await screen.findByLabelText("Role for Data");
+    const unknown = within(select).getByRole("option", {
+      name: "Unknown role (ghost)",
+    }) as HTMLOptionElement;
+    expect(unknown).toBeDisabled();
+    expect(select).toHaveValue(unknown.value);
+
+    // Saving another row must not drop the unknown mapping: the recovered
+    // name round-trips as the roleId.
+    await user.selectOptions(
+      screen.getByLabelText("Role for Developers"),
+      "role-editor",
+    );
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    const mappings = (bodies[0] as { mappings: { team: string; roleId: string }[] })
+      .mappings;
+    expect(mappings).toContainEqual({ team: "data", roleId: "ghost" });
+    expect(mappings).toContainEqual({ team: "developers", roleId: "role-editor" });
   });
 });

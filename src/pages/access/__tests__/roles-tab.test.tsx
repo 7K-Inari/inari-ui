@@ -92,8 +92,9 @@ describe("RolesTab", () => {
     expect(viewer.permissions).toContain("extensions.invoke");
   });
 
-  it("deletes a custom role", async () => {
+  it("deletes a custom role after confirmation", async () => {
     const user = userEvent.setup();
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
     policyMockControl.getState().roles.acme.push({
       id: "role-temp",
       orgId: "t-acme",
@@ -108,13 +109,40 @@ describe("RolesTab", () => {
     render(<RolesTab />);
     const row = (await screen.findByText("Temp")).closest("tr")!;
     await user.click(within(row).getByRole("button", { name: "Delete" }));
+    expect(confirmSpy).toHaveBeenCalledOnce();
     expect(
       policyMockControl.getState().roles.acme.map((r) => r.name),
     ).not.toContain("temp");
+    confirmSpy.mockRestore();
+  });
+
+  it("does not delete when the confirmation is declined", async () => {
+    const user = userEvent.setup();
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
+    policyMockControl.getState().roles.acme.push({
+      id: "role-keep",
+      orgId: "t-acme",
+      name: "keep",
+      displayName: "Keep",
+      description: "",
+      builtin: false,
+      permissions: ["tenant.read"],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+    render(<RolesTab />);
+    const row = (await screen.findByText("Keep")).closest("tr")!;
+    await user.click(within(row).getByRole("button", { name: "Delete" }));
+    expect(confirmSpy).toHaveBeenCalledOnce();
+    expect(
+      policyMockControl.getState().roles.acme.map((r) => r.name),
+    ).toContain("keep");
+    confirmSpy.mockRestore();
   });
 
   it("surfaces the server 409 when deleting a team-bound role", async () => {
     const user = userEvent.setup();
+    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
     policyMockControl.getState().roles.acme.push({
       id: "role-bound",
       orgId: "t-acme",
@@ -140,6 +168,7 @@ describe("RolesTab", () => {
     expect(
       policyMockControl.getState().roles.acme.map((r) => r.name),
     ).toContain("bound");
+    confirmSpy.mockRestore();
   });
 
   it("marks the tab read-only when canManageRbac is false", async () => {

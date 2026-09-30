@@ -21,6 +21,16 @@ import { tenantLink } from "@/tenant/tenant-link";
 // Sentinel for the per-row "No role" option: a team with no mapping holds no
 // tenant ClusterRole.
 const NO_ROLE = "";
+// Sentinel prefix for a mapping whose ClusterRole matches no role entity
+// (custom role deleted elsewhere, or the roles list failed to load). The
+// remainder is the role name recovered from the ClusterRole suffix. Rendered
+// as a disabled "Unknown role" option so a Save can never silently drop the
+// mapping: it round-trips the name as the roleId (the write accepts names).
+const UNKNOWN_PREFIX = "unknown:";
+
+function unknownName(value: string): string | null {
+  return value.startsWith(UNKNOWN_PREFIX) ? value.slice(UNKNOWN_PREFIX.length) : null;
+}
 
 const selectClass =
   "flex h-9 w-full max-w-xs rounded-md border border-input bg-background px-3 text-sm";
@@ -41,12 +51,19 @@ export function RoleMatrix() {
     error,
     refetch,
   } = useAsyncResource((t) => getRbacMatrix(t, tenant), [tenant]);
-  const { data: roles } = useAsyncResource((t) => listRoles(t, tenant), [tenant]);
+  const {
+    data: roles,
+    loading: rolesLoading,
+    error: rolesError,
+  } = useAsyncResource((t) => listRoles(t, tenant), [tenant]);
 
   const roleByName = React.useMemo(
     () => new Map((roles ?? []).map((r) => [r.name, r])),
     [roles],
   );
+  // Without the role entities the per-row selects cannot resolve a single
+  // row — and Save is a whole-set replace that would unmap every team.
+  const rolesReady = roles !== undefined;
 
   // Draft state: one roleId per team. null = pristine, mirrors the server
   // state. The draft is tagged with its tenant: a tenant switch re-renders
@@ -72,7 +89,14 @@ export function RoleMatrix() {
       const name = clusterRole.startsWith(prefix)
         ? clusterRole.slice(prefix.length)
         : clusterRole;
-      base[group.path] = roleByName.get(name)?.id ?? NO_ROLE;
+      if (clusterRole === "") {
+        base[group.path] = NO_ROLE;
+      } else {
+        const match = roleByName.get(name);
+        // Unknown ClusterRole: keep the mapping addressable via the sentinel
+        // so it round-trips on Save instead of being silently unmapped.
+        base[group.path] = match ? match.id : UNKNOWN_PREFIX + name;
+      }
     }
     return base;
   }, [draft, matrix, roleByName, tenant]);
@@ -84,13 +108,17 @@ export function RoleMatrix() {
   };
 
   const save = async () => {
-    if (!draft || !matrix) return;
+    if (!draft || !matrix || !rolesReady) return;
     setSaving(true);
     setActionError(null);
     // Whole-set replace: exactly one mapping per team, teams on "No role"
-    // are omitted (unmapped).
+    // are omitted (unmapped). Unknown roles round-trip their recovered name
+    // as the roleId so the write never silently drops them.
     const mappings = matrix.groups
-      .map((g) => ({ team: g.team, roleId: draft[g.path] ?? NO_ROLE }))
+      .map((g) => {
+        const value = draft[g.path] ?? NO_ROLE;
+        return { team: g.team, roleId: unknownName(value) ?? value };
+      })
       .filter((m) => m.roleId !== NO_ROLE);
     try {
       await putTeamRoleMappings(token, tenant, mappings);
@@ -119,7 +147,16 @@ export function RoleMatrix() {
       </Card>
     );
   }
-  if (loading && !matrix) {
+  if (rolesError) {
+    return (
+      <Card>
+        <CardContent className="py-6 text-sm text-destructive">
+          Failed to load roles: {rolesError.message}
+        </CardContent>
+      </Card>
+    );
+  }
+  if ((loading && !matrix) || rolesLoading && !roles) {
     return <p className="text-sm text-muted-foreground">Loading role assignments…</p>;
   }
   if (!matrix || matrix.groups.length === 0) {
@@ -146,7 +183,7 @@ export function RoleMatrix() {
             </Button>
           )}
           <CapabilityGate capability="manageRbac" mode="disable">
-            <Button onClick={save} disabled={!dirty || saving}>
+            <Button onClick={save} disabled={!dirty || saving || !rolesReady}>
               {saving ? "Saving…" : "Save changes"}
             </Button>
           </CapabilityGate>
@@ -171,6 +208,7 @@ export function RoleMatrix() {
             {matrix.groups.map((group) => {
               const display = teamDisplayName(group);
               const value = effective[group.path] ?? NO_ROLE;
+              const unknown = unknownName(value);
               const role = (roles ?? []).find((r) => r.id === value);
               return (
                 <tr key={group.path} className="border-t hover:bg-muted/30">
@@ -183,11 +221,20 @@ export function RoleMatrix() {
                       aria-label={`Role for ${display}`}
                       className={selectClass}
                       value={value}
-                      disabled={!canManageRbac || saving}
-                      title={role?.description || undefined}
+                      disabled={!canManageRbac || saving || !rolesReady}
+                      title={
+                        unknown
+                          ? `No role entity matches "${unknown}"; the mapping is preserved on save`
+                          : role?.description || undefined
+                      }
                       onChange={(e) => select(group.path, e.target.value)}
                     >
                       <option value={NO_ROLE}>No role</option>
+                      {unknown && (
+                        <option value={value} disabled>
+                          Unknown role ({unknown})
+                        </option>
+                      )}
                       {(roles ?? []).map((r) => (
                         <option key={r.id} value={r.id}>
                           {r.displayName || r.name}

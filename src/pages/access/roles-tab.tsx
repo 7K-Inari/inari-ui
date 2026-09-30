@@ -23,7 +23,7 @@ import {
 } from "@/pages/settings/components/capability-gate";
 import { useTenant } from "@/tenant/tenant-context";
 
-const NAME_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
+const NAME_PATTERN = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
 
 // Permission catalog grouped by its server-provided domain (ADR-0013 static
 // catalog) so the editor reads like the console IA instead of a flat slug list.
@@ -267,9 +267,18 @@ export function RolesTab() {
   // Editor state: "new" for create, a role id for edit, null when closed.
   const [editing, setEditing] = React.useState<string | null>(null);
   const [actionError, setActionError] = React.useState<string | null>(null);
+  const [deleting, setDeleting] = React.useState(false);
 
   const remove = async (role: Role) => {
+    if (
+      !window.confirm(
+        `Delete role "${role.displayName || role.name}"? Teams mapped to it will lose the mapping.`,
+      )
+    ) {
+      return;
+    }
     setActionError(null);
+    setDeleting(true);
     try {
       await deleteRole(token, tenant, role.id);
       refetch();
@@ -277,6 +286,8 @@ export function RolesTab() {
       setActionError(
         err instanceof ApiError ? err.message : "Failed to delete role",
       );
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -369,6 +380,7 @@ export function RolesTab() {
                           <Button
                             variant="outline"
                             size="sm"
+                            disabled={deleting}
                             onClick={() => remove(role)}
                           >
                             Delete
