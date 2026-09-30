@@ -44,17 +44,23 @@ export async function getRbacMatrix(
   return normalize(res);
 }
 
-// The write contract is team→role (TeamRoleMapping); the read projection is
-// groupPath→clusterRole. Translate via the matrix's group list; fall back to
-// the group path's trailing segment when the group is unknown.
+// The write contract is team→roleId (ADR-0013); the read projection is
+// groupPath→clusterRole (`tenant-<slug>-<role.Name>`, synthesized from the
+// roles table). Translate group paths via the matrix's group list (fall back
+// to the trailing segment) and strip the tenant ClusterRole prefix to recover
+// the role name, which the write accepts as a roleId.
 function toTeamRoleMappings(
+  tenant: string,
   matrix: RbacMatrix,
   mappings: RbacMapping[],
 ): TeamRoleMapping[] {
   const teamByPath = new Map(matrix.groups.map((g) => [g.path, g.team]));
+  const prefix = `tenant-${resolveTenant(tenant)}-`;
   return mappings.map((m) => ({
     team: teamByPath.get(m.groupPath) ?? m.groupPath.split("/").pop()!,
-    role: m.clusterRole,
+    roleId: m.clusterRole.startsWith(prefix)
+      ? m.clusterRole.slice(prefix.length)
+      : m.clusterRole,
   }));
 }
 
@@ -70,6 +76,18 @@ async function putMappings(
   return res.changes ?? [];
 }
 
+// Role-entity write path (ADR-0013): callers that already hold role entities
+// (the Teams & Roles matrix) submit team→roleId directly — no ClusterRole
+// round-trip through the read projection. Teams omitted from the set are
+// unmapped (declarative whole-set replace).
+export async function putTeamRoleMappings(
+  token: string | undefined,
+  tenant: string,
+  mappings: TeamRoleMapping[],
+): Promise<TeamRoleChange[]> {
+  return putMappings(token, tenant, { mappings });
+}
+
 // Declarative whole-set replace (M6.W3 settings editor): the settings page
 // submits the full desired mapping set in one call rather than N sequential
 // per-cell writes.
@@ -80,7 +98,7 @@ export async function putRbacMappings(
 ): Promise<TeamRoleChange[]> {
   const matrix = await getRbacMatrix(token, tenant);
   return putMappings(token, tenant, {
-    mappings: toTeamRoleMappings(matrix, mappings),
+    mappings: toTeamRoleMappings(tenant, matrix, mappings),
   });
 }
 
@@ -100,6 +118,6 @@ export async function setRbacMapping(
   const rest = matrix.mappings.filter((m) => key(m) !== target);
   const next = mapped ? [...rest, { groupPath, clusterRole }] : rest;
   return putMappings(token, tenant, {
-    mappings: toTeamRoleMappings(matrix, next),
+    mappings: toTeamRoleMappings(tenant, matrix, next),
   });
 }

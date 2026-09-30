@@ -50,15 +50,27 @@ function renderPage(initialEntry: string) {
 }
 
 describe("AccessPage", () => {
-  it("renders the three tabs and defaults to Members", async () => {
+  it("renders the tabs and defaults to Members", async () => {
     renderPage("/acme/access");
     expect(
       screen.getByRole("link", { name: "Members" }),
     ).toHaveAttribute("aria-current", "page");
     expect(screen.getByRole("link", { name: "Teams & Roles" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Roles" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Identity" })).toBeInTheDocument();
     // Members tab content loads
     expect(await screen.findByText("Ada Admin")).toBeInTheDocument();
+  });
+
+  it("shows the role editor on the Roles tab", async () => {
+    renderPage("/acme/access/roles");
+    expect(screen.getByRole("link", { name: "Roles" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(await screen.findByText("Admin")).toBeInTheDocument();
+    expect(screen.getAllByText("Built-in")).toHaveLength(4);
+    expect(screen.getByRole("button", { name: "New role" })).toBeInTheDocument();
   });
 
   it("shows the role matrix on the Teams & Roles tab", async () => {
@@ -68,9 +80,9 @@ describe("AccessPage", () => {
       "page",
     );
     expect(await screen.findByText("Platform Team")).toBeInTheDocument();
-    expect(
-      screen.getByRole("radio", { name: "Platform Team: Operator" }),
-    ).toBeChecked();
+    expect(screen.getByLabelText("Role for Platform Team")).toHaveValue(
+      "role-operator",
+    );
   });
 
   it("shows identity settings links on the Identity tab", async () => {

@@ -13,7 +13,8 @@ import {
   putOrgMember,
   removeTeamMember,
 } from "@/api/tenants";
-import type { MemberView, Team } from "@/api/tenants";
+import type { OrgMemberView, Team } from "@/api/tenants";
+import { listRoles, type Role } from "@/api/roles";
 import { useAuth } from "@/auth/auth-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,14 +30,23 @@ import { useTenant } from "@/tenant/tenant-context";
 const selectClass =
   "flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm";
 
-const ORG_ROLES = ["org-admin", "platform-engineer", "developer", "viewer"];
+// Fallback while the roles list loads: the four built-ins are seeded per
+// tenant (ADR-0013), so "viewer" always resolves.
+function roleOptions(roles: Role[] | null): { id: string; label: string }[] {
+  return (roles ?? []).map((r) => ({
+    id: r.name,
+    label: r.displayName || r.name,
+  }));
+}
 
 function InviteForm({
   tenant,
+  roles,
   disabled,
   onDone,
 }: {
   tenant: string;
+  roles: Role[] | null;
   disabled: boolean;
   onDone: () => void;
 }) {
@@ -52,8 +62,9 @@ function InviteForm({
     setSaving(true);
     try {
       // The server resolves an email subject to the Keycloak user id
-      // (inari-server tenancy.resolveMemberSubject).
-      await putOrgMember(token, tenant, email, { role });
+      // (inari-server tenancy.resolveMemberSubject); the role is a roleId
+      // (roles.id or built-in name, ADR-0013).
+      await putOrgMember(token, tenant, email, { roleId: role });
       setEmail("");
       onDone();
     } catch (err) {
@@ -92,9 +103,9 @@ function InviteForm({
               onChange={(e) => setRole(e.target.value)}
               disabled={disabled}
             >
-              {ORG_ROLES.map((r) => (
-                <option key={r} value={r}>
-                  {r}
+              {roleOptions(roles).map((r) => (
+                <option key={r.id} value={r.id}>
+                  {r.label}
                 </option>
               ))}
             </select>
@@ -114,11 +125,13 @@ function InviteForm({
 function MemberRow({
   tenant,
   member,
+  roles,
   canManage,
   onChanged,
 }: {
   tenant: string;
-  member: MemberView;
+  member: OrgMemberView;
+  roles: Role[] | null;
   canManage: boolean;
   onChanged: () => void;
 }) {
@@ -126,11 +139,18 @@ function MemberRow({
   const [busy, setBusy] = React.useState(false);
   const [actionError, setActionError] = React.useState<string | null>(null);
 
+  // PUT defines the member's single org role (it replaces every other
+  // grant). The view model is a set — team-derived grants included — so a
+  // multi-role member shows "Multiple" until a role is chosen.
+  const memberRoles = member.roles ?? [];
+  const current = memberRoles.length === 1 ? memberRoles[0] : "";
+
   const changeRole = async (role: string) => {
+    if (!role) return;
     setActionError(null);
     setBusy(true);
     try {
-      await putOrgMember(token, tenant, member.userId, { role });
+      await putOrgMember(token, tenant, member.userId, { roleId: role });
       onChanged();
     } catch (err) {
       setActionError(
@@ -161,20 +181,37 @@ function MemberRow({
       <td className="px-4 py-2 font-medium">{member.displayName}</td>
       <td className="px-4 py-2 text-muted-foreground">{member.email}</td>
       <td className="px-4 py-2">
-        <select
-          aria-label={`Role for ${member.displayName}`}
-          className={selectClass}
-          value={member.role}
-          disabled={!canManage || busy}
-          title={canManage ? undefined : "Requires member management permission"}
-          onChange={(e) => changeRole(e.target.value)}
-        >
-          {ORG_ROLES.map((r) => (
-            <option key={r} value={r}>
-              {r}
-            </option>
-          ))}
-        </select>
+        <div className="flex items-center gap-2">
+          <select
+            aria-label={`Role for ${member.displayName}`}
+            className={selectClass}
+            value={current}
+            disabled={!canManage || busy}
+            title={
+              canManage
+                ? "Sets the member's single org role (replaces other grants)"
+                : "Requires member management permission"
+            }
+            onChange={(e) => changeRole(e.target.value)}
+          >
+            {current === "" && (
+              <option value="" disabled>
+                {memberRoles.length === 0 ? "No role" : "Multiple"}
+              </option>
+            )}
+            {roleOptions(roles).map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.label}
+              </option>
+            ))}
+          </select>
+          {memberRoles.length > 1 &&
+            memberRoles.map((r) => (
+              <Badge key={r} variant="muted">
+                {r}
+              </Badge>
+            ))}
+        </div>
       </td>
       <td className="px-4 py-2 text-right">
         {actionError && (
@@ -203,11 +240,11 @@ function UserPicker({
   team: string;
   exclude: Set<string>;
   disabled: boolean;
-  onPick: (member: MemberView) => void;
+  onPick: (member: OrgMemberView) => void;
 }) {
   const { token } = useAuth();
   const [query, setQuery] = React.useState("");
-  const [results, setResults] = React.useState<MemberView[] | null>(null);
+  const [results, setResults] = React.useState<OrgMemberView[] | null>(null);
 
   React.useEffect(() => {
     const q = query.trim();
@@ -294,7 +331,7 @@ function TeamMembersPanel({
   const [busy, setBusy] = React.useState(false);
   const [actionError, setActionError] = React.useState<string | null>(null);
 
-  const add = async (member: MemberView) => {
+  const add = async (member: OrgMemberView) => {
     setActionError(null);
     setBusy(true);
     try {
@@ -370,7 +407,7 @@ function TeamMembersPanel({
   );
 }
 
-function TeamsSection() {
+function TeamsSection({ roles }: { roles: Role[] | null }) {
   const { tenant } = useTenant();
   const { token } = useAuth();
   const { canManageTeams } = useOrgCapabilities();
@@ -383,6 +420,7 @@ function TeamsSection() {
 
   const [expanded, setExpanded] = React.useState<string | null>(null);
   const [name, setName] = React.useState("");
+  const [roleId, setRoleId] = React.useState("viewer");
   const [creating, setCreating] = React.useState(false);
   const [actionError, setActionError] = React.useState<string | null>(null);
 
@@ -391,7 +429,7 @@ function TeamsSection() {
     setActionError(null);
     setCreating(true);
     try {
-      await createTeam(token, tenant, { name });
+      await createTeam(token, tenant, { name, roleId });
       setName("");
       refetch();
     } catch (err) {
@@ -451,7 +489,10 @@ function TeamsSection() {
             <Card key={team.id}>
               <div className="flex items-center justify-between px-4 py-3">
                 <div>
-                  <p className="text-sm font-medium">{team.displayName || team.name}</p>
+                  <p className="text-sm font-medium">
+                    {team.displayName || team.name}{" "}
+                    <Badge variant="muted">{team.roleName || team.roleId}</Badge>
+                  </p>
                   <p className="text-xs text-muted-foreground">{team.name}</p>
                 </div>
                 <div className="flex gap-2">
@@ -508,6 +549,22 @@ function TeamsSection() {
                 required
               />
             </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="team-role">Role</Label>
+              <select
+                id="team-role"
+                className={selectClass}
+                value={roleId}
+                onChange={(e) => setRoleId(e.target.value)}
+                disabled={!canManageTeams}
+              >
+                {roleOptions(roles).map((r) => (
+                  <option key={r.id} value={r.id}>
+                    {r.label}
+                  </option>
+                ))}
+              </select>
+            </div>
             <CapabilityGate capability="manageTeams" mode="disable">
               <Button type="submit" disabled={creating || !canManageTeams}>
                 {creating ? "Creating…" : "Create"}
@@ -529,6 +586,7 @@ export function MembersTab() {
     error,
     refetch,
   } = useAsyncResource((t) => listOrgMembers(t, tenant), [tenant]);
+  const { data: roles } = useAsyncResource((t) => listRoles(t, tenant), [tenant]);
 
   return (
     <div className="space-y-8">
@@ -582,6 +640,7 @@ export function MembersTab() {
                     key={m.userId}
                     tenant={tenant}
                     member={m}
+                    roles={roles}
                     canManage={canManageMembers}
                     onChanged={refetch}
                   />
@@ -591,10 +650,15 @@ export function MembersTab() {
           </div>
         )}
 
-        <InviteForm tenant={tenant} disabled={!canManageMembers} onDone={refetch} />
+        <InviteForm
+          tenant={tenant}
+          roles={roles}
+          disabled={!canManageMembers}
+          onDone={refetch}
+        />
       </section>
 
-      <TeamsSection />
+      <TeamsSection roles={roles} />
     </div>
   );
 }

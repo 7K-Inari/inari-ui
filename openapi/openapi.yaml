@@ -1070,6 +1070,39 @@ components:
         - engine
         - source
       type: object
+    CreateRoleInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreateRoleInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        description:
+          maxLength: 500
+          type: string
+        displayName:
+          maxLength: 200
+          type: string
+        name:
+          description: DNS-1123 role name (ClusterRole suffix tenant-<slug>-<name>)
+          maxLength: 63
+          minLength: 1
+          pattern: ^[a-z0-9][a-z0-9-]*$
+          type: string
+        permissions:
+          description: Permission-catalog slugs (GET permissions/catalog)
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+      required:
+        - name
+        - permissions
+      type: object
     CreateRolloutInputBody:
       additionalProperties: false
       properties:
@@ -1194,8 +1227,8 @@ components:
           minLength: 1
           pattern: ^[a-z0-9][a-z0-9-]*$
           type: string
-        role:
-          description: Org role the team grants (default viewer)
+        roleId:
+          description: Org role the team grants (roles.id or built-in role name; default viewer)
           type: string
       required:
         - name
@@ -2729,6 +2762,25 @@ components:
       required:
         - policies
       type: object
+    ListRolesOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListRolesOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        roles:
+          items:
+            $ref: "#/components/schemas/Role"
+          type:
+            - array
+            - "null"
+      required:
+        - roles
+      type: object
     ListRolloutsOutputBody:
       additionalProperties: false
       properties:
@@ -2911,9 +2963,13 @@ components:
         canCreateOrganizations:
           description: Caller may create tenants (platform:inari org_creator)
           type: boolean
-        orgRoles:
+        roles:
           additionalProperties:
-            type: string
+            items:
+              type: string
+            type:
+              - array
+              - "null"
           type: object
         tenants:
           additionalProperties:
@@ -2995,8 +3051,12 @@ components:
           type: string
         email:
           type: string
-        role:
-          type: string
+        roles:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
         teams:
           items:
             type: string
@@ -3009,7 +3069,7 @@ components:
         - userId
         - email
         - displayName
-        - role
+        - roles
         - teams
       type: object
     OrgVisibilityEntry:
@@ -3089,6 +3149,42 @@ components:
           $ref: "#/components/schemas/PolicyPack"
       required:
         - pack
+      type: object
+    Permission:
+      additionalProperties: false
+      properties:
+        description:
+          type: string
+        domain:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+      required:
+        - slug
+        - name
+        - description
+        - domain
+      type: object
+    PermissionCatalogOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/PermissionCatalogOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        permissions:
+          items:
+            $ref: "#/components/schemas/Permission"
+          type:
+            - array
+            - "null"
+      required:
+        - permissions
       type: object
     PinInputBody:
       additionalProperties: false
@@ -3317,11 +3413,11 @@ components:
           format: uri
           readOnly: true
           type: string
-        role:
-          description: Org role to grant
+        roleId:
+          description: Org role to grant (roles.id or built-in role name)
           type: string
       required:
-        - role
+        - roleId
       type: object
     PutProviderCompatInputBody:
       additionalProperties: false
@@ -3390,7 +3486,7 @@ components:
           readOnly: true
           type: string
         mappings:
-          description: Declarative team→role set; applied atomically
+          description: Declarative team→roleId set; applied atomically
           items:
             $ref: "#/components/schemas/TeamRoleMapping"
           type:
@@ -3781,6 +3877,80 @@ components:
           $ref: "#/components/schemas/RunView"
       required:
         - run
+      type: object
+    Role:
+      additionalProperties: false
+      properties:
+        builtin:
+          type: boolean
+        createdAt:
+          format: date-time
+          type: string
+        description:
+          type: string
+        displayName:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        orgId:
+          type: string
+        permissions:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+        - id
+        - orgId
+        - name
+        - displayName
+        - description
+        - builtin
+        - permissions
+        - createdAt
+        - updatedAt
+      type: object
+    RoleOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RoleOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        role:
+          $ref: "#/components/schemas/Role"
+      required:
+        - role
+      type: object
+    RolePatch:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RolePatch.json
+          format: uri
+          readOnly: true
+          type: string
+        description:
+          type: string
+        displayName:
+          type: string
+        name:
+          type: string
+        permissions:
+          items:
+            type: string
+          type: array
       type: object
     RollbackInputBody:
       additionalProperties: false
@@ -4401,14 +4571,17 @@ components:
           type: string
         orgId:
           type: string
-        role:
+        roleId:
+          type: string
+        roleName:
           type: string
       required:
         - id
         - orgId
         - name
         - displayName
-        - role
+        - roleId
+        - roleName
         - keycloakGroupPath
         - createdAt
       type: object
@@ -4432,28 +4605,42 @@ components:
       properties:
         name:
           type: string
-        newRole:
+        newPermissions:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        newRoleId:
           type: string
-        oldRole:
+        oldPermissions:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        oldRoleId:
           type: string
         teamId:
           type: string
       required:
         - teamId
         - name
-        - oldRole
-        - newRole
+        - oldRoleId
+        - oldPermissions
+        - newRoleId
+        - newPermissions
       type: object
     TeamRoleMapping:
       additionalProperties: false
       properties:
-        role:
+        roleId:
           type: string
         team:
           type: string
       required:
         - team
-        - role
+        - roleId
       type: object
     TemplateDetail:
       additionalProperties: false
@@ -8711,6 +8898,33 @@ paths:
       security:
         - bearer: []
       summary: Send a test notification to an endpoint
+  /api/v1/tenants/{org}/permissions/catalog:
+    get:
+      operationId: getPermissionCatalog
+      parameters:
+        - description: Tenant slug
+          in: path
+          name: org
+          required: true
+          schema:
+            description: Tenant slug
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PermissionCatalogOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Static permission catalog for the role editor
   /api/v1/tenants/{org}/platform-resources:
     get:
       operationId: listPlatformResources
@@ -9236,7 +9450,158 @@ paths:
           description: Error
       security:
         - bearer: []
-      summary: Declarative bulk set of team→role mappings, applied atomically (org admin only)
+      summary: Declarative bulk set of team→role mappings, applied atomically (tenant.rbac.manage)
+  /api/v1/tenants/{org}/roles:
+    get:
+      operationId: listRoles
+      parameters:
+        - description: Tenant slug
+          in: path
+          name: org
+          required: true
+          schema:
+            description: Tenant slug
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListRolesOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: List org roles (built-in and custom)
+    post:
+      operationId: createRole
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateRoleInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Create a custom org role (tenant.rbac.manage)
+  /api/v1/tenants/{org}/roles/{role}:
+    delete:
+      operationId: deleteRole
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - description: Role name or ID
+          in: path
+          name: role
+          required: true
+          schema:
+            description: Role name or ID
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Delete a custom role (tenant.rbac.manage; built-ins are never deletable)
+    get:
+      operationId: getRole
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - description: Role name or ID
+          in: path
+          name: role
+          required: true
+          schema:
+            description: Role name or ID
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Get one org role by name or ID
+    patch:
+      operationId: updateRole
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: role
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RolePatch"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RoleOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Edit a role (tenant.rbac.manage; built-in names are immutable; the tenant.admin guardrail applies)
   /api/v1/tenants/{org}/rollouts:
     get:
       operationId: listRollouts

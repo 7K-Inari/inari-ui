@@ -17,7 +17,7 @@ afterEach(() => {
 afterAll(() => mockServer.close());
 
 function capturePut() {
-  const bodies: { mappings?: { team: string; role: string }[] }[] = [];
+  const bodies: { mappings?: { team: string; roleId: string }[] }[] = [];
   mockServer.use(
     http.put("*/api/v1/tenants/:org/rbac/mappings", async ({ request }) => {
       bodies.push((await request.json()) as (typeof bodies)[number]);
@@ -43,15 +43,13 @@ describe("rbac api", () => {
     });
   });
 
-  it("writes the declarative set as team→role mappings", async () => {
+  it("writes the declarative set as team→roleId mappings", async () => {
     const bodies = capturePut();
     await putRbacMappings("tok", "acme", [
       { groupPath: "tenant-acme/data", clusterRole: "tenant-acme-viewer" },
     ]);
     expect(bodies).toHaveLength(1);
-    expect(bodies[0].mappings).toEqual([
-      { team: "data", role: "tenant-acme-viewer" },
-    ]);
+    expect(bodies[0].mappings).toEqual([{ team: "data", roleId: "viewer" }]);
   });
 
   it("setRbacMapping adds a cell by composing over the bulk PUT", async () => {
@@ -65,14 +63,15 @@ describe("rbac api", () => {
     expect(bodies).toHaveLength(1);
     expect(bodies[0].mappings).toContainEqual({
       team: "data",
-      role: "tenant-acme-operator",
+      roleId: "operator",
     });
-    // Existing mappings are preserved in the declarative set.
+    // Existing mappings are preserved in the declarative set, translated to
+    // roleIds by stripping the tenant ClusterRole prefix.
     for (const existing of rbacMatrixFor("acme").mappings) {
       const team = existing.groupPath.split("/").pop()!;
       expect(bodies[0].mappings).toContainEqual({
         team,
-        role: existing.clusterRole,
+        roleId: existing.clusterRole.replace("tenant-acme-", ""),
       });
     }
   });
@@ -91,7 +90,7 @@ describe("rbac api", () => {
     const team = existing.groupPath.split("/").pop()!;
     expect(bodies[0].mappings ?? []).not.toContainEqual({
       team,
-      role: existing.clusterRole,
+      roleId: existing.clusterRole.replace("tenant-acme-", ""),
     });
     expect(bodies[0].mappings).toHaveLength(
       rbacMatrixFor("acme").mappings.length - 1,
