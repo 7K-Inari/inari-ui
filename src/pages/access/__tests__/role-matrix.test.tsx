@@ -245,6 +245,23 @@ describe("RoleMatrix", () => {
     expect(wrapper).toHaveAttribute("title", "Requires role management permission");
   });
 
+  it("read-back after Save still resolves the assigned role", async () => {
+    const user = userEvent.setup();
+    renderMatrix();
+    const select = await screen.findByLabelText("Role for Data");
+    await user.selectOptions(select, "role-editor");
+    await user.click(screen.getByRole("button", { name: "Save changes" }));
+
+    // After Save the matrix refetches; the row must still show the assigned
+    // role, not degrade to "Unknown role" (the mock synthesizes ClusterRoles
+    // from the role NAME, matching the server).
+    await vi.waitFor(() =>
+      expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled(),
+    );
+    expect(screen.getByLabelText("Role for Data")).toHaveValue("role-editor");
+    expect(screen.queryByText(/Unknown role/)).not.toBeInTheDocument();
+  });
+
   it("keeps an unresolvable ClusterRole visible and round-trips it on Save", async () => {
     const user = userEvent.setup();
     const bodies: unknown[] = [];

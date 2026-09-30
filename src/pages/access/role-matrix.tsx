@@ -63,7 +63,10 @@ export function RoleMatrix() {
   );
   // Without the role entities the per-row selects cannot resolve a single
   // row — and Save is a whole-set replace that would unmap every team.
-  const rolesReady = roles !== undefined;
+  // `useAsyncResource` keeps stale data while refetching (e.g. a tenant
+  // switch), so "ready" also requires the fetch to have settled; otherwise a
+  // previous tenant's role list could be saved into the new tenant.
+  const rolesReady = roles !== undefined && !rolesLoading;
 
   // Draft state: one roleId per team. null = pristine, mirrors the server
   // state. The draft is tagged with its tenant: a tenant switch re-renders

@@ -733,7 +733,11 @@ export const handlers = [
     const mappings = body.mappings.map((m) => ({
       groupPath:
         groups.find((g) => g.team === m.team)?.path ?? `tenant-${org}/${m.team}`,
-      clusterRole: `tenant-${org}-${m.roleId}`,
+      // The server resolves roleId (roles.id or name) to the role entity and
+      // synthesizes the ClusterRole from the role NAME
+      // (tenant-<slug>-<name>); resolve here so the read-back join in the
+      // matrix recovers the role instead of degrading to "Unknown role".
+      clusterRole: `tenant-${org}-${findRole(org, m.roleId)?.name ?? m.roleId}`,
     }));
     const before = rbacMatrixFor(org).mappings;
     setRbacMappingsMock(org, mappings);
@@ -1409,6 +1413,12 @@ export const handlers = [
     if (updated === null) return humaError(404, "role not found");
     if (updated === "builtin-rename") {
       return humaError(409, "built-in role names are immutable");
+    }
+    if (updated === "guardrail") {
+      return humaError(
+        409,
+        "this edit would leave the organization without a team holding the tenant.admin permission",
+      );
     }
     return HttpResponse.json({ role: updated });
   }),

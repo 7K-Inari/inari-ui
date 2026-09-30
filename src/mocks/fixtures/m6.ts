@@ -765,8 +765,23 @@ export function createRoleMock(
   return role;
 }
 
-// Built-in names are immutable; the tenant.admin guardrail is enforced by
-// the handler (it needs the mapping state to answer 409).
+// The tenant.admin guardrail (server: 409 + explanation): some team in the
+// org must retain the tenant.admin permission after any role edit, or the
+// tenant locks itself out.
+function adminRetained(
+  org: string,
+  patched: { id: string; permissions: string[] | null },
+): boolean {
+  return teamsFor(org).some((team) => {
+    const role = findRole(org, team.roleId);
+    const permissions =
+      role?.id === patched.id ? (patched.permissions ?? []) : (role?.permissions ?? []);
+    return permissions.includes("tenant.admin");
+  });
+}
+
+// Built-in names are immutable; the tenant.admin guardrail is enforced here
+// (it needs the team→role state to answer 409).
 export function updateRoleMock(
   org: string,
   nameOrId: string,
@@ -776,11 +791,17 @@ export function updateRoleMock(
     description?: string;
     permissions?: string[];
   },
-): Role | "builtin-rename" | null {
+): Role | "builtin-rename" | "guardrail" | null {
   const role = findRole(org, nameOrId);
   if (!role) return null;
   if (role.builtin && patch.name !== undefined && patch.name !== role.name) {
     return "builtin-rename";
+  }
+  if (
+    patch.permissions !== undefined &&
+    !adminRetained(org, { id: role.id, permissions: patch.permissions })
+  ) {
+    return "guardrail";
   }
   if (patch.name !== undefined) role.name = patch.name;
   if (patch.displayName !== undefined) role.displayName = patch.displayName;

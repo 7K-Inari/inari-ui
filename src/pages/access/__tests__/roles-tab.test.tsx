@@ -140,6 +140,41 @@ describe("RolesTab", () => {
     confirmSpy.mockRestore();
   });
 
+  it("surfaces the tenant.admin guardrail 409 inline when editing the admin bundle", async () => {
+    const user = userEvent.setup();
+    render(<RolesTab />);
+    const row = (await screen.findByText("Admin")).closest("tr")!;
+    await user.click(within(row).getByRole("button", { name: "Edit" }));
+
+    // Uncheck the tenant.admin permission and save: the only team holding
+    // admin (platform-team) would lose it.
+    await user.click(screen.getByText("Organization admin"));
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(
+      await screen.findByText(/without a team holding the tenant\.admin permission/),
+    ).toBeInTheDocument();
+    // The server state is unchanged.
+    expect(
+      policyMockControl.getState().roles.acme.find((r) => r.name === "admin")!
+        .permissions,
+    ).toContain("tenant.admin");
+  });
+
+  it("edits the operator bundle (no tenant.admin) freely", async () => {
+    const user = userEvent.setup();
+    render(<RolesTab />);
+    const row = (await screen.findByText("Operator")).closest("tr")!;
+    await user.click(within(row).getByRole("button", { name: "Edit" }));
+    await user.click(screen.getByText("Read organization"));
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(screen.queryByText(/tenant\.admin permission/)).not.toBeInTheDocument();
+    expect(
+      policyMockControl.getState().roles.acme.find((r) => r.name === "operator")!
+        .permissions,
+    ).not.toContain("tenant.read");
+  });
+
   it("surfaces the server 409 when deleting a team-bound role", async () => {
     const user = userEvent.setup();
     const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
