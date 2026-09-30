@@ -35,7 +35,14 @@ export function RoleMatrix() {
 
   // Draft state: one role per team (radio semantics — the server rejects
   // duplicate teams with 400). null = pristine, mirrors the server state.
-  const [draft, setDraft] = React.useState<Record<string, string> | null>(null);
+  // The draft is tagged with its tenant: a tenant switch re-renders without
+  // unmounting, and a stale draft from the previous tenant would otherwise
+  // show every team as "No role" and wipe the new tenant's mappings on Save.
+  const [draftState, setDraftState] = React.useState<{
+    tenant: string;
+    values: Record<string, string>;
+  } | null>(null);
+  const draft = draftState && draftState.tenant === tenant ? draftState.values : null;
   const [saving, setSaving] = React.useState(false);
   const [actionError, setActionError] = React.useState<string | null>(null);
 
@@ -52,7 +59,7 @@ export function RoleMatrix() {
   const dirty = draft !== null;
 
   const select = (groupPath: string, clusterRole: string) => {
-    setDraft({ ...effective, [groupPath]: clusterRole });
+    setDraftState({ tenant, values: { ...effective, [groupPath]: clusterRole } });
     setActionError(null);
   };
 
@@ -67,7 +74,7 @@ export function RoleMatrix() {
       .filter((m) => m.clusterRole !== NO_ROLE);
     try {
       await putRbacMappings(token, tenant, mappings);
-      setDraft(null);
+      setDraftState(null);
       refetch();
     } catch (err) {
       setActionError(
@@ -79,7 +86,7 @@ export function RoleMatrix() {
   };
 
   const reset = () => {
-    setDraft(null);
+    setDraftState(null);
     setActionError(null);
   };
 

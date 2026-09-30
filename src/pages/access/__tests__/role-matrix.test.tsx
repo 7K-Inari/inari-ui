@@ -9,6 +9,7 @@ import { m3MockControl } from "@/mocks/fixtures/m3";
 import { mockServer } from "@/mocks/server";
 
 let mockPermissions: MyPermissions = { canCreateOrganizations: false };
+let mockTenant = "acme";
 
 vi.mock("@/auth/auth-context", () => ({
   useAuth: () => ({ token: "test-token", parsedToken: {} }),
@@ -17,7 +18,7 @@ vi.mock("@/auth/permissions-context", () => ({
   usePermissions: () => mockPermissions,
 }));
 vi.mock("@/tenant/tenant-context", () => ({
-  useTenant: () => ({ tenant: "acme" }),
+  useTenant: () => ({ tenant: mockTenant }),
 }));
 
 beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
@@ -27,9 +28,13 @@ afterEach(() => {
 });
 beforeEach(() => {
   m3MockControl.reset();
+  mockTenant = "acme";
   mockPermissions = {
     canCreateOrganizations: false,
-    tenants: { acme: { canManageRbac: true } },
+    tenants: {
+      acme: { canManageRbac: true },
+      globex: { canManageRbac: true },
+    },
   };
 });
 afterAll(() => mockServer.close());
@@ -118,6 +123,37 @@ describe("RoleMatrix", () => {
     ).toBeInTheDocument();
     // draft retained: still dirty, save stays enabled
     expect(screen.getByRole("button", { name: "Save changes" })).toBeEnabled();
+  });
+
+  it("drops a dirty draft when the tenant switches (no cross-tenant wipe)", async () => {
+    const user = userEvent.setup();
+    const bodies: unknown[] = [];
+    mockServer.use(
+      http.put("*/api/v1/tenants/:org/rbac/mappings", async ({ request }) => {
+        bodies.push(await request.json());
+        return HttpResponse.json({ changes: [] });
+      }),
+    );
+
+    const { rerender } = render(<RoleMatrix />);
+    await screen.findByText("Platform Team");
+    await user.click(screen.getByRole("radio", { name: "Data: Operator" }));
+    expect(screen.getByRole("button", { name: "Save changes" })).toBeEnabled();
+
+    // Tenant switch re-renders without unmounting (same route tree).
+    mockTenant = "globex";
+    rerender(<RoleMatrix />);
+
+    // The acme draft must not leak into globex: the matrix reflects the
+    // globex server state and Save is disabled (pristine).
+    await vi.waitFor(() =>
+      expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled(),
+    );
+    expect(
+      screen.getByRole("radio", { name: "Developers: Viewer" }),
+    ).toBeChecked();
+    expect(screen.getByRole("radio", { name: "Data: No role" })).toBeChecked();
+    expect(bodies).toHaveLength(0);
   });
 
   it("disables radios and Save with a tooltip when canManageRbac is false", async () => {
