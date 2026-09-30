@@ -10,10 +10,7 @@ import {
   ListChecks,
   Scale,
   ScrollText,
-  ShieldCheck,
   TicketCheck,
-  UserPlus,
-  Users,
   Vault,
   Webhook,
 } from "lucide-react";
@@ -40,8 +37,6 @@ export const SETTINGS_NAV_SECTIONS: SettingsNavSection[] = [
     title: "Tenant/Org",
     items: [
       { label: "Profile", path: "org", icon: Building2, requiredCapability: "viewer" },
-      { label: "Members", path: "org/members", icon: Users, requiredCapability: "viewer" },
-      { label: "Teams", path: "org/teams", icon: UserPlus, requiredCapability: "viewer" },
       { label: "Git", path: "org/git", icon: FolderGit2, requiredCapability: "viewer" },
       { label: "Git connections", path: "org/git-connections", icon: Github, requiredCapability: "viewer" },
       { label: "IdP Brokering", path: "org/idp", icon: Webhook, requiredCapability: "admin" },
@@ -54,7 +49,6 @@ export const SETTINGS_NAV_SECTIONS: SettingsNavSection[] = [
     items: [
       { label: "OIDC Clients", path: "identity/clients", icon: KeyRound, requiredCapability: "admin" },
       { label: "Scopes", path: "identity/scopes", icon: ListChecks, requiredCapability: "admin" },
-      { label: "RBAC Mapping", path: "identity/rbac", icon: ShieldCheck, requiredCapability: "admin" },
     ],
   },
   {

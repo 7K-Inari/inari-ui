@@ -106,7 +106,12 @@ import {
   policyMockControl,
   listOrgsMock,
   orgMembersFor,
+  grantPlatformAdminMock,
   packsFor,
+  platformAdminsList,
+  revokePlatformAdminMock,
+  searchOrgMembers,
+  tenantCapabilitiesProjection,
   patchOrgMock,
   policiesFor,
   putOrgMemberMock,
@@ -311,9 +316,32 @@ function humaError(status: number, detail: string) {
 
 export const handlers = [
   // ---- global permissions (OpenFGA projection, M1.W2) ----
+  // M1.W1 Phase A adds the per-tenant capability projection (`tenants`).
   http.get("*/api/v1/me/permissions", () =>
-    HttpResponse.json({ canCreateOrganizations: true }),
+    HttpResponse.json({
+      canCreateOrganizations: true,
+      tenants: tenantCapabilitiesProjection(),
+    }),
   ),
+
+  // ---- platform admins (M1.W1 RBAC Phase A; proposed routes) ----
+  http.get("*/api/v1/platform/admins", () =>
+    HttpResponse.json({ admins: platformAdminsList() }),
+  ),
+
+  http.put("*/api/v1/platform/admins/:subject", ({ params }) => {
+    const subject = params.subject as string;
+    if (!subject) return humaError(422, "validation failed (subject is required)");
+    grantPlatformAdminMock(subject);
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.delete("*/api/v1/platform/admins/:subject", ({ params }) => {
+    if (!revokePlatformAdminMock(params.subject as string)) {
+      return humaError(404, "platform admin not found");
+    }
+    return new HttpResponse(null, { status: 204 });
+  }),
 
   // ---- tenants (platform-scoped, not under /tenants/:org) ----
   http.get("*/api/v1/tenants", () =>
@@ -681,6 +709,14 @@ export const handlers = [
     // atomically. Translate team slugs back to group paths for mock state.
     if (!Array.isArray(body.mappings)) {
       return humaError(422, "validation failed (mappings is required)");
+    }
+    // Server enforces one role per team: duplicate team entries are rejected.
+    const seenTeams = new Set<string>();
+    for (const m of body.mappings) {
+      if (seenTeams.has(m.team)) {
+        return humaError(400, `duplicate mapping for team "${m.team}"`);
+      }
+      seenTeams.add(m.team);
     }
     const org = params.org as string;
     const groups = rbacMatrixFor(org).groups;
@@ -1256,9 +1292,14 @@ export const handlers = [
   }),
 
   // ---- M6.W2: org-wide members (proposed routes) ----
-  http.get(`${BASE}/members`, ({ params }) =>
-    HttpResponse.json({ members: orgMembersFor(params.org as string) }),
-  ),
+  // M1.W1 Phase A: ?q= filters by email/display name (user picker).
+  http.get(`${BASE}/members`, ({ params, request }) => {
+    const q = new URL(request.url).searchParams.get("q");
+    const members = q
+      ? searchOrgMembers(params.org as string, q)
+      : orgMembersFor(params.org as string);
+    return HttpResponse.json({ members });
+  }),
 
   http.put(`${BASE}/members/:subject`, async ({ params, request }) => {
     const body = (await request.json()) as { role?: string };
@@ -1306,13 +1347,20 @@ export const handlers = [
     return new HttpResponse(null, { status: 204 });
   }),
 
-  http.get(`${BASE}/teams/:team/members`, ({ params }) => {
+  http.get(`${BASE}/teams/:team/members`, ({ params, request }) => {
     if (!teamsFor(params.org as string).some((t) => t.name === params.team)) {
       return humaError(404, "team not found");
     }
-    return HttpResponse.json({
-      members: teamMembersFor(params.org as string, params.team as string),
-    });
+    const q = new URL(request.url).searchParams.get("q")?.trim().toLowerCase();
+    let members = teamMembersFor(params.org as string, params.team as string);
+    if (q) {
+      members = members.filter(
+        (m) =>
+          m.email.toLowerCase().includes(q) ||
+          m.displayName.toLowerCase().includes(q),
+      );
+    }
+    return HttpResponse.json({ members });
   }),
 
   http.post(`${BASE}/teams/:team/members`, async ({ params, request }) => {

@@ -4,18 +4,19 @@ import type { components } from "@/api/__generated__/schema";
 // Global permissions are computed server-side by the OpenFGA-backed
 // authorization brain (M1.W2); the UI only consumes this projection.
 type MyPermissionsOutputBody = components["schemas"]["MyPermissionsOutputBody"];
+type TenantCapabilities = components["schemas"]["TenantCapabilities"];
 
-// Forward-compatible seam for a per-tenant permission projection the server
-// has not shipped yet: parse it when present, treat its absence as "unknown"
-// (never as denial).
-export interface TenantPermissions {
+// Per-tenant capability projection (`tenants` on GET /me/permissions). The
+// contract fixes canDeploy/canManageMembers/canManageTeams/canManageRbac;
+// the extra optional flags are UI-side forward-compat consumed by overview
+// pages. Parse defensively: an absent projection is "unknown", never denial.
+export interface TenantPermissions extends Partial<TenantCapabilities> {
   canDecideApprovals?: boolean;
   canRegisterClusters?: boolean;
   canConnectCloudAccounts?: boolean;
-  canDeploy?: boolean;
 }
 
-// UI view model over MyPermissionsOutputBody plus the unshipped `tenants` seam.
+// UI view model over MyPermissionsOutputBody.
 export interface MyPermissions {
   canCreateOrganizations: boolean;
   tenants?: Record<string, TenantPermissions>;
@@ -30,6 +31,9 @@ const TENANT_FLAGS = [
   "canRegisterClusters",
   "canConnectCloudAccounts",
   "canDeploy",
+  "canManageMembers",
+  "canManageTeams",
+  "canManageRbac",
 ] as const;
 
 function parseTenantPermissions(raw: unknown): Record<string, TenantPermissions> | undefined {
@@ -50,10 +54,7 @@ function parseTenantPermissions(raw: unknown): Record<string, TenantPermissions>
 export async function fetchMyPermissions(
   token: string | undefined,
 ): Promise<MyPermissions> {
-  const res = await apiFetch<MyPermissionsOutputBody & { tenants?: unknown }>(
-    `/me/permissions`,
-    { token },
-  );
+  const res = await apiFetch<MyPermissionsOutputBody>(`/me/permissions`, { token });
   const tenants = parseTenantPermissions(res.tenants);
   const orgRoles = parseOrgRoles(res.orgRoles);
   return {

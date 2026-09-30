@@ -24,20 +24,11 @@ type ListTeamsResponse = components["schemas"]["ListTeamsOutputBody"];
 type ListMembersResponse = components["schemas"]["ListMembersOutputBody"];
 type AddMemberRequest = components["schemas"]["AddMemberInputBody"];
 
-// TODO(contract-sync): the routes below are proposed huma shapes not yet in
-// the pinned contract (1.6.0). Replace these local interfaces with generated
-// schemas once the inari-server M6 release lands (npm run sync:api).
-export interface PatchTenantRequest {
-  displayName: string;
-}
+export type PatchTenantRequest = components["schemas"]["UpdateTenantInputBody"];
 // Server contract (setMemberRole): subject is a Keycloak user UUID or email;
 // the body carries only the org role.
-export interface PutOrgMemberRequest {
-  role: string;
-}
-export interface CreateTeamRequest {
-  name: string;
-}
+export type PutOrgMemberRequest = components["schemas"]["PutMemberInputBody"];
+export type CreateTeamRequest = components["schemas"]["CreateTeamInputBody"];
 
 // The only cross-tenant call in the contract: orgs visible to the caller
 // (drives the tenant switcher and the all-tenants home).
@@ -103,13 +94,21 @@ export async function patchTenant(
 
 // ---- org-wide members ----
 
+function searchQuery(q?: string): string {
+  return q ? `?q=${encodeURIComponent(q)}` : "";
+}
+
+// `q` filters members by email server-side (case-insensitive substring;
+// M1.W1 user picker).
 export async function listOrgMembers(
   token: string | undefined,
   tenant: string,
+  opts?: { q?: string },
 ): Promise<MemberView[]> {
-  const res = await apiFetch<ListMembersResponse>(`${tenantPath(tenant)}/members`, {
-    token,
-  });
+  const res = await apiFetch<ListMembersResponse>(
+    `${tenantPath(tenant)}/members${searchQuery(opts?.q)}`,
+    { token },
+  );
   return res.members ?? [];
 }
 
@@ -178,9 +177,10 @@ export async function listTeamMembers(
   token: string | undefined,
   tenant: string,
   team: string,
+  opts?: { q?: string },
 ): Promise<MemberView[]> {
   const res = await apiFetch<ListMembersResponse>(
-    `${tenantPath(tenant)}/teams/${encodeURIComponent(team)}/members`,
+    `${tenantPath(tenant)}/teams/${encodeURIComponent(team)}/members${searchQuery(opts?.q)}`,
     { token },
   );
   return res.members ?? [];
