@@ -2691,6 +2691,25 @@ components:
       required:
         - packs
       type: object
+    ListPlatformAdminsOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListPlatformAdminsOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        admins:
+          items:
+            $ref: "#/components/schemas/PlatformAdminView"
+          type:
+            - array
+            - "null"
+      required:
+        - admins
+      type: object
     ListPoliciesOutputBody:
       additionalProperties: false
       properties:
@@ -2896,6 +2915,10 @@ components:
           additionalProperties:
             type: string
           type: object
+        tenants:
+          additionalProperties:
+            $ref: "#/components/schemas/TenantCapabilities"
+          type: object
       required:
         - canCreateOrganizations
       type: object
@@ -3082,6 +3105,20 @@ components:
           type: string
       required:
         - version
+      type: object
+    PlatformAdminView:
+      additionalProperties: false
+      properties:
+        displayName:
+          type: string
+        email:
+          type: string
+        userId:
+          type: string
+      required:
+        - userId
+        - email
+        - displayName
       type: object
     Policy:
       additionalProperties: false
@@ -4472,6 +4509,23 @@ components:
         - description
         - version
       type: object
+    TenantCapabilities:
+      additionalProperties: false
+      properties:
+        canDeploy:
+          type: boolean
+        canManageMembers:
+          type: boolean
+        canManageRbac:
+          type: boolean
+        canManageTeams:
+          type: boolean
+      required:
+        - canDeploy
+        - canManageMembers
+        - canManageTeams
+        - canManageRbac
+      type: object
     TenantDeletion:
       additionalProperties: false
       properties:
@@ -5117,6 +5171,70 @@ paths:
       security:
         - bearer: []
       summary: Platform-level permissions of the authenticated caller
+  /api/v1/platform/admins:
+    get:
+      operationId: listPlatformAdmins
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListPlatformAdminsOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: List platform admins (members of the Keycloak platform admin group)
+  /api/v1/platform/admins/{subject}:
+    delete:
+      operationId: revokePlatformAdmin
+      parameters:
+        - description: Keycloak user id or email of the user to grant/revoke
+          in: path
+          name: subject
+          required: true
+          schema:
+            description: Keycloak user id or email of the user to grant/revoke
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Revoke platform admin (leaves the platform admin group; idempotent)
+    put:
+      operationId: grantPlatformAdmin
+      parameters:
+        - description: Keycloak user id or email of the user to grant/revoke
+          in: path
+          name: subject
+          required: true
+          schema:
+            description: Keycloak user id or email of the user to grant/revoke
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Grant platform admin (joins the platform admin group; org_creator tuple converges via PlatformGroupSync)
   /api/v1/tenants:
     get:
       operationId: listTenants
@@ -8337,6 +8455,14 @@ paths:
           schema:
             description: Tenant slug
             type: string
+        - description: Case-insensitive email substring filter
+          explode: false
+          in: query
+          name: q
+          schema:
+            description: Case-insensitive email substring filter
+            maxLength: 200
+            type: string
       responses:
         "200":
           content:
@@ -9825,6 +9951,14 @@ paths:
           required: true
           schema:
             description: Team name
+            type: string
+        - description: Case-insensitive email substring filter
+          explode: false
+          in: query
+          name: q
+          schema:
+            description: Case-insensitive email substring filter
+            maxLength: 200
             type: string
       responses:
         "200":

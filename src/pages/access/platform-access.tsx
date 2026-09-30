@@ -100,18 +100,16 @@ export function PlatformAccessPage() {
             </thead>
             <tbody>
               {admins.map((admin) => (
-                <tr key={admin.subject} className="border-t hover:bg-muted/30">
-                  <td className="px-4 py-2 font-medium">
-                    {admin.displayName ?? admin.subject}
-                  </td>
+                <tr key={admin.userId} className="border-t hover:bg-muted/30">
+                  <td className="px-4 py-2 font-medium">{admin.displayName}</td>
                   <td className="px-4 py-2 text-muted-foreground">
-                    {admin.email ?? "—"}
+                    {admin.email}
                   </td>
                   <td className="px-4 py-2 text-right">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => revoke(admin.subject)}
+                      onClick={() => revoke(admin.userId)}
                     >
                       Revoke
                     </Button>

@@ -97,10 +97,11 @@ export interface MockGitProvider {
   apiBase?: string | null;
 }
 
+// Wire shape: components.schemas.PlatformAdminView (all fields required).
 export interface MockPlatformAdmin {
-  subject: string;
-  email?: string;
-  displayName?: string;
+  userId: string;
+  email: string;
+  displayName: string;
 }
 
 export const baselinePack: PolicyPack = {
@@ -420,7 +421,7 @@ function seedState(): PolicyMockState {
     gitAuthorizeError: null,
     gitDisconnectError: null,
     platformAdmins: [
-      { subject: "u-root", email: "root@inari.dev", displayName: "Root Admin" },
+      { userId: "u-root", email: "root@inari.dev", displayName: "Root Admin" },
     ],
     tenantCapabilities: {
       acme: {
@@ -730,16 +731,16 @@ export function platformAdminsList(): MockPlatformAdmin[] {
   return state.platformAdmins.map((a) => ({ ...a }));
 }
 
-// subject is a Keycloak UUID or an email (the server resolves emails via the
-// Admin API); the mock stores whatever it is given.
+// subject is a Keycloak user id or an email (the server resolves emails via
+// the Admin API); the mock stores whatever it is given.
 export function grantPlatformAdminMock(subject: string): MockPlatformAdmin {
   const existing = state.platformAdmins.find(
-    (a) => a.subject === subject || a.email === subject,
+    (a) => a.userId === subject || a.email === subject,
   );
   if (existing) return existing;
   const admin: MockPlatformAdmin = {
-    subject,
-    email: subject.includes("@") ? subject : undefined,
+    userId: subject,
+    email: subject.includes("@") ? subject : `${subject}@mock.local`,
     displayName: subject,
   };
   state.platformAdmins.push(admin);
@@ -749,7 +750,7 @@ export function grantPlatformAdminMock(subject: string): MockPlatformAdmin {
 export function revokePlatformAdminMock(subject: string): boolean {
   const before = state.platformAdmins.length;
   state.platformAdmins = state.platformAdmins.filter(
-    (a) => a.subject !== subject && a.email !== subject,
+    (a) => a.userId !== subject && a.email !== subject,
   );
   return state.platformAdmins.length < before;
 }

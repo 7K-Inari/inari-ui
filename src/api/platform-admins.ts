@@ -1,20 +1,16 @@
 import { apiFetch } from "@/api/client";
+import type { components } from "@/api/__generated__/schema";
 
-// TODO(contract-sync): the platform admins routes (M1.W1 RBAC Phase A server
-// task — GET/PUT/DELETE /api/v1/platform/admins[/{subject}]) are not yet in
-// the pinned OpenAPI snapshot; the shapes below follow the architecture plan.
-// Replace these local interfaces with generated schemas at the codegen tail
-// (npm run sync:api).
-export interface PlatformAdmin {
-  subject: string;
-  email?: string;
-  displayName?: string;
-}
+// Platform admins (M1.W1 RBAC Phase A): membership in the Keycloak
+// platform-admins group, managed via the Admin API server-side.
+export type PlatformAdmin = components["schemas"]["PlatformAdminView"];
+type ListPlatformAdminsOutputBody =
+  components["schemas"]["ListPlatformAdminsOutputBody"];
 
 export async function listPlatformAdmins(
   token: string | undefined,
 ): Promise<PlatformAdmin[]> {
-  const res = await apiFetch<{ admins?: PlatformAdmin[] }>(`/platform/admins`, {
+  const res = await apiFetch<ListPlatformAdminsOutputBody>(`/platform/admins`, {
     token,
   });
   return res.admins ?? [];

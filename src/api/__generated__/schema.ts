@@ -72,6 +72,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/platform/admins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List platform admins (members of the Keycloak platform admin group) */
+        get: operations["listPlatformAdmins"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/admins/{subject}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Grant platform admin (joins the platform admin group; org_creator tuple converges via PlatformGroupSync) */
+        put: operations["grantPlatformAdmin"];
+        post?: never;
+        /** Revoke platform admin (leaves the platform admin group; idempotent) */
+        delete: operations["revokePlatformAdmin"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenants": {
         parameters: {
             query?: never;
@@ -3425,6 +3460,15 @@ export interface components {
             readonly $schema?: string;
             packs: components["schemas"]["PolicyPack"][] | null;
         };
+        ListPlatformAdminsOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/ListPlatformAdminsOutputBody.json
+             */
+            readonly $schema?: string;
+            admins: components["schemas"]["PlatformAdminView"][] | null;
+        };
         ListPoliciesOutputBody: {
             /**
              * Format: uri
@@ -3524,6 +3568,9 @@ export interface components {
             orgRoles?: {
                 [key: string]: string;
             };
+            tenants?: {
+                [key: string]: components["schemas"]["TenantCapabilities"];
+            };
         };
         NotificationDelivery: {
             /** Format: int64 */
@@ -3601,6 +3648,11 @@ export interface components {
              */
             readonly $schema?: string;
             version: string;
+        };
+        PlatformAdminView: {
+            displayName: string;
+            email: string;
+            userId: string;
         };
         Policy: {
             /** Format: date-time */
@@ -4224,6 +4276,12 @@ export interface components {
             tags?: string[] | null;
             version: string;
         };
+        TenantCapabilities: {
+            canDeploy: boolean;
+            canManageMembers: boolean;
+            canManageRbac: boolean;
+            canManageTeams: boolean;
+        };
         TenantDeletion: {
             approvalId?: string;
             /** Format: date-time */
@@ -4602,6 +4660,95 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["MyPermissionsOutputBody"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listPlatformAdmins: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListPlatformAdminsOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    grantPlatformAdmin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Keycloak user id or email of the user to grant/revoke */
+                subject: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    revokePlatformAdmin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Keycloak user id or email of the user to grant/revoke */
+                subject: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {
@@ -8019,7 +8166,10 @@ export interface operations {
     };
     listOrgMembers: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Case-insensitive email substring filter */
+                q?: string;
+            };
             header?: never;
             path: {
                 /** @description Tenant slug */
@@ -9659,7 +9809,10 @@ export interface operations {
     };
     listMembers: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Case-insensitive email substring filter */
+                q?: string;
+            };
             header?: never;
             path: {
                 /** @description Tenant slug */

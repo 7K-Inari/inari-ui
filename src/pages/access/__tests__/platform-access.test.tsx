@@ -46,7 +46,7 @@ describe("PlatformAccessPage", () => {
     await user.click(screen.getByRole("button", { name: "Grant" }));
     expect((await screen.findAllByText("ops@inari.dev")).length).toBeGreaterThan(0);
     expect(
-      policyMockControl.getState().platformAdmins.map((a) => a.subject),
+      policyMockControl.getState().platformAdmins.map((a) => a.userId),
     ).toContain("ops@inari.dev");
   });
 
