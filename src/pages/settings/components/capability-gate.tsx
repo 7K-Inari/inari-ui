@@ -12,16 +12,16 @@ export interface OrgCapabilities {
   canManageRbac: boolean;
 }
 
-// The org role comes from the server (`GET /me/permissions` → orgRoles,
-// via PermissionsProvider), which reflects the authoritative FGA state.
+// The org roles come from the server (`GET /me/permissions` → roles, via
+// PermissionsProvider), which reflects the authoritative FGA state.
 // The token's `organization` claim carries only slugs (no role), so a
 // token-only derivation silently degrades every user to viewer — the
 // read-only-UI incident of 2026-09-16. The token claim remains the fallback
-// for older servers that do not return orgRoles yet.
+// for older servers that do not return roles yet.
 export function useOrgCapabilities(): OrgCapabilities {
   const { parsedToken } = useAuth();
   const { tenant } = useTenant();
-  const { orgRoles, tenants } = usePermissions();
+  const { roles, tenants } = usePermissions();
 
   const tokenAdmin = React.useMemo(() => {
     const claim = parsedToken?.["organization"];
@@ -40,9 +40,8 @@ export function useOrgCapabilities(): OrgCapabilities {
     return false;
   }, [parsedToken, tenant]);
 
-  const serverRole = orgRoles?.[tenant];
-  const isAdmin =
-    serverRole !== undefined ? serverRole === "org-admin" : tokenAdmin;
+  const serverRoles = roles?.[tenant];
+  const isAdmin = serverRoles !== undefined ? serverRoles.includes("admin") : tokenAdmin;
 
   // Per-capability flags come from the `tenants` projection on
   // GET /me/permissions (M1.W1). An absent projection is "unknown", never a

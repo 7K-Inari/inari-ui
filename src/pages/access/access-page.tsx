@@ -3,6 +3,7 @@ import { Link, useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { MembersTab } from "@/pages/access/members-tab";
 import { RoleMatrix } from "@/pages/access/role-matrix";
+import { RolesTab } from "@/pages/access/roles-tab";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
@@ -10,6 +11,7 @@ import { tenantLink } from "@/tenant/tenant-link";
 const TABS = [
   { id: "members", label: "Members" },
   { id: "teams", label: "Teams & Roles" },
+  { id: "roles", label: "Roles" },
   { id: "identity", label: "Identity" },
 ] as const;
 
@@ -77,6 +79,7 @@ export function AccessPage() {
 
       {active === "members" && <MembersTab />}
       {active === "teams" && <RoleMatrix />}
+      {active === "roles" && <RolesTab />}
       {active === "identity" && <IdentityTab tenant={tenant} />}
     </div>
   );

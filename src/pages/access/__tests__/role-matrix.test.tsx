@@ -87,18 +87,19 @@ describe("RoleMatrix", () => {
 
     await user.click(save);
     expect(bodies).toHaveLength(1);
-    const mappings = (bodies[0] as { mappings: { team: string; role: string }[] }).mappings;
-    // exactly one mapping per team, "No role" teams omitted
+    const mappings = (bodies[0] as { mappings: { team: string; roleId: string }[] }).mappings;
+    // exactly one mapping per team, "No role" teams omitted; the write
+    // contract is team→roleId (ADR-0013), translated from ClusterRole names.
     const teams = mappings.map((m) => m.team);
     expect(new Set(teams).size).toBe(teams.length);
-    expect(mappings).toContainEqual({ team: "data", role: "tenant-acme-operator" });
+    expect(mappings).toContainEqual({ team: "data", roleId: "operator" });
     expect(mappings).toContainEqual({
       team: "platform-team",
-      role: "tenant-acme-operator",
+      roleId: "operator",
     });
     expect(mappings).toContainEqual({
       team: "developers",
-      role: "tenant-acme-viewer",
+      roleId: "viewer",
     });
   });
 

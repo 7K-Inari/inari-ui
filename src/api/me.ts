@@ -20,10 +20,10 @@ export interface TenantPermissions extends Partial<TenantCapabilities> {
 export interface MyPermissions {
   canCreateOrganizations: boolean;
   tenants?: Record<string, TenantPermissions>;
-  // Effective org role per tenant slug ("org-admin", "platform-engineer",
-  // "developer", "viewer"), mirroring the members API. Absent on older
+  // Effective org role names per tenant slug (ADR-0013: a set, custom roles
+  // have no total order), mirroring the members API. Absent on older
   // servers — treat as "unknown", never as denial.
-  orgRoles?: Record<string, string>;
+  roles?: Record<string, string[]>;
 }
 
 const TENANT_FLAGS = [
@@ -56,19 +56,21 @@ export async function fetchMyPermissions(
 ): Promise<MyPermissions> {
   const res = await apiFetch<MyPermissionsOutputBody>(`/me/permissions`, { token });
   const tenants = parseTenantPermissions(res.tenants);
-  const orgRoles = parseOrgRoles(res.orgRoles);
+  const roles = parseOrgRoles(res.roles);
   return {
     canCreateOrganizations: res.canCreateOrganizations === true,
     ...(tenants ? { tenants } : {}),
-    ...(orgRoles ? { orgRoles } : {}),
+    ...(roles ? { roles } : {}),
   };
 }
 
-function parseOrgRoles(raw: unknown): Record<string, string> | undefined {
+function parseOrgRoles(raw: unknown): Record<string, string[]> | undefined {
   if (typeof raw !== "object" || raw === null) return undefined;
-  const out: Record<string, string> = {};
+  const out: Record<string, string[]> = {};
   for (const [org, value] of Object.entries(raw as Record<string, unknown>)) {
-    if (typeof value === "string") out[org] = value;
+    if (Array.isArray(value)) {
+      out[org] = value.filter((v): v is string => typeof v === "string");
+    }
   }
   return Object.keys(out).length > 0 ? out : undefined;
 }

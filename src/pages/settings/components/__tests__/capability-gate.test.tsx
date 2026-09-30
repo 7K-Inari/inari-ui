@@ -53,7 +53,7 @@ describe("useOrgCapabilities", () => {
   it("falls back to admin-derived defaults when the projection is absent", () => {
     mockPermissions = {
       canCreateOrganizations: false,
-      orgRoles: { acme: "org-admin" },
+      roles: { acme: ["admin"] },
     };
     render(<CapabilitiesProbe />);
     const caps = JSON.parse(screen.getByTestId("caps").textContent!);

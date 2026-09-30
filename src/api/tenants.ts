@@ -20,8 +20,13 @@ export type GitConfigRequest = components["schemas"]["GitConfigInputBody"];
 
 export type Team = components["schemas"]["Team"];
 export type MemberView = components["schemas"]["MemberView"];
+// Org-wide members (ADR-0013): the role is a set of role names (direct grant
+// plus team-derived), not a single "highest" role.
+export type OrgMemberView = components["schemas"]["OrgMemberView"];
 type ListTeamsResponse = components["schemas"]["ListTeamsOutputBody"];
 type ListMembersResponse = components["schemas"]["ListMembersOutputBody"];
+type ListOrgMembersResponse =
+  components["schemas"]["ListOrgMembersOutputBody"];
 type AddMemberRequest = components["schemas"]["AddMemberInputBody"];
 
 export type PatchTenantRequest = components["schemas"]["UpdateTenantInputBody"];
@@ -104,8 +109,8 @@ export async function listOrgMembers(
   token: string | undefined,
   tenant: string,
   opts?: { q?: string },
-): Promise<MemberView[]> {
-  const res = await apiFetch<ListMembersResponse>(
+): Promise<OrgMemberView[]> {
+  const res = await apiFetch<ListOrgMembersResponse>(
     `${tenantPath(tenant)}/members${searchQuery(opts?.q)}`,
     { token },
   );

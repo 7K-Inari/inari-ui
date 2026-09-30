@@ -1466,6 +1466,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenants/{org}/permissions/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Static permission catalog for the role editor */
+        get: operations["getPermissionCatalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenants/{org}/platform-resources": {
         parameters: {
             query?: never;
@@ -1683,13 +1700,50 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** Declarative bulk set of team→role mappings, applied atomically (org admin only) */
+        /** Declarative bulk set of team→role mappings, applied atomically (tenant.rbac.manage) */
         put: operations["putRBACMappings"];
         post?: never;
         delete?: never;
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List org roles (built-in and custom) */
+        get: operations["listRoles"];
+        put?: never;
+        /** Create a custom org role (tenant.rbac.manage) */
+        post: operations["createRole"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/roles/{role}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get one org role by name or ID */
+        get: operations["getRole"];
+        put?: never;
+        post?: never;
+        /** Delete a custom role (tenant.rbac.manage; built-ins are never deletable) */
+        delete: operations["deleteRole"];
+        options?: never;
+        head?: never;
+        /** Edit a role (tenant.rbac.manage; built-in names are immutable; the tenant.admin guardrail applies) */
+        patch: operations["updateRole"];
         trace?: never;
     };
     "/api/v1/tenants/{org}/rollouts": {
@@ -2651,6 +2705,20 @@ export interface components {
             /** @description request | render */
             target: string;
         };
+        CreateRoleInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/CreateRoleInputBody.json
+             */
+            readonly $schema?: string;
+            description?: string;
+            displayName?: string;
+            /** @description DNS-1123 role name (ClusterRole suffix tenant-<slug>-<name>) */
+            name: string;
+            /** @description Permission-catalog slugs (GET permissions/catalog) */
+            permissions: string[] | null;
+        };
         CreateRolloutInputBody: {
             /**
              * Format: uri
@@ -2722,8 +2790,8 @@ export interface components {
             readonly $schema?: string;
             /** @description URL-safe team name */
             name: string;
-            /** @description Org role the team grants (default viewer) */
-            role?: string;
+            /** @description Org role the team grants (roles.id or built-in role name; default viewer) */
+            roleId?: string;
         };
         CreateTenantInputBody: {
             /**
@@ -3478,6 +3546,15 @@ export interface components {
             readonly $schema?: string;
             policies: components["schemas"]["Policy"][] | null;
         };
+        ListRolesOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/ListRolesOutputBody.json
+             */
+            readonly $schema?: string;
+            roles: components["schemas"]["Role"][] | null;
+        };
         ListRolloutsOutputBody: {
             /**
              * Format: uri
@@ -3565,8 +3642,8 @@ export interface components {
             readonly $schema?: string;
             /** @description Caller may create tenants (platform:inari org_creator) */
             canCreateOrganizations: boolean;
-            orgRoles?: {
-                [key: string]: string;
+            roles?: {
+                [key: string]: string[] | null;
             };
             tenants?: {
                 [key: string]: components["schemas"]["TenantCapabilities"];
@@ -3600,7 +3677,7 @@ export interface components {
         OrgMemberView: {
             displayName: string;
             email: string;
-            role: string;
+            roles: string[] | null;
             teams: string[] | null;
             userId: string;
         };
@@ -3639,6 +3716,21 @@ export interface components {
              */
             readonly $schema?: string;
             pack: components["schemas"]["PolicyPack"];
+        };
+        Permission: {
+            description: string;
+            domain: string;
+            name: string;
+            slug: string;
+        };
+        PermissionCatalogOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/PermissionCatalogOutputBody.json
+             */
+            readonly $schema?: string;
+            permissions: components["schemas"]["Permission"][] | null;
         };
         PinInputBody: {
             /**
@@ -3740,8 +3832,8 @@ export interface components {
              * @example https://example.com/schemas/PutMemberInputBody.json
              */
             readonly $schema?: string;
-            /** @description Org role to grant */
-            role: string;
+            /** @description Org role to grant (roles.id or built-in role name) */
+            roleId: string;
         };
         PutProviderCompatInputBody: {
             /**
@@ -3774,7 +3866,7 @@ export interface components {
              * @example https://example.com/schemas/PutRBACMappingsInputBody.json
              */
             readonly $schema?: string;
-            /** @description Declarative team→role set; applied atomically */
+            /** @description Declarative team→roleId set; applied atomically */
             mappings: components["schemas"]["TeamRoleMapping"][] | null;
         };
         PutRBACMappingsOutputBody: {
@@ -3956,6 +4048,40 @@ export interface components {
              */
             readonly $schema?: string;
             run: components["schemas"]["RunView"];
+        };
+        Role: {
+            builtin: boolean;
+            /** Format: date-time */
+            createdAt: string;
+            description: string;
+            displayName: string;
+            id: string;
+            name: string;
+            orgId: string;
+            permissions: string[] | null;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        RoleOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/RoleOutputBody.json
+             */
+            readonly $schema?: string;
+            role: components["schemas"]["Role"];
+        };
+        RolePatch: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/RolePatch.json
+             */
+            readonly $schema?: string;
+            description?: string;
+            displayName?: string;
+            name?: string;
+            permissions?: string[];
         };
         RollbackInputBody: {
             /**
@@ -4237,7 +4363,8 @@ export interface components {
             keycloakGroupPath: string;
             name: string;
             orgId: string;
-            role: string;
+            roleId: string;
+            roleName: string;
         };
         TeamOutputBody: {
             /**
@@ -4250,12 +4377,14 @@ export interface components {
         };
         TeamRoleChange: {
             name: string;
-            newRole: string;
-            oldRole: string;
+            newPermissions: string[] | null;
+            newRoleId: string;
+            oldPermissions: string[] | null;
+            oldRoleId: string;
             teamId: string;
         };
         TeamRoleMapping: {
-            role: string;
+            roleId: string;
             team: string;
         };
         TemplateDetail: {
@@ -8459,6 +8588,38 @@ export interface operations {
             };
         };
     };
+    getPermissionCatalog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Tenant slug */
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermissionCatalogOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     listPlatformResources: {
         parameters: {
             query?: never;
@@ -9035,6 +9196,173 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PutRBACMappingsOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listRoles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description Tenant slug */
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListRolesOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    createRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateRoleInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                /** @description Role name or ID */
+                role: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                /** @description Role name or ID */
+                role: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    updateRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                role: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RolePatch"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleOutputBody"];
                 };
             };
             /** @description Error */

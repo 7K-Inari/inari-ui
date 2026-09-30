@@ -106,6 +106,12 @@ import {
   policyMockControl,
   listOrgsMock,
   orgMembersFor,
+  createRoleMock,
+  deleteRoleMock,
+  findRole,
+  permissionCatalog,
+  rolesFor,
+  updateRoleMock,
   grantPlatformAdminMock,
   packsFor,
   platformAdminsList,
@@ -320,6 +326,9 @@ export const handlers = [
   http.get("*/api/v1/me/permissions", () =>
     HttpResponse.json({
       canCreateOrganizations: true,
+      // ADR-0013: a set of role names per org (the dev persona is an org
+      // admin everywhere).
+      roles: { acme: ["admin"], globex: ["admin"] },
       tenants: tenantCapabilitiesProjection(),
     }),
   ),
@@ -703,10 +712,11 @@ export const handlers = [
 
   http.put(`${BASE}/rbac/mappings`, async ({ params, request }) => {
     const body = (await request.json()) as {
-      mappings?: { team: string; role: string }[];
+      mappings?: { team: string; roleId: string }[];
     };
-    // Contract: declarative whole-set replace of team→role mappings, applied
-    // atomically. Translate team slugs back to group paths for mock state.
+    // Contract: declarative whole-set replace of team→roleId mappings (ADR-
+    // 0013), applied atomically. Translate team slugs back to group paths and
+    // roleIds to synthesized ClusterRole names for mock state.
     if (!Array.isArray(body.mappings)) {
       return humaError(422, "validation failed (mappings is required)");
     }
@@ -723,7 +733,7 @@ export const handlers = [
     const mappings = body.mappings.map((m) => ({
       groupPath:
         groups.find((g) => g.team === m.team)?.path ?? `tenant-${org}/${m.team}`,
-      clusterRole: m.role,
+      clusterRole: `tenant-${org}-${m.roleId}`,
     }));
     const before = rbacMatrixFor(org).mappings;
     setRbacMappingsMock(org, mappings);
@@ -737,8 +747,10 @@ export const handlers = [
       .map((g) => ({
         teamId: g.team,
         name: g.team,
-        oldRole: before.find((b) => b.groupPath === g.path)?.clusterRole ?? "",
-        newRole: roleByPath.get(g.path) ?? "",
+        oldRoleId: before.find((b) => b.groupPath === g.path)?.clusterRole ?? "",
+        oldPermissions: [],
+        newRoleId: roleByPath.get(g.path) ?? "",
+        newPermissions: [],
       }));
     return HttpResponse.json({ changes });
   }),
@@ -1302,14 +1314,14 @@ export const handlers = [
   }),
 
   http.put(`${BASE}/members/:subject`, async ({ params, request }) => {
-    const body = (await request.json()) as { role?: string };
-    if (!body.role) {
-      return humaError(422, "validation failed (role is required)");
+    const body = (await request.json()) as { roleId?: string };
+    if (!body.roleId) {
+      return humaError(422, "validation failed (roleId is required)");
     }
     if (!getOrgMock(params.org as string))
       return humaError(404, "organization not found");
     putOrgMemberMock(params.org as string, params.subject as string, {
-      role: body.role,
+      roleId: body.roleId,
     });
     return new HttpResponse(null, { status: 204 });
   }),
@@ -1327,7 +1339,7 @@ export const handlers = [
   ),
 
   http.post(`${BASE}/teams`, async ({ params, request }) => {
-    const body = (await request.json()) as { name?: string };
+    const body = (await request.json()) as { name?: string; roleId?: string };
     if (!body.name || !/^[a-z0-9][a-z0-9-]*$/.test(body.name)) {
       return humaError(
         422,
@@ -1336,8 +1348,81 @@ export const handlers = [
     }
     if (!getOrgMock(params.org as string))
       return humaError(404, "organization not found");
-    const team = createTeamMock(params.org as string, body.name);
+    const team = createTeamMock(params.org as string, body.name, body.roleId);
     return HttpResponse.json({ team }, { status: 201 });
+  }),
+
+  // ---- M1.W2 role engine (ADR-0013) ----
+  http.get(`${BASE}/permissions/catalog`, () =>
+    HttpResponse.json({ permissions: permissionCatalog() }),
+  ),
+
+  http.get(`${BASE}/roles`, ({ params }) =>
+    HttpResponse.json({ roles: rolesFor(params.org as string) }),
+  ),
+
+  http.post(`${BASE}/roles`, async ({ params, request }) => {
+    const body = (await request.json()) as {
+      name?: string;
+      displayName?: string;
+      description?: string;
+      permissions?: string[] | null;
+    };
+    if (!body.name || !/^[a-z0-9][a-z0-9-]*$/.test(body.name)) {
+      return humaError(
+        422,
+        "validation failed (name must be lowercase alphanumeric with dashes)",
+      );
+    }
+    if (!Array.isArray(body.permissions)) {
+      return humaError(422, "validation failed (permissions is required)");
+    }
+    if (!getOrgMock(params.org as string))
+      return humaError(404, "organization not found");
+    if (findRole(params.org as string, body.name)) {
+      return humaError(409, `role "${body.name}" already exists`);
+    }
+    const role = createRoleMock(params.org as string, {
+      name: body.name,
+      displayName: body.displayName,
+      description: body.description,
+      permissions: body.permissions,
+    });
+    return HttpResponse.json({ role }, { status: 201 });
+  }),
+
+  http.get(`${BASE}/roles/:role`, ({ params }) => {
+    const role = findRole(params.org as string, params.role as string);
+    if (!role) return humaError(404, "role not found");
+    return HttpResponse.json({ role });
+  }),
+
+  http.patch(`${BASE}/roles/:role`, async ({ params, request }) => {
+    const body = (await request.json()) as {
+      name?: string;
+      displayName?: string;
+      description?: string;
+      permissions?: string[];
+    };
+    const org = params.org as string;
+    const updated = updateRoleMock(org, params.role as string, body);
+    if (updated === null) return humaError(404, "role not found");
+    if (updated === "builtin-rename") {
+      return humaError(409, "built-in role names are immutable");
+    }
+    return HttpResponse.json({ role: updated });
+  }),
+
+  http.delete(`${BASE}/roles/:role`, ({ params }) => {
+    const result = deleteRoleMock(params.org as string, params.role as string);
+    if (result === "not-found") return humaError(404, "role not found");
+    if (result === "builtin") {
+      return humaError(409, "built-in roles are never deletable");
+    }
+    if (result === "bound") {
+      return humaError(409, "role is bound to teams; remap them first");
+    }
+    return new HttpResponse(null, { status: 204 });
   }),
 
   http.delete(`${BASE}/teams/:team`, ({ params }) => {

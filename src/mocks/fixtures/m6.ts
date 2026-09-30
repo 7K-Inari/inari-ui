@@ -28,6 +28,9 @@ type GitConfigRequest = components["schemas"]["GitConfigInputBody"];
 export type Organization = components["schemas"]["Organization"];
 export type Team = components["schemas"]["Team"];
 export type MemberView = components["schemas"]["MemberView"];
+export type OrgMemberView = components["schemas"]["OrgMemberView"];
+export type Role = components["schemas"]["Role"];
+export type Permission = components["schemas"]["Permission"];
 export type RegistrationToken = components["schemas"]["RegistrationToken"];
 
 // M6.W2: proposed wire shapes for routes not yet in the pinned contract
@@ -56,7 +59,10 @@ export interface PolicyMockState {
   gitConfigs: Record<string, TenantGitConfig>;
   nextEvaluateDecision: PolicyDecision | null;
   orgs: Record<string, Organization>;
-  orgMembers: Record<string, MemberView[]>;
+  orgMembers: Record<string, OrgMemberView[]>;
+  // M1.W2 role engine (ADR-0013): org roles over the static permission
+  // catalog; built-ins are seeded per tenant.
+  roles: Record<string, Role[]>;
   // M1.W1 RBAC Phase A: platform admins (GET/PUT/DELETE /platform/admins) and
   // the per-tenant capability projection on GET /me/permissions. Proposed
   // wire shapes — swap for generated types after contract sync.
@@ -191,6 +197,59 @@ export const denyDecision: PolicyDecision = {
   ],
 };
 
+// ADR-0013 static permission catalog (mirrors inari-server
+// internal/authz/permissions.go): the only thing the FGA model encodes.
+const PERMISSION_CATALOG: Permission[] = [
+  { slug: "tenant.read", name: "Read organization", description: "View organization settings and resources.", domain: "tenant" },
+  { slug: "tenant.settings.write", name: "Write settings", description: "Edit organization settings and git config.", domain: "tenant" },
+  { slug: "tenant.members.manage", name: "Manage members", description: "Invite and remove organization members.", domain: "tenant" },
+  { slug: "tenant.teams.manage", name: "Manage teams", description: "Create, edit, and delete teams.", domain: "tenant" },
+  { slug: "tenant.rbac.manage", name: "Manage roles", description: "Create and edit roles and team role mappings.", domain: "tenant" },
+  { slug: "tenant.identity.manage", name: "Manage identity", description: "Manage OIDC clients and scopes.", domain: "tenant" },
+  { slug: "tenant.notifications.manage", name: "Manage notifications", description: "Manage notification endpoints.", domain: "tenant" },
+  { slug: "tenant.admin", name: "Organization admin", description: "Destructive tenant operations; the guardrail anchor.", domain: "tenant" },
+  { slug: "clusters.register", name: "Register clusters", description: "Register and manage clusters.", domain: "fleet" },
+  { slug: "cloudaccounts.manage", name: "Manage cloud accounts", description: "Connect and validate cloud accounts.", domain: "fleet" },
+  { slug: "zones.manage", name: "Manage zones", description: "Vend and manage tenant zones.", domain: "fleet" },
+  { slug: "fleet.manage", name: "Manage fleet", description: "Manage cluster sets and fleet rollouts.", domain: "fleet" },
+  { slug: "policies.manage", name: "Manage policies", description: "Manage policy packs and assignments.", domain: "governance" },
+  { slug: "secretstores.manage", name: "Manage secret stores", description: "Manage secret store integrations.", domain: "governance" },
+  { slug: "extensions.manage", name: "Manage extensions", description: "Install and configure extensions.", domain: "extensions" },
+  { slug: "extensions.invoke", name: "Invoke extensions", description: "Invoke installed extensions.", domain: "extensions" },
+  { slug: "catalog.manage", name: "Manage catalog", description: "Curate the service catalog.", domain: "catalog" },
+  { slug: "deployments.create", name: "Create deployments", description: "Deploy from the catalog.", domain: "catalog" },
+  { slug: "approvals.manage", name: "Manage approvals", description: "Decide approval requests.", domain: "catalog" },
+];
+
+// Bundles mirror the retired hierarchy (ADR-0013): names double as the
+// pinned ClusterRole suffixes.
+function builtinRoles(orgId: string): Role[] {
+  const createdAt = iso(now - 90 * 86_400_000);
+  const role = (
+    name: string,
+    displayName: string,
+    description: string,
+    permissions: string[],
+  ): Role => ({
+    id: `role-${name}`,
+    orgId,
+    name,
+    displayName,
+    description,
+    builtin: true,
+    permissions,
+    createdAt,
+    updatedAt: createdAt,
+  });
+  const all = PERMISSION_CATALOG.map((p) => p.slug);
+  return [
+    role("admin", "Admin", "Full organization administration.", all),
+    role("operator", "Operator", "Platform operations without tenant administration.", all.filter((p) => p !== "tenant.admin")),
+    role("editor", "Editor", "Deploy and manage day-to-day resources.", ["tenant.read", "catalog.manage", "deployments.create", "approvals.manage", "extensions.invoke"]),
+    role("viewer", "Viewer", "Read-only access.", ["tenant.read"]),
+  ];
+}
+
 function seedState(): PolicyMockState {
   return {
     packs: [{ ...baselinePack }, { ...platformPack }],
@@ -230,13 +289,15 @@ function seedState(): PolicyMockState {
           userId: "u-admin",
           displayName: "Ada Admin",
           email: "ada@acme.example",
-          role: "org-admin",
+          roles: ["admin"],
+          teams: ["platform-team"],
         },
         {
           userId: "u-dev",
           displayName: "Dev Dorian",
           email: "dorian@acme.example",
-          role: "developer",
+          roles: ["editor"],
+          teams: [],
         },
       ],
       globex: [
@@ -244,9 +305,14 @@ function seedState(): PolicyMockState {
           userId: "u-globex",
           displayName: "Gail Globex",
           email: "gail@globex.example",
-          role: "org-admin",
+          roles: ["admin"],
+          teams: [],
         },
       ],
+    },
+    roles: {
+      acme: builtinRoles("t-acme"),
+      globex: builtinRoles("t-globex"),
     },
     teams: {
       acme: [
@@ -255,7 +321,8 @@ function seedState(): PolicyMockState {
           orgId: "t-acme",
           name: "platform-team",
           displayName: "Platform Team",
-          role: "admin",
+          roleId: "admin",
+          roleName: "admin",
           keycloakGroupPath: "/acme/platform-team",
           createdAt: iso(now - 80 * 86_400_000),
         },
@@ -615,30 +682,32 @@ export function patchOrgMock(
   return org;
 }
 
-export function orgMembersFor(org: string): MemberView[] {
+export function orgMembersFor(org: string): OrgMemberView[] {
   return state.orgMembers[org] ?? [];
 }
 
 // subject is a Keycloak UUID for existing members, or an email for invites
-// (the server resolves it via tenancy.resolveMemberSubject).
+// (the server resolves it via tenancy.resolveMemberSubject). PUT defines the
+// member's single org role (ADR-0013), replacing other direct grants.
 export function putOrgMemberMock(
   org: string,
   subject: string,
-  body: { role: string },
-): MemberView {
+  body: { roleId: string },
+): OrgMemberView {
   const members = (state.orgMembers[org] ??= []);
   const existing = members.find(
     (m) => m.userId === subject || m.email === subject,
   );
   if (existing) {
-    existing.role = body.role;
+    existing.roles = [body.roleId];
     return existing;
   }
-  const member: MemberView = {
+  const member: OrgMemberView = {
     userId: subject,
     displayName: subject,
     email: subject,
-    role: body.role,
+    roles: [body.roleId],
+    teams: [],
   };
   members.push(member);
   return member;
@@ -655,15 +724,98 @@ export function teamsFor(org: string): Team[] {
   return state.teams[org] ?? [];
 }
 
-export function createTeamMock(org: string, name: string): Team {
+// ---- M1.W2 role engine (ADR-0013) ----
+
+export function permissionCatalog(): Permission[] {
+  return PERMISSION_CATALOG;
+}
+
+// Built-ins are seeded per tenant; lazily seed for orgs created at runtime.
+export function rolesFor(org: string): Role[] {
+  return (state.roles[org] ??= builtinRoles(state.orgs[org]?.id ?? `t-${org}`));
+}
+
+export function findRole(org: string, nameOrId: string): Role | undefined {
+  return rolesFor(org).find((r) => r.id === nameOrId || r.name === nameOrId);
+}
+
+export function createRoleMock(
+  org: string,
+  body: {
+    name: string;
+    displayName?: string;
+    description?: string;
+    permissions?: string[] | null;
+  },
+): Role {
+  const roles = rolesFor(org);
+  const created = new Date().toISOString();
+  const role: Role = {
+    id: nextId("role"),
+    orgId: state.orgs[org]?.id ?? `t-${org}`,
+    name: body.name,
+    displayName: body.displayName ?? body.name,
+    description: body.description ?? "",
+    builtin: false,
+    permissions: body.permissions ?? [],
+    createdAt: created,
+    updatedAt: created,
+  };
+  roles.push(role);
+  return role;
+}
+
+// Built-in names are immutable; the tenant.admin guardrail is enforced by
+// the handler (it needs the mapping state to answer 409).
+export function updateRoleMock(
+  org: string,
+  nameOrId: string,
+  patch: {
+    name?: string;
+    displayName?: string;
+    description?: string;
+    permissions?: string[];
+  },
+): Role | "builtin-rename" | null {
+  const role = findRole(org, nameOrId);
+  if (!role) return null;
+  if (role.builtin && patch.name !== undefined && patch.name !== role.name) {
+    return "builtin-rename";
+  }
+  if (patch.name !== undefined) role.name = patch.name;
+  if (patch.displayName !== undefined) role.displayName = patch.displayName;
+  if (patch.description !== undefined) role.description = patch.description;
+  if (patch.permissions !== undefined) role.permissions = patch.permissions;
+  role.updatedAt = new Date().toISOString();
+  return role;
+}
+
+// Custom roles bound to teams cannot be deleted (server: 409, remap first).
+export function deleteRoleMock(
+  org: string,
+  nameOrId: string,
+): "ok" | "builtin" | "bound" | "not-found" {
+  const role = findRole(org, nameOrId);
+  if (!role) return "not-found";
+  if (role.builtin) return "builtin";
+  if (teamsFor(org).some((t) => t.roleId === role.id || t.roleId === role.name)) {
+    return "bound";
+  }
+  state.roles[org] = rolesFor(org).filter((r) => r.id !== role.id);
+  return "ok";
+}
+
+export function createTeamMock(org: string, name: string, roleId?: string): Team {
   const teams = (state.teams[org] ??= []);
+  // Server default per CreateTeamInputBody: roleId defaults to viewer.
+  const role = roleId || "viewer";
   const team: Team = {
     id: nextId("team"),
     orgId: state.orgs[org]?.id ?? `t-${org}`,
     name,
     displayName: name,
-    // Server default per CreateTeamInputBody: role defaults to viewer.
-    role: "viewer",
+    roleId: role,
+    roleName: role,
     keycloakGroupPath: `/${org}/${name}`,
     createdAt: new Date().toISOString(),
   };
@@ -690,12 +842,19 @@ export function addTeamMemberMock(
 ): boolean {
   if (!teamsFor(org).some((t) => t.name === team)) return false;
   const orgMember = orgMembersFor(org).find((m) => m.userId === subject);
-  const member: MemberView = orgMember ?? {
-    userId: subject,
-    displayName: subject,
-    email: "",
-    role: "member",
-  };
+  const member: MemberView = orgMember
+    ? {
+        userId: orgMember.userId,
+        displayName: orgMember.displayName,
+        email: orgMember.email,
+        role: orgMember.roles?.[0] ?? "",
+      }
+    : {
+        userId: subject,
+        displayName: subject,
+        email: "",
+        role: "",
+      };
   const members = (state.teamMembers[`${org}/${team}`] ??= []);
   if (!members.some((m) => m.userId === subject)) members.push(member);
   return true;
@@ -717,7 +876,7 @@ export function removeTeamMemberMock(
 
 // Server-side member search (?q= filters by email or display name,
 // case-insensitive).
-export function searchOrgMembers(org: string, q: string): MemberView[] {
+export function searchOrgMembers(org: string, q: string): OrgMemberView[] {
   const needle = q.trim().toLowerCase();
   if (!needle) return orgMembersFor(org);
   return orgMembersFor(org).filter(

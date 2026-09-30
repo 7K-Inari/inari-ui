@@ -50,7 +50,7 @@ describe("MembersTab", () => {
     render(<MembersTab />);
     expect(await screen.findByText("Ada Admin")).toBeInTheDocument();
     expect(screen.getByText("Dev Dorian")).toBeInTheDocument();
-    expect(screen.getByLabelText("Role for Ada Admin")).toHaveValue("org-admin");
+    expect(screen.getByLabelText("Role for Ada Admin")).toHaveValue("admin");
   });
 
   it("invites a new member by email", async () => {
@@ -58,12 +58,15 @@ describe("MembersTab", () => {
     render(<MembersTab />);
     await screen.findByText("Ada Admin");
     await user.type(screen.getByLabelText("Email"), "erin@acme.example");
-    await user.selectOptions(screen.getByLabelText("Role"), "viewer");
+    await user.selectOptions(
+      screen.getByLabelText("Role", { selector: "#invite-role" }),
+      "viewer",
+    );
     await user.click(screen.getByRole("button", { name: "Invite" }));
     const added = policyMockControl
       .getState()
       .orgMembers.acme.find((m) => m.email === "erin@acme.example");
-    expect(added?.role).toBe("viewer");
+    expect(added?.roles).toEqual(["viewer"]);
   });
 
   it("changes and removes org member roles", async () => {
@@ -72,12 +75,12 @@ describe("MembersTab", () => {
     const row = (await screen.findByText("Dev Dorian")).closest("tr")!;
     await user.selectOptions(
       within(row).getByLabelText("Role for Dev Dorian"),
-      "org-admin",
+      "admin",
     );
     expect(
       policyMockControl.getState().orgMembers.acme.find((m) => m.userId === "u-dev")
-        ?.role,
-    ).toBe("org-admin");
+        ?.roles,
+    ).toEqual(["admin"]);
 
     await user.click(within(row).getByRole("button", { name: "Remove" }));
     expect(

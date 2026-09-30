@@ -20,11 +20,11 @@ describe("me api", () => {
   it("maps the contract body onto the view model", async () => {
     stubPermissions({
       canCreateOrganizations: true,
-      orgRoles: { acme: "org-admin" },
+      roles: { acme: ["admin"] },
     });
     await expect(fetchMyPermissions("tok")).resolves.toEqual({
       canCreateOrganizations: true,
-      orgRoles: { acme: "org-admin" },
+      roles: { acme: ["admin"] },
     });
   });
 
@@ -46,17 +46,17 @@ describe("me api", () => {
     stubPermissions({ canCreateOrganizations: false });
     const perms = await fetchMyPermissions("tok");
     expect(perms.tenants).toBeUndefined();
-    expect(perms.orgRoles).toBeUndefined();
+    expect(perms.roles).toBeUndefined();
   });
 
   it("drops non-string org role values", async () => {
     stubPermissions({
       canCreateOrganizations: false,
-      orgRoles: { acme: "viewer", bad: 42 },
+      roles: { acme: ["viewer", 42], bad: "not-an-array" },
     });
     await expect(fetchMyPermissions("tok")).resolves.toEqual({
       canCreateOrganizations: false,
-      orgRoles: { acme: "viewer" },
+      roles: { acme: ["viewer"] },
     });
   });
 });
