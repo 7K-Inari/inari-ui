@@ -7,6 +7,9 @@ name: edge
 on:
   push:
     branches: [main]
+  # Manual repair path: republish :edge when a push-triggered run never fired
+  # (e.g. GitHub dropped the push event) or published from a stale commit.
+  workflow_dispatch:
 
 permissions:
   contents: write
