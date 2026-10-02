@@ -24,9 +24,9 @@ jobs:
   drift:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: oras-project/setup-oras@v1
-      - uses: mikefarah/yq@v4.44.3
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: oras-project/setup-oras@22ce207df3b08e061f537244349aac6ae1d214f6 # v1
+      - uses: mikefarah/yq@504fc38780cc46be8444ea1b72fb55919fc0bfb0 # v4.54.1
 
       - name: check snapshot against published server spec
         id: check
@@ -34,7 +34,7 @@ jobs:
 
       - name: open or update drift issue
         if: failure() && steps.check.outcome == 'failure'
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
           script: |
             const title = 'OpenAPI drift: pinned snapshot is behind the server spec';
