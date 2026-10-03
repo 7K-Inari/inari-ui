@@ -85,6 +85,23 @@ describe("ClusterDetailPage", () => {
     expect(screen.getByText("v1.30.2")).toBeInTheDocument();
   });
 
+  it("shows the Connect tab with connect instructions", async () => {
+    const user = userEvent.setup();
+    renderDetail();
+    await screen.findByRole("heading", { name: "kind-dev" });
+    await user.click(screen.getByRole("tab", { name: "Connect" }));
+    expect(await screen.findByText("inari cluster connect cl-kind-dev")).toBeInTheDocument();
+  });
+
+  it("honors ?tab=connect in the URL", async () => {
+    renderDetail("cl-kind-dev", "?tab=connect");
+    expect(await screen.findByText("inari cluster connect cl-kind-dev")).toBeInTheDocument();
+    expect(screen.getByRole("tab", { name: "Connect" })).toHaveAttribute(
+      "aria-selected",
+      "true",
+    );
+  });
+
   it("honors ?tab=overview in the URL", async () => {
     renderDetail("cl-kind-dev", "?tab=overview");
     await screen.findByRole("heading", { name: "kind-dev" });

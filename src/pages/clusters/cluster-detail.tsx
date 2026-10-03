@@ -19,12 +19,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { config } from "@/config";
 import { SlotBoundary } from "@/ext/slot-boundary";
 import { toSdkCluster } from "@/ext/mappers";
 import { useClusterTabSlots } from "@/ext/slots";
 import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
+import { ConnectTab } from "@/pages/clusters/connect-tab";
 import { ClusterStatusBadge } from "@/pages/clusters/status-badge";
 
 const KIND_LABELS: Record<CapabilityKind, string> = {
@@ -187,6 +189,10 @@ const BUILTIN_TABS = [
   { id: "overview", label: "Overview" },
 ] as const;
 
+// kubectl access (kubeconfig download + connect instructions) is gated by a
+// runtime feature flag until the flag system (task f368d08b) lands.
+const CONNECT_TAB = { id: "connect", label: "Connect" } as const;
+
 function DecommissionCard({
   cluster,
   onDecommissioned,
@@ -322,8 +328,11 @@ export function ClusterDetailPage() {
   const [actionError, setActionError] = React.useState<string | null>(null);
   const [searchParams, setSearchParams] = useSearchParams();
   const extensionTabs = useClusterTabSlots();
+  const builtinTabs = config.features.kubectlAccess
+    ? [CONNECT_TAB, ...BUILTIN_TABS]
+    : BUILTIN_TABS;
   const allTabs = [
-    ...BUILTIN_TABS.map((t) => ({ id: t.id, label: t.label })),
+    ...builtinTabs.map((t) => ({ id: t.id, label: t.label })),
     ...extensionTabs.map((t) => ({ id: t.id, label: t.title })),
   ];
   const requestedTab = searchParams.get("tab") ?? "capabilities";
@@ -473,6 +482,7 @@ export function ClusterDetailPage() {
         ))}
       </div>
 
+      {tab === "connect" && config.features.kubectlAccess && <ConnectTab cluster={cluster} />}
       {tab === "capabilities" && <CapabilitiesTab clusterId={cluster.id} />}
       {tab === "overview" && <OverviewTab clusterId={cluster.id} />}
       {extensionTabs

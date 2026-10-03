@@ -13,8 +13,17 @@ declare global {
       keycloakClientId?: string;
       apiBaseUrl?: string;
       agentGatewayUrl?: string;
+      features?: ConsoleFeatures;
     };
   }
+}
+
+// Feature flags. The dedicated flag system (task f368d08b, parked) will own
+// evaluation later; until then these are static values that deployments can
+// already override via window.__INARI_CONFIG__.features without UI changes.
+export interface ConsoleFeatures {
+  /** kubectl access (connect tab, kubeconfig download). Default on. */
+  kubectlAccess?: boolean;
 }
 
 export interface ConsoleConfig {
@@ -23,6 +32,7 @@ export interface ConsoleConfig {
   keycloakClientId: string;
   apiBaseUrl: string;
   agentGatewayUrl: string;
+  features: Required<ConsoleFeatures>;
 }
 
 export const config: ConsoleConfig = {
@@ -46,4 +56,7 @@ export const config: ConsoleConfig = {
     window.__INARI_CONFIG__?.agentGatewayUrl ??
     import.meta.env.VITE_AGENT_GATEWAY_URL ??
     "wss://localhost:8081/connect",
+  features: {
+    kubectlAccess: window.__INARI_CONFIG__?.features?.kubectlAccess ?? true,
+  },
 };

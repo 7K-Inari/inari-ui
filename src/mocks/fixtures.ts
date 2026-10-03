@@ -1,4 +1,4 @@
-import type { CreateClusterRequest } from "@/api/clusters";
+import type { ClusterAccessInfo, CreateClusterRequest } from "@/api/clusters";
 import type {
   Capability,
   ClusterDetail,
@@ -120,9 +120,22 @@ export const kindCapabilities: Capability[] = [
   },
 ];
 
+function defaultAccessInfo(cluster: ClusterDetail): ClusterAccessInfo {
+  return {
+    audience: "kubernetes",
+    issuerUrl: "https://keycloak.inari.test/realms/inari",
+    kubectlAccessEnabled: true,
+    kubectlClientId: `org-${cluster.tenant}-kubectl`,
+    organization: cluster.tenant,
+    proxyUrl: "https://kubeproxy.inari.test",
+    tunnelAvailable: true,
+  };
+}
+
 export interface MockState {
   clusters: ClusterDetail[];
   capabilities: Record<string, Capability[]>;
+  accessInfo: Record<string, ClusterAccessInfo>;
   // Clusters whose decommission is blocked by shared (non-Inari-managed)
   // resources — the mock answers 409 until force is passed.
   decommissionBlocked: string[];
@@ -138,6 +151,12 @@ function seedState(): MockState {
       [degradedCluster.id]: [],
       [otherTenantCluster.id]: [],
     },
+    accessInfo: Object.fromEntries(
+      [connectedCluster, degradedCluster, otherTenantCluster].map((c) => [
+        c.id,
+        defaultAccessInfo(c),
+      ]),
+    ),
     decommissionBlocked: [],
     decommissionDrain: {},
   };
@@ -166,6 +185,10 @@ export const mockControl = {
   },
   setDecommissionDrain(id: string, instanceIds: string[]) {
     state.decommissionDrain[id] = instanceIds;
+  },
+  setAccessInfo(id: string, patch: Partial<ClusterAccessInfo>) {
+    const info = state.accessInfo[id];
+    if (info) state.accessInfo[id] = { ...info, ...patch };
   },
 };
 
@@ -228,6 +251,11 @@ export function listForTenant(tenant: string | null): ClusterSummary[] {
 
 export function findCluster(id: string): ClusterDetail | undefined {
   return state.clusters.find((c) => c.id === id);
+}
+
+export function accessInfoFor(id: string): ClusterAccessInfo | undefined {
+  if (!findCluster(id)) return undefined;
+  return state.accessInfo[id];
 }
 
 export function capabilitiesFor(id: string): Capability[] | undefined {

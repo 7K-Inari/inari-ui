@@ -24,6 +24,34 @@ export class ApiError extends Error {
   }
 }
 
+// Builds an ApiError from a failed huma response (ErrorModel:
+// { title, status, detail, errors?: [{message}] }). Shared by apiFetch and
+// non-JSON download helpers.
+export async function apiErrorFromResponse(res: Response): Promise<ApiError> {
+  let message = `Request failed with status ${res.status}`;
+  let remediation: string | undefined;
+  let code: string | undefined;
+  try {
+    const data = (await res.json()) as {
+      message?: string;
+      detail?: string;
+      remediation?: string;
+      code?: string;
+      errors?: { message?: string }[];
+    };
+    if (data.detail) message = data.detail;
+    else if (data.message) message = data.message;
+    if (data.errors?.length && data.errors[0].message) {
+      message = `${message} (${data.errors[0].message})`;
+    }
+    if (typeof data.remediation === "string") remediation = data.remediation;
+    if (typeof data.code === "string") code = data.code;
+  } catch {
+    // keep default message
+  }
+  return new ApiError(res.status, message, remediation, code);
+}
+
 interface ApiFetchOptions {
   token?: string;
   method?: string;
@@ -46,31 +74,7 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
     throw new ApiError(0, "Network error: control plane unreachable");
   }
 
-  if (!res.ok) {
-    let message = `Request failed with status ${res.status}`;
-    let remediation: string | undefined;
-    let code: string | undefined;
-    try {
-      // Huma ErrorModel: { title, status, detail, errors?: [{message}] }
-      const data = (await res.json()) as {
-        message?: string;
-        detail?: string;
-        remediation?: string;
-        code?: string;
-        errors?: { message?: string }[];
-      };
-      if (data.detail) message = data.detail;
-      else if (data.message) message = data.message;
-      if (data.errors?.length && data.errors[0].message) {
-        message = `${message} (${data.errors[0].message})`;
-      }
-      if (typeof data.remediation === "string") remediation = data.remediation;
-      if (typeof data.code === "string") code = data.code;
-    } catch {
-      // keep default message
-    }
-    throw new ApiError(res.status, message, remediation, code);
-  }
+  if (!res.ok) throw await apiErrorFromResponse(res);
 
   const contentType = res.headers.get("content-type") ?? "";
   if (!contentType.includes("application/json")) {
