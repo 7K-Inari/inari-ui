@@ -1,6 +1,7 @@
 import { http, HttpResponse } from "msw";
 
 import {
+  accessInfoFor,
   approveClusterMock,
   capabilitiesFor,
   cordonClusterMock,
@@ -628,6 +629,23 @@ export const handlers = [
     const cluster = revokeClusterMock(params.id as string);
     if (!cluster) return humaError(404, "cluster not found");
     return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.get(`${BASE}/clusters/:id/access-info`, ({ params }) => {
+    const info = accessInfoFor(params.id as string);
+    if (!info) return humaError(404, "cluster not found");
+    return HttpResponse.json({ accessInfo: info });
+  }),
+
+  http.get(`${BASE}/clusters/:id/kubeconfig`, ({ params, request }) => {
+    if (!findCluster(params.id as string)) return humaError(404, "cluster not found");
+    const mode = new URL(request.url).searchParams.get("mode") ?? "gateway";
+    return new HttpResponse(`# ${mode} kubeconfig for ${params.id}\napiVersion: v1\n`, {
+      headers: {
+        "Content-Type": "application/yaml",
+        "Content-Disposition": `attachment; filename="kubeconfig-${params.id}.yaml"`,
+      },
+    });
   }),
 
   http.get(`${BASE}/clusters/:id/capabilities`, ({ params }) => {

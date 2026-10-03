@@ -730,6 +730,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenants/{org}/clusters/{id}/kubeconfig": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Render a secret-free kubeconfig (gateway or direct mode) for download */
+        get: operations["getClusterKubeconfig"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenants/{org}/clusters/{id}/revoke": {
         parameters: {
             query?: never;
@@ -2521,8 +2538,12 @@ export interface components {
         ClusterAccessInfo: {
             audience: string;
             issuerUrl: string;
+            kubectlAccessEnabled: boolean;
             kubectlClientId: string;
             organization: string;
+            proxyUrl?: string;
+            tunnelAvailable: boolean;
+            tunnelUnavailableReason?: string;
         };
         ClusterOutputBody: {
             /**
@@ -6460,6 +6481,46 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DecommissionOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getClusterKubeconfig: {
+        parameters: {
+            query?: {
+                /** @description gateway points at inari-kubeproxy; direct needs a server URL */
+                mode?: "gateway" | "direct";
+                /** @description kubelogin login flow */
+                grantType?: "authcode" | "device-code";
+                /** @description Apiserver URL for direct mode */
+                server?: string;
+            };
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    "Content-Type"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": string;
                 };
             };
             /** @description Error */

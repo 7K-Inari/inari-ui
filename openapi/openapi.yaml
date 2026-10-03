@@ -698,15 +698,25 @@ components:
           type: string
         issuerUrl:
           type: string
+        kubectlAccessEnabled:
+          type: boolean
         kubectlClientId:
           type: string
         organization:
+          type: string
+        proxyUrl:
+          type: string
+        tunnelAvailable:
+          type: boolean
+        tunnelUnavailableReason:
           type: string
       required:
         - issuerUrl
         - kubectlClientId
         - audience
         - organization
+        - kubectlAccessEnabled
+        - tunnelAvailable
       type: object
     ClusterOutputBody:
       additionalProperties: false
@@ -6962,6 +6972,70 @@ paths:
       security:
         - bearer: []
       summary: Decommission a cluster (ownership-checked drain, identity revocation, archived audit)
+  /api/v1/tenants/{org}/clusters/{id}/kubeconfig:
+    get:
+      operationId: getClusterKubeconfig
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - description: gateway points at inari-kubeproxy; direct needs a server URL
+          explode: false
+          in: query
+          name: mode
+          schema:
+            default: gateway
+            description: gateway points at inari-kubeproxy; direct needs a server URL
+            enum:
+              - gateway
+              - direct
+            type: string
+        - description: kubelogin login flow
+          explode: false
+          in: query
+          name: grantType
+          schema:
+            default: device-code
+            description: kubelogin login flow
+            enum:
+              - authcode
+              - device-code
+            type: string
+        - description: Apiserver URL for direct mode
+          explode: false
+          in: query
+          name: server
+          schema:
+            description: Apiserver URL for direct mode
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                contentEncoding: base64
+                type: string
+          description: OK
+          headers:
+            Content-Type:
+              schema:
+                type: string
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Render a secret-free kubeconfig (gateway or direct mode) for download
   /api/v1/tenants/{org}/clusters/{id}/revoke:
     post:
       operationId: revokeCluster

@@ -1,10 +1,12 @@
-import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { ApiError } from "@/api/client";
 import {
   approveCluster,
   cordonCluster,
   decommissionCluster,
+  downloadKubeconfig,
+  getAccessInfo,
   revokeCluster,
   uncordonCluster,
   clusterHealth,
@@ -151,6 +153,89 @@ describe("clusters api", () => {
     const err = await deleteCluster("tok", "cl-nope", "acme").catch((e) => e);
     expect(err).toBeInstanceOf(ApiError);
     expect(err.status).toBe(404);
+  });
+});
+
+describe("cluster access api", () => {
+  it("gets OIDC access info for a cluster", async () => {
+    const info = await getAccessInfo("tok", "cl-kind-dev");
+    expect(info.kubectlAccessEnabled).toBe(true);
+    expect(info.tunnelAvailable).toBe(true);
+    expect(info.proxyUrl).toBe("https://kubeproxy.inari.test");
+    expect(info.organization).toBe("acme");
+  });
+
+  it("surfaces 404 for unknown clusters", async () => {
+    await expect(getAccessInfo("tok", "cl-nope")).rejects.toMatchObject({ status: 404 });
+  });
+
+  function stubDownloadDom() {
+    const anchor = { href: "", download: "", click: vi.fn() } as unknown as HTMLAnchorElement;
+    const origCreate = document.createElement.bind(document);
+    const createSpy = vi
+      .spyOn(document, "createElement")
+      .mockImplementation(((tag: string, options?: ElementCreationOptions) =>
+        tag === "a" ? anchor : origCreate(tag, options)) as typeof document.createElement);
+    const createObjectURL = vi.fn().mockReturnValue("blob:mock");
+    const revokeObjectURL = vi.fn();
+    URL.createObjectURL = createObjectURL;
+    URL.revokeObjectURL = revokeObjectURL;
+    return { anchor, createSpy, createObjectURL, revokeObjectURL };
+  }
+
+  it("downloads a kubeconfig with mode/server query params and the server filename", async () => {
+    let seenUrl: string | null = null;
+    let seenAuth: string | null = null;
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.get("*/api/v1/tenants/acme/clusters/cl-kind-dev/kubeconfig", ({ request }) => {
+        seenUrl = request.url;
+        seenAuth = request.headers.get("authorization");
+        return new HttpResponse("apiVersion: v1\n", {
+          headers: {
+            "Content-Type": "application/yaml",
+            "Content-Disposition": 'attachment; filename="kind-dev.yaml"',
+          },
+        });
+      }),
+    );
+    const { anchor, createSpy, revokeObjectURL } = stubDownloadDom();
+
+    await downloadKubeconfig("my-token", "cl-kind-dev", {
+      mode: "direct",
+      server: "https://api.example.com",
+    });
+
+    const url = new URL(seenUrl!);
+    expect(url.searchParams.get("mode")).toBe("direct");
+    expect(url.searchParams.get("server")).toBe("https://api.example.com");
+    expect(seenAuth).toBe("Bearer my-token");
+    expect(anchor.download).toBe("kind-dev.yaml");
+    expect(anchor.click).toHaveBeenCalled();
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:mock");
+    createSpy.mockRestore();
+  });
+
+  it("falls back to a derived filename when Content-Disposition is missing", async () => {
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.get("*/api/v1/tenants/acme/clusters/cl-kind-dev/kubeconfig", () =>
+        new HttpResponse("apiVersion: v1\n", {
+          headers: { "Content-Type": "application/yaml" },
+        }),
+      ),
+    );
+    const { anchor, createSpy } = stubDownloadDom();
+
+    await downloadKubeconfig("tok", "cl-kind-dev", { mode: "gateway" });
+    expect(anchor.download).toBe("kubeconfig-cl-kind-dev.yaml");
+    createSpy.mockRestore();
+  });
+
+  it("surfaces server errors as ApiError", async () => {
+    await expect(
+      downloadKubeconfig("tok", "cl-nope", { mode: "gateway" }),
+    ).rejects.toBeInstanceOf(ApiError);
   });
 });
 

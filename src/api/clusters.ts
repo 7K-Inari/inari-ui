@@ -1,6 +1,6 @@
-import { apiFetch } from "@/api/client";
+import { API_BASE_URL, ApiError, apiErrorFromResponse, apiFetch } from "@/api/client";
 import { config } from "@/config";
-import type { components } from "@/api/__generated__/schema";
+import type { components, operations } from "@/api/__generated__/schema";
 import type {
   Capability,
   CapabilityKind,
@@ -117,6 +117,78 @@ export async function getCapabilities(
     { token },
   );
   return (res.capabilities ?? []).map(mapCapability);
+}
+
+type AccessInfoResponse = components["schemas"]["AccessInfoOutputBody"];
+export type ClusterAccessInfo = components["schemas"]["ClusterAccessInfo"];
+
+type KubeconfigQuery = NonNullable<
+  operations["getClusterKubeconfig"]["parameters"]["query"]
+>;
+export type KubeconfigMode = NonNullable<KubeconfigQuery["mode"]>;
+export type KubeconfigGrantType = NonNullable<KubeconfigQuery["grantType"]>;
+
+export interface KubeconfigDownloadOptions {
+  mode?: KubeconfigMode;
+  grantType?: KubeconfigGrantType;
+  /** Apiserver URL, required by the server in direct mode. */
+  server?: string;
+}
+
+// Secret-free OIDC inputs for building a kubelogin kubeconfig, plus tunnel
+// availability and the platform feature-flag state (kubectlAccessEnabled).
+export async function getAccessInfo(
+  token: string | undefined,
+  id: string,
+  tenant?: string,
+): Promise<ClusterAccessInfo> {
+  const res = await apiFetch<AccessInfoResponse>(
+    `${tenantPath(resolveTenant(tenant))}/clusters/${encodeURIComponent(id)}/access-info`,
+    { token },
+  );
+  return res.accessInfo;
+}
+
+// Server-side rendered kubeconfig (gateway or direct mode), downloaded as a
+// file. apiFetch is JSON-oriented, so this fetches the blob itself to read
+// the Content-Disposition filename and trigger the browser download.
+export async function downloadKubeconfig(
+  token: string | undefined,
+  id: string,
+  opts: KubeconfigDownloadOptions = {},
+  tenant?: string,
+): Promise<void> {
+  const params = new URLSearchParams();
+  if (opts.mode) params.set("mode", opts.mode);
+  if (opts.grantType) params.set("grantType", opts.grantType);
+  if (opts.server) params.set("server", opts.server);
+  const query = params.toString();
+  const path = `${tenantPath(resolveTenant(tenant))}/clusters/${encodeURIComponent(id)}/kubeconfig${query ? `?${query}` : ""}`;
+
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE_URL}${path}`, { headers });
+  } catch {
+    throw new ApiError(0, "Network error: control plane unreachable");
+  }
+  if (!res.ok) throw await apiErrorFromResponse(res);
+
+  const blob = await res.blob();
+  const disposition = res.headers.get("content-disposition") ?? "";
+  const match = /filename="?([^";]+)"?/.exec(disposition);
+  const filename = match?.[1] ?? `kubeconfig-${id}.yaml`;
+
+  const url = URL.createObjectURL(blob);
+  try {
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    anchor.click();
+  } finally {
+    URL.revokeObjectURL(url);
+  }
 }
 
 interface TokenResponse {
