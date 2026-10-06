@@ -12,22 +12,41 @@ import { Label } from "@/components/ui/label";
 import { CopyButton } from "@/pages/cloud-accounts/copy-button";
 import { useTenant } from "@/tenant/tenant-context";
 
-const PREREQS: { tool: string; description: string; commands: string[] }[] = [
+const PREREQS: { tool: string; description: string; commands: { label: string; command: string }[] }[] = [
   {
     tool: "inari-cli",
     description: "Authenticates you and merges kubeconfig entries (inari cluster connect).",
-    commands: ["brew install 7k-inari/tap/inari"],
+    commands: [
+      { label: "Homebrew (macOS/Linux)", command: "brew install 7k-inari/tap/inari" },
+      { label: "Go", command: "go install github.com/7K-Inari/inari-cli@latest" },
+      {
+        label: "Scoop (Windows)",
+        command: "scoop bucket add inari https://github.com/7K-Inari/scoop-bucket && scoop install inari",
+      },
+      {
+        label: "Prebuilt binaries",
+        command: "https://github.com/7K-Inari/inari-cli/releases",
+      },
+    ],
   },
   {
     tool: "kubelogin",
     description: "kubectl exec credential plugin that mints OIDC tokens on demand.",
-    commands: ["brew install int128/kubelogin/kubelogin", "kubectl krew install oidc-login"],
+    commands: [
+      { label: "Homebrew (macOS/Linux)", command: "brew install int128/kubelogin/kubelogin" },
+      { label: "kubectl krew", command: "kubectl krew install oidc-login" },
+      {
+        label: "Prebuilt binaries",
+        command: "https://github.com/int128/kubelogin/releases",
+      },
+    ],
   },
 ];
 
-function CommandRow({ command }: { command: string }) {
+function CommandRow({ label, command }: { label?: string; command: string }) {
   return (
     <div className="flex items-center gap-2">
+      {label && <span className="w-40 shrink-0 text-xs text-muted-foreground">{label}</span>}
       <code className="flex-1 overflow-auto rounded-md bg-muted px-3 py-2 font-mono text-xs">
         {command}
       </code>
@@ -145,8 +164,8 @@ export function ConnectTab({ cluster }: { cluster: ClusterDetail }) {
             <div key={p.tool} className="space-y-1.5">
               <p className="text-sm font-medium">{p.tool}</p>
               <p className="text-xs text-muted-foreground">{p.description}</p>
-              {p.commands.map((cmd) => (
-                <CommandRow key={cmd} command={cmd} />
+              {p.commands.map((c) => (
+                <CommandRow key={c.command} label={c.label} command={c.command} />
               ))}
             </div>
           ))}

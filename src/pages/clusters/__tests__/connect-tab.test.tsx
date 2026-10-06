@@ -44,6 +44,16 @@ describe("ConnectTab", () => {
     expect(screen.getByText(/kubectl krew install oidc-login/)).toBeInTheDocument();
   });
 
+  it("shows alternative inari-cli install options with labels", async () => {
+    renderTab();
+    await screen.findByText("inari login");
+    expect(screen.getByText(/go install github.com\/7K-Inari\/inari-cli@latest/)).toBeInTheDocument();
+    expect(screen.getByText(/scoop bucket add inari/)).toBeInTheDocument();
+    expect(screen.getByText(/brew install 7k-inari\/tap\/inari/)).toBeInTheDocument();
+    expect(screen.getByText(/inari-cli\/releases/)).toBeInTheDocument();
+    expect(screen.getAllByText(/Prebuilt binaries/).length).toBe(2);
+  });
+
   it("warns and defaults to direct mode when the tunnel is unavailable", async () => {
     mockControl.setAccessInfo("cl-kind-dev", {
       tunnelAvailable: false,
