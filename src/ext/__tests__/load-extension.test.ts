@@ -165,6 +165,24 @@ describe("checkRemoteEntryHealth", () => {
     expect(health.error.message).toContain("fetch failed");
   });
 
+  it("reports unhealthy when a 200 returns HTML (SPA fallback, not a remoteEntry)", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn().mockResolvedValue(
+        new Response("<!doctype html><title>Inari</title>", {
+          status: 200,
+          headers: { "content-type": "text/html; charset=utf-8" },
+        }),
+      ),
+    );
+    const health = await checkRemoteEntryHealth("/extensions/dead/remoteEntry.js");
+    expect(health.status).toBe("unhealthy");
+    if (health.status !== "unhealthy") throw new Error("unreachable");
+    expect(health.error).toBeInstanceOf(ExtensionLoadError);
+    expect(health.error.message).toContain("text/html");
+    expect(health.error.message).toContain("/extensions/dead/remoteEntry.js");
+  });
+
   it("reports unverifiable for an opaque (CORS-restricted) response", async () => {
     const opaque = new Response(null, { status: 200 });
     Object.defineProperty(opaque, "type", { value: "opaque" });

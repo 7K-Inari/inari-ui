@@ -144,6 +144,27 @@ describe("ExtensionsPage", () => {
     expect(screen.queryByText("down-ext")).not.toBeInTheDocument();
   });
 
+  it("rejects a dead bare-relative remoteEntry URL (no leading slash)", async () => {
+    const { http, HttpResponse } = await import("msw");
+    // "extensions/dead-rel/remoteEntry.js" resolves against API_BASE_URL
+    // ("/api/v1") to "/api/extensions/dead-rel/remoteEntry.js".
+    mockServer.use(
+      http.get("*/api/extensions/dead-rel/remoteEntry.js", () => HttpResponse.error()),
+    );
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findAllByText("inari-ext-argocd");
+    await user.type(screen.getByLabelText("Name"), "dead-rel");
+    await user.type(
+      screen.getByLabelText("remoteEntry URL / OCI reference"),
+      "extensions/dead-rel/remoteEntry.js",
+    );
+    await user.click(screen.getByRole("button", { name: "Add remote" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Failed to fetch remoteEntry");
+    expect(screen.queryByText("dead-rel")).not.toBeInTheDocument();
+  });
+
   it("rotates a backend extension identity and shows the one-time secret", async () => {
     const user = userEvent.setup();
     renderPage();

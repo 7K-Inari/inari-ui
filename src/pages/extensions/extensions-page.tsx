@@ -45,10 +45,12 @@ function AddRemoteForm({ onAdded }: { onAdded: () => void }) {
         try {
           // Registration-time health check: reject remoteEntry URLs that are
           // definitively unreachable so stale registrations never get stored.
-          // OCI references (no URL scheme / not fetchable as remoteEntry.js)
-          // and CORS-restricted cross-origin URLs can't be observed — warn
-          // and let the server decide instead of hard-failing.
-          if (/^(https?:\/\/|\/)/.test(remoteEntryUrl)) {
+          // OCI references (not fetchable as remoteEntry.js) and
+          // CORS-restricted cross-origin URLs can't be observed — warn and
+          // let the server decide instead of hard-failing. Everything else
+          // (absolute http(s), root-relative, and bare relative paths, all of
+          // which resolveRemoteEntryUrl fetches) is preflighted.
+          if (!/^oci:\/\//i.test(remoteEntryUrl)) {
             const health = await checkRemoteEntryHealth(remoteEntryUrl);
             if (health.status === "unhealthy") {
               setError(`${health.error.message} — registration rejected`);
@@ -62,6 +64,7 @@ function AddRemoteForm({ onAdded }: { onAdded: () => void }) {
             }
           }
           await addUiExtension(token, tenant, { name, remoteEntryUrl });
+          setNotice(null);
           setName("");
           setRemoteEntryUrl("");
           onAdded();

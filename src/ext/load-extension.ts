@@ -80,6 +80,19 @@ export async function checkRemoteEntryHealth(
       reason: `${entryUrl} is cross-origin and not CORS-readable; reachability confirmed but the HTTP status cannot be observed`,
     };
   }
+  // A 200 with an HTML body is not a remoteEntry: it means the URL hit an SPA
+  // fallback / error page, i.e. the remote is effectively dead or wrong.
+  const contentType = res.headers.get("content-type") ?? "";
+  if (res.ok && contentType.includes("text/html")) {
+    return {
+      status: "unhealthy",
+      error: new ExtensionLoadError(
+        entryUrl,
+        `Failed to fetch remoteEntry ${entryUrl}: expected JavaScript but got ${contentType} (SPA fallback or error page — is the URL correct?)`,
+        { status: res.status },
+      ),
+    };
+  }
   if (!res.ok) {
     // The control plane proxies remoteEntry and returns huma ErrorModel JSON
     // ({ title, status, detail }) on upstream failures; best-effort parse.
