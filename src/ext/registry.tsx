@@ -7,7 +7,7 @@ import {
   type UiExtensionRemoteViewModel,
 } from "@/api/extensions";
 import { useAuth } from "@/auth/auth-context";
-import { loadExtension, type ExtensionLoader } from "@/ext/load-extension";
+import { ExtensionLoadError, loadExtension, type ExtensionLoader } from "@/ext/load-extension";
 import { filterAllowedExtensions, getSelfExtensionPermissions } from "@/ext/rbac";
 import { useTenant } from "@/tenant/tenant-context";
 
@@ -18,6 +18,10 @@ export interface ExtensionEntry {
   state: ExtensionLoadState;
   extension?: InariExtension;
   error?: string;
+  // Fetch cause for failed loads (ExtensionLoadError): the remoteEntry URL
+  // and HTTP status so a dead/stale remote is identifiable from the UI.
+  errorUrl?: string;
+  errorStatus?: number;
 }
 
 export interface SlotBinding {
@@ -91,11 +95,17 @@ export function ExtensionsProvider({
             const extension = await loader(remote);
             update = { remote, state: "ready", extension };
           } catch (err) {
-            console.error(`[inari] failed to load extension ${remote.name}:`, err);
+            console.error(
+              `[inari] failed to load extension ${remote.name} (${remote.remoteEntryUrl}):`,
+              err,
+            );
+            const loadErr = err instanceof ExtensionLoadError ? err : undefined;
             update = {
               remote,
               state: "failed",
               error: err instanceof Error ? err.message : "load failed",
+              errorUrl: loadErr?.entryUrl,
+              errorStatus: loadErr?.status,
             };
           }
           if (cancelled) return;

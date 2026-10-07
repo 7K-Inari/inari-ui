@@ -59,6 +59,12 @@ describe("ExtensionsPage", () => {
   });
 
   it("adds a remote via the form", async () => {
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.get("*/extensions/cost-ext/remoteEntry.js", () =>
+        new HttpResponse("// remoteEntry", { status: 200 }),
+      ),
+    );
     const user = userEvent.setup();
     renderPage();
     await screen.findAllByText("inari-ext-argocd");
@@ -72,6 +78,10 @@ describe("ExtensionsPage", () => {
   });
 
   it("surfaces server validation errors when adding a remote", async () => {
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.get("*/x.js", () => new HttpResponse("// remoteEntry", { status: 200 })),
+    );
     const user = userEvent.setup();
     renderPage();
     await screen.findAllByText("inari-ext-argocd");
@@ -81,6 +91,78 @@ describe("ExtensionsPage", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "name must be lowercase alphanumeric with dashes",
     );
+  });
+
+  it("rejects registration when the remoteEntry URL is unreachable (HTTP 502)", async () => {
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.get("*/extensions/dead-ext/remoteEntry.js", () =>
+        HttpResponse.json(
+          {
+            title: "Bad Gateway",
+            status: 502,
+            detail: "upstream connect error or disconnect/reset before headers",
+          },
+          { status: 502 },
+        ),
+      ),
+    );
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findAllByText("inari-ext-argocd");
+    await user.type(screen.getByLabelText("Name"), "dead-ext");
+    await user.type(
+      screen.getByLabelText("remoteEntry URL / OCI reference"),
+      "/extensions/dead-ext/remoteEntry.js",
+    );
+    await user.click(screen.getByRole("button", { name: "Add remote" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("HTTP 502");
+    expect(alert).toHaveTextContent("upstream connect error");
+    expect(alert).toHaveTextContent("/extensions/dead-ext/remoteEntry.js");
+    // The registration was rejected before hitting the API: no new remote.
+    expect(screen.queryByText("dead-ext")).not.toBeInTheDocument();
+  });
+
+  it("rejects registration when the remoteEntry host does not answer", async () => {
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.get("*/extensions/down-ext/remoteEntry.js", () => HttpResponse.error()),
+    );
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findAllByText("inari-ext-argocd");
+    await user.type(screen.getByLabelText("Name"), "down-ext");
+    await user.type(
+      screen.getByLabelText("remoteEntry URL / OCI reference"),
+      "/extensions/down-ext/remoteEntry.js",
+    );
+    await user.click(screen.getByRole("button", { name: "Add remote" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Failed to fetch remoteEntry");
+    expect(alert).toHaveTextContent("/extensions/down-ext/remoteEntry.js");
+    expect(screen.queryByText("down-ext")).not.toBeInTheDocument();
+  });
+
+  it("rejects a dead bare-relative remoteEntry URL (no leading slash)", async () => {
+    const { http, HttpResponse } = await import("msw");
+    // "extensions/dead-rel/remoteEntry.js" resolves against API_BASE_URL
+    // ("/api/v1") to "/api/extensions/dead-rel/remoteEntry.js".
+    mockServer.use(
+      http.get("*/api/extensions/dead-rel/remoteEntry.js", () => HttpResponse.error()),
+    );
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findAllByText("inari-ext-argocd");
+    await user.type(screen.getByLabelText("Name"), "dead-rel");
+    await user.type(
+      screen.getByLabelText("remoteEntry URL / OCI reference"),
+      "extensions/dead-rel/remoteEntry.js",
+    );
+    await user.click(screen.getByRole("button", { name: "Add remote" }));
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Failed to fetch remoteEntry");
+    expect(screen.queryByText("dead-rel")).not.toBeInTheDocument();
   });
 
   it("rotates a backend extension identity and shows the one-time secret", async () => {
