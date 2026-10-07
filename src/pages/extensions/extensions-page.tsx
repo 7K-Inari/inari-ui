@@ -15,6 +15,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ApiError } from "@/api/client";
+import { checkRemoteEntryHealth } from "@/ext/load-extension";
 import { useExtensions, type ExtensionLoadState } from "@/ext/registry";
 import { useTenant } from "@/tenant/tenant-context";
 
@@ -30,6 +31,7 @@ function AddRemoteForm({ onAdded }: { onAdded: () => void }) {
   const [name, setName] = React.useState("");
   const [remoteEntryUrl, setRemoteEntryUrl] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
+  const [notice, setNotice] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
 
   return (
@@ -39,7 +41,26 @@ function AddRemoteForm({ onAdded }: { onAdded: () => void }) {
         e.preventDefault();
         setSubmitting(true);
         setError(null);
+        setNotice(null);
         try {
+          // Registration-time health check: reject remoteEntry URLs that are
+          // definitively unreachable so stale registrations never get stored.
+          // OCI references (no URL scheme / not fetchable as remoteEntry.js)
+          // and CORS-restricted cross-origin URLs can't be observed — warn
+          // and let the server decide instead of hard-failing.
+          if (/^(https?:\/\/|\/)/.test(remoteEntryUrl)) {
+            const health = await checkRemoteEntryHealth(remoteEntryUrl);
+            if (health.status === "unhealthy") {
+              setError(`${health.error.message} — registration rejected`);
+              return;
+            }
+            if (health.status === "unverifiable") {
+              console.warn(`[inari] ${health.reason}`);
+              setNotice(
+                "remoteEntry reachability could not be verified (CORS-restricted); registering anyway.",
+              );
+            }
+          }
           await addUiExtension(token, tenant, { name, remoteEntryUrl });
           setName("");
           setRemoteEntryUrl("");
@@ -79,6 +100,11 @@ function AddRemoteForm({ onAdded }: { onAdded: () => void }) {
       {error && (
         <p className="w-full text-sm text-destructive" role="alert">
           {error}
+        </p>
+      )}
+      {notice && (
+        <p className="w-full text-sm text-muted-foreground" role="status">
+          {notice}
         </p>
       )}
     </form>
@@ -160,6 +186,11 @@ export function ExtensionsPage() {
                     </td>
                     <td className="py-2 pr-4">
                       <Badge variant={STATE_VARIANT[entry.state]}>{entry.state}</Badge>
+                      {entry.errorStatus !== undefined && (
+                        <Badge variant="outline" className="ml-1">
+                          HTTP {entry.errorStatus}
+                        </Badge>
+                      )}
                       {entry.error && (
                         <p className="mt-1 text-xs text-destructive">{entry.error}</p>
                       )}
