@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useConfirm } from "@/components/confirm";
 
 import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
@@ -226,6 +227,7 @@ function StoreStatusBadge({ tenant, name }: { tenant: string; name: string }) {
 }
 
 export function EsoStoresPage() {
+  const [confirm, confirmDialog] = useConfirm();
   const { tenant } = useTenant();
   const { token } = useAuth();
   const { canWriteSettings } = useOrgCapabilities();
@@ -290,7 +292,14 @@ export function EsoStoresPage() {
   };
 
   const remove = async (store: SecretStore) => {
-    if (!window.confirm(`Delete secret store "${store.name}"?`)) return;
+    if (
+      !(await confirm({
+        title: "Delete secret store",
+        body: `Delete secret store "${store.name}"?`,
+        confirmLabel: "Delete",
+      }))
+    )
+      return;
     setActionError(null);
     try {
       await deleteSecretStore(token, tenant, store.name);
@@ -306,6 +315,7 @@ export function EsoStoresPage() {
 
   return (
     <div className="space-y-4">
+      {confirmDialog}
       <SettingsSectionHeader
         title="ESO secret stores"
         description="External Secrets Operator SecretStore registry. Credentials stay on the cluster as Kubernetes Secrets — the hub stores references only and never displays secret values."

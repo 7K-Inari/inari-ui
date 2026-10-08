@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useConfirm } from "@/components/confirm";
 
 import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
@@ -276,6 +277,7 @@ function EndpointRow({
   onEdit: () => void;
   onTested: (endpointId: string, delivery: NotificationDelivery) => void;
 }) {
+  const [confirm, confirmDialog] = useConfirm();
   const { token } = useAuth();
   const [busy, setBusy] = React.useState(false);
   const [actionError, setActionError] = React.useState<string | null>(null);
@@ -311,11 +313,13 @@ function EndpointRow({
       onTested(endpoint.id, delivery);
     });
 
-  const remove = () => {
+  const remove = async () => {
     if (
-      !window.confirm(
-        `Delete notification endpoint "${endpoint.name}"? Deliveries stop immediately.`,
-      )
+      !(await confirm({
+        title: "Delete notification endpoint",
+        body: `Delete notification endpoint "${endpoint.name}"? Deliveries stop immediately.`,
+        confirmLabel: "Delete",
+      }))
     )
       return;
     void run(async () => {
@@ -325,8 +329,10 @@ function EndpointRow({
   };
 
   return (
-    <tr className="border-t hover:bg-muted/30">
-      <td className="px-4 py-2 font-medium">{endpoint.name}</td>
+    <>
+      {confirmDialog}
+      <tr className="border-t hover:bg-muted/30">
+        <td className="px-4 py-2 font-medium">{endpoint.name}</td>
       <td className="px-4 py-2">
         <Badge variant={endpoint.kind === "slack" ? "neutral" : "neutral"}>
           {endpoint.kind}
@@ -414,6 +420,8 @@ function EndpointRow({
         </div>
       </td>
     </tr>
+    </>
+  
   );
 }
 

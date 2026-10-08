@@ -94,7 +94,6 @@ describe("RolesTab", () => {
 
   it("deletes a custom role after confirmation", async () => {
     const user = userEvent.setup();
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
     policyMockControl.getState().roles.acme.push({
       id: "role-temp",
       orgId: "t-acme",
@@ -109,16 +108,15 @@ describe("RolesTab", () => {
     render(<RolesTab />);
     const row = (await screen.findByText("Temp")).closest("tr")!;
     await user.click(within(row).getByRole("button", { name: "Delete" }));
-    expect(confirmSpy).toHaveBeenCalledOnce();
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Delete" }));
     expect(
       policyMockControl.getState().roles.acme.map((r) => r.name),
     ).not.toContain("temp");
-    confirmSpy.mockRestore();
   });
 
   it("does not delete when the confirmation is declined", async () => {
     const user = userEvent.setup();
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
     policyMockControl.getState().roles.acme.push({
       id: "role-keep",
       orgId: "t-acme",
@@ -133,11 +131,11 @@ describe("RolesTab", () => {
     render(<RolesTab />);
     const row = (await screen.findByText("Keep")).closest("tr")!;
     await user.click(within(row).getByRole("button", { name: "Delete" }));
-    expect(confirmSpy).toHaveBeenCalledOnce();
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
     expect(
       policyMockControl.getState().roles.acme.map((r) => r.name),
     ).toContain("keep");
-    confirmSpy.mockRestore();
   });
 
   it("surfaces the tenant.admin guardrail 409 inline when editing the admin bundle", async () => {
@@ -177,7 +175,6 @@ describe("RolesTab", () => {
 
   it("surfaces the server 409 when deleting a team-bound role", async () => {
     const user = userEvent.setup();
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
     policyMockControl.getState().roles.acme.push({
       id: "role-bound",
       orgId: "t-acme",
@@ -197,13 +194,14 @@ describe("RolesTab", () => {
     render(<RolesTab />);
     const row = (await screen.findByText("Bound")).closest("tr")!;
     await user.click(within(row).getByRole("button", { name: "Delete" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Delete" }));
     expect(
       await screen.findByText(/remap them first/),
     ).toBeInTheDocument();
     expect(
       policyMockControl.getState().roles.acme.map((r) => r.name),
     ).toContain("bound");
-    confirmSpy.mockRestore();
   });
 
   it("marks the tab read-only when canManageRbac is false", async () => {

@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useConfirm } from "@/components/confirm";
 
 import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
@@ -75,6 +76,7 @@ function toInput(data: Record<string, unknown>): OidcClientInput {
 }
 
 export function OidcClientsPage() {
+  const [confirm, confirmDialog] = useConfirm();
   const { tenant } = useTenant();
   const { token } = useAuth();
   const { canWriteSettings } = useOrgCapabilities();
@@ -130,7 +132,13 @@ export function OidcClientsPage() {
   };
 
   const rotate = async (client: OidcClient) => {
-    if (!window.confirm(`Rotate the secret for client "${client.name}"? The old secret stops working immediately.`)) {
+    if (
+      !(await confirm({
+        title: "Rotate client secret",
+        body: `Rotate the secret for client "${client.name}"? The old secret stops working immediately.`,
+        confirmLabel: "Rotate",
+      }))
+    ) {
       return;
     }
     setActionError(null);
@@ -142,7 +150,14 @@ export function OidcClientsPage() {
   };
 
   const remove = async (client: OidcClient) => {
-    if (!window.confirm(`Disable client "${client.name}"?`)) return;
+    if (
+      !(await confirm({
+        title: "Disable client",
+        body: `Disable client "${client.name}"?`,
+        confirmLabel: "Disable",
+      }))
+    )
+      return;
     setActionError(null);
     try {
       await deleteOidcClient(token, tenant, client.clientId);
@@ -154,6 +169,7 @@ export function OidcClientsPage() {
 
   return (
     <div className="space-y-4">
+      {confirmDialog}
       <SettingsSectionHeader
         title="OIDC clients"
         description="Service and public clients for agents, CLI, and CI (Keycloak inari realm)."

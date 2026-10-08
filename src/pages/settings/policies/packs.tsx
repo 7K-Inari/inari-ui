@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useConfirm } from "@/components/confirm";
 
 import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
@@ -29,6 +30,7 @@ const selectClass =
   "flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm";
 
 export function PolicyPacksPage() {
+  const [confirm, confirmDialog] = useConfirm();
   const { tenant } = useTenant();
   const { token } = useAuth();
   const { canWriteSettings } = useOrgCapabilities();
@@ -103,7 +105,13 @@ export function PolicyPacksPage() {
   };
 
   const removeAssignment = async (assignment: PolicyAssignment) => {
-    if (!window.confirm(`Remove assignment of this pack to ${assignment.targetType} "${assignment.targetId}"?`)) {
+    if (
+      !(await confirm({
+        title: "Remove pack assignment",
+        body: `Remove assignment of this pack to ${assignment.targetType} "${assignment.targetId}"?`,
+        confirmLabel: "Remove",
+      }))
+    ) {
       return;
     }
     setActionError(null);
@@ -117,6 +125,7 @@ export function PolicyPacksPage() {
 
   return (
     <div className="space-y-4">
+      {confirmDialog}
       <SettingsSectionHeader
         title="Policy packs"
         description="Kyverno / CEL-VAP policy packs available to this organization (org and platform-global)."

@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useConfirm } from "@/components/confirm";
 
 import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
@@ -95,6 +96,7 @@ function toInput(data: Record<string, unknown>): OidcProviderInput {
 }
 
 export function IdpBrokeringPage() {
+  const [confirm, confirmDialog] = useConfirm();
   const { tenant } = useTenant();
   const { token } = useAuth();
   const { canWriteSettings } = useOrgCapabilities();
@@ -167,9 +169,11 @@ export function IdpBrokeringPage() {
 
   const remove = async () => {
     if (
-      !window.confirm(
-        "Delete the SSO provider? Users will no longer be routed to it at login.",
-      )
+      !(await confirm({
+        title: "Delete SSO provider",
+        body: "Delete the SSO provider? Users will no longer be routed to it at login.",
+        confirmLabel: "Delete",
+      }))
     ) {
       return;
     }
@@ -183,11 +187,13 @@ export function IdpBrokeringPage() {
     }
   };
 
-  const confirmRotate = () => {
+  const confirmRotate = async () => {
     if (
-      window.confirm(
-        "Rotate the client secret? The old secret stops working immediately.",
-      )
+      await confirm({
+        title: "Rotate client secret",
+        body: "Rotate the client secret? The old secret stops working immediately.",
+        confirmLabel: "Rotate",
+      })
     ) {
       setRotating(true);
       setActionError(null);
@@ -199,6 +205,7 @@ export function IdpBrokeringPage() {
 
   return (
     <div className="space-y-4">
+      {confirmDialog}
       <SettingsSectionHeader
         title="SSO provider"
         description="Broker sign-in through your organization's OIDC identity provider. One provider per organization."

@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useConfirm } from "@/components/confirm";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { FolderGit2, Github, Gitlab } from "lucide-react";
 
@@ -120,6 +121,7 @@ function ProviderRow({
 }
 
 export function GitConnectionsPage() {
+  const [confirm, confirmDialog] = useConfirm();
   const { tenant } = useTenant();
   const { token } = useAuth();
   const navigate = useNavigate();
@@ -177,7 +179,14 @@ export function GitConnectionsPage() {
 
   const disconnect = async (connection: GitConnectionViewModel) => {
     const { label } = providerMeta(connection.provider);
-    if (!window.confirm(`Disconnect ${label} (${connection.login})?`)) return;
+    if (
+      !(await confirm({
+        title: "Disconnect git connection",
+        body: `Disconnect ${label} (${connection.login})?`,
+        confirmLabel: "Disconnect",
+      }))
+    )
+      return;
     setNotice(null);
     setActionError(null);
     try {
@@ -195,6 +204,7 @@ export function GitConnectionsPage() {
 
   return (
     <div className="space-y-4">
+      {confirmDialog}
       <SettingsSectionHeader
         title="Git connections"
         description="Your personal Git provider accounts for this organization. Credentials are stored server-side — tokens are never shown here."

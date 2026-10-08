@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useConfirm } from "@/components/confirm";
 import { Link } from "react-router-dom";
 
 import { useAsyncResource } from "@/api/hooks";
@@ -32,6 +33,7 @@ const HEALTH_FILTERS: Array<{ value: ResourceHealth | "all"; label: string }> = 
 ];
 
 export function ResourceListPage() {
+  const [confirm, confirmDialog] = useConfirm();
   const { tenant } = useTenant();
   const { token } = useAuth();
   const [healthFilter, setHealthFilter] = React.useState<ResourceHealth | "all">("all");
@@ -46,7 +48,13 @@ export function ResourceListPage() {
   });
 
   const undeploy = async (id: string, name: string) => {
-    if (!window.confirm(`Undeploy "${name}"? This removes the instance and its desired state.`)) {
+    if (
+      !(await confirm({
+        title: "Undeploy resource",
+        body: `Undeploy "${name}"? This removes the instance and its desired state.`,
+        confirmLabel: "Undeploy",
+      }))
+    ) {
       return;
     }
     setActionError(null);
@@ -65,6 +73,7 @@ export function ResourceListPage() {
 
   return (
     <div className="space-y-4">
+      {confirmDialog}
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Resources</h1>
         <p className="text-sm text-muted-foreground">

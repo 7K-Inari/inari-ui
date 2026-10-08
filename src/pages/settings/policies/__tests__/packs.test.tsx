@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -66,8 +66,9 @@ describe("PolicyPacksPage", () => {
     await user.click(screen.getByRole("button", { name: "Assign pack" }));
     expect(await screen.findByText("clusterset/cs-prod")).toBeInTheDocument();
 
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     await user.click(screen.getByRole("button", { name: "Remove" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Remove" }));
     expect(screen.queryByText("clusterset/cs-prod")).not.toBeInTheDocument();
   });
 

@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useConfirm } from "@/components/confirm";
 
 import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
@@ -247,6 +248,7 @@ function RoleEditor({
 }
 
 export function RolesTab() {
+  const [confirm, confirmDialog] = useConfirm();
   const { tenant } = useTenant();
   const { token } = useAuth();
   const { canManageRbac } = useOrgCapabilities();
@@ -268,9 +270,11 @@ export function RolesTab() {
 
   const remove = async (role: Role) => {
     if (
-      !window.confirm(
-        `Delete role "${role.displayName || role.name}"? Teams mapped to it will lose the mapping.`,
-      )
+      !(await confirm({
+        title: "Delete role",
+        body: `Delete role "${role.displayName || role.name}"? Teams mapped to it will lose the mapping.`,
+        confirmLabel: "Delete",
+      }))
     ) {
       return;
     }
@@ -307,6 +311,7 @@ export function RolesTab() {
 
   return (
     <div className="space-y-4">
+      {confirmDialog}
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           Org roles bundle permissions from the static catalog. Built-in roles
