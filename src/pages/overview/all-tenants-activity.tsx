@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "7k-design-system/react";
 import { tenantLink } from "@/tenant/tenant-link";
 import {
   fetchRecentActivity,
@@ -57,18 +57,15 @@ export function AllTenantsActivitySection({ orgs, orgNames }: SectionProps) {
 
   return (
     <Card data-testid="all-activity">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0">
-        <CardTitle className="text-base">Recent activity</CardTitle>
+      <div className="card-header overview-card-header">
+        <span className="mono-label">Recent activity</span>
         {orgs[0] && (
-          <Link
-            to={tenantLink(orgs[0], "deploys")}
-            className="text-sm text-primary hover:underline"
-          >
+          <Link to={tenantLink(orgs[0], "deploys")} className="overview-card-link">
             View all
           </Link>
         )}
-      </CardHeader>
-      <CardContent className="space-y-4">
+      </div>
+      <div className="card-body overview-card-stack">
         {firstLoad && <SectionSkeleton />}
         {!firstLoad && items.length > 0 && (
           <ActivityListItems items={items} orgNames={orgNames} />
@@ -83,12 +80,10 @@ export function AllTenantsActivitySection({ orgs, orgNames }: SectionProps) {
           />
         ))}
         {!firstLoad && settled.length === entries.length && items.length === 0 && (
-          <p className="py-2 text-sm text-muted-foreground">
-            No recent activity across your organizations.
-          </p>
+          <div className="empty">No recent activity across your organizations.</div>
         )}
         <OverflowNote count={overflow} />
-      </CardContent>
+      </div>
     </Card>
   );
 }

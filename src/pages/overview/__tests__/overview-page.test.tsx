@@ -130,20 +130,21 @@ describe("OverviewPage", () => {
 
       renderPage();
       await act(async () => {});
-      expect(clusterCalls).toBe(1);
-      expect(approvalCalls).toBe(1);
-
-      await act(async () => {
-        await vi.advanceTimersByTimeAsync(15_000);
-      });
-      expect(approvalCalls).toBe(2);
-      expect(clusterCalls).toBe(1);
-
-      await act(async () => {
-        await vi.advanceTimersByTimeAsync(15_000);
-      });
-      expect(approvalCalls).toBe(3);
+      // The stat row polls the same endpoints as the cards.
       expect(clusterCalls).toBe(2);
+      expect(approvalCalls).toBe(2);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(15_000);
+      });
+      expect(approvalCalls).toBe(4);
+      expect(clusterCalls).toBe(2);
+
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(15_000);
+      });
+      expect(approvalCalls).toBe(6);
+      expect(clusterCalls).toBe(4);
     } finally {
       vi.useRealTimers();
     }
@@ -233,16 +234,17 @@ describe("OverviewPage", () => {
 
       renderPage();
       await act(async () => {});
-      // Two cards consume /instances now (resource health + recent activity).
-      expect(instanceCalls).toBe(2);
-      expect(driftCalls).toBe(1);
+      // Two cards consume /instances (resource health + recent activity) plus
+      // the stat row; drift is the card + stat row.
+      expect(instanceCalls).toBe(3);
+      expect(driftCalls).toBe(2);
 
       await act(async () => {
         await vi.advanceTimersByTimeAsync(30_000);
       });
-      // Only the resource-health card polls at 30s; activity polls at 60s.
-      expect(instanceCalls).toBe(3);
-      expect(driftCalls).toBe(2);
+      // Only the resource-health card and stat row poll at 30s; activity at 60s.
+      expect(instanceCalls).toBe(5);
+      expect(driftCalls).toBe(4);
     } finally {
       vi.useRealTimers();
     }

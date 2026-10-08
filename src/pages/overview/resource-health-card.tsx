@@ -40,21 +40,18 @@ export function ResourceHealthCard() {
           if (i.updateAvailable) upgrades += 1;
         }
         return (
-          <div className="space-y-3">
-            <p className="text-3xl font-semibold">{instances.length}</p>
-            <ul className="space-y-1">
+          <div className="overview-card-stack">
+            <p className="stat-value">{instances.length}</p>
+            <ul className="list">
               {HEALTH_ORDER.filter((h) => counts.get(h)).map((h) => (
-                <li key={h} className="flex items-center justify-between text-sm">
+                <li key={h} className="list-item overview-count-row">
                   <HealthBadge health={h} />
-                  <span className="tabular-nums">{counts.get(h)}</span>
+                  <span className="mono-data">{counts.get(h)}</span>
                 </li>
               ))}
             </ul>
             {upgrades > 0 && (
-              <Link
-                to={tenantLink(tenant, "deploys")}
-                className="block text-sm text-primary hover:underline"
-              >
+              <Link to={tenantLink(tenant, "deploys")} className="overview-card-link">
                 {upgrades} upgrade{upgrades === 1 ? "" : "s"} available
               </Link>
             )}

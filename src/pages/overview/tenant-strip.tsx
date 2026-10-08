@@ -1,14 +1,13 @@
-import { Building2 } from "lucide-react";
+import { Building2, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Alert, Button, Skeleton } from "7k-design-system/react";
 
 import type { AsyncState } from "@/api/hooks";
 import type { Tenant } from "@/api/tenants";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
 
-// Org cards for the all-tenants home. Recents come from the tenant-switcher
+// Org rows for the all-tenants home. Recents come from the tenant-switcher
 // state (localStorage-backed, maintained by TenantProvider), filtered to orgs
 // the caller can actually see.
 export function TenantStrip({ state }: { state: AsyncState<Tenant[]> }) {
@@ -17,20 +16,20 @@ export function TenantStrip({ state }: { state: AsyncState<Tenant[]> }) {
 
   if (error && !data) {
     return (
-      <div className="flex flex-col items-start gap-3 py-2" data-testid="tenant-strip">
-        <p className="text-sm text-destructive">Failed to load: {error.message}</p>
-        <Button variant="outline" size="sm" onClick={refetch}>
+      <Alert variant="danger" data-testid="tenant-strip">
+        <span>Failed to load: {error.message}</span>
+        <Button variant="secondary" size="sm" onClick={refetch}>
           Retry
         </Button>
-      </div>
+      </Alert>
     );
   }
 
   if (!data && loading) {
     return (
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3" aria-busy="true">
+      <div className="overview-card-skeleton" aria-busy="true">
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-20 animate-pulse rounded-lg bg-muted" />
+          <Skeleton key={i} height={40} />
         ))}
       </div>
     );
@@ -39,12 +38,14 @@ export function TenantStrip({ state }: { state: AsyncState<Tenant[]> }) {
   const tenants = data ?? [];
   if (tenants.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground" data-testid="tenant-strip">
-        You don't belong to any organizations yet.{" "}
-        <Link to="/create-organization" className="text-primary hover:underline">
-          Create one
-        </Link>
-      </p>
+      <div className="empty" data-testid="tenant-strip">
+        <span className="empty-text">
+          You don't belong to any organizations yet.{" "}
+          <Link to="/create-organization" className="overview-card-link">
+            Create one
+          </Link>
+        </span>
+      </div>
     );
   }
 
@@ -53,38 +54,31 @@ export function TenantStrip({ state }: { state: AsyncState<Tenant[]> }) {
     .filter((t): t is Tenant => t !== undefined);
 
   return (
-    <div className="space-y-4" data-testid="tenant-strip">
+    <div className="tenant-strip" data-testid="tenant-strip">
       {recentTenants.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-medium text-muted-foreground">Recent</span>
+        <div className="tenant-strip-recents">
+          <span className="mono-label">Recent</span>
           {recentTenants.map((t) => (
-            <span
-              key={t.slug}
-              data-testid={`recent-${t.slug}`}
-              className="rounded-full border bg-muted/50 px-2 py-0.5 text-xs"
-            >
-              <Link to={tenantLink(t.slug, "overview")} className="hover:underline">
+            <span key={t.slug} data-testid={`recent-${t.slug}`}>
+              <Link to={tenantLink(t.slug, "overview")} className="tag">
                 {t.displayName}
               </Link>
             </span>
           ))}
         </div>
       )}
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="list">
         {tenants.map((t) => (
-          <Link key={t.slug} to={tenantLink(t.slug, "overview")} className="block">
-            <Card className="h-full transition-colors hover:border-primary/50">
-              <CardContent className="flex items-center gap-3 py-4">
-                <Building2 className="shrink-0 text-muted-foreground" />
-                <div className="min-w-0">
-                  <p className="truncate font-medium">{t.displayName}</p>
-                  <p className="truncate font-mono text-xs text-muted-foreground">{t.slug}</p>
-                </div>
-              </CardContent>
-            </Card>
-          </Link>
+          <li key={t.slug}>
+            <Link to={tenantLink(t.slug, "overview")} className="list-item tenant-row">
+              <Building2 size={16} aria-hidden="true" className="tenant-row-icon" />
+              <span className="tenant-row-name mono-data">{t.displayName}</span>
+              <span className="tag">{t.slug}</span>
+              <ChevronRight size={16} aria-hidden="true" className="tenant-row-chevron" />
+            </Link>
+          </li>
         ))}
-      </div>
+      </ul>
     </div>
   );
 }

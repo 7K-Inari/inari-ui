@@ -30,20 +30,18 @@ export function DriftCard() {
           .sort((a, b) => b.detectedAt.localeCompare(a.detectedAt))
           .slice(0, LATEST_EVENTS);
         return (
-          <div className="space-y-3">
-            <p className="text-3xl font-semibold">{events.length}</p>
-            <ul className="space-y-2">
+          <div className="overview-card-stack">
+            <p className="stat-value">{events.length}</p>
+            <ul className="list">
               {latest.map((e) => (
-                <li key={e.id} className="text-sm">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="truncate font-medium">
+                <li key={e.id} className="list-item">
+                  <div className="overview-count-row">
+                    <span className="overview-approval-title">
                       {e.kind}/{e.resourceRef ?? e.clusterId}
                     </span>
-                    <span className="shrink-0 text-muted-foreground">
-                      {formatRelative(e.detectedAt)}
-                    </span>
+                    <span className="mono-caption">{formatRelative(e.detectedAt)}</span>
                   </div>
-                  {e.detail && <p className="truncate text-muted-foreground">{e.detail}</p>}
+                  {e.detail && <p className="mono-caption">{e.detail}</p>}
                 </li>
               ))}
             </ul>

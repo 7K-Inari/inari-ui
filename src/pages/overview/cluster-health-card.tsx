@@ -18,11 +18,11 @@ export function ClusterStatusCounts({ clusters }: { clusters: ClusterSummary[] }
     counts.set(c.status, (counts.get(c.status) ?? 0) + 1);
   }
   return (
-    <ul className="space-y-1">
+    <ul className="list">
       {STATUS_ORDER.filter((s) => counts.get(s)).map((s) => (
-        <li key={s} className="flex items-center justify-between text-sm">
+        <li key={s} className="list-item overview-count-row">
           <ClusterStatusBadge status={s} />
-          <span className="tabular-nums">{counts.get(s)}</span>
+          <span className="mono-data">{counts.get(s)}</span>
         </li>
       ))}
     </ul>
@@ -52,8 +52,8 @@ export function ClusterHealthCard() {
       }
     >
       {(clusters: ClusterSummary[]) => (
-        <div className="space-y-3">
-          <p className="text-3xl font-semibold">{clusters.length}</p>
+        <div className="overview-card-stack">
+          <p className="stat-value">{clusters.length}</p>
           <ClusterStatusCounts clusters={clusters} />
         </div>
       )}

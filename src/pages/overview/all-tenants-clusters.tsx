@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 import { listClusters } from "@/api/clusters";
 import type { ClusterSummary } from "@/api/types";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "7k-design-system/react";
 import { tenantLink } from "@/tenant/tenant-link";
 import {
   ALL_TENANTS_POLL_MS,
@@ -35,15 +35,13 @@ function OrgClusterChip({
     <div data-testid={`org-chip-${org}`}>
       <Link
         to={tenantLink(org, "clusters")}
-        className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors hover:border-primary/50"
+        className="org-cluster-chip"
       >
-        <span className="min-w-0 truncate font-medium">{name}</span>
-        <span className="ml-auto tabular-nums text-muted-foreground">
+        <span className="org-cluster-chip-name">{name}</span>
+        <span className="mono-data">
           {connected}/{clusters.length}
         </span>
-        {unhealthy > 0 && (
-          <span className="text-xs text-destructive">{unhealthy} unhealthy</span>
-        )}
+        {unhealthy > 0 && <span className="badge badge-danger">{unhealthy} unhealthy</span>}
       </Link>
     </div>
   );
@@ -68,10 +66,10 @@ export function AllTenantsClusterRollup({ orgs, orgNames }: SectionProps) {
 
   return (
     <Card data-testid="all-clusters">
-      <CardHeader>
-        <CardTitle className="text-base">Cluster health</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
+      <div className="card-header overview-card-header">
+        <span className="mono-label">Cluster health</span>
+      </div>
+      <div className="card-body overview-card-stack">
         {firstLoad && <SectionSkeleton />}
         {chips.length > 0 && (
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -95,12 +93,10 @@ export function AllTenantsClusterRollup({ orgs, orgNames }: SectionProps) {
           />
         ))}
         {allEmpty && (
-          <p className="py-2 text-sm text-muted-foreground">
-            No clusters registered across your organizations.
-          </p>
+          <div className="empty">No clusters registered across your organizations.</div>
         )}
         <OverflowNote count={overflow} />
-      </CardContent>
+      </div>
     </Card>
   );
 }
