@@ -28,6 +28,7 @@ import { CloudAccountListPage } from "@/pages/cloud-accounts/cloud-account-list"
 import { ConnectAccountWizardPage } from "@/pages/cloud-accounts/connect-wizard";
 import { AccessPage } from "@/pages/access/access-page";
 import { PlatformAccessPage } from "@/pages/access/platform-access";
+import { PlatformFeatureFlagsPage } from "@/pages/access/platform-feature-flags";
 import { ApprovalsPage } from "@/pages/approvals/approvals-page";
 import { AuditLogPage } from "@/pages/audit/audit-log-page";
 import { PlatformPage } from "@/pages/platform/platform-page";
@@ -85,6 +86,7 @@ export function AppRoutes() {
         <Route path="/create-organization" element={<CreateOrganizationPage />} />
         <Route path="/:tenant/ext-sso/callback" element={<ExtensionSsoCallbackPage />} />
         <Route path="/platform/access" element={<PlatformAccessPage />} />
+        <Route path="/platform/feature-flags" element={<PlatformFeatureFlagsPage />} />
         <Route path="/:tenant" element={<TenantRoutes />}>
           <Route index element={<Navigate to="overview" replace />} />
           <Route
