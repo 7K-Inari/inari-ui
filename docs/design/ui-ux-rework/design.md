@@ -93,7 +93,8 @@ Accent scoping: the host app renders under `<html data-project="inari">` (or `Pr
 - Sidebar: 240px fixed, `bg-base`, 2px right border (`--border-subtle`), logo block 56px high (aligns with top bar). Nav groups keep the current Deliver / Operate / Govern labels, rendered as `.nav` with `.nav-item` (mono-label, 11px uppercase), active item = `aria-current="page"` + `.accent-secondary-border-left` 3px orange bar (Inari accent override of the magenta default) + invert text.
 - **Nav badge counts**: pending approvals and degraded clusters render a `.badge.badge-warning` / `.badge-danger` count right-aligned in the nav item.
 - Sidebar is collapsible to 64px icon rail at 1024–1279px.
-- Top bar (left→right): the **Inari project icon** (`build/icons/icon-inari.svg`, 24–26px — constant identity mark, keeps its magenta/orange tones per DS rule 5; it is *not* re-themed to the orange brand chain), hamburger (mobile only), tenant switcher as `.combobox`-style trigger (mono label showing `ORG / TEAM`); right side: `ThemeToggle` (DS component), `.avatar` with user menu (`.menu`).
+- Top bar: hamburger (mobile only), tenant switcher as `.combobox`-style trigger (mono label showing `ORG / TEAM`); right side: `ThemeToggle` (DS component), `.avatar` with user menu (`.menu`).
+- **Logo block (sidebar, 56px)**: the **Inari project icon** (`build/icons/icon-inari.svg`, 24px, constant identity mark — keeps its magenta/orange tones per DS rule 5, not re-themed to the orange brand chain) sits **left of the `INARI` wordmark** (Geist 700, `--text-body` 16px, brand-orange `b`).
 - Content: centered, max 1280px, 24px gutters, 24px vertical rhythm (`--space-6`). 12-col grid, gutter 24px.
 
 **Breakpoints**

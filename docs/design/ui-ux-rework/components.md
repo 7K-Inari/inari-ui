@@ -30,7 +30,7 @@ Project scope: `<html data-project="inari">` (or `ProjectProvider defaultProject
 
 | Screen | DS components/classes |
 |---|---|
-| Shell | `Nav`/`NavItem`, `Avatar`, `ThemeToggle`, `Drawer`, `Tooltip`, `.menu`, `.combobox`, `.status-dot` — sidebar icons stay on the existing `lucide-react` set (16px, `currentColor`); Inari project icon (`build/icons/icon-inari.svg`) sits leftmost in the top bar, keeping its magenta/orange identity tones |
+| Shell | `Nav`/`NavItem`, `Avatar`, `ThemeToggle`, `Drawer`, `Tooltip`, `.menu`, `.combobox`, `.status-dot` — sidebar icons stay on the existing `lucide-react` set (16px, `currentColor`); Inari project icon (`build/icons/icon-inari.svg`) sits left of the `INARI` wordmark in the sidebar logo block, keeping its magenta/orange identity tones |
 | Overview | `.grid`, `Card`, `.stat`/`.stat-accent`, `Badge`, `.list`, `.empty`, `Skeleton`, `.accent-secondary-border-top` |
 | Catalog | `.toolbar`, `Input`+`.input-addon`, `.tag`, `Select`, `.btn-group`, `.btn-icon`, `Card`, `.table`, `.pagination`/`.page-btn`, `.chip`, `.empty`, `Skeleton`, `.glow-mod-secondary` |
 | Item detail | `Tabs` (`.tab-accent`), `Card`, `.icon-box`, `.code-inline`/`.code-block`, `Select`, `Button variant="glow-accent"`, `.alert-info` |
