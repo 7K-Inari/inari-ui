@@ -14,6 +14,7 @@
     "sync:api": "./scripts/sync-api.sh"
   },
   "dependencies": {
+    "7k-design-system": "file:../7k-design-system",
     "@7k-inari/ui-plugin-sdk": "^0.1.7",
     "@module-federation/runtime": "^2.8.2",
     "@radix-ui/react-avatar": "^1.1.1",

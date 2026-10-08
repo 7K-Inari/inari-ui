@@ -1,24 +1,9 @@
 import * as React from "react";
 import { LogOut, Menu } from "lucide-react";
+import { Avatar, Drawer, ThemeToggle } from "7k-design-system/react";
 
 import { useAuth } from "@/auth/auth-context";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetContent,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { ModeToggle } from "@/components/theme-provider";
+import { Dropdown } from "@/components/dropdown";
 import { SidebarNav } from "@/layout/sidebar";
 import { TenantSwitcher } from "@/layout/tenant-switcher";
 
@@ -38,41 +23,37 @@ export function Header() {
   const [navOpen, setNavOpen] = React.useState(false);
 
   return (
-    <header className="flex h-14 items-center gap-3 border-b bg-background px-4">
-      <Sheet open={navOpen} onOpenChange={setNavOpen}>
-        <SheetTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            aria-label="Open navigation"
-          >
-            <Menu />
-          </Button>
-        </SheetTrigger>
-        <SheetContent aria-describedby={undefined}>
-          <SheetTitle className="sr-only">Navigation</SheetTitle>
-          <SidebarNav onNavigate={() => setNavOpen(false)} />
-        </SheetContent>
-      </Sheet>
+    <header className="topbar">
+      <button
+        type="button"
+        className="btn btn-ghost btn-icon topbar-hamburger"
+        aria-label="Open navigation"
+        onClick={() => setNavOpen(true)}
+      >
+        <Menu size={18} />
+      </button>
+      <Drawer
+        open={navOpen}
+        onClose={() => setNavOpen(false)}
+        side="left"
+        aria-label="Navigation"
+      >
+        <SidebarNav onNavigate={() => setNavOpen(false)} />
+      </Drawer>
       <TenantSwitcher />
-      <div className="flex-1" />
-      <ModeToggle />
-      <DropdownMenu>
-        <DropdownMenuTrigger aria-label="User menu">
-          <Avatar>
-            <AvatarFallback>{initials}</AvatarFallback>
-          </Avatar>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>{name}</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onSelect={() => logout()}>
-            <LogOut />
-            Sign out
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <div className="topbar-spacer" />
+      <ThemeToggle />
+      <Dropdown
+        label="User menu"
+        align="end"
+        trigger={<Avatar initials={initials} />}
+      >
+        <p className="mono-label menu-section">{name}</p>
+        <button type="button" role="menuitem" className="menu-item" onClick={() => logout()}>
+          <LogOut size={14} aria-hidden="true" />
+          Sign out
+        </button>
+      </Dropdown>
     </header>
   );
 }

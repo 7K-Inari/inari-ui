@@ -1,3 +1,4 @@
+import type { LucideIcon } from "lucide-react";
 import {
   BookOpen,
   Boxes,
@@ -18,7 +19,7 @@ import {
 export interface NavItem {
   label: string;
   path: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: LucideIcon;
 }
 
 export interface NavSection {

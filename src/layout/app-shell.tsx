@@ -5,11 +5,11 @@ import { Sidebar } from "@/layout/sidebar";
 
 export function AppShell() {
   return (
-    <div className="flex h-screen">
+    <div className="app-shell">
       <Sidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="app-shell-main">
         <Header />
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="app-content">
           <Outlet />
         </main>
       </div>
