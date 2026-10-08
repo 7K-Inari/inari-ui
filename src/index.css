@@ -503,6 +503,12 @@ body {
   display: inline-flex;
   cursor: pointer;
 }
+.avatar-trigger {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+}
 .dropdown-menu {
   position: absolute;
   top: calc(100% + 4px);

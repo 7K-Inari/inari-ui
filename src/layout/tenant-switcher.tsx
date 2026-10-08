@@ -37,11 +37,11 @@ export function TenantSwitcher() {
       label="Tenant context switcher"
       className="tenant-switcher"
       trigger={
-        <span className="btn btn-ghost tenant-switcher-trigger">
+        <button type="button" className="btn btn-ghost tenant-switcher-trigger">
           {tenant === ALL_TENANTS ? <Globe size={16} /> : <Building2 size={16} />}
           <span className="mono-label tenant-switcher-label">{label}</span>
           <ChevronsUpDown size={14} aria-hidden="true" />
-        </span>
+        </button>
       }
     >
       {(close) => (

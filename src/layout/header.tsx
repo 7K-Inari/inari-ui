@@ -46,7 +46,11 @@ export function Header() {
       <Dropdown
         label="User menu"
         align="end"
-        trigger={<Avatar initials={initials} />}
+        trigger={
+          <button type="button" className="avatar-trigger">
+            <Avatar initials={initials} />
+          </button>
+        }
       >
         <p className="mono-label menu-section">{name}</p>
         <button type="button" role="menuitem" className="menu-item" onClick={() => logout()}>
