@@ -10,10 +10,9 @@ import {
   type AutoApproveRule,
 } from "@/api/policies";
 import { useAuth } from "@/auth/auth-context";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import {
   CapabilityGate,
@@ -115,9 +114,9 @@ export function ApprovalsConfigPage() {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load approval config: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
@@ -127,20 +126,20 @@ export function ApprovalsConfigPage() {
 
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">{actionError}</CardContent>
+          <div className="card-body">{actionError}</div>
         </Card>
       )}
 
       {saved && !dirty && (
         <Card>
-          <CardContent className="py-3 text-sm">Configuration saved.</CardContent>
+          <div className="card-body">Configuration saved.</div>
         </Card>
       )}
 
       {config && (
         <div className="space-y-4">
           <Card>
-            <CardContent className="space-y-3 py-4">
+            <div className="card-body">
               <h2 className="text-sm font-medium">Thresholds</h2>
               <div className="space-y-2">
                 {effectiveThresholds.map((t, idx) => (
@@ -153,17 +152,17 @@ export function ApprovalsConfigPage() {
                       className="w-28"
                       value={String(t.approvalsRequired)}
                       disabled={!canWriteSettings}
-                      onChange={(e) => setThreshold(idx, Number(e.target.value))}
+                      onChange={(v) => setThreshold(idx, Number(v))}
                     />
                     <span className="text-xs text-muted-foreground">approvals required</span>
                   </div>
                 ))}
               </div>
-            </CardContent>
+            </div>
           </Card>
 
           <Card>
-            <CardContent className="space-y-3 py-4">
+            <div className="card-body">
               <h2 className="text-sm font-medium">Approver groups</h2>
               <ul className="space-y-1">
                 {effectiveGroups.map((group) => (
@@ -180,11 +179,11 @@ export function ApprovalsConfigPage() {
               {canWriteSettings && (
                 <div className="flex items-end gap-2">
                   <div className="space-y-1.5">
-                    <Label htmlFor="new-group">Add group</Label>
+                    <label className="form-label" htmlFor="new-group">Add group</label>
                     <Input
                       id="new-group"
                       value={newGroup}
-                      onChange={(e) => setNewGroup(e.target.value)}
+                      onChange={(v) => setNewGroup(v)}
                       placeholder="tenant-acme/team"
                     />
                   </div>
@@ -193,11 +192,11 @@ export function ApprovalsConfigPage() {
                   </Button>
                 </div>
               )}
-            </CardContent>
+            </div>
           </Card>
 
           <Card>
-            <CardContent className="space-y-3 py-4">
+            <div className="card-body">
               <h2 className="text-sm font-medium">Auto-approve rules</h2>
               {effectiveRules.length === 0 && (
                 <p className="text-sm text-muted-foreground">No auto-approve rules.</p>
@@ -217,7 +216,7 @@ export function ApprovalsConfigPage() {
                   </li>
                 ))}
               </ul>
-            </CardContent>
+            </div>
           </Card>
 
           <p className="text-xs text-muted-foreground">

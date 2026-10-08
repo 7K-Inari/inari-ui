@@ -170,9 +170,8 @@ describe("ExtensionsPage", () => {
     renderPage();
     await screen.findByText("healthy");
     await user.click(screen.getByRole("button", { name: "Rotate identity" }));
-    expect(await screen.findByRole("status")).toHaveTextContent(
-      "mock-one-time-secret",
-    );
+    const statuses = await screen.findAllByRole("status");
+    expect(statuses.some((el) => el.textContent?.includes("mock-one-time-secret"))).toBe(true);
   });
 
   it("surfaces an error when identity rotation fails", async () => {
@@ -191,7 +190,9 @@ describe("ExtensionsPage", () => {
     await user.click(screen.getByRole("button", { name: "Rotate identity" }));
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent("rotation already in progress");
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(
+      screen.queryAllByRole("status").some((el) => el.textContent?.includes("secret")),
+    ).toBe(false);
     // The error belongs to the backend extensions card, not the UI card.
     const backendCard = screen
       .getByText("Backend extensions")
@@ -204,9 +205,8 @@ describe("ExtensionsPage", () => {
     renderPage();
     await screen.findByText("healthy");
     await user.click(screen.getByRole("button", { name: "Rotate identity" }));
-    expect(await screen.findByRole("status")).toHaveTextContent(
-      "mock-one-time-secret",
-    );
+    const statuses = await screen.findAllByRole("status");
+    expect(statuses.some((el) => el.textContent?.includes("mock-one-time-secret"))).toBe(true);
 
     const { http, HttpResponse } = await import("msw");
     mockServer.use(
@@ -222,7 +222,9 @@ describe("ExtensionsPage", () => {
       "rotation already in progress",
     );
     // The stale (now-invalid) secret must not remain on screen.
-    expect(screen.queryByRole("status")).not.toBeInTheDocument();
+    expect(
+      screen.queryAllByRole("status").some((el) => el.textContent?.includes("secret")),
+    ).toBe(false);
     expect(screen.queryByText(/mock-one-time-secret/)).not.toBeInTheDocument();
   });
 

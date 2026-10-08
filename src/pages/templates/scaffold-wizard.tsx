@@ -20,11 +20,10 @@ import {
   RunIdentityBadge,
   RunIdentityNotice,
 } from "@/components/templates/run-identity-notice";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
 
@@ -187,31 +186,25 @@ function ScaffoldStatus({ scaffoldId }: { scaffoldId: string }) {
         </p>
       )}
       {!run.terminal && (
-        <Button variant="outline" size="sm" onClick={cancel} disabled={acting}>
+        <Button variant="secondary" size="sm" onClick={cancel} disabled={acting}>
           {acting ? "Cancelling…" : "Cancel run"}
         </Button>
       )}
       <div className="flex flex-wrap justify-center gap-2">
         {run.outputs.repoUrl && (
-          <Button asChild variant="outline" size="sm">
-            <a href={run.outputs.repoUrl} target="_blank" rel="noreferrer">
+          <a href={run.outputs.repoUrl} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">
               Open repository
             </a>
-          </Button>
         )}
         {run.outputs.pipelineUrl && (
-          <Button asChild variant="outline" size="sm">
-            <a href={run.outputs.pipelineUrl} target="_blank" rel="noreferrer">
+          <a href={run.outputs.pipelineUrl} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">
               Open pipeline
             </a>
-          </Button>
         )}
         {run.outputs.catalogItemId && (
-          <Button asChild size="sm">
-            <Link to={tenantLink(tenant, `catalog/${run.outputs.catalogItemId}`)}>
+          <Link to={tenantLink(tenant, `catalog/${run.outputs.catalogItemId}`)} className="btn btn-primary btn-sm">
               View catalog entry
             </Link>
-          </Button>
         )}
       </div>
     </div>
@@ -248,9 +241,9 @@ export function ScaffoldWizardPage() {
   if (template.error) {
     return (
       <Card>
-        <CardContent className="py-12 text-center text-sm text-destructive">
+        <div className="card-body">
           Failed to load template: {template.error.message}
-        </CardContent>
+        </div>
       </Card>
     );
   }
@@ -311,14 +304,14 @@ export function ScaffoldWizardPage() {
 
       {step === 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle>Configure</CardTitle>
-            <CardDescription>
+          <div className="card-header">
+            <h2 className="mono-label">Configure</h2>
+            <p className="card-lede">
               The tenant context is bound automatically: namespace, owning group, and RBAC
               are derived from the current tenant.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            </p>
+          </div>
+          <div className="card-body">
             <dl className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-md bg-muted p-3 text-sm">
               <dt className="text-muted-foreground">Tenant</dt>
               <dd className="font-mono text-xs">{tenant}</dd>
@@ -333,11 +326,11 @@ export function ScaffoldWizardPage() {
               tenant={tenant}
             />
             <div className="space-y-1.5">
-              <Label htmlFor="service-name">Service name</Label>
+              <label className="form-label" htmlFor="service-name">Service name</label>
               <Input
                 id="service-name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(v) => setName(v)}
                 placeholder="payments-api"
               />
               {nameError && <p className="text-xs text-destructive">{nameError}</p>}
@@ -350,25 +343,25 @@ export function ScaffoldWizardPage() {
               onChange={setFormData}
             />
             <div className="flex justify-end gap-2">
-              <Button variant="ghost" asChild>
-                <Link to={tenantLink(tenant, "templates")}>Cancel</Link>
-              </Button>
+              <Link to={tenantLink(tenant, "templates")} className="btn btn-ghost">
+                Cancel
+              </Link>
               <Button onClick={next}>Next</Button>
             </div>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {step === 1 && (
         <Card>
-          <CardHeader>
-            <CardTitle>Review</CardTitle>
-            <CardDescription>
+          <div className="card-header">
+            <h2 className="mono-label">Review</h2>
+            <p className="card-lede">
               The scaffold run creates the repository, CI pipeline, and a discovered catalog
               entry, then binds tenant RBAC.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            </p>
+          </div>
+          <div className="card-body">
             <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
               <dt className="text-muted-foreground">Name</dt>
               <dd>{name}</dd>
@@ -403,21 +396,21 @@ export function ScaffoldWizardPage() {
                 {submitting ? "Starting…" : "Scaffold"}
               </Button>
             </div>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {step === 2 && run && (
         <Card>
-          <CardHeader>
-            <CardTitle>Scaffold status</CardTitle>
-            <CardDescription>
+          <div className="card-header">
+            <h2 className="mono-label">Scaffold status</h2>
+            <p className="card-lede">
               Repo, pipeline, and catalog entry are created by the scaffold run.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            </p>
+          </div>
+          <div className="card-body">
             <ScaffoldStatus scaffoldId={run.id} />
-          </CardContent>
+          </div>
         </Card>
       )}
     </div>

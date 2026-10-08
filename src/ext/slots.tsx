@@ -12,7 +12,7 @@ import type {
 } from "@7k-inari/ui-plugin-sdk";
 
 import type { CatalogItemSummary, ResourceInstanceSummary } from "@/api/types";
-import { Button } from "@/components/ui/button";
+import { Button } from "7k-design-system/react";
 import { SlotBoundary } from "@/ext/slot-boundary";
 import { toSdkCatalogItem, toSdkResourceInstance } from "@/ext/mappers";
 import { useSlots, type SlotBinding } from "@/ext/registry";

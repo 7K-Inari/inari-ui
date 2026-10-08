@@ -19,11 +19,10 @@ import type {
   NotificationEndpoint,
 } from "@/api/notifications";
 import { useAuth } from "@/auth/auth-context";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import { useOrgCapabilities } from "@/pages/settings/components/capability-gate";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
@@ -112,10 +111,10 @@ function EndpointForm({
 
   return (
     <Card>
-      <CardContent className="py-4">
+      <div className="card-body">
         <form onSubmit={submit} className="max-w-2xl space-y-4">
           <div className="space-y-1.5">
-            <Label>Kind</Label>
+            <label className="form-label">Kind</label>
             <div className="flex gap-4">
               {(["slack", "webhook"] as const).map((kind) => (
                 <label
@@ -137,21 +136,21 @@ function EndpointForm({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="endpoint-name">Name</Label>
+            <label className="form-label" htmlFor="endpoint-name">Name</label>
             <Input
               id="endpoint-name"
               value={form.name}
-              onChange={(e) => set("name", e.target.value)}
+              onChange={(v) => set("name", v)}
               placeholder="ops-alerts"
             />
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="endpoint-url">URL</Label>
+            <label className="form-label" htmlFor="endpoint-url">URL</label>
             <Input
               id="endpoint-url"
               value={form.url}
-              onChange={(e) => set("url", e.target.value)}
+              onChange={(v) => set("url", v)}
               placeholder={
                 form.kind === "slack"
                   ? "https://hooks.slack.com/services/…"
@@ -178,12 +177,12 @@ function EndpointForm({
 
           {form.kind === "webhook" && (
             <div className="space-y-1.5">
-              <Label htmlFor="endpoint-secret">Signing secret (optional)</Label>
+              <label className="form-label" htmlFor="endpoint-secret">Signing secret (optional)</label>
               <Input
                 id="endpoint-secret"
                 type="password"
                 value={form.secret}
-                onChange={(e) => set("secret", e.target.value)}
+                onChange={(v) => set("secret", v)}
                 placeholder={
                   editing ? "Leave blank to keep the current secret" : ""
                 }
@@ -192,7 +191,7 @@ function EndpointForm({
           )}
 
           <div className="space-y-1.5">
-            <Label>Events</Label>
+            <label className="form-label">Events</label>
             <p className="text-xs text-muted-foreground">
               Select none to subscribe to all events.
             </p>
@@ -250,12 +249,12 @@ function EndpointForm({
                   ? "Save changes"
                   : "Create endpoint"}
             </Button>
-            <Button type="button" variant="outline" onClick={onCancel}>
+            <Button type="button" variant="secondary" onClick={onCancel}>
               Cancel
             </Button>
           </div>
         </form>
-      </CardContent>
+      </div>
     </Card>
   );
 }
@@ -329,7 +328,7 @@ function EndpointRow({
     <tr className="border-t hover:bg-muted/30">
       <td className="px-4 py-2 font-medium">{endpoint.name}</td>
       <td className="px-4 py-2">
-        <Badge variant={endpoint.kind === "slack" ? "default" : "secondary"}>
+        <Badge variant={endpoint.kind === "slack" ? "neutral" : "neutral"}>
           {endpoint.kind}
         </Badge>
       </td>
@@ -344,10 +343,10 @@ function EndpointRow({
       <td className="px-4 py-2">
         <div className="flex max-w-xs flex-wrap gap-1">
           {!endpoint.events || endpoint.events.length === 0 ? (
-            <Badge variant="muted">All events</Badge>
+            <Badge variant="neutral">All events</Badge>
           ) : (
             endpoint.events.map((e) => (
-              <Badge key={e} variant="outline">
+              <Badge key={e} variant="neutral">
                 {eventLabel(e)}
               </Badge>
             ))
@@ -387,7 +386,7 @@ function EndpointRow({
           {canWrite && (
             <>
               <Button
-                variant="outline"
+                variant="secondary"
                 size="sm"
                 disabled={busy}
                 onClick={sendTest}
@@ -395,7 +394,7 @@ function EndpointRow({
                 Send test
               </Button>
               <Button
-                variant="outline"
+                variant="secondary"
                 size="sm"
                 disabled={busy}
                 onClick={onEdit}
@@ -403,7 +402,7 @@ function EndpointRow({
                 Edit
               </Button>
               <Button
-                variant="outline"
+                variant="secondary"
                 size="sm"
                 disabled={busy}
                 onClick={remove}
@@ -505,9 +504,9 @@ export function NotificationsPage() {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load notification endpoints: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
@@ -529,14 +528,14 @@ export function NotificationsPage() {
 
       {endpoints && endpoints.length === 0 && !formOpen && (
         <Card>
-          <CardContent className="space-y-3 py-12 text-center">
+          <div className="card-body">
             <p className="text-sm text-muted-foreground">
               No notification endpoints yet.
             </p>
             {canWriteSettings && (
               <Button onClick={openCreate}>Create your first endpoint</Button>
             )}
-          </CardContent>
+          </div>
         </Card>
       )}
 

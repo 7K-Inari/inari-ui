@@ -1,13 +1,13 @@
 import * as React from "react";
 import { Copy } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "7k-design-system/react";
 
 export function CopyButton({ value, label }: { value: string; label: string }) {
   const [copied, setCopied] = React.useState(false);
   return (
     <Button
-      variant="outline"
+      variant="secondary"
       size="sm"
       onClick={async () => {
         try {

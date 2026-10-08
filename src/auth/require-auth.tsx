@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { useAuth } from "@/auth/auth-context";
-import { Button } from "@/components/ui/button";
+import { Button } from "7k-design-system/react";
 
 export function RequireAuth({ children }: { children: React.ReactNode }) {
   const { initialized, authenticated, error, login, retry } = useAuth();

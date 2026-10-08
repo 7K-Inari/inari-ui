@@ -12,11 +12,10 @@ import {
   type Role,
 } from "@/api/roles";
 import { useAuth } from "@/auth/auth-context";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import {
   CapabilityGate,
   useOrgCapabilities,
@@ -131,20 +130,20 @@ function RoleEditor({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-base">
+      <div className="card-header">
+        <h2 className="mono-label">
           {role === null ? "Create role" : `Edit ${role.displayName || role.name}`}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+        </h2>
+      </div>
+      <div className="card-body">
         <form className="space-y-4" onSubmit={submit}>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="role-name">Name</Label>
+              <label className="form-label" htmlFor="role-name">Name</label>
               <Input
                 id="role-name"
                 value={draft.name}
-                onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                onChange={(v) => setDraft({ ...draft, name: v })}
                 placeholder="lowercase-with-dashes"
                 disabled={disabled || !nameEditable}
                 title={
@@ -161,24 +160,22 @@ function RoleEditor({
               )}
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="role-display-name">Display name</Label>
+              <label className="form-label" htmlFor="role-display-name">Display name</label>
               <Input
                 id="role-display-name"
                 value={draft.displayName}
-                onChange={(e) =>
-                  setDraft({ ...draft, displayName: e.target.value })
+                onChange={(v) => setDraft({ ...draft, displayName: v })
                 }
                 disabled={disabled}
               />
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="role-description">Description</Label>
+            <label className="form-label" htmlFor="role-description">Description</label>
             <Input
               id="role-description"
               value={draft.description}
-              onChange={(e) =>
-                setDraft({ ...draft, description: e.target.value })
+              onChange={(v) => setDraft({ ...draft, description: v })
               }
               disabled={disabled}
             />
@@ -236,7 +233,7 @@ function RoleEditor({
             </CapabilityGate>
             <Button
               type="button"
-              variant="outline"
+              variant="secondary"
               onClick={onCancel}
               disabled={saving}
             >
@@ -244,7 +241,7 @@ function RoleEditor({
             </Button>
           </div>
         </form>
-      </CardContent>
+      </div>
     </Card>
   );
 }
@@ -294,9 +291,9 @@ export function RolesTab() {
   if (error) {
     return (
       <Card>
-        <CardContent className="py-6 text-sm text-destructive">
+        <div className="card-body">
           Failed to load roles: {error.message}
-        </CardContent>
+        </div>
       </Card>
     );
   }
@@ -315,7 +312,7 @@ export function RolesTab() {
           Org roles bundle permissions from the static catalog. Built-in roles
           are never deletable; custom roles bound to teams cannot be deleted.
           {!canManageRbac && (
-            <Badge variant="muted" className="ml-2">
+            <Badge variant="neutral" className="ml-2">
               Read-only
             </Badge>
           )}
@@ -329,9 +326,9 @@ export function RolesTab() {
 
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">
+          <div className="card-body">
             {actionError}
-          </CardContent>
+          </div>
         </Card>
       )}
 
@@ -356,7 +353,7 @@ export function RolesTab() {
                     <span className="text-xs text-muted-foreground">
                       {role.name}
                     </span>{" "}
-                    {role.builtin && <Badge variant="muted">Built-in</Badge>}
+                    {role.builtin && <Badge variant="neutral">Built-in</Badge>}
                   </td>
                   <td className="px-4 py-2 text-muted-foreground">
                     {(role.permissions ?? []).length}
@@ -368,7 +365,7 @@ export function RolesTab() {
                     <div className="flex justify-end gap-2">
                       <CapabilityGate capability="manageRbac" mode="disable">
                         <Button
-                          variant="outline"
+                          variant="secondary"
                           size="sm"
                           onClick={() => setEditing(role.id)}
                         >
@@ -378,7 +375,7 @@ export function RolesTab() {
                       {!role.builtin && (
                         <CapabilityGate capability="manageRbac" mode="disable">
                           <Button
-                            variant="outline"
+                            variant="secondary"
                             size="sm"
                             disabled={deleting}
                             onClick={() => remove(role)}
@@ -398,9 +395,9 @@ export function RolesTab() {
 
       {roles && roles.length === 0 && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No roles in this organization.
-          </CardContent>
+          </div>
         </Card>
       )}
 

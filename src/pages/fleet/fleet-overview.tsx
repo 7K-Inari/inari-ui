@@ -14,11 +14,10 @@ import {
 import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
@@ -32,12 +31,12 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]["id"];
 
-const ROLLOUT_STATE_VARIANT: Record<string, "success" | "warning" | "destructive" | "muted"> = {
+const ROLLOUT_STATE_VARIANT: Record<string, "success" | "warning" | "danger" | "neutral"> = {
   running: "warning",
   "waiting-approval": "warning",
   completed: "success",
-  failed: "destructive",
-  "rolled-back": "muted",
+  failed: "danger",
+  "rolled-back": "neutral",
 };
 
 function parseLabels(input: string): Record<string, string> {
@@ -79,21 +78,21 @@ function CreateClusterSetForm({ onCreated }: { onCreated: () => void }) {
       }}
     >
       <div className="space-y-1.5">
-        <Label htmlFor="cs-name">Name</Label>
+        <label className="form-label" htmlFor="cs-name">Name</label>
         <Input
           id="cs-name"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(v) => setName(v)}
           placeholder="prod-us"
           required
         />
       </div>
       <div className="min-w-64 space-y-1.5">
-        <Label htmlFor="cs-labels">Targeting labels</Label>
+        <label className="form-label" htmlFor="cs-labels">Targeting labels</label>
         <Input
           id="cs-labels"
           value={labels}
-          onChange={(e) => setLabels(e.target.value)}
+          onChange={(v) => setLabels(v)}
           placeholder="region=us, env=prod"
         />
       </div>
@@ -122,16 +121,16 @@ function ClusterSetsTab() {
     <div className="space-y-4">
       {(sets.data ?? []).length === 0 ? (
         <Card>
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No ClusterSets defined yet.
-          </CardContent>
+          </div>
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {(sets.data ?? []).map((set) => (
             <Card key={set.id}>
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center justify-between gap-2 text-base">
+              <div className="card-header">
+                <h2 className="mono-label">
                   <Link
                     to={tenantLink(tenant, `fleet/clustersets/${set.id}`)}
                     className="hover:underline"
@@ -139,7 +138,7 @@ function ClusterSetsTab() {
                     {set.name}
                   </Link>
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     size="sm"
                     onClick={async () => {
                       setActionError(null);
@@ -157,12 +156,12 @@ function ClusterSetsTab() {
                   >
                     Delete
                   </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 pt-0 text-sm">
+                </h2>
+              </div>
+              <div className="card-body">
                 <div className="flex flex-wrap gap-1">
                   {Object.entries(set.labels).map(([k, v]) => (
-                    <Badge key={k} variant="outline" className="font-mono">
+                    <Badge key={k} variant="neutral" className="font-mono">
                       {k}={v}
                     </Badge>
                   ))}
@@ -170,7 +169,7 @@ function ClusterSetsTab() {
                 <p className="text-muted-foreground">
                   Members resolve from the label selector server-side.
                 </p>
-              </CardContent>
+              </div>
             </Card>
           ))}
         </div>
@@ -197,15 +196,15 @@ function RolloutsTab() {
   if ((rollouts.data ?? []).length === 0) {
     return (
       <Card>
-        <CardContent className="py-10 text-center text-sm text-muted-foreground">
+        <div className="card-body">
           No rollouts in flight.
-        </CardContent>
+        </div>
       </Card>
     );
   }
   return (
     <Card>
-      <CardContent className="p-0">
+      <div className="card-body">
         <table className="w-full text-sm">
           <thead className="text-left text-xs text-muted-foreground">
             <tr>
@@ -234,7 +233,7 @@ function RolloutsTab() {
                   {rollout.stages.map((s) => s.name).join(" → ")}
                 </td>
                 <td className="px-4 py-2">
-                  <Badge variant={ROLLOUT_STATE_VARIANT[rollout.state] ?? "muted"}>
+                  <Badge variant={ROLLOUT_STATE_VARIANT[rollout.state] ?? "neutral"}>
                     {rollout.state}
                   </Badge>
                 </td>
@@ -245,7 +244,7 @@ function RolloutsTab() {
             ))}
           </tbody>
         </table>
-      </CardContent>
+      </div>
     </Card>
   );
 }
@@ -262,9 +261,9 @@ function DriftTab() {
   if ((drift.data ?? []).length === 0) {
     return (
       <Card>
-        <CardContent className="py-10 text-center text-sm text-muted-foreground">
+        <div className="card-body">
           No drift detected — desired and reported state match everywhere.
-        </CardContent>
+        </div>
       </Card>
     );
   }
@@ -274,7 +273,7 @@ function DriftTab() {
         Drift is report-only in v1 — reconcile via the owning GitOps repo.
       </p>
       <Card>
-        <CardContent className="p-0">
+        <div className="card-body">
           <table className="w-full text-sm">
             <thead className="text-left text-xs text-muted-foreground">
               <tr>
@@ -307,7 +306,7 @@ function DriftTab() {
               ))}
             </tbody>
           </table>
-        </CardContent>
+        </div>
       </Card>
     </div>
   );
@@ -329,7 +328,7 @@ function AgentChannelsTab() {
   }
   return (
     <Card>
-      <CardContent className="p-0">
+      <div className="card-body">
         <table className="w-full text-sm">
           <thead className="text-left text-xs text-muted-foreground">
             <tr>
@@ -346,7 +345,7 @@ function AgentChannelsTab() {
                   {setNameById.get(assignment.clusterSetId) ?? assignment.clusterSetId}
                 </td>
                 <td className="px-4 py-2">
-                  <Badge variant={assignment.channel === "canary" ? "warning" : "secondary"}>
+                  <Badge variant={assignment.channel === "canary" ? "warning" : "neutral"}>
                     {assignment.channel}
                   </Badge>
                 </td>
@@ -355,7 +354,7 @@ function AgentChannelsTab() {
                 </td>
                 <td className="px-4 py-2 text-right">
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     size="sm"
                     onClick={async () => {
                       setError(null);
@@ -389,7 +388,7 @@ function AgentChannelsTab() {
             {error}
           </p>
         )}
-      </CardContent>
+      </div>
     </Card>
   );
 }

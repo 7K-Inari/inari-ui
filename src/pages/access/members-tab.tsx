@@ -16,11 +16,10 @@ import {
 import type { OrgMemberView, Team } from "@/api/tenants";
 import { listRoles, type Role } from "@/api/roles";
 import { useAuth } from "@/auth/auth-context";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import {
   CapabilityGate,
   useOrgCapabilities,
@@ -78,24 +77,24 @@ function InviteForm({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Invite member</CardTitle>
-      </CardHeader>
-      <CardContent>
+      <div className="card-header">
+        <h2 className="mono-label">Invite member</h2>
+      </div>
+      <div className="card-body">
         <form className="max-w-xl space-y-3" onSubmit={submit}>
           <div className="space-y-1.5">
-            <Label htmlFor="invite-email">Email</Label>
+            <label className="form-label" htmlFor="invite-email">Email</label>
             <Input
               id="invite-email"
               type="email"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(v) => setEmail(v)}
               disabled={disabled}
               required
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="invite-role">Role</Label>
+            <label className="form-label" htmlFor="invite-role">Role</label>
             <select
               id="invite-role"
               className={selectClass}
@@ -117,7 +116,7 @@ function InviteForm({
             </Button>
           </CapabilityGate>
         </form>
-      </CardContent>
+      </div>
     </Card>
   );
 }
@@ -207,7 +206,7 @@ function MemberRow({
           </select>
           {memberRoles.length > 1 &&
             memberRoles.map((r) => (
-              <Badge key={r} variant="muted">
+              <Badge key={r} variant="neutral">
                 {r}
               </Badge>
             ))}
@@ -218,7 +217,7 @@ function MemberRow({
           <span className="mr-2 text-xs text-destructive">{actionError}</span>
         )}
         <CapabilityGate capability="manageMembers" mode="disable">
-          <Button variant="outline" size="sm" disabled={busy} onClick={remove}>
+          <Button variant="secondary" size="sm" disabled={busy} onClick={remove}>
             Remove
           </Button>
         </CapabilityGate>
@@ -272,11 +271,11 @@ function UserPicker({
 
   return (
     <div className="relative flex-1 space-y-1.5">
-      <Label htmlFor={`picker-${team}`}>Add member</Label>
+      <label className="form-label" htmlFor={`picker-${team}`}>Add member</label>
       <Input
         id={`picker-${team}`}
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        onChange={(v) => setQuery(v)}
         placeholder="Search org members by email or name"
         disabled={disabled}
       />
@@ -384,7 +383,7 @@ function TeamMembersPanel({
               </span>
               <CapabilityGate capability="manageTeams" mode="disable">
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   onClick={() => remove(m.userId)}
                 >
@@ -465,9 +464,9 @@ function TeamsSection({ roles }: { roles: Role[] | null }) {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load teams: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
@@ -477,9 +476,9 @@ function TeamsSection({ roles }: { roles: Role[] | null }) {
 
       {!error && teams && teams.length === 0 && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No teams in this organization.
-          </CardContent>
+          </div>
         </Card>
       )}
 
@@ -491,13 +490,13 @@ function TeamsSection({ roles }: { roles: Role[] | null }) {
                 <div>
                   <p className="text-sm font-medium">
                     {team.displayName || team.name}{" "}
-                    <Badge variant="muted">{team.roleName || team.roleId}</Badge>
+                    <Badge variant="neutral">{team.roleName || team.roleId}</Badge>
                   </p>
                   <p className="text-xs text-muted-foreground">{team.name}</p>
                 </div>
                 <div className="flex gap-2">
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     size="sm"
                     onClick={() =>
                       setExpanded(expanded === team.name ? null : team.name)
@@ -507,7 +506,7 @@ function TeamsSection({ roles }: { roles: Role[] | null }) {
                   </Button>
                   <CapabilityGate capability="manageTeams" mode="disable">
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       size="sm"
                       onClick={() => remove(team.name)}
                     >
@@ -533,24 +532,24 @@ function TeamsSection({ roles }: { roles: Role[] | null }) {
       {actionError && <p className="text-sm text-destructive">{actionError}</p>}
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Create team</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <div className="card-header">
+          <h2 className="mono-label">Create team</h2>
+        </div>
+        <div className="card-body">
           <form className="flex max-w-xl items-end gap-2" onSubmit={create}>
             <div className="flex-1 space-y-1.5">
-              <Label htmlFor="team-name">Name</Label>
+              <label className="form-label" htmlFor="team-name">Name</label>
               <Input
                 id="team-name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(v) => setName(v)}
                 placeholder="lowercase-with-dashes"
                 disabled={!canManageTeams}
                 required
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="team-role">Role</Label>
+              <label className="form-label" htmlFor="team-role">Role</label>
               <select
                 id="team-role"
                 className={selectClass}
@@ -571,7 +570,7 @@ function TeamsSection({ roles }: { roles: Role[] | null }) {
               </Button>
             </CapabilityGate>
           </form>
-        </CardContent>
+        </div>
       </Card>
     </section>
   );
@@ -596,7 +595,7 @@ export function MembersTab() {
           <p className="text-sm text-muted-foreground">
             Org-wide membership and role assignment.
             {!canManageMembers && (
-              <Badge variant="muted" className="ml-2">
+              <Badge variant="neutral" className="ml-2">
                 Read-only
               </Badge>
             )}
@@ -605,9 +604,9 @@ export function MembersTab() {
 
         {error && (
           <Card>
-            <CardContent className="py-6 text-sm text-destructive">
+            <div className="card-body">
               Failed to load members: {error.message}
-            </CardContent>
+            </div>
           </Card>
         )}
 
@@ -617,9 +616,9 @@ export function MembersTab() {
 
         {!error && members && members.length === 0 && (
           <Card>
-            <CardContent className="py-12 text-center text-sm text-muted-foreground">
+            <div className="card-body">
               No members in this organization.
-            </CardContent>
+            </div>
           </Card>
         )}
 

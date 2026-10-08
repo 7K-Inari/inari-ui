@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { ShieldAlert } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
 import { tenantLink } from "@/tenant/tenant-link";
 
 // Server 409 fallback-block (W6): a user-scope template was run without a
@@ -29,11 +28,9 @@ export function FallbackBlockedError({
         Connect a git account, then try again.
       </p>
       {detail && <p className="text-xs text-muted-foreground">{detail}</p>}
-      <Button asChild size="sm" variant="outline">
-        <Link to={tenantLink(tenant, "settings/org/git-connections")}>
+      <Link to={tenantLink(tenant, "settings/org/git-connections")} className="btn btn-secondary btn-sm">
           Connect a git account
         </Link>
-      </Button>
     </div>
   );
 }

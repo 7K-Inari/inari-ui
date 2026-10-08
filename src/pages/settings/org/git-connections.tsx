@@ -12,9 +12,9 @@ import {
 } from "@/api/git-connections";
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
@@ -59,7 +59,7 @@ function ProviderRow({
         <span className="inline-flex items-center gap-2 font-medium">
           <Icon className="h-4 w-4" aria-hidden />
           {label}
-          {!provider.enabled && <Badge variant="muted">not available</Badge>}
+          {!provider.enabled && <Badge variant="neutral">not available</Badge>}
         </span>
       </td>
       <td className="px-4 py-2">
@@ -73,7 +73,7 @@ function ProviderRow({
         {connection && connection.scopes.length > 0 ? (
           <span className="inline-flex flex-wrap gap-1">
             {connection.scopes.map((scope) => (
-              <Badge key={scope} variant="muted">
+              <Badge key={scope} variant="neutral">
                 {scope}
               </Badge>
             ))}
@@ -202,9 +202,9 @@ export function GitConnectionsPage() {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load git connections: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
@@ -214,23 +214,23 @@ export function GitConnectionsPage() {
 
       {notice && (
         <Card>
-          <CardContent className="py-3 text-sm">{notice}</CardContent>
+          <div className="card-body">{notice}</div>
         </Card>
       )}
 
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">
+          <div className="card-body">
             {actionError}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && !loading && data && providers.length === 0 && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No Git providers are configured for this organization.
-          </CardContent>
+          </div>
         </Card>
       )}
 

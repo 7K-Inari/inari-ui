@@ -65,6 +65,7 @@ export function FilterBar({
                 type="button"
                 className={active ? "tag tag-outlined" : "tag"}
                 aria-pressed={active}
+                aria-label={t.label}
                 onClick={() => setParam(tags.param, active ? null : t.value)}
               >
                 {t.label}

@@ -15,11 +15,10 @@ import {
   SchemaForm,
   type SchemaFormHandle,
 } from "@/components/schema-form/schema-form";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import {
   CapabilityGate,
@@ -221,9 +220,9 @@ export function IdpBrokeringPage() {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load SSO provider: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
@@ -233,23 +232,23 @@ export function IdpBrokeringPage() {
 
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">
+          <div className="card-body">
             {actionError}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {notice && (
         <Card>
-          <CardContent className="py-3 text-sm text-muted-foreground">
+          <div className="card-body">
             {notice}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {editing && canWriteSettings && (
         <Card>
-          <CardContent className="space-y-3 py-4">
+          <div className="card-body">
             <SchemaForm
               ref={formRef}
               schema={schemaFor(!provider)}
@@ -263,24 +262,24 @@ export function IdpBrokeringPage() {
                 Cancel
               </Button>
             </div>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && !loading && !provider && !editing && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No SSO provider configured for this organization.
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {provider && !editing && (
         <Card>
-          <CardContent className="space-y-3 py-4">
+          <div className="card-body">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">{provider.alias}</span>
-              <Badge variant="secondary">OIDC</Badge>
+              <Badge variant="neutral">OIDC</Badge>
             </div>
             <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
               <div>
@@ -312,7 +311,7 @@ export function IdpBrokeringPage() {
                   <span className="text-xs text-muted-foreground">None</span>
                 )}
                 {domainHints.map((d) => (
-                  <Badge key={d} variant="secondary">
+                  <Badge key={d} variant="neutral">
                     {d}
                   </Badge>
                 ))}
@@ -335,20 +334,20 @@ export function IdpBrokeringPage() {
                 </Button>
               </div>
             </CapabilityGate>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {rotating && (
         <Card>
-          <CardContent className="space-y-3 py-4">
+          <div className="card-body">
             <div className="space-y-1.5">
-              <Label htmlFor="idp-new-secret">New client secret</Label>
+              <label className="form-label" htmlFor="idp-new-secret">New client secret</label>
               <Input
                 id="idp-new-secret"
                 type="password"
                 value={newSecret}
-                onChange={(e) => setNewSecret(e.target.value)}
+                onChange={(v) => setNewSecret(v)}
               />
               <p className="text-xs text-muted-foreground">
                 The secret is write-only and will not be shown again.
@@ -368,7 +367,7 @@ export function IdpBrokeringPage() {
                 Cancel
               </Button>
             </div>
-          </CardContent>
+          </div>
         </Card>
       )}
     </div>

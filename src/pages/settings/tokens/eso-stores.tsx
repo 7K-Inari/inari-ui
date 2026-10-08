@@ -19,10 +19,9 @@ import {
 } from "@/api/secret-stores";
 import { useAuth } from "@/auth/auth-context";
 import { SchemaForm, type SchemaFormHandle } from "@/components/schema-form/schema-form";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import {
   CapabilityGate,
@@ -326,9 +325,9 @@ export function EsoStoresPage() {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load secret stores: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
@@ -338,17 +337,17 @@ export function EsoStoresPage() {
 
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">{actionError}</CardContent>
+          <div className="card-body">{actionError}</div>
         </Card>
       )}
 
       {editing && canWriteSettings && (
         <Card>
-          <CardContent className="space-y-3 py-4">
+          <div className="card-body">
             <div className="space-y-1.5">
-              <Label htmlFor="secret-store-provider">
+              <label className="form-label" htmlFor="secret-store-provider">
                 Provider <span className="text-destructive">*</span>
-              </Label>
+              </label>
               <select
                 id="secret-store-provider"
                 className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
@@ -385,15 +384,15 @@ export function EsoStoresPage() {
                   ? "Create store"
                   : "Save store"}
             </Button>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && stores && stores.length === 0 && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No secret stores registered for this organization.
-          </CardContent>
+          </div>
         </Card>
       )}
 
@@ -420,9 +419,9 @@ export function EsoStoresPage() {
                     <td className="px-4 py-2 font-medium">{store.name}</td>
                     <td className="px-4 py-2">
                       {readOnly ? (
-                        <Badge variant="secondary">Platform</Badge>
+                        <Badge variant="neutral">Platform</Badge>
                       ) : (
-                        <Badge variant="muted">Cluster</Badge>
+                        <Badge variant="neutral">Cluster</Badge>
                       )}
                     </td>
                     <td className="px-4 py-2 font-mono text-xs">

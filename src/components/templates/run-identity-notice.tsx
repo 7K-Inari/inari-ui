@@ -4,7 +4,7 @@ import { ShieldAlert, UserCircle2 } from "lucide-react";
 import type { GitConnectionViewModel } from "@/api/git-connections";
 import type { ScaffoldRunViewModel } from "@/api/templates";
 import type { TemplateScope } from "@/api/types";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "7k-design-system/react";
 import { tenantLink } from "@/tenant/tenant-link";
 
 const PROVIDER_LABEL: Record<string, string> = {
@@ -101,7 +101,7 @@ export function RunIdentityBadge({ run }: { run: ScaffoldRunViewModel }) {
     <div className="flex flex-col items-center gap-2">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
         <span>Commits as</span>
-        <Badge variant={identity.kind === "user" ? "secondary" : "warning"}>
+        <Badge variant={identity.kind === "user" ? "neutral" : "warning"}>
           {label}
         </Badge>
         {run.usedFallback && <Badge variant="warning">fallback</Badge>}

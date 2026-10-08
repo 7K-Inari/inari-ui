@@ -122,33 +122,32 @@ describe("ClusterListPage", () => {
 
   it("cancels a pending registration after confirmation and removes the row", async () => {
     const user = userEvent.setup();
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     mockControl.setClusterStatus("cl-eks-prod", "pending");
     renderList();
     const pendingRow = (await screen.findByText("eks-prod-eu")).closest("tr")!;
     await user.click(within(pendingRow).getByRole("button", { name: "Cancel registration" }));
-    expect(window.confirm).toHaveBeenCalled();
+    // The destructive action confirms via a DS modal, not window.confirm.
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Cancel registration" }));
     await vi.waitFor(() => {
       expect(screen.queryByText("eks-prod-eu")).not.toBeInTheDocument();
     });
     expect(mockControl.getState().clusters.map((c) => c.id)).not.toContain("cl-eks-prod");
-    vi.restoreAllMocks();
   });
 
   it("keeps the row when the confirmation is declined", async () => {
     const user = userEvent.setup();
-    vi.spyOn(window, "confirm").mockReturnValue(false);
     mockControl.setClusterStatus("cl-eks-prod", "pending");
     renderList();
     const pendingRow = (await screen.findByText("eks-prod-eu")).closest("tr")!;
     await user.click(within(pendingRow).getByRole("button", { name: "Cancel registration" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Keep registration" }));
     expect(screen.getByText("eks-prod-eu")).toBeInTheDocument();
-    vi.restoreAllMocks();
   });
 
   it("surfaces API errors when cancelling fails", async () => {
     const user = userEvent.setup();
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     const { http, HttpResponse } = await import("msw");
     mockServer.use(
       http.delete("*/api/v1/tenants/acme/clusters/:id", () =>
@@ -159,7 +158,8 @@ describe("ClusterListPage", () => {
     renderList();
     const pendingRow = (await screen.findByText("eks-prod-eu")).closest("tr")!;
     await user.click(within(pendingRow).getByRole("button", { name: "Cancel registration" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Cancel registration" }));
     expect(await screen.findByText(/forbidden/)).toBeInTheDocument();
-    vi.restoreAllMocks();
   });
 });

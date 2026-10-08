@@ -15,10 +15,9 @@ import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
 import type { CapabilityKind, ClusterDetail, ManagementMode } from "@/api/types";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Alert, Badge, Button, Card, Checkbox, Modal, Skeleton } from "7k-design-system/react";
+
+import { PageHeader } from "@/components/page-header";
 import { config } from "@/config";
 import { SlotBoundary } from "@/ext/slot-boundary";
 import { toSdkCluster } from "@/ext/mappers";
@@ -48,10 +47,10 @@ const KIND_ORDER: CapabilityKind[] = [
   "crd",
 ];
 
-const MODE_VARIANT: Record<ManagementMode, "success" | "secondary" | "muted"> = {
+const MODE_VARIANT: Record<ManagementMode, "success" | "info" | "neutral"> = {
   adopt: "success",
-  observe: "secondary",
-  ignore: "muted",
+  observe: "info",
+  ignore: "neutral",
 };
 
 export function CapabilitiesTab({ clusterId }: { clusterId: string }) {
@@ -63,14 +62,16 @@ export function CapabilitiesTab({ clusterId }: { clusterId: string }) {
   );
 
   if (error) {
-    return (
-      <p className="text-sm text-destructive">
-        Failed to load capabilities: {error.message}
-      </p>
-    );
+    return <Alert variant="danger">Failed to load capabilities: {error.message}</Alert>;
   }
   if (loading && !capabilities) {
-    return <p className="text-sm text-muted-foreground">Discovering capabilities…</p>;
+    return (
+      <div className="overview-card-skeleton" aria-busy="true">
+        {Array.from({ length: 4 }, (_, i) => (
+          <Skeleton key={i} height={32} />
+        ))}
+      </div>
+    );
   }
 
   const caps = (capabilities ?? []).filter(
@@ -82,12 +83,13 @@ export function CapabilitiesTab({ clusterId }: { clusterId: string }) {
 
   if ((capabilities ?? []).length === 0) {
     return (
-      <Card>
-        <CardContent className="py-10 text-center text-sm text-muted-foreground">
+      <div className="empty">
+        <span className="empty-title">No capabilities discovered</span>
+        <span className="empty-text">
           No capabilities discovered yet. They appear automatically once the agent finishes its
           first scan — nothing to declare by hand.
-        </CardContent>
-      </Card>
+        </span>
+      </div>
     );
   }
 
@@ -97,57 +99,52 @@ export function CapabilitiesTab({ clusterId }: { clusterId: string }) {
   })).filter((g) => g.items.length > 0);
 
   return (
-    <div className="space-y-4">
-      <Input
+    <div className="stack">
+      <input
+        className="input filter-bar-search"
         placeholder="Filter capabilities…"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         aria-label="Filter capabilities"
-        className="max-w-sm"
       />
       {grouped.length === 0 && (
-        <p className="text-sm text-muted-foreground">No capabilities match the filter.</p>
+        <div className="empty">No capabilities match the filter.</div>
       )}
       {grouped.map((group) => (
         <Card key={group.kind}>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">
-              {KIND_LABELS[group.kind]}{" "}
-              <span className="text-muted-foreground">({group.items.length})</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="pt-0">
-            <table className="w-full text-sm">
-              <thead className="text-left text-xs text-muted-foreground">
+          <div className="card-header">
+            <h2 className="mono-label">
+              {KIND_LABELS[group.kind]} ({group.items.length})
+            </h2>
+          </div>
+          <div className="card-body">
+            <table className="table">
+              <thead>
                 <tr>
-                  <th className="py-1 pr-4 font-medium">Name</th>
-                  <th className="py-1 pr-4 font-medium">Group</th>
-                  <th className="py-1 pr-4 font-medium">Version</th>
-                  <th className="py-1 pr-4 font-medium">Management</th>
-                  <th className="py-1 font-medium">Updated</th>
+                  <th>Name</th>
+                  <th>Group</th>
+                  <th>Version</th>
+                  <th>Management</th>
+                  <th>Updated</th>
                 </tr>
               </thead>
               <tbody>
                 {group.items.map((cap) => (
-                  <tr key={cap.id} className="border-t">
-                    <td className="py-1.5 pr-4 font-mono text-xs">{cap.name}</td>
-                    <td className="py-1.5 pr-4 font-mono text-xs text-muted-foreground">
-                      {cap.group}
-                    </td>
-                    <td className="py-1.5 pr-4">{cap.version}</td>
-                    <td className="py-1.5 pr-4">
+                  <tr key={cap.id}>
+                    <td className="mono">{cap.name}</td>
+                    <td className="mono">{cap.group}</td>
+                    <td className="mono">{cap.version}</td>
+                    <td>
                       <Badge variant={MODE_VARIANT[cap.managementMode]}>
                         {cap.managementMode}
                       </Badge>
                     </td>
-                    <td className="py-1.5 text-muted-foreground">
-                      {formatRelative(cap.updatedAt)}
-                    </td>
+                    <td className="mono">{formatRelative(cap.updatedAt)}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
-          </CardContent>
+          </div>
         </Card>
       ))}
     </div>
@@ -159,28 +156,28 @@ function OverviewTab({ clusterId }: { clusterId: string }) {
   if (!cluster) return null;
   return (
     <Card>
-      <CardContent className="grid grid-cols-2 gap-4 py-6 text-sm md:grid-cols-3">
+      <div className="card-body cluster-overview-grid">
         <div>
-          <p className="text-xs text-muted-foreground">Kubernetes version</p>
-          <p className="font-mono">{cluster.k8sVersion ?? "unknown"}</p>
+          <p className="mono-caption">Kubernetes version</p>
+          <p className="mono-data">{cluster.k8sVersion ?? "unknown"}</p>
         </div>
         <div>
-          <p className="text-xs text-muted-foreground">Tenant</p>
-          <p className="font-mono">{cluster.tenant}</p>
+          <p className="mono-caption">Tenant</p>
+          <p className="mono-data">{cluster.tenant}</p>
         </div>
         <div>
-          <p className="text-xs text-muted-foreground">Registered</p>
-          <p>{formatRelative(cluster.createdAt)}</p>
+          <p className="mono-caption">Registered</p>
+          <p className="mono-data">{formatRelative(cluster.createdAt)}</p>
         </div>
         <div>
-          <p className="text-xs text-muted-foreground">Last seen</p>
-          <p>{formatRelative(cluster.lastSeenAt)}</p>
+          <p className="mono-caption">Last seen</p>
+          <p className="mono-data">{formatRelative(cluster.lastSeenAt)}</p>
         </div>
         <div>
-          <p className="text-xs text-muted-foreground">Discovered capabilities</p>
-          <p>{cluster.capabilityCount}</p>
+          <p className="mono-caption">Discovered capabilities</p>
+          <p className="mono-data">{cluster.capabilityCount}</p>
         </div>
-      </CardContent>
+      </div>
     </Card>
   );
 }
@@ -233,47 +230,42 @@ function DecommissionCard({
 
   if (drained !== null) {
     return (
-      <Card>
-        <CardContent className="py-6 text-sm text-muted-foreground">
-          Cluster decommissioned.
-          {drained.length > 0
-            ? ` Drained ${drained.length} instance${drained.length === 1 ? "" : "s"}: ${drained.join(", ")}.`
-            : " No instances had to be drained."}
-        </CardContent>
-      </Card>
+      <Alert variant="success">
+        Cluster decommissioned.
+        {drained.length > 0
+          ? ` Drained ${drained.length} instance${drained.length === 1 ? "" : "s"}: ${drained.join(", ")}.`
+          : " No instances had to be drained."}
+      </Alert>
     );
   }
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Decommission</CardTitle>
-        <CardDescription>
+      <div className="card-header">
+        <h2 className="mono-label">Decommission</h2>
+      </div>
+      <div className="card-body">
+        <p className="card-lede">
           Drains all Inari-managed instances off the cluster, disables its identity, and marks it
           decommissioned. This is irreversible — the cluster must be re-registered to be used
           again.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={submit} className="space-y-4">
-          {error && <p className="text-sm text-destructive">{error}</p>}
+        </p>
+        <form onSubmit={submit} className="stack">
+          {error && <Alert variant="danger">{error}</Alert>}
           {blocked && (
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={force}
-                onChange={(e) => setForce(e.target.checked)}
-              />
-              Force decommission (drain even though shared resources exist)
-            </label>
+            <Checkbox
+              checked={force}
+              onChange={(e) => setForce(e.target.checked)}
+              label="Force decommission (drain even though shared resources exist)"
+            />
           )}
-          <div className="flex justify-end">
-            <Button type="submit" variant="destructive" disabled={submitting}>
+          <div className="wizard-actions">
+            <Button type="submit" variant="danger" disabled={submitting}>
               {submitting ? "Decommissioning…" : "Decommission cluster"}
             </Button>
           </div>
         </form>
-      </CardContent>
+      </div>
     </Card>
   );
 }
@@ -300,23 +292,23 @@ function RevokeCard({ cluster, onRevoked }: { cluster: ClusterDetail; onRevoked:
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Revoke</CardTitle>
-        <CardDescription>
+      <div className="card-header">
+        <h2 className="mono-label">Revoke</h2>
+      </div>
+      <div className="card-body">
+        <p className="card-lede">
           Disables the cluster&apos;s credentials. The agent disconnects immediately and cannot
           reconnect; the cluster can later be decommissioned.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={submit} className="space-y-4">
-          {error && <p className="text-sm text-destructive">{error}</p>}
-          <div className="flex justify-end">
-            <Button type="submit" variant="destructive" disabled={submitting}>
+        </p>
+        <form onSubmit={submit} className="stack">
+          {error && <Alert variant="danger">{error}</Alert>}
+          <div className="wizard-actions">
+            <Button type="submit" variant="danger" disabled={submitting}>
               {submitting ? "Revoking…" : "Revoke cluster"}
             </Button>
           </div>
         </form>
-      </CardContent>
+      </div>
     </Card>
   );
 }
@@ -327,6 +319,7 @@ export function ClusterDetailPage() {
   const navigate = useNavigate();
   const { clusterId } = useParams<{ clusterId: string }>();
   const [actionError, setActionError] = React.useState<string | null>(null);
+  const [confirmCancel, setConfirmCancel] = React.useState(false);
   const [searchParams, setSearchParams] = useSearchParams();
   const extensionTabs = useClusterTabSlots();
   const builtinTabs = config.features.kubectlAccess
@@ -351,17 +344,22 @@ export function ClusterDetailPage() {
 
   if (error) {
     return (
-      <div className="space-y-3">
-        <p className="text-sm text-destructive">Failed to load cluster: {error.message}</p>
-        <Button asChild variant="outline">
-          <Link to={tenantLink(tenant, "clusters")}>Back to clusters</Link>
-        </Button>
+      <div className="stack">
+        <Alert variant="danger">Failed to load cluster: {error.message}</Alert>
+        <Link to={tenantLink(tenant, "clusters")} className="btn btn-secondary">
+          Back to clusters
+        </Link>
       </div>
     );
   }
 
   if (loading && !cluster) {
-    return <p className="text-sm text-muted-foreground">Loading cluster…</p>;
+    return (
+      <div className="overview-card-skeleton" aria-busy="true">
+        <Skeleton height={32} width="40%" />
+        <Skeleton height={240} />
+      </div>
+    );
   }
 
   if (!cluster) return null;
@@ -377,13 +375,7 @@ export function ClusterDetailPage() {
   };
 
   const cancelRegistration = async () => {
-    if (
-      !window.confirm(
-        `Cancel the pending registration for "${cluster.name}"? This deletes the cluster record.`,
-      )
-    ) {
-      return;
-    }
+    setConfirmCancel(false);
     setActionError(null);
     try {
       await deleteCluster(token, cluster.id, tenant);
@@ -396,86 +388,108 @@ export function ClusterDetailPage() {
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">{cluster.name}</h1>
-        <ClusterStatusBadge status={cluster.status} />
-        <div className="flex flex-wrap gap-1">
-          {Object.entries(cluster.labels).map(([k, v]) => (
-            <Badge key={k} variant="outline" className="font-mono">
-              {k}={v}
-            </Badge>
-          ))}
-        </div>
-        {cluster.status === "pending" && (
-          <div className="flex gap-2">
-            <Button asChild variant="outline" size="sm">
-              <Link to={tenantLink(tenant, `clusters/new?cluster=${cluster.id}`)}>
-                Resume registration
-              </Link>
+    <div className="stack">
+      <PageHeader
+        breadcrumb="Operate / Clusters"
+        title={cluster.name}
+        actions={
+          <>
+            <ClusterStatusBadge status={cluster.status} />
+            {Object.entries(cluster.labels).map(([k, v]) => (
+              <span key={k} className="tag">
+                {k}={v}
+              </span>
+            ))}
+            {cluster.status === "pending" && (
+              <>
+                <Link
+                  to={tenantLink(tenant, `clusters/new?cluster=${cluster.id}`)}
+                  className="btn btn-secondary btn-sm"
+                >
+                  Resume registration
+                </Link>
+                <Button variant="danger" size="sm" onClick={() => setConfirmCancel(true)}>
+                  Cancel registration
+                </Button>
+              </>
+            )}
+            {cluster.status === "pending_approval" && (
+              <Button
+                variant="accent"
+                size="sm"
+                onClick={() =>
+                  lifecycleAction(
+                    () => approveCluster(token, cluster.id, tenant),
+                    "Failed to approve cluster",
+                  )
+                }
+              >
+                Approve cluster
+              </Button>
+            )}
+            {(cluster.status === "connected" || cluster.status === "degraded") && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() =>
+                  lifecycleAction(
+                    () => cordonCluster(token, cluster.id, tenant),
+                    "Failed to cordon cluster",
+                  )
+                }
+              >
+                Cordon
+              </Button>
+            )}
+            {cluster.status === "cordoned" && (
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() =>
+                  lifecycleAction(
+                    () => uncordonCluster(token, cluster.id, tenant),
+                    "Failed to uncordon cluster",
+                  )
+                }
+              >
+                Uncordon
+              </Button>
+            )}
+          </>
+        }
+      />
+
+      {actionError && <Alert variant="danger">{actionError}</Alert>}
+
+      <Modal
+        open={confirmCancel}
+        onClose={() => setConfirmCancel(false)}
+        aria-label="Cancel registration"
+      >
+        <div className="decision-modal">
+          <h2 className="mono-label">Cancel registration</h2>
+          <p>
+            Cancel the pending registration for &quot;{cluster.name}&quot;? This deletes the
+            cluster record.
+          </p>
+          <div className="wizard-actions">
+            <Button variant="ghost" onClick={() => setConfirmCancel(false)}>
+              Keep registration
             </Button>
-            <Button variant="outline" size="sm" onClick={cancelRegistration}>
+            <Button variant="danger" onClick={() => void cancelRegistration()}>
               Cancel registration
             </Button>
           </div>
-        )}
-        {cluster.status === "pending_approval" && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              lifecycleAction(
-                () => approveCluster(token, cluster.id, tenant),
-                "Failed to approve cluster",
-              )
-            }
-          >
-            Approve cluster
-          </Button>
-        )}
-        {(cluster.status === "connected" || cluster.status === "degraded") && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              lifecycleAction(
-                () => cordonCluster(token, cluster.id, tenant),
-                "Failed to cordon cluster",
-              )
-            }
-          >
-            Cordon
-          </Button>
-        )}
-        {cluster.status === "cordoned" && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() =>
-              lifecycleAction(
-                () => uncordonCluster(token, cluster.id, tenant),
-                "Failed to uncordon cluster",
-              )
-            }
-          >
-            Uncordon
-          </Button>
-        )}
-      </div>
+        </div>
+      </Modal>
 
-      {actionError && <p className="text-sm text-destructive">{actionError}</p>}
-
-      <div className="flex gap-1 border-b" role="tablist" aria-label="Cluster sections">
+      <div className="tabs cluster-tabs" role="tablist" aria-label="Cluster sections">
         {allTabs.map((t) => (
           <button
             key={t.id}
             role="tab"
             aria-selected={tab === t.id}
-            className={
-              tab === t.id
-                ? "border-b-2 border-primary px-3 py-2 text-sm font-medium"
-                : "px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
-            }
+            className={`tab tab-accent${tab === t.id ? " active" : ""}`}
             onClick={() => setSearchParams({ tab: t.id }, { replace: true })}
           >
             {t.label}
@@ -495,7 +509,7 @@ export function ClusterDetailPage() {
         ))}
 
       {cluster.status !== "pending" && (
-        <div className="space-y-4">
+        <div className="stack">
           {config.features.kubectlAccess &&
             cluster.status !== "revoked" &&
             cluster.status !== "decommissioned" && <KubectlAccessCard clusterId={cluster.id} />}

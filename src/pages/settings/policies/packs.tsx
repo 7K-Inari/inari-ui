@@ -10,11 +10,10 @@ import {
 } from "@/api/policies";
 import { useAuth } from "@/auth/auth-context";
 import type { components } from "@/api/__generated__/schema";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import {
   CapabilityGate,
@@ -137,9 +136,9 @@ export function PolicyPacksPage() {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load policy packs: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
@@ -149,35 +148,35 @@ export function PolicyPacksPage() {
 
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">{actionError}</CardContent>
+          <div className="card-body">{actionError}</div>
         </Card>
       )}
 
       {showCreate && canWriteSettings && (
         <Card>
-          <CardContent className="py-4">
+          <div className="card-body">
             <form className="space-y-3" onSubmit={submitCreate}>
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label htmlFor="pack-name">Name</Label>
+                  <label className="form-label" htmlFor="pack-name">Name</label>
                   <Input
                     id="pack-name"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(v) => setName(v)}
                     required
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="pack-version">Version</Label>
+                  <label className="form-label" htmlFor="pack-version">Version</label>
                   <Input
                     id="pack-version"
                     value={version}
-                    onChange={(e) => setVersion(e.target.value)}
+                    onChange={(v) => setVersion(v)}
                     required
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="pack-engine">Engine</Label>
+                  <label className="form-label" htmlFor="pack-engine">Engine</label>
                   <select
                     id="pack-engine"
                     className={selectClass}
@@ -189,16 +188,16 @@ export function PolicyPacksPage() {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="pack-oci">OCI reference (optional)</Label>
+                  <label className="form-label" htmlFor="pack-oci">OCI reference (optional)</label>
                   <Input
                     id="pack-oci"
                     value={ociRef}
-                    onChange={(e) => setOciRef(e.target.value)}
+                    onChange={(v) => setOciRef(v)}
                   />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="pack-manifests">Manifests (JSON)</Label>
+                <label className="form-label" htmlFor="pack-manifests">Manifests (JSON)</label>
                 <textarea
                   id="pack-manifests"
                   className="min-h-24 w-full rounded-md border border-input bg-transparent px-3 py-2 font-mono text-xs"
@@ -209,15 +208,15 @@ export function PolicyPacksPage() {
               </div>
               <Button type="submit">Create pack</Button>
             </form>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && packs && packs.length === 0 && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No policy packs available yet.
-          </CardContent>
+          </div>
         </Card>
       )}
 
@@ -243,9 +242,9 @@ export function PolicyPacksPage() {
                     <td className="px-4 py-2 font-mono text-xs">{pack.version}</td>
                     <td className="px-4 py-2">
                       {pack.orgId ? (
-                        <Badge variant="secondary">Org</Badge>
+                        <Badge variant="neutral">Org</Badge>
                       ) : (
-                        <Badge variant="muted">Platform</Badge>
+                        <Badge variant="neutral">Platform</Badge>
                       )}
                     </td>
                     <td className="px-4 py-2 text-xs text-muted-foreground">
@@ -275,7 +274,7 @@ export function PolicyPacksPage() {
                           onSubmit={submitAssign}
                         >
                           <div className="space-y-1.5">
-                            <Label htmlFor={`assign-type-${pack.id}`}>Target type</Label>
+                            <label className="form-label" htmlFor={`assign-type-${pack.id}`}>Target type</label>
                             <select
                               id={`assign-type-${pack.id}`}
                               className={selectClass}
@@ -288,11 +287,11 @@ export function PolicyPacksPage() {
                             </select>
                           </div>
                           <div className="min-w-56 flex-1 space-y-1.5">
-                            <Label htmlFor={`assign-target-${pack.id}`}>Target ID</Label>
+                            <label className="form-label" htmlFor={`assign-target-${pack.id}`}>Target ID</label>
                             <Input
                               id={`assign-target-${pack.id}`}
                               value={targetId}
-                              onChange={(e) => setTargetId(e.target.value)}
+                              onChange={(v) => setTargetId(v)}
                               required
                             />
                           </div>

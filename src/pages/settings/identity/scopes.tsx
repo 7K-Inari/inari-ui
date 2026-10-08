@@ -9,9 +9,9 @@ import {
   type OidcClient,
 } from "@/api/identity";
 import { useAuth } from "@/auth/auth-context";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
 import { CapabilityGate } from "@/pages/settings/components/capability-gate";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
@@ -71,9 +71,9 @@ export function OidcScopesPage() {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load scopes: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
@@ -83,7 +83,7 @@ export function OidcScopesPage() {
 
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">{actionError}</CardContent>
+          <div className="card-body">{actionError}</div>
         </Card>
       )}
 
@@ -100,7 +100,7 @@ export function OidcScopesPage() {
               {scopes.map((entry) => (
                 <tr key={entry.audience} className="border-t hover:bg-muted/30">
                   <td className="px-4 py-2">
-                    <Badge variant="muted">{entry.audience}</Badge>
+                    <Badge variant="neutral">{entry.audience}</Badge>
                   </td>
                   <td className="px-4 py-2 font-mono text-xs">
                     {entry.scopes.join(", ")}

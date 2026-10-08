@@ -6,9 +6,9 @@ import { deleteResource, listResources } from "@/api/resources";
 import { ApiError } from "@/api/client";
 import { useAuth } from "@/auth/auth-context";
 import type { ResourceHealth } from "@/api/types";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
 import { useTenant } from "@/tenant/tenant-context";
 import { ALL_TENANTS, tenantLink } from "@/tenant/tenant-link";
 
@@ -19,8 +19,8 @@ export function HealthBadge({ health }: { health: ResourceHealth }) {
       : health === "progressing"
         ? "warning"
         : health === "degraded"
-          ? "destructive"
-          : "muted";
+          ? "danger"
+          : "neutral";
   return <Badge variant={variant}>{health}</Badge>;
 }
 
@@ -87,9 +87,9 @@ export function ResourceListPage() {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load resources: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
@@ -101,24 +101,22 @@ export function ResourceListPage() {
 
       {!error && resources && visible.length === 0 && (
         <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+          <div className="card-body">
             <p className="text-sm text-muted-foreground">
               {resources.length === 0
                 ? "No resources yet. Deploy something from the catalog to see it here."
                 : "No resources match this filter."}
             </p>
             {resources.length === 0 && (
-              <Button asChild variant="outline">
-                <Link to={tenantLink(tenant, "catalog")}>Browse catalog</Link>
-              </Button>
+              <Link to={tenantLink(tenant, "catalog")} className="btn btn-secondary">Browse catalog</Link>
             )}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {visible.length > 0 && (
         <Card>
-          <CardContent className="p-0">
+          <div className="card-body">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b text-left text-muted-foreground">
@@ -161,7 +159,7 @@ export function ResourceListPage() {
                       )}
                     </td>
                     <td className="px-4 py-2 text-right">
-                      <Button variant="outline" size="sm" onClick={() => undeploy(r.id, r.name)}>
+                      <Button variant="secondary" size="sm" onClick={() => undeploy(r.id, r.name)}>
                         Delete
                       </Button>
                     </td>
@@ -169,7 +167,7 @@ export function ResourceListPage() {
                 ))}
               </tbody>
             </table>
-          </CardContent>
+          </div>
         </Card>
       )}
     </div>

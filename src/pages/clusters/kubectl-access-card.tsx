@@ -8,9 +8,9 @@ import {
 } from "@/api/feature-flags";
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
 import { useTenant } from "@/tenant/tenant-context";
 
 const KUBECTL_ACCESS_FLAG_KEY = "kubectl_access.enabled";
@@ -51,18 +51,18 @@ export function KubectlAccessCard({ clusterId }: { clusterId: string }) {
   if (error) {
     return (
       <Card>
-        <CardContent className="py-6 text-sm text-destructive">
+        <div className="card-body">
           Failed to load kubectl access state: {error.message}
-        </CardContent>
+        </div>
       </Card>
     );
   }
   if (loading && !flags) {
     return (
       <Card>
-        <CardContent className="py-6 text-sm text-muted-foreground">
+        <div className="card-body">
           Loading kubectl access state…
-        </CardContent>
+        </div>
       </Card>
     );
   }
@@ -70,23 +70,23 @@ export function KubectlAccessCard({ clusterId }: { clusterId: string }) {
 
   return (
     <Card>
-      <CardHeader>
+      <div className="card-header">
         <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-base">kubectl access</CardTitle>
+          <h2 className="mono-label">kubectl access</h2>
           <div className="flex items-center gap-2">
-            {flag.overridden && <Badge variant="outline">cluster override</Badge>}
-            <Badge variant={flag.value ? "success" : "destructive"}>
+            {flag.overridden && <Badge variant="neutral">cluster override</Badge>}
+            <Badge variant={flag.value ? "success" : "danger"}>
               {flag.value ? "Enabled" : "Disabled"}
             </Badge>
           </div>
         </div>
-        <CardDescription>
+        <p className="card-lede">
           Reversible kill switch for this cluster only. When disabled, users get a clear error
           and the tunnel session is closed; re-enabling restores access without an agent
           restart.
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
+        </p>
+      </div>
+      <div className="card-body">
         {flag.envPinned && (
           <p className="text-sm text-muted-foreground">
             Pinned by an explicitly set environment variable on the platform — changes here are
@@ -97,7 +97,7 @@ export function KubectlAccessCard({ clusterId }: { clusterId: string }) {
         <div className="flex justify-end gap-2">
           {flag.overridden && (
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               disabled={busy}
               onClick={() =>
@@ -111,7 +111,7 @@ export function KubectlAccessCard({ clusterId }: { clusterId: string }) {
             </Button>
           )}
           <Button
-            variant={flag.value ? "destructive" : "default"}
+            variant={flag.value ? "danger" : "primary"}
             size="sm"
             disabled={busy}
             onClick={() =>
@@ -124,7 +124,7 @@ export function KubectlAccessCard({ clusterId }: { clusterId: string }) {
             {busy ? "Saving…" : flag.value ? "Disable for this cluster" : "Enable for this cluster"}
           </Button>
         </div>
-      </CardContent>
+      </div>
     </Card>
   );
 }

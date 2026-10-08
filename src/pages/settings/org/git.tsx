@@ -4,10 +4,9 @@ import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
 import { getGitConfig, putGitConfig } from "@/api/tenants";
 import { useAuth } from "@/auth/auth-context";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import { useOrgCapabilities } from "@/pages/settings/components/capability-gate";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
@@ -67,25 +66,25 @@ function GitConfigForm({
     <>
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">{actionError}</CardContent>
+          <div className="card-body">{actionError}</div>
         </Card>
       )}
 
       {saved && !actionError && (
         <Card>
-          <CardContent className="py-3 text-sm">Git config saved.</CardContent>
+          <div className="card-body">Git config saved.</div>
         </Card>
       )}
 
       <Card>
-        <CardContent className="py-4">
+        <div className="card-body">
           <form className="max-w-xl space-y-3" onSubmit={submit}>
             <div className="space-y-1.5">
-              <Label htmlFor="git-repo">Repository</Label>
+              <label className="form-label" htmlFor="git-repo">Repository</label>
               <Input
                 id="git-repo"
                 value={repo}
-                onChange={(e) => setRepo(e.target.value)}
+                onChange={(v) => setRepo(v)}
                 placeholder="owner/name or https URL"
                 required
                 disabled={!canWrite}
@@ -95,17 +94,17 @@ function GitConfigForm({
               </p>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="git-branch">Base branch</Label>
+              <label className="form-label" htmlFor="git-branch">Base branch</label>
               <Input
                 id="git-branch"
                 value={baseBranch}
-                onChange={(e) => setBaseBranch(e.target.value)}
+                onChange={(v) => setBaseBranch(v)}
                 placeholder="main"
                 disabled={!canWrite}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="git-policy">Commit policy</Label>
+              <label className="form-label" htmlFor="git-policy">Commit policy</label>
               <select
                 id="git-policy"
                 className={selectClass}
@@ -125,7 +124,7 @@ function GitConfigForm({
               </Button>
             )}
           </form>
-        </CardContent>
+        </div>
       </Card>
     </>
   );
@@ -154,9 +153,9 @@ export function GitSettingsPage() {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load git config: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 

@@ -3,9 +3,8 @@ import { Link, useParams } from "react-router-dom";
 import { ApiError } from "@/api/client";
 import { getClusterSet, listClusterSetMembers } from "@/api/fleet";
 import { useAsyncResource } from "@/api/hooks";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
 
@@ -29,9 +28,7 @@ export function ClusterSetDetailPage() {
         <p className="text-sm text-destructive">
           {notFound ? "ClusterSet not found." : `Failed to load ClusterSet: ${set.error.message}`}
         </p>
-        <Button asChild variant="outline">
-          <Link to={tenantLink(tenant, "fleet")}>Back to fleet</Link>
-        </Button>
+        <Link to={tenantLink(tenant, "fleet")} className="btn btn-secondary">Back to fleet</Link>
       </div>
     );
   }
@@ -52,25 +49,25 @@ export function ClusterSetDetailPage() {
       </div>
 
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Targeting labels</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-1 pt-0">
+        <div className="card-header">
+          <h2 className="mono-label">Targeting labels</h2>
+        </div>
+        <div className="card-body">
           {Object.entries(data.labels).map(([k, v]) => (
-            <Badge key={k} variant="outline" className="font-mono">
+            <Badge key={k} variant="neutral" className="font-mono">
               {k}={v}
             </Badge>
           ))}
-        </CardContent>
+        </div>
       </Card>
 
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">
+        <div className="card-header">
+          <h2 className="mono-label">
             Member clusters ({memberList.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
+          </h2>
+        </div>
+        <div className="card-body">
           {members.loading && !members.data ? (
             <p className="px-6 pb-6 text-sm text-muted-foreground">
               Resolving member clusters…
@@ -99,7 +96,7 @@ export function ClusterSetDetailPage() {
                       </Link>
                     </td>
                     <td className="px-4 py-2">
-                      <Badge variant={cluster.state === "active" ? "success" : "muted"}>
+                      <Badge variant={cluster.state === "active" ? "success" : "neutral"}>
                         {cluster.state}
                       </Badge>
                     </td>
@@ -108,7 +105,7 @@ export function ClusterSetDetailPage() {
               </tbody>
             </table>
           )}
-        </CardContent>
+        </div>
       </Card>
     </div>
   );

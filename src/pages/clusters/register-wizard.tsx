@@ -6,11 +6,10 @@ import { buildHelmCommand, createCluster, getCluster, issueRegistrationToken } f
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
 import type { ClusterStatus, CreateClusterResponse } from "@/api/types";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import { formatCountdown } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
@@ -59,7 +58,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
   const [copied, setCopied] = React.useState(false);
   return (
     <Button
-      variant="outline"
+      variant="secondary"
       size="sm"
       onClick={async () => {
         try {
@@ -84,7 +83,7 @@ function TokenCountdown({ expiresAt }: { expiresAt: string }) {
   }, []);
   const remaining = formatCountdown(expiresAt, now);
   return (
-    <Badge variant={remaining === "expired" ? "destructive" : "warning"}>
+    <Badge variant={remaining === "expired" ? "danger" : "warning"}>
       {remaining === "expired" ? "Token expired" : `Token expires in ${remaining}`}
     </Badge>
   );
@@ -153,7 +152,7 @@ function WaitingForConnection({ clusterId }: { clusterId: string }) {
           cluster has outbound HTTPS access to the control plane.
         </p>
         <Button
-          variant="outline"
+          variant="secondary"
           onClick={() => {
             setTimedOut(false);
             setPollKey((k) => k + 1);
@@ -217,7 +216,7 @@ function ResumedInstall({ clusterId, orgID }: { clusterId: string; orgID: string
   return (
     <div className="space-y-2">
       {error && <p className="text-sm text-destructive">{error}</p>}
-      <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+      <Button variant="secondary" size="sm" onClick={load} disabled={loading}>
         {loading ? "Issuing token…" : "Show install command"}
       </Button>
     </div>
@@ -283,31 +282,31 @@ export function RegisterWizardPage() {
 
       {step === 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle>Cluster details</CardTitle>
-            <CardDescription>
+          <div className="card-header">
+            <h2 className="mono-label">Cluster details</h2>
+            <p className="card-lede">
               This creates a cluster record and issues a one-time registration token.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            </p>
+          </div>
+          <div className="card-body">
             <form onSubmit={submit} className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="cluster-name">Name</Label>
+                <label className="form-label" htmlFor="cluster-name">Name</label>
                 <Input
                   id="cluster-name"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(v) => setName(v)}
                   placeholder="kind-dev"
                   required
                 />
                 {nameError && <p className="text-xs text-destructive">{nameError}</p>}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="cluster-labels">Labels</Label>
+                <label className="form-label" htmlFor="cluster-labels">Labels</label>
                 <Input
                   id="cluster-labels"
                   value={labelsInput}
-                  onChange={(e) => setLabelsInput(e.target.value)}
+                  onChange={(v) => setLabelsInput(v)}
                   placeholder="env=dev, cloud=aws"
                 />
                 <p className="text-xs text-muted-foreground">
@@ -324,20 +323,20 @@ export function RegisterWizardPage() {
                 </Button>
               </div>
             </form>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {step === 1 && created && (
         <Card>
-          <CardHeader>
-            <CardTitle>Install the agent</CardTitle>
-            <CardDescription>
+          <div className="card-header">
+            <h2 className="mono-label">Install the agent</h2>
+            <p className="card-lede">
               The token below is shown once and embeds cluster identity. Install the agent within
               the token lifetime.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            </p>
+          </div>
+          <div className="card-body">
             <div className="flex items-center justify-between gap-2 rounded-md border bg-muted/40 p-3">
               <code className="truncate font-mono text-xs" data-testid="registration-token">
                 {created.registrationToken}
@@ -358,15 +357,15 @@ export function RegisterWizardPage() {
             <div className="flex justify-end">
               <Button onClick={() => setStep(2)}>I&apos;ve installed it — watch for connection</Button>
             </div>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {step === 2 && clusterId && (
         <Card>
-          <CardHeader>
-            <CardTitle>Waiting for connection</CardTitle>
-            <CardDescription>
+          <div className="card-header">
+            <h2 className="mono-label">Waiting for connection</h2>
+            <p className="card-lede">
               {created
                 ? `Cluster "${created.cluster.name}" was registered.`
                 : resumed.error
@@ -374,18 +373,16 @@ export function RegisterWizardPage() {
                   : resumed.data
                     ? `Cluster "${resumed.data.name}".`
                     : "Restoring registration…"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            </p>
+          </div>
+          <div className="card-body">
             {!created && resumed.error ? (
               <div className="space-y-3">
                 <p className="text-sm text-destructive">
                   This registration could not be restored — it may have been cancelled or belongs
                   to another tenant.
                 </p>
-                <Button asChild variant="outline" size="sm">
-                  <Link to={tenantLink(tenant, "clusters/new")}>Start a new registration</Link>
-                </Button>
+                <Link to={tenantLink(tenant, "clusters/new")} className="btn btn-secondary btn-sm">Start a new registration</Link>
               </div>
             ) : (
               <>
@@ -394,13 +391,11 @@ export function RegisterWizardPage() {
                   <ResumedInstall clusterId={clusterId} orgID={resumed.data.tenant} />
                 )}
                 <div className="flex justify-end">
-                  <Button asChild variant="outline">
-                    <Link to={tenantLink(tenant, `clusters/${clusterId}`)}>Open cluster detail</Link>
-                  </Button>
+                  <Link to={tenantLink(tenant, `clusters/${clusterId}`)} className="btn btn-secondary">Open cluster detail</Link>
                 </div>
               </>
             )}
-          </CardContent>
+          </div>
         </Card>
       )}
     </div>

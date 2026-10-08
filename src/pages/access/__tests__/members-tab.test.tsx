@@ -38,9 +38,7 @@ afterAll(() => mockServer.close());
 async function expandTeamMembers(
   user: ReturnType<typeof userEvent.setup>,
 ): Promise<HTMLElement> {
-  const card = (await screen.findByText("Platform Team")).closest(
-    "[class*='rounded']",
-  )! as HTMLElement;
+  const card = (await screen.findByText("Platform Team")).closest(".card")! as HTMLElement;
   await user.click(within(card).getByRole("button", { name: "Members" }));
   return card;
 }

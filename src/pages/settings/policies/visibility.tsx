@@ -8,9 +8,9 @@ import {
 } from "@/api/policies";
 import type { CatalogVisibilityRule } from "@/api/policies";
 import { useAuth } from "@/auth/auth-context";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import { useOrgCapabilities } from "@/pages/settings/components/capability-gate";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
@@ -54,7 +54,7 @@ function RuleRow({
         {rule.visible ? (
           <Badge variant="success">visible</Badge>
         ) : (
-          <Badge variant="muted">hidden</Badge>
+          <Badge variant="neutral">hidden</Badge>
         )}
       </td>
       <td className="px-4 py-2 text-xs text-muted-foreground">
@@ -65,7 +65,7 @@ function RuleRow({
           <span className="mr-2 text-xs text-destructive">{actionError}</span>
         )}
         {canWrite && (
-          <Button variant="outline" size="sm" disabled={busy} onClick={toggle}>
+          <Button variant="secondary" size="sm" disabled={busy} onClick={toggle}>
             {rule.visible ? "Hide" : "Show"}
           </Button>
         )}
@@ -98,9 +98,9 @@ export function VisibilityPage() {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load visibility rules: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
@@ -110,9 +110,9 @@ export function VisibilityPage() {
 
       {!error && rules && rules.length === 0 && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No visibility overrides — the catalog follows platform defaults.
-          </CardContent>
+          </div>
         </Card>
       )}
 

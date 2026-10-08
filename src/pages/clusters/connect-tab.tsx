@@ -5,10 +5,9 @@ import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
 import type { ClusterDetail } from "@/api/types";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import { CopyButton } from "@/pages/cloud-accounts/copy-button";
 import { useTenant } from "@/tenant/tenant-context";
 
@@ -114,22 +113,22 @@ export function ConnectTab({ cluster }: { cluster: ClusterDetail }) {
     <div className="space-y-4">
       {!kubectlEnabled && (
         <Card>
-          <CardContent className="py-4 text-sm text-destructive">
+          <div className="card-body">
             kubectl access is disabled for this platform by an administrator. The commands and
             download below will not work until it is re-enabled.
-          </CardContent>
+          </div>
         </Card>
       )}
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Connection status</CardTitle>
-          <CardDescription>
+        <div className="card-header">
+          <h2 className="mono-label">Connection status</h2>
+          <p className="card-lede">
             kubectl talks to this cluster either through the Inari gateway tunnel or directly to
             its API server.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
+          </p>
+        </div>
+        <div className="card-body">
           <div className="flex items-center gap-2">
             <span
               className={`inline-block size-2 rounded-full ${tunnelAvailable ? "bg-green-500" : "bg-muted-foreground"}`}
@@ -151,15 +150,15 @@ export function ConnectTab({ cluster }: { cluster: ClusterDetail }) {
               Gateway endpoint: <span className="font-mono text-xs">{accessInfo.proxyUrl}</span>
             </p>
           )}
-        </CardContent>
+        </div>
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Prerequisites</CardTitle>
-          <CardDescription>Install these tools on your machine first.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        <div className="card-header">
+          <h2 className="mono-label">Prerequisites</h2>
+          <p className="card-lede">Install these tools on your machine first.</p>
+        </div>
+        <div className="card-body">
           {PREREQS.map((p) => (
             <div key={p.tool} className="space-y-1.5">
               <p className="text-sm font-medium">{p.tool}</p>
@@ -169,18 +168,18 @@ export function ConnectTab({ cluster }: { cluster: ClusterDetail }) {
               ))}
             </div>
           ))}
-        </CardContent>
+        </div>
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Connect</CardTitle>
-          <CardDescription>
+        <div className="card-header">
+          <h2 className="mono-label">Connect</h2>
+          <p className="card-lede">
             Pick how kubectl reaches the cluster, then run the commands or download a ready-made
             kubeconfig.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          </p>
+        </div>
+        <div className="card-body">
           <div className="space-y-2" role="radiogroup" aria-label="Connection mode">
             <label className="flex items-start gap-2 text-sm">
               <input
@@ -219,11 +218,11 @@ export function ConnectTab({ cluster }: { cluster: ClusterDetail }) {
 
           {mode === "direct" && (
             <div className="space-y-1.5">
-              <Label htmlFor="direct-server-url">API server URL</Label>
+              <label className="form-label" htmlFor="direct-server-url">API server URL</label>
               <Input
                 id="direct-server-url"
                 value={server}
-                onChange={(e) => setServer(e.target.value)}
+                onChange={(v) => setServer(v)}
                 placeholder="https://api.my-cluster.example.com"
               />
             </div>
@@ -236,13 +235,7 @@ export function ConnectTab({ cluster }: { cluster: ClusterDetail }) {
 
           {downloadError && <p className="text-sm text-destructive">{downloadError}</p>}
           <div className="flex items-center gap-3">
-            <Button
-              onClick={download}
-              disabled={downloading || !kubectlEnabled}
-              title={
-                !kubectlEnabled ? "kubectl access is disabled for this platform" : undefined
-              }
-            >
+            <Button onClick={download} disabled={downloading || !kubectlEnabled}>
               {downloading ? "Downloading…" : "Download kubeconfig"}
             </Button>
             {!kubectlEnabled && (
@@ -251,7 +244,7 @@ export function ConnectTab({ cluster }: { cluster: ClusterDetail }) {
               </p>
             )}
           </div>
-        </CardContent>
+        </div>
       </Card>
     </div>
   );

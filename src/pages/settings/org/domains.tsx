@@ -4,11 +4,10 @@ import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
 import { getIdentityProvider, putDomainHints } from "@/api/idp";
 import { useAuth } from "@/auth/auth-context";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import {
   CapabilityGate,
   useOrgCapabilities,
@@ -101,9 +100,9 @@ export function OrgDomainsPage() {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load domains: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
@@ -113,18 +112,18 @@ export function OrgDomainsPage() {
 
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">
+          <div className="card-body">
             {actionError}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && !provider && !loading && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No domains claimed. Configure an SSO provider first — claimed
             domains route users to it at login.
-          </CardContent>
+          </div>
         </Card>
       )}
 
@@ -132,15 +131,15 @@ export function OrgDomainsPage() {
         <>
           {canWriteSettings && (
             <Card>
-              <CardContent className="space-y-2 py-4">
+              <div className="card-body">
                 <div className="space-y-1.5">
-                  <Label htmlFor="new-domain">Add domain</Label>
+                  <label className="form-label" htmlFor="new-domain">Add domain</label>
                   <div className="flex gap-2">
                     <Input
                       id="new-domain"
                       placeholder="acme.example or *.acme.example"
                       value={newDomain}
-                      onChange={(e) => setNewDomain(e.target.value)}
+                      onChange={(v) => setNewDomain(v)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           e.preventDefault();
@@ -158,17 +157,17 @@ export function OrgDomainsPage() {
                     is rejected.
                   </p>
                 </div>
-              </CardContent>
+              </div>
             </Card>
           )}
 
           {domains.length === 0 && (
             <Card>
-              <CardContent className="py-12 text-center text-sm text-muted-foreground">
+              <div className="card-body">
                 No domains claimed yet. Add a domain so users with matching
                 email addresses are routed to this organization&apos;s SSO
                 provider at login.
-              </CardContent>
+              </div>
             </Card>
           )}
 
@@ -188,9 +187,9 @@ export function OrgDomainsPage() {
                       <td className="px-4 py-2 font-mono text-xs">{d}</td>
                       <td className="px-4 py-2">
                         {d.startsWith("*.") ? (
-                          <Badge variant="secondary">Wildcard</Badge>
+                          <Badge variant="neutral">Wildcard</Badge>
                         ) : (
-                          <Badge variant="muted">Exact</Badge>
+                          <Badge variant="neutral">Exact</Badge>
                         )}
                       </td>
                       <td className="px-4 py-2">

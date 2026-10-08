@@ -3,10 +3,9 @@ import { useNavigate } from "react-router-dom";
 
 import { createZone } from "@/api/zones";
 import { useAuth } from "@/auth/auth-context";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
 
@@ -62,51 +61,51 @@ export function VendZoneWizardPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Zone details</CardTitle>
-          <CardDescription>
+        <div className="card-header">
+          <h2 className="mono-label">Zone details</h2>
+          <p className="card-lede">
             This requests a new tenant zone; provisioning starts once the request is accepted.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </p>
+        </div>
+        <div className="card-body">
           <form onSubmit={submit} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="zone-name">Name</Label>
+              <label className="form-label" htmlFor="zone-name">Name</label>
               <Input
                 id="zone-name"
                 value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
+                onChange={(v) => setDisplayName(v)}
                 placeholder="acme-analytics"
                 required
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="zone-slug">Slug</Label>
+              <label className="form-label" htmlFor="zone-slug">Slug</label>
               <Input
                 id="zone-slug"
                 value={slug}
-                onChange={(e) => setSlug(e.target.value)}
+                onChange={(v) => setSlug(v)}
                 placeholder="acme-analytics"
                 required
               />
               {slugError && <p className="text-xs text-destructive">{slugError}</p>}
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="zone-org-unit">Org unit</Label>
+              <label className="form-label" htmlFor="zone-org-unit">Org unit</label>
               <Input
                 id="zone-org-unit"
                 value={ouId}
-                onChange={(e) => setOuId(e.target.value)}
+                onChange={(v) => setOuId(v)}
                 placeholder="acme-data"
                 required
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="zone-management-account">Management account ID</Label>
+              <label className="form-label" htmlFor="zone-management-account">Management account ID</label>
               <Input
                 id="zone-management-account"
                 value={managementAccountId}
-                onChange={(e) => setManagementAccountId(e.target.value)}
+                onChange={(v) => setManagementAccountId(v)}
                 placeholder="ma-platform-prod"
                 required
               />
@@ -115,7 +114,7 @@ export function VendZoneWizardPage() {
               </p>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="zone-region">Region</Label>
+              <label className="form-label" htmlFor="zone-region">Region</label>
               <select
                 id="zone-region"
                 value={region}
@@ -130,7 +129,7 @@ export function VendZoneWizardPage() {
               </select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="zone-tier">Tier</Label>
+              <label className="form-label" htmlFor="zone-tier">Tier</label>
               <select
                 id="zone-tier"
                 value="starter"
@@ -154,7 +153,7 @@ export function VendZoneWizardPage() {
               </Button>
             </div>
           </form>
-        </CardContent>
+        </div>
       </Card>
     </div>
   );

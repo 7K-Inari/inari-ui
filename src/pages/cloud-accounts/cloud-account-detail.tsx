@@ -11,8 +11,8 @@ import {
 import { listClusters } from "@/api/clusters";
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
@@ -76,9 +76,9 @@ export function CloudAccountDetailPage() {
   if (error) {
     return (
       <Card>
-        <CardContent className="py-6 text-sm text-destructive">
+        <div className="card-body">
           Failed to load cloud account: {error.message}
-        </CardContent>
+        </div>
       </Card>
     );
   }
@@ -108,9 +108,9 @@ export function CloudAccountDetailPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Account</CardTitle>
-          <CardDescription>
+        <div className="card-header">
+          <h2 className="mono-label">Account</h2>
+          <p className="card-lede">
             {account.status === "connected"
               ? "The trust role validated successfully and the account is ready."
               : account.status === "failed"
@@ -118,9 +118,9 @@ export function CloudAccountDetailPage() {
                 : account.status === "validating"
                   ? "Validation is in progress."
                   : "Waiting for the trust role to be created in the tenant account."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </p>
+        </div>
+        <div className="card-body">
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between gap-4">
               <dt className="text-muted-foreground">Account ID</dt>
@@ -155,17 +155,17 @@ export function CloudAccountDetailPage() {
               </div>
             )}
           </dl>
-        </CardContent>
+        </div>
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Validate</CardTitle>
-          <CardDescription>
+        <div className="card-header">
+          <h2 className="mono-label">Validate</h2>
+          <p className="card-lede">
             Runs a dry-run AssumeRole against the trust role to confirm the connection.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          </p>
+        </div>
+        <div className="card-body">
           <Button onClick={runValidation} disabled={validating}>
             {validating ? (
               <>
@@ -180,18 +180,18 @@ export function CloudAccountDetailPage() {
           {validation && (
             <ValidationStateView account={validation} accountId={account.id} tenant={tenant} />
           )}
-        </CardContent>
+        </div>
       </Card>
 
       {account.status === "connected" && (
         <Card>
-          <CardHeader>
-            <CardTitle>ProviderConfig</CardTitle>
-            <CardDescription>
+          <div className="card-header">
+            <h2 className="mono-label">ProviderConfig</h2>
+            <p className="card-lede">
               Crossplane ProviderConfig manifest rendered by the server for a cluster.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
+            </p>
+          </div>
+          <div className="card-body">
             <div className="flex items-center gap-2">
               <label htmlFor="provider-config-cluster" className="text-sm text-muted-foreground">
                 Cluster
@@ -228,22 +228,22 @@ export function CloudAccountDetailPage() {
                 <CopyButton value={providerConfig.data} label="Copy manifest" />
               </>
             )}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       <Card>
-        <CardHeader>
-          <CardTitle>Trust setup</CardTitle>
-          <CardDescription>
+        <div className="card-header">
+          <h2 className="mono-label">Trust setup</h2>
+          <p className="card-lede">
             One-time trust role setup for this account. Apply in AWS account{" "}
             <code className="font-mono text-xs">{account.accountId}</code>.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          </p>
+        </div>
+        <div className="card-body">
           <TrustRoleFacts account={account} />
           <CopyButton value={account.externalId} label="Copy ExternalId" />
-        </CardContent>
+        </div>
       </Card>
     </div>
   );

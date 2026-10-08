@@ -9,20 +9,19 @@ import {
 } from "@/api/extensions";
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import { ApiError } from "@/api/client";
 import { checkRemoteEntryHealth } from "@/ext/load-extension";
 import { useExtensions, type ExtensionLoadState } from "@/ext/registry";
 import { useTenant } from "@/tenant/tenant-context";
 
-const STATE_VARIANT: Record<ExtensionLoadState, "secondary" | "success" | "destructive"> = {
-  loading: "secondary",
+const STATE_VARIANT: Record<ExtensionLoadState, "neutral" | "success" | "danger"> = {
+  loading: "neutral",
   ready: "success",
-  failed: "destructive",
+  failed: "danger",
 };
 
 function AddRemoteForm({ onAdded }: { onAdded: () => void }) {
@@ -78,21 +77,21 @@ function AddRemoteForm({ onAdded }: { onAdded: () => void }) {
       }}
     >
       <div className="space-y-1.5">
-        <Label htmlFor="ext-name">Name</Label>
+        <label className="form-label" htmlFor="ext-name">Name</label>
         <Input
           id="ext-name"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(v) => setName(v)}
           placeholder="inari-ext-argocd"
           required
         />
       </div>
       <div className="min-w-64 space-y-1.5">
-        <Label htmlFor="ext-entry">remoteEntry URL / OCI reference</Label>
+        <label className="form-label" htmlFor="ext-entry">remoteEntry URL / OCI reference</label>
         <Input
           id="ext-entry"
           value={remoteEntryUrl}
-          onChange={(e) => setRemoteEntryUrl(e.target.value)}
+          onChange={(v) => setRemoteEntryUrl(v)}
           placeholder="/extensions/inari-ext-argocd/remoteEntry.js"
           required
         />
@@ -147,10 +146,10 @@ export function ExtensionsPage() {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">UI extensions</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        <div className="card-header">
+          <h2 className="mono-label">UI extensions</h2>
+        </div>
+        <div className="card-body">
           {entries.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               No UI extensions installed. Add a remote below.
@@ -181,7 +180,7 @@ export function ExtensionsPage() {
                     <td className="py-2 pr-4">
                       <div className="flex flex-wrap gap-1">
                         {entry.remote.slots.map((s) => (
-                          <Badge key={`${s.kind}/${s.name}`} variant="outline">
+                          <Badge key={`${s.kind}/${s.name}`} variant="neutral">
                             {s.kind}
                           </Badge>
                         ))}
@@ -190,7 +189,7 @@ export function ExtensionsPage() {
                     <td className="py-2 pr-4">
                       <Badge variant={STATE_VARIANT[entry.state]}>{entry.state}</Badge>
                       {entry.errorStatus !== undefined && (
-                        <Badge variant="outline" className="ml-1">
+                        <Badge variant="neutral" className="ml-1">
                           HTTP {entry.errorStatus}
                         </Badge>
                       )}
@@ -200,7 +199,7 @@ export function ExtensionsPage() {
                     </td>
                     <td className="py-2 text-right">
                       <Button
-                        variant="outline"
+                        variant="secondary"
                         size="sm"
                         onClick={async () => {
                           setActionError(null);
@@ -230,14 +229,14 @@ export function ExtensionsPage() {
             </p>
           )}
           <AddRemoteForm onAdded={reload} />
-        </CardContent>
+        </div>
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Backend extensions</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <div className="card-header">
+          <h2 className="mono-label">Backend extensions</h2>
+        </div>
+        <div className="card-body">
           {backend.loading && !backend.data ? (
             <p className="text-sm text-muted-foreground">Loading backend extensions…</p>
           ) : (backend.data ?? []).length === 0 ? (
@@ -262,13 +261,13 @@ export function ExtensionsPage() {
                       {ext.state}
                     </td>
                     <td className="py-2 pr-4">
-                      <Badge variant={ext.healthy ? "success" : "destructive"}>
+                      <Badge variant={ext.healthy ? "success" : "danger"}>
                         {ext.healthy ? "healthy" : "unhealthy"}
                       </Badge>
                     </td>
                     <td className="py-2 text-right">
                       <Button
-                        variant="outline"
+                        variant="secondary"
                         size="sm"
                         onClick={async () => {
                           setRotateError(null);
@@ -318,7 +317,7 @@ export function ExtensionsPage() {
               </p>
             </div>
           )}
-        </CardContent>
+        </div>
       </Card>
     </div>
   );

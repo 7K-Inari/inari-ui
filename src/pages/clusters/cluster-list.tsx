@@ -1,21 +1,20 @@
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import * as React from "react";
+import { Alert, Button, Modal, Skeleton } from "7k-design-system/react";
 
 import { deleteCluster, listClusters } from "@/api/clusters";
 import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
-import type { ClusterStatus } from "@/api/types";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import type { ClusterStatus, ClusterSummary } from "@/api/types";
+import { FilterBar } from "@/components/filter-bar";
+import { PageHeader } from "@/components/page-header";
 import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 import { ALL_TENANTS, tenantLink } from "@/tenant/tenant-link";
 import { ClusterStatusBadge } from "@/pages/clusters/status-badge";
 
-const STATUS_FILTERS: Array<{ value: ClusterStatus | "all"; label: string }> = [
-  { value: "all", label: "All" },
+const STATUS_OPTIONS: Array<{ value: ClusterStatus; label: string }> = [
   { value: "connected", label: "Connected" },
   { value: "pending", label: "Pending" },
   { value: "pending_approval", label: "Pending approval" },
@@ -26,10 +25,18 @@ const STATUS_FILTERS: Array<{ value: ClusterStatus | "all"; label: string }> = [
   { value: "disconnected", label: "Disconnected" },
 ];
 
+const QUICK_FILTERS: Array<{ value: ClusterStatus; label: string }> = [
+  { value: "degraded", label: "Degraded" },
+  { value: "pending", label: "Pending" },
+  { value: "disconnected", label: "Disconnected" },
+];
+
 export function ClusterListPage() {
   const { tenant } = useTenant();
   const { token } = useAuth();
-  const [statusFilter, setStatusFilter] = React.useState<ClusterStatus | "all">("all");
+  const [searchParams] = useSearchParams();
+  const statusFilter = searchParams.get("status") ?? "all";
+  const [confirmCancel, setConfirmCancel] = React.useState<ClusterSummary | null>(null);
   const [actionError, setActionError] = React.useState<string | null>(null);
   const {
     data: clusters,
@@ -40,17 +47,11 @@ export function ClusterListPage() {
     refetchIntervalMs: 15_000,
   });
 
-  const cancelRegistration = async (id: string, name: string) => {
-    if (
-      !window.confirm(
-        `Cancel the pending registration for "${name}"? This deletes the cluster record.`,
-      )
-    ) {
-      return;
-    }
+  const cancelRegistration = async (cluster: ClusterSummary) => {
+    setConfirmCancel(null);
     setActionError(null);
     try {
-      await deleteCluster(token, id, tenant);
+      await deleteCluster(token, cluster.id, tenant);
       refetch();
     } catch (err) {
       setActionError(
@@ -59,146 +60,179 @@ export function ClusterListPage() {
     }
   };
 
-  const visible = (clusters ?? []).filter(
-    (c) => statusFilter === "all" || c.status === statusFilter,
-  );
+  const all = clusters ?? [];
+  const visible = all.filter((c) => statusFilter === "all" || c.status === statusFilter);
+  const degraded = all.filter((c) => c.status === "degraded").length;
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Clusters</h1>
-          <p className="text-sm text-muted-foreground">
-            Kubernetes clusters registered with the platform.
-          </p>
-        </div>
-        <Button asChild>
-          <Link to={tenantLink(tenant, "clusters/new")}>Register cluster</Link>
-        </Button>
-      </div>
+    <div>
+      <PageHeader
+        breadcrumb="Operate / Clusters"
+        title="Clusters"
+        actions={
+          <Link to={tenantLink(tenant, "clusters/new")} className="btn btn-glow-accent">
+            Register cluster
+          </Link>
+        }
+      />
 
-      <div className="flex gap-1" role="group" aria-label="Filter by status">
-        {STATUS_FILTERS.map((f) => (
-          <Button
-            key={f.value}
-            variant={statusFilter === f.value ? "secondary" : "ghost"}
-            size="sm"
-            onClick={() => setStatusFilter(f.value)}
-          >
-            {f.label}
-          </Button>
-        ))}
-      </div>
+      {degraded > 0 && (
+        <div className="banner banner-warning" data-testid="degraded-banner">
+          <span className="banner-count">{degraded}</span>
+          <span>
+            degraded cluster{degraded === 1 ? "" : "s"} need{degraded === 1 ? "s" : ""} attention
+          </span>
+          <Link to="?status=degraded" className="banner-link">
+            View degraded
+          </Link>
+        </div>
+      )}
+
+      <FilterBar
+        tags={{
+          param: "status",
+          items: QUICK_FILTERS.map((f) => ({
+            value: f.value,
+            label: f.label,
+            count: all.filter((c) => c.status === f.value).length,
+          })),
+        }}
+        selects={[
+          {
+            param: "status",
+            label: "Filter by status",
+            allLabel: "All statuses",
+            options: STATUS_OPTIONS.map((o) => ({ value: o.value, label: o.label })),
+          },
+        ]}
+      />
 
       {error && (
-        <Card>
-          <CardContent className="py-6 text-sm text-destructive">
-            Failed to load clusters: {error.message}
-          </CardContent>
-        </Card>
+        <Alert variant="danger">
+          <span>Failed to load clusters: {error.message}</span>
+          <Button variant="secondary" size="sm" onClick={refetch}>
+            Retry
+          </Button>
+        </Alert>
       )}
 
       {!error && loading && !clusters && (
-        <p className="text-sm text-muted-foreground">Loading clusters…</p>
+        <div className="overview-card-skeleton" aria-busy="true">
+          {Array.from({ length: 6 }, (_, i) => (
+            <Skeleton key={i} height={32} />
+          ))}
+        </div>
       )}
 
       {!error && clusters && visible.length === 0 && (
-        <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-            <p className="text-sm text-muted-foreground">
-              {clusters.length === 0
-                ? "No clusters registered yet. Connect your first cluster to unlock the live capability catalog."
-                : "No clusters match this filter."}
-            </p>
-            {clusters.length === 0 && (
-              <Button asChild>
-                <Link to={tenantLink(tenant, "clusters/new")}>Register your first cluster</Link>
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {actionError && (
-        <Card>
-          <CardContent className="py-3 text-sm text-destructive">{actionError}</CardContent>
-        </Card>
-      )}
-
-      {visible.length > 0 && (
-        <div className="overflow-hidden rounded-lg border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
-              <tr>
-                <th className="px-4 py-2 font-medium">Name</th>
-                <th className="px-4 py-2 font-medium">Status</th>
-                {tenant === ALL_TENANTS && <th className="px-4 py-2 font-medium">Tenant</th>}
-                <th className="px-4 py-2 font-medium">Kubernetes</th>
-                <th className="px-4 py-2 font-medium">Labels</th>
-                <th className="px-4 py-2 font-medium">Capabilities</th>
-                <th className="px-4 py-2 font-medium">Last seen</th>
-                <th className="px-4 py-2 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {visible.map((cluster) => (
-                <tr key={cluster.id} className="border-t hover:bg-muted/30">
-                  <td className="px-4 py-2">
-                    <Link
-                      to={tenantLink(tenant, `clusters/${cluster.id}`)}
-                      className="font-medium text-primary hover:underline"
-                    >
-                      {cluster.name}
-                    </Link>
-                  </td>
-                  <td className="px-4 py-2">
-                    <ClusterStatusBadge status={cluster.status} />
-                  </td>
-                  {tenant === ALL_TENANTS && (
-                    <td className="px-4 py-2 font-mono text-xs">{cluster.tenant}</td>
-                  )}
-                  <td className="px-4 py-2 font-mono text-xs">
-                    {cluster.k8sVersion ?? "—"}
-                  </td>
-                  <td className="px-4 py-2">
-                    <div className="flex flex-wrap gap-1">
-                      {Object.entries(cluster.labels).map(([k, v]) => (
-                        <Badge key={k} variant="outline" className="font-mono">
-                          {k}={v}
-                        </Badge>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-4 py-2">{cluster.capabilityCount}</td>
-                  <td className="px-4 py-2 text-muted-foreground">
-                    {formatRelative(cluster.lastSeenAt)}
-                  </td>
-                  <td className="px-4 py-2">
-                    {cluster.status === "pending" && (
-                      <div className="flex gap-2">
-                        <Button asChild variant="outline" size="sm">
-                          <Link
-                            to={tenantLink(tenant, `clusters/new?cluster=${cluster.id}`)}
-                          >
-                            Resume registration
-                          </Link>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => cancelRegistration(cluster.id, cluster.name)}
-                        >
-                          Cancel registration
-                        </Button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="empty">
+          <span className="empty-title">
+            {all.length === 0 ? "No clusters registered" : "No clusters match"}
+          </span>
+          <span className="empty-text">
+            {all.length === 0
+              ? "No clusters registered yet. Connect your first cluster to unlock the live capability catalog."
+              : "No clusters match this filter."}
+          </span>
+          {all.length === 0 && (
+            <Link to={tenantLink(tenant, "clusters/new")} className="btn btn-accent">
+              Register your first cluster
+            </Link>
+          )}
         </div>
       )}
+
+      {actionError && <Alert variant="danger">{actionError}</Alert>}
+
+      {visible.length > 0 && (
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Status</th>
+              {tenant === ALL_TENANTS && <th>Tenant</th>}
+              <th>Kubernetes</th>
+              <th>Labels</th>
+              <th>Capabilities</th>
+              <th>Last seen</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {visible.map((cluster) => (
+              <tr key={cluster.id}>
+                <td>
+                  <Link
+                    to={tenantLink(tenant, `clusters/${cluster.id}`)}
+                    className="table-link"
+                  >
+                    {cluster.name}
+                  </Link>
+                </td>
+                <td>
+                  <ClusterStatusBadge status={cluster.status} />
+                </td>
+                {tenant === ALL_TENANTS && <td className="mono">{cluster.tenant}</td>}
+                <td className="mono">{cluster.k8sVersion ?? "—"}</td>
+                <td>
+                  <span className="cluster-labels">
+                    {Object.entries(cluster.labels).map(([k, v]) => (
+                      <span key={k} className="tag">
+                        {k}={v}
+                      </span>
+                    ))}
+                  </span>
+                </td>
+                <td className="mono">{cluster.capabilityCount}</td>
+                <td className="mono">{formatRelative(cluster.lastSeenAt)}</td>
+                <td>
+                  {cluster.status === "pending" && (
+                    <span className="cluster-row-actions">
+                      <Link
+                        to={tenantLink(tenant, `clusters/new?cluster=${cluster.id}`)}
+                        className="btn btn-secondary btn-sm"
+                      >
+                        Resume registration
+                      </Link>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        onClick={() => setConfirmCancel(cluster)}
+                      >
+                        Cancel registration
+                      </Button>
+                    </span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      <Modal
+        open={confirmCancel !== null}
+        onClose={() => setConfirmCancel(null)}
+        aria-label="Cancel registration"
+      >
+        {confirmCancel && (
+          <div className="decision-modal">
+            <h2 className="mono-label">Cancel registration</h2>
+            <p>
+              Cancel the pending registration for &quot;{confirmCancel.name}&quot;? This deletes
+              the cluster record.
+            </p>
+            <div className="wizard-actions">
+              <Button variant="ghost" onClick={() => setConfirmCancel(null)}>
+                Keep registration
+              </Button>
+              <Button variant="danger" onClick={() => void cancelRegistration(confirmCancel)}>
+                Cancel registration
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
 }

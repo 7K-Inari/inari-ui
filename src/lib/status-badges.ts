@@ -23,7 +23,7 @@ const STATUS_MAP: Record<string, BadgeVariant> = {
   unknown: "neutral",
   revoked: "neutral",
   decommissioned: "neutral",
-  disconnected: "neutral",
+  disconnected: "danger",
 };
 
 export function statusToBadge(status: string): BadgeVariant {

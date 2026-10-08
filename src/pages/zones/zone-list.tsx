@@ -3,24 +3,23 @@ import { Link } from "react-router-dom";
 import { useAsyncResource } from "@/api/hooks";
 import type { ZoneStatus } from "@/api/zones";
 import { listZones } from "@/api/zones";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
 
 const STATUS_CONFIG: Record<
   ZoneStatus,
-  { label: string; variant: "success" | "warning" | "destructive" | "muted" }
+  { label: string; variant: "success" | "warning" | "danger" | "neutral" }
 > = {
   requested: { label: "Requested", variant: "warning" },
   pending_approval: { label: "Pending approval", variant: "warning" },
   provisioning: { label: "Provisioning", variant: "warning" },
   wiring: { label: "Wiring", variant: "warning" },
   active: { label: "Active", variant: "success" },
-  failed: { label: "Failed", variant: "destructive" },
-  manual_intervention: { label: "Manual intervention", variant: "destructive" },
+  failed: { label: "Failed", variant: "danger" },
+  manual_intervention: { label: "Manual intervention", variant: "danger" },
   decommission_pending_approval: {
     label: "Decommission pending approval",
     variant: "warning",
@@ -28,11 +27,11 @@ const STATUS_CONFIG: Record<
   cordoning: { label: "Cordoning", variant: "warning" },
   draining: { label: "Draining", variant: "warning" },
   decommissioning: { label: "Decommissioning", variant: "warning" },
-  closed: { label: "Closed", variant: "muted" },
+  closed: { label: "Closed", variant: "neutral" },
 };
 
 export function ZoneStatusBadge({ status }: { status: ZoneStatus }) {
-  const config = STATUS_CONFIG[status] ?? { label: status, variant: "muted" as const };
+  const config = STATUS_CONFIG[status] ?? { label: status, variant: "neutral" as const };
   return (
     <Badge variant={config.variant} data-testid={`zone-status-${status}`}>
       {config.label}
@@ -58,16 +57,14 @@ export function ZoneListPage() {
             zone.
           </p>
         </div>
-        <Button asChild>
-          <Link to={tenantLink(tenant, "tenant-zones/new")}>Vend new zone</Link>
-        </Button>
+        <Link to={tenantLink(tenant, "tenant-zones/new")} className="btn btn-primary">Vend new zone</Link>
       </div>
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load zones: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
@@ -77,15 +74,13 @@ export function ZoneListPage() {
 
       {!error && zones && zones.length === 0 && (
         <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+          <div className="card-body">
             <p className="text-sm text-muted-foreground">
               No tenant zones yet. Vend a zone to get a dedicated cloud account, EKS cluster, and
               platform wiring.
             </p>
-            <Button asChild>
-              <Link to={tenantLink(tenant, "tenant-zones/new")}>Vend your first zone</Link>
-            </Button>
-          </CardContent>
+            <Link to={tenantLink(tenant, "tenant-zones/new")} className="btn btn-primary">Vend your first zone</Link>
+          </div>
         </Card>
       )}
 
@@ -119,7 +114,7 @@ export function ZoneListPage() {
                   <td className="px-4 py-2">{zone.orgUnit}</td>
                   <td className="px-4 py-2 font-mono text-xs">{zone.region}</td>
                   <td className="px-4 py-2">
-                    <Badge variant="outline">{zone.tier}</Badge>
+                    <Badge variant="neutral">{zone.tier}</Badge>
                   </td>
                   <td className="px-4 py-2">
                     <ZoneStatusBadge status={zone.status} />

@@ -12,9 +12,9 @@ import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
 import type { CatalogItemDetail, ResourceInstanceDetail } from "@/api/types";
 import { useAuth } from "@/auth/auth-context";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
 import { SchemaForm, type SchemaFormHandle } from "@/components/schema-form/schema-form";
 import { applyHintsToSchema, hintsToUiSchema } from "@/components/schema-form/ui-hints";
 import { InstanceActionButtons } from "@/ext/slots";
@@ -27,7 +27,7 @@ function ActionsMenu({ resource }: { resource: ResourceInstanceDetail }) {
   const [open, setOpen] = React.useState(false);
   return (
     <div className="relative">
-      <Button variant="outline" onClick={() => setOpen((o) => !o)}>
+      <Button variant="secondary" onClick={() => setOpen((o) => !o)}>
         Actions
       </Button>
       {open && (
@@ -88,13 +88,13 @@ function EditSpecCard({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Edit spec</CardTitle>
-        <CardDescription>
+      <div className="card-header">
+        <h2 className="mono-label">Edit spec</h2>
+        <p className="card-lede">
           Changes re-render the instance at its current version (v{resource.version}).
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+        </p>
+      </div>
+      <div className="card-body">
         {updated ? (
           <p className="text-sm">
             <Badge variant="success">Spec update submitted</Badge>{" "}
@@ -118,7 +118,7 @@ function EditSpecCard({
             </div>
           </form>
         )}
-      </CardContent>
+      </div>
     </Card>
   );
 }
@@ -164,12 +164,12 @@ function RollbackCard({
   if (done) {
     return (
       <Card>
-        <CardContent className="py-4 text-sm">
+        <div className="card-body">
           <Badge variant="success">Rollback to {target} submitted</Badge>{" "}
           <span className="text-muted-foreground">
             The instance re-renders at v{target} shortly.
           </span>
-        </CardContent>
+        </div>
       </Card>
     );
   }
@@ -178,13 +178,13 @@ function RollbackCard({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Rollback</CardTitle>
-        <CardDescription>
+      <div className="card-header">
+        <h2 className="mono-label">Rollback</h2>
+        <p className="card-lede">
           Re-deploy this instance at an earlier catalog version (current: v{resource.version}).
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
+        </p>
+      </div>
+      <div className="card-body">
         <div className="flex items-center gap-2">
           <select
             aria-label="Target version"
@@ -198,12 +198,12 @@ function RollbackCard({
               </option>
             ))}
           </select>
-          <Button variant="outline" size="sm" onClick={submit} disabled={submitting || !target}>
+          <Button variant="secondary" size="sm" onClick={submit} disabled={submitting || !target}>
             {submitting ? "Rolling back…" : `Rollback to ${target}`}
           </Button>
         </div>
         {error && <p className="text-sm text-destructive">{error}</p>}
-      </CardContent>
+      </div>
     </Card>
   );
 }
@@ -237,37 +237,37 @@ function DeleteCard({ resource }: { resource: ResourceInstanceDetail }) {
   if (pendingApproval) {
     return (
       <Card>
-        <CardContent className="py-6 text-sm text-muted-foreground">
+        <div className="card-body">
           Undeploy requested. Deletion is gated on approval — once approved, the instance is
           removed automatically. Track it in the{" "}
           <Link to={tenantLink(tenant, "approvals")} className="underline">
             Approvals inbox
           </Link>
           .
-        </CardContent>
+        </div>
       </Card>
     );
   }
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-base">Delete</CardTitle>
-        <CardDescription>
+      <div className="card-header">
+        <h2 className="mono-label">Delete</h2>
+        <p className="card-lede">
           Undeploys this instance: its desired state is removed from the tenant state repo and
           the backing application is deleted. This cannot be undone.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+        </p>
+      </div>
+      <div className="card-body">
         <form onSubmit={submit} className="space-y-4">
           {error && <p className="text-sm text-destructive">{error}</p>}
           <div className="flex justify-end">
-            <Button type="submit" variant="destructive" disabled={submitting}>
+            <Button type="submit" variant="danger" disabled={submitting}>
               {submitting ? "Deleting…" : "Delete resource"}
             </Button>
           </div>
         </form>
-      </CardContent>
+      </div>
     </Card>
   );
 }
@@ -292,9 +292,9 @@ export function ResourceDetailPage() {
     const notFound = error instanceof ApiError && error.status === 404;
     return (
       <Card>
-        <CardContent className="py-12 text-center text-sm text-muted-foreground">
+        <div className="card-body">
           {notFound ? "Resource not found." : `Failed to load resource: ${error.message}`}
-        </CardContent>
+        </div>
       </Card>
     );
   }
@@ -310,7 +310,7 @@ export function ResourceDetailPage() {
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-semibold tracking-tight">{resource.name}</h1>
             <HealthBadge health={resource.health} />
-            <Badge variant="muted">{resource.status}</Badge>
+            <Badge variant="neutral">{resource.status}</Badge>
           </div>
           <p className="text-sm text-muted-foreground">
             {resource.catalogItemName} v{resource.version} · cluster {resource.clusterId} · owned by{" "}
@@ -324,14 +324,14 @@ export function ResourceDetailPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Spec</CardTitle>
-          </CardHeader>
-          <CardContent>
+          <div className="card-header">
+            <h2 className="mono-label">Spec</h2>
+          </div>
+          <div className="card-body">
             <pre className="max-h-96 overflow-auto rounded-md bg-muted p-3 font-mono text-xs">
               {JSON.stringify(resource.spec, null, 2)}
             </pre>
-          </CardContent>
+          </div>
         </Card>
         {catalogItem.data && (
           <EditSpecCard resource={resource} item={catalogItem.data} onUpdated={refetch} />

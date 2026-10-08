@@ -47,7 +47,7 @@ function IssuedTokenDialog({
   };
 
   return (
-    <Card role="dialog" aria-label="Registration token issued">
+    <div className="card" role="dialog" aria-label="Registration token issued">
       <CardHeader>
         <CardTitle className="text-base">Registration token issued</CardTitle>
       </CardHeader>
@@ -68,7 +68,7 @@ function IssuedTokenDialog({
           </Button>
         </div>
       </CardContent>
-    </Card>
+    </div>
   );
 }
 

@@ -6,9 +6,9 @@ import { useAsyncResource } from "@/api/hooks";
 import { getRbacMatrix, putTeamRoleMappings } from "@/api/rbac";
 import { listRoles } from "@/api/roles";
 import { useAuth } from "@/auth/auth-context";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
 import { teamDisplayName } from "@/pages/access/role-catalog";
 import {
   CapabilityGate,
@@ -144,18 +144,18 @@ export function RoleMatrix() {
   if (error) {
     return (
       <Card>
-        <CardContent className="py-6 text-sm text-destructive">
+        <div className="card-body">
           Failed to load role assignments: {error.message}
-        </CardContent>
+        </div>
       </Card>
     );
   }
   if (rolesError) {
     return (
       <Card>
-        <CardContent className="py-6 text-sm text-destructive">
+        <div className="card-body">
           Failed to load roles: {rolesError.message}
-        </CardContent>
+        </div>
       </Card>
     );
   }
@@ -165,9 +165,9 @@ export function RoleMatrix() {
   if (!matrix || matrix.groups.length === 0) {
     return (
       <Card>
-        <CardContent className="py-12 text-center text-sm text-muted-foreground">
+        <div className="card-body">
           No teams in this organization.
-        </CardContent>
+        </div>
       </Card>
     );
   }
@@ -181,7 +181,7 @@ export function RoleMatrix() {
         </p>
         <div className="flex items-center gap-2">
           {dirty && (
-            <Button variant="outline" size="sm" onClick={reset} disabled={saving}>
+            <Button variant="secondary" size="sm" onClick={reset} disabled={saving}>
               Discard
             </Button>
           )}
@@ -195,7 +195,7 @@ export function RoleMatrix() {
 
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">{actionError}</CardContent>
+          <div className="card-body">{actionError}</div>
         </Card>
       )}
 
@@ -217,7 +217,7 @@ export function RoleMatrix() {
                 <tr key={group.path} className="border-t hover:bg-muted/30">
                   <td className="px-4 py-2">
                     <span className="font-medium">{display}</span>{" "}
-                    <Badge variant="muted">{group.memberCount} members</Badge>
+                    <Badge variant="neutral">{group.memberCount} members</Badge>
                   </td>
                   <td className="px-4 py-2">
                     <select

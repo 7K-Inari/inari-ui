@@ -6,11 +6,10 @@ import { exportAuditEvents, listAuditEvents } from "@/api/audit";
 import type { AuditFilters } from "@/api/audit";
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 
@@ -80,7 +79,7 @@ export function AuditLogPage() {
             Every control-plane action for this tenant.
           </p>
         </div>
-        <Button variant="outline" size="sm" disabled={exporting} onClick={() => void exportCsv()}>
+        <Button variant="secondary" size="sm" disabled={exporting} onClick={() => void exportCsv()}>
           <Download aria-hidden />
           Export CSV
         </Button>
@@ -90,51 +89,51 @@ export function AuditLogPage() {
 
       <div className="flex flex-wrap items-end gap-3">
         <div className="space-y-1">
-          <Label htmlFor="audit-actor">Actor</Label>
+          <label className="form-label" htmlFor="audit-actor">Actor</label>
           <Input
             id="audit-actor"
             value={draft.actor ?? ""}
-            onChange={(e) => setDraft((d) => ({ ...d, actor: e.target.value }))}
+            onChange={(v) => setDraft((d) => ({ ...d, actor: v }))}
             placeholder="jane@acme.example"
             className="w-56"
           />
         </div>
         <div className="space-y-1">
-          <Label htmlFor="audit-action">Action</Label>
+          <label className="form-label" htmlFor="audit-action">Action</label>
           <Input
             id="audit-action"
             value={draft.action ?? ""}
-            onChange={(e) => setDraft((d) => ({ ...d, action: e.target.value }))}
+            onChange={(v) => setDraft((d) => ({ ...d, action: v }))}
             placeholder="deploy.create"
             className="w-48 font-mono"
           />
         </div>
         <div className="space-y-1">
-          <Label htmlFor="audit-object-type">Object type</Label>
+          <label className="form-label" htmlFor="audit-object-type">Object type</label>
           <Input
             id="audit-object-type"
             value={draft.objectType ?? ""}
-            onChange={(e) => setDraft((d) => ({ ...d, objectType: e.target.value }))}
+            onChange={(v) => setDraft((d) => ({ ...d, objectType: v }))}
             placeholder="instance"
             className="w-40"
           />
         </div>
         <div className="space-y-1">
-          <Label htmlFor="audit-from">From</Label>
+          <label className="form-label" htmlFor="audit-from">From</label>
           <Input
             id="audit-from"
             type="datetime-local"
             value={draft.from ?? ""}
-            onChange={(e) => setDraft((d) => ({ ...d, from: e.target.value }))}
+            onChange={(v) => setDraft((d) => ({ ...d, from: v }))}
           />
         </div>
         <div className="space-y-1">
-          <Label htmlFor="audit-to">To</Label>
+          <label className="form-label" htmlFor="audit-to">To</label>
           <Input
             id="audit-to"
             type="datetime-local"
             value={draft.to ?? ""}
-            onChange={(e) => setDraft((d) => ({ ...d, to: e.target.value }))}
+            onChange={(v) => setDraft((d) => ({ ...d, to: v }))}
           />
         </div>
         <Button size="sm" onClick={apply}>
@@ -147,9 +146,9 @@ export function AuditLogPage() {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load audit events: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
@@ -159,9 +158,9 @@ export function AuditLogPage() {
 
       {!error && events && items.length === 0 && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No audit events match these filters.
-          </CardContent>
+          </div>
         </Card>
       )}
 
@@ -185,7 +184,7 @@ export function AuditLogPage() {
                   </td>
                   <td className="px-4 py-2 font-mono text-xs">{event.actor}</td>
                   <td className="px-4 py-2">
-                    <Badge variant="outline" className="font-mono">
+                    <Badge variant="neutral" className="font-mono">
                       {event.action}
                     </Badge>
                   </td>
@@ -208,7 +207,7 @@ export function AuditLogPage() {
           <div className="flex gap-2">
             <Button
               size="sm"
-              variant="outline"
+              variant="secondary"
               disabled={currentPage === 0}
               onClick={() => setPage((p) => Math.max(0, p - 1))}
             >
@@ -216,7 +215,7 @@ export function AuditLogPage() {
             </Button>
             <Button
               size="sm"
-              variant="outline"
+              variant="secondary"
               disabled={currentPage >= pageCount - 1}
               onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
             >

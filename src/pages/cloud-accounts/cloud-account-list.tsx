@@ -2,8 +2,7 @@ import { Link } from "react-router-dom";
 
 import { listCloudAccounts } from "@/api/cloud-accounts";
 import { useAsyncResource } from "@/api/hooks";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
@@ -29,16 +28,14 @@ export function CloudAccountListPage() {
             platform.
           </p>
         </div>
-        <Button asChild>
-          <Link to={tenantLink(tenant, "cloud-accounts/new")}>Connect AWS account</Link>
-        </Button>
+        <Link to={tenantLink(tenant, "cloud-accounts/new")} className="btn btn-primary">Connect AWS account</Link>
       </div>
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load cloud accounts: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
@@ -48,15 +45,13 @@ export function CloudAccountListPage() {
 
       {!error && accounts && accounts.length === 0 && (
         <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
+          <div className="card-body">
             <p className="text-sm text-muted-foreground">
               No cloud accounts connected yet. Connect an AWS account to provision managed
               resources.
             </p>
-            <Button asChild>
-              <Link to={tenantLink(tenant, "cloud-accounts/new")}>Connect your first account</Link>
-            </Button>
-          </CardContent>
+            <Link to={tenantLink(tenant, "cloud-accounts/new")} className="btn btn-primary">Connect your first account</Link>
+          </div>
         </Card>
       )}
 

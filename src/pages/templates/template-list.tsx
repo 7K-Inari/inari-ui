@@ -3,9 +3,8 @@ import { Link } from "react-router-dom";
 import { listTemplates } from "@/api/templates";
 import { useAsyncResource } from "@/api/hooks";
 import { TemplateScopeBadge } from "@/components/templates/template-scope-badge";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
 
@@ -24,9 +23,9 @@ export function TemplateListPage() {
 
       {templates.error && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-destructive">
+          <div className="card-body">
             Failed to load templates: {templates.error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
@@ -36,37 +35,35 @@ export function TemplateListPage() {
 
       {templates.data && templates.data.length === 0 && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No templates published yet.
-          </CardContent>
+          </div>
         </Card>
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {(templates.data ?? []).map((template) => (
           <Card key={template.id} className="flex flex-col">
-            <CardHeader>
+            <div className="card-header">
               <div className="flex items-center justify-between gap-2">
-                <CardTitle className="text-base">{template.displayName}</CardTitle>
+                <h2 className="mono-label">{template.displayName}</h2>
                 <span className="text-xs text-muted-foreground">v{template.version}</span>
               </div>
-              <CardDescription>{template.description}</CardDescription>
-            </CardHeader>
-            <CardContent className="mt-auto flex items-center justify-between gap-2 pt-0">
+              <p className="card-lede">{template.description}</p>
+            </div>
+            <div className="card-body">
               <div className="flex flex-wrap gap-1">
                 <TemplateScopeBadge scope={template.scope} />
                 {template.tags.map((tag) => (
-                  <Badge key={tag} variant="muted">
+                  <Badge key={tag} variant="neutral">
                     {tag}
                   </Badge>
                 ))}
               </div>
-              <Button asChild size="sm">
-                <Link to={tenantLink(tenant, `templates/${template.name}/scaffold`)}>
+              <Link to={tenantLink(tenant, `templates/${template.name}/scaffold`)} className="btn btn-primary btn-sm">
                   Scaffold
                 </Link>
-              </Button>
-            </CardContent>
+            </div>
           </Card>
         ))}
       </div>

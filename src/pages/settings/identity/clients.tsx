@@ -14,9 +14,9 @@ import {
 } from "@/api/identity";
 import { useAuth } from "@/auth/auth-context";
 import { SchemaForm, type SchemaFormHandle } from "@/components/schema-form/schema-form";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import {
   CapabilityGate,
@@ -173,9 +173,9 @@ export function OidcClientsPage() {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load OIDC clients: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
@@ -185,7 +185,7 @@ export function OidcClientsPage() {
 
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">{actionError}</CardContent>
+          <div className="card-body">{actionError}</div>
         </Card>
       )}
 
@@ -193,7 +193,7 @@ export function OidcClientsPage() {
 
       {editing && canWriteSettings && (
         <Card>
-          <CardContent className="space-y-3 py-4">
+          <div className="card-body">
             <SchemaForm
               ref={formRef}
               schema={CLIENT_SCHEMA}
@@ -203,15 +203,15 @@ export function OidcClientsPage() {
             <Button onClick={submit}>
               {editing === "new" ? "Create client" : "Save client"}
             </Button>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && clients && clients.length === 0 && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No OIDC clients yet.
-          </CardContent>
+          </div>
         </Card>
       )}
 
@@ -234,9 +234,9 @@ export function OidcClientsPage() {
                   <td className="px-4 py-2 font-medium">{client.name}</td>
                   <td className="px-4 py-2">
                     {client.type === "public" ? (
-                      <Badge variant="secondary">Public</Badge>
+                      <Badge variant="neutral">Public</Badge>
                     ) : (
-                      <Badge variant="muted">Service</Badge>
+                      <Badge variant="neutral">Service</Badge>
                     )}
                   </td>
                   <td className="px-4 py-2 font-mono text-xs">

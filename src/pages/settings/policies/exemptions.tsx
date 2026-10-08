@@ -9,11 +9,10 @@ import {
 } from "@/api/policies";
 import { useAuth } from "@/auth/auth-context";
 import type { components } from "@/api/__generated__/schema";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import {
   CapabilityGate,
   useOrgCapabilities,
@@ -23,16 +22,16 @@ import { useTenant } from "@/tenant/tenant-context";
 
 type Exemption = components["schemas"]["Exemption"];
 
-function stateVariant(state: string): "warning" | "success" | "destructive" | "muted" {
+function stateVariant(state: string): "warning" | "success" | "danger" | "neutral" {
   switch (state) {
     case "pending":
       return "warning";
     case "approved":
       return "success";
     case "rejected":
-      return "destructive";
+      return "danger";
     default:
-      return "muted";
+      return "neutral";
   }
 }
 
@@ -107,9 +106,9 @@ export function ExemptionsPage() {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load exemptions: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
@@ -119,55 +118,55 @@ export function ExemptionsPage() {
 
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">{actionError}</CardContent>
+          <div className="card-body">{actionError}</div>
         </Card>
       )}
 
       {showRequest && canWriteSettings && (
         <Card>
-          <CardContent className="py-4">
+          <div className="card-body">
             <form className="space-y-3" onSubmit={submitRequest}>
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label htmlFor="ex-policy">Policy ID</Label>
+                  <label className="form-label" htmlFor="ex-policy">Policy ID</label>
                   <Input
                     id="ex-policy"
                     value={policyId}
-                    onChange={(e) => setPolicyId(e.target.value)}
+                    onChange={(v) => setPolicyId(v)}
                     required
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="ex-expires">Expires at</Label>
+                  <label className="form-label" htmlFor="ex-expires">Expires at</label>
                   <Input
                     id="ex-expires"
                     type="datetime-local"
                     value={expiresAt}
-                    onChange={(e) => setExpiresAt(e.target.value)}
+                    onChange={(v) => setExpiresAt(v)}
                     required
                   />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="ex-reason">Reason</Label>
+                <label className="form-label" htmlFor="ex-reason">Reason</label>
                 <Input
                   id="ex-reason"
                   value={reason}
-                  onChange={(e) => setReason(e.target.value)}
+                  onChange={(v) => setReason(v)}
                   required
                 />
               </div>
               <Button type="submit">Submit request</Button>
             </form>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && exemptions && exemptions.length === 0 && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No exemptions requested yet.
-          </CardContent>
+          </div>
         </Card>
       )}
 

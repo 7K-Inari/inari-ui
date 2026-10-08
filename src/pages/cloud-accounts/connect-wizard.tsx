@@ -5,10 +5,9 @@ import { CheckCircle2, Loader2 } from "lucide-react";
 import type { CloudAccount } from "@/api/cloud-accounts";
 import { createCloudAccount, validateCloudAccount } from "@/api/cloud-accounts";
 import { useAuth } from "@/auth/auth-context";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
 import { CopyButton } from "@/pages/cloud-accounts/copy-button";
@@ -80,9 +79,7 @@ export function ValidationStateView({
         <p className="text-sm text-muted-foreground">
           Dry-run AssumeRole succeeded; the account is ready for managed resources.
         </p>
-        <Button asChild variant="outline">
-          <Link to={tenantLink(tenant, `cloud-accounts/${accountId}`)}>Open account detail</Link>
-        </Button>
+        <Link to={tenantLink(tenant, `cloud-accounts/${accountId}`)} className="btn btn-secondary">Open account detail</Link>
       </div>
     );
   }
@@ -185,32 +182,32 @@ export function ConnectAccountWizardPage() {
 
       {step === 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle>Account details</CardTitle>
-            <CardDescription>
+          <div className="card-header">
+            <h2 className="mono-label">Account details</h2>
+            <p className="card-lede">
               This registers the cloud account record. You will then create the trust role in your
               AWS account and validate the connection.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            </p>
+          </div>
+          <div className="card-body">
             <form onSubmit={submit} className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="aws-account-id">AWS account ID</Label>
+                <label className="form-label" htmlFor="aws-account-id">AWS account ID</label>
                 <Input
                   id="aws-account-id"
                   value={accountIdInput}
-                  onChange={(e) => setAccountIdInput(e.target.value)}
+                  onChange={(v) => setAccountIdInput(v)}
                   placeholder="123456789012"
                   required
                 />
                 {accountIdError && <p className="text-xs text-destructive">{accountIdError}</p>}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="role-arn">Role ARN</Label>
+                <label className="form-label" htmlFor="role-arn">Role ARN</label>
                 <Input
                   id="role-arn"
                   value={roleArnInput}
-                  onChange={(e) => setRoleArnInput(e.target.value)}
+                  onChange={(v) => setRoleArnInput(v)}
                   placeholder="arn:aws:iam::123456789012:role/inari-platform-access"
                   required
                 />
@@ -220,11 +217,11 @@ export function ConnectAccountWizardPage() {
                 </p>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="external-id">External ID (optional)</Label>
+                <label className="form-label" htmlFor="external-id">External ID (optional)</label>
                 <Input
                   id="external-id"
                   value={externalIdInput}
-                  onChange={(e) => setExternalIdInput(e.target.value)}
+                  onChange={(v) => setExternalIdInput(v)}
                   placeholder="Generated if left empty"
                 />
                 <p className="text-xs text-muted-foreground">
@@ -241,23 +238,23 @@ export function ConnectAccountWizardPage() {
                 </Button>
               </div>
             </form>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {step === 1 && created && (
         <Card>
-          <CardHeader>
-            <CardTitle>Create the trust role</CardTitle>
-            <CardDescription>
+          <div className="card-header">
+            <h2 className="mono-label">Create the trust role</h2>
+            <p className="card-lede">
               No credentials are stored on the platform. In your AWS account{" "}
               <code className="font-mono text-xs">{created.accountId}</code>, create the trust role
               so the platform can assume{" "}
               <code className="font-mono text-xs">{created.roleArn}</code>. This is a one-time
               setup.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            </p>
+          </div>
+          <div className="card-body">
             <TrustRoleFacts account={created} />
             <div className="flex items-center justify-between gap-2">
               <CopyButton value={created.externalId} label="Copy ExternalId" />
@@ -270,20 +267,20 @@ export function ConnectAccountWizardPage() {
                 I&apos;ve created the role — validate
               </Button>
             </div>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {step === 2 && created && (
         <Card>
-          <CardHeader>
-            <CardTitle>Validate the connection</CardTitle>
-            <CardDescription>
+          <div className="card-header">
+            <h2 className="mono-label">Validate the connection</h2>
+            <p className="card-lede">
               The platform performs a dry-run AssumeRole against{" "}
               <code className="font-mono text-xs">{created.roleArn}</code>.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            </p>
+          </div>
+          <div className="card-body">
             {validating && (
               <div className="flex flex-col items-center gap-3 py-8 text-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
@@ -302,7 +299,7 @@ export function ConnectAccountWizardPage() {
                 <Button onClick={runValidation}>Retry validation</Button>
               </div>
             )}
-          </CardContent>
+          </div>
         </Card>
       )}
     </div>

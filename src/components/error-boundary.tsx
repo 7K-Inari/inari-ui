@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "7k-design-system/react";
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;

@@ -6,10 +6,9 @@ import { createTenant } from "@/api/tenants";
 import { useAuth } from "@/auth/auth-context";
 import { keycloak } from "@/auth/keycloak";
 import { usePermissions } from "@/auth/permissions-context";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 
 const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 
@@ -28,18 +27,18 @@ export function CreateOrganizationPage() {
     return (
       <div className="flex min-h-screen items-center justify-center p-6">
         <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Not authorized</CardTitle>
-            <CardDescription>
+          <div className="card-header">
+            <h2 className="mono-label">Not authorized</h2>
+            <p className="card-lede">
               You are not authorized to create organizations. Contact a platform
               administrator.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            </p>
+          </div>
+          <div className="card-body">
             <Button variant="ghost" onClick={() => navigate(-1)}>
               Go back
             </Button>
-          </CardContent>
+          </div>
         </Card>
       </div>
     );
@@ -85,31 +84,31 @@ export function CreateOrganizationPage() {
         </div>
 
         <Card>
-          <CardHeader>
-            <CardTitle>Organization details</CardTitle>
-            <CardDescription>
+          <div className="card-header">
+            <h2 className="mono-label">Organization details</h2>
+            <p className="card-lede">
               The slug is the organization's immutable identifier used in URLs and API
               paths.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            </p>
+          </div>
+          <div className="card-body">
             <form onSubmit={submit} className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="org-name">Display name</Label>
+                <label className="form-label" htmlFor="org-name">Display name</label>
                 <Input
                   id="org-name"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(v) => setName(v)}
                   placeholder="Acme Analytics"
                   required
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="org-slug">Slug</Label>
+                <label className="form-label" htmlFor="org-slug">Slug</label>
                 <Input
                   id="org-slug"
                   value={slug}
-                  onChange={(e) => setSlug(e.target.value)}
+                  onChange={(v) => setSlug(v)}
                   placeholder="acme-analytics"
                   required
                 />
@@ -125,7 +124,7 @@ export function CreateOrganizationPage() {
                 </Button>
               </div>
             </form>
-          </CardContent>
+          </div>
         </Card>
       </div>
     </div>
