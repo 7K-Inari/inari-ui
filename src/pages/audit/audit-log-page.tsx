@@ -3,10 +3,10 @@ import * as React from "react";
 
 import type { paths } from "@/api/__generated__/schema";
 import { exportAuditEvents, listAuditEvents } from "@/api/audit";
-import type { AuditFilters } from "@/api/audit";
+import type { AuditEvent, AuditFilters } from "@/api/audit";
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
-import { Badge } from "7k-design-system/react";
+import { Badge , DataTable } from "7k-design-system/react";
 import { Button } from "7k-design-system/react";
 import { Card } from "7k-design-system/react";
 import { Input } from "7k-design-system/react";
@@ -165,38 +165,31 @@ export function AuditLogPage() {
       )}
 
       {pageItems.length > 0 && (
-        <div className="overflow-hidden rounded-lg border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
-              <tr>
-                <th className="px-4 py-2 font-medium">Time</th>
-                <th className="px-4 py-2 font-medium">Actor</th>
-                <th className="px-4 py-2 font-medium">Action</th>
-                <th className="px-4 py-2 font-medium">Object</th>
-                <th className="px-4 py-2 font-medium">Detail</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pageItems.map((event) => (
-                <tr key={event.id} className="border-t hover:bg-muted/30">
-                  <td className="px-4 py-2 text-muted-foreground">
-                    <span title={event.at}>{formatRelative(event.at)}</span>
-                  </td>
-                  <td className="px-4 py-2 font-mono text-xs">{event.actor}</td>
-                  <td className="px-4 py-2">
-                    <Badge variant="neutral" className="font-mono">
-                      {event.action}
-                    </Badge>
-                  </td>
-                  <td className="px-4 py-2 font-mono text-xs">
-                    {event.objectType}/{event.objectName}
-                  </td>
-                  <td className="px-4 py-2 text-muted-foreground">{event.detail}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <DataTable<AuditEvent>
+          columns={[
+            {
+              key: "at",
+              label: "Time",
+              mono: true,
+              render: (event) => <span title={event.at}>{formatRelative(event.at)}</span>,
+            },
+            { key: "actor", label: "Actor", mono: true },
+            {
+              key: "action",
+              label: "Action",
+              render: (event) => <Badge variant="neutral">{event.action}</Badge>,
+            },
+            {
+              key: "object",
+              label: "Object",
+              mono: true,
+              render: (event) => `${event.objectType}/${event.objectName}`,
+            },
+            { key: "detail", label: "Detail" },
+          ]}
+          rows={pageItems}
+          rowKey="id"
+        />
       )}
 
       {items.length > PAGE_SIZE && (

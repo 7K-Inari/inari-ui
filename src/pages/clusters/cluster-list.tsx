@@ -1,6 +1,6 @@
 import { Link, useSearchParams } from "react-router-dom";
 import * as React from "react";
-import { Alert, Button, Modal, Skeleton } from "7k-design-system/react";
+import { Alert, Button, DataTable, Modal, Skeleton, type DataTableColumn } from "7k-design-system/react";
 
 import { deleteCluster, listClusters } from "@/api/clusters";
 import { ApiError } from "@/api/client";
@@ -63,6 +63,68 @@ export function ClusterListPage() {
   const all = clusters ?? [];
   const visible = all.filter((c) => statusFilter === "all" || c.status === statusFilter);
   const degraded = all.filter((c) => c.status === "degraded").length;
+
+  const columns: DataTableColumn<ClusterSummary>[] = [
+    {
+      key: "name",
+      label: "Name",
+      render: (c) => (
+        <Link to={tenantLink(tenant, `clusters/${c.id}`)} className="table-link">
+          {c.name}
+        </Link>
+      ),
+    },
+    {
+      key: "status",
+      label: "Status",
+      render: (c) => <ClusterStatusBadge status={c.status} />,
+    },
+    ...(tenant === ALL_TENANTS ? [{ key: "tenant", label: "Tenant", mono: true } as const] : []),
+    {
+      key: "k8sVersion",
+      label: "Kubernetes",
+      mono: true,
+      render: (c) => c.k8sVersion ?? "—",
+    },
+    {
+      key: "labels",
+      label: "Labels",
+      render: (c) => (
+        <span className="cluster-labels">
+          {Object.entries(c.labels).map(([k, v]) => (
+            <span key={k} className="tag">
+              {k}={v}
+            </span>
+          ))}
+        </span>
+      ),
+    },
+    { key: "capabilityCount", label: "Capabilities", mono: true },
+    {
+      key: "lastSeenAt",
+      label: "Last seen",
+      mono: true,
+      render: (c) => formatRelative(c.lastSeenAt),
+    },
+    {
+      key: "actions",
+      label: "Actions",
+      render: (c) =>
+        c.status === "pending" ? (
+          <span className="cluster-row-actions">
+            <Link
+              to={tenantLink(tenant, `clusters/new?cluster=${c.id}`)}
+              className="btn btn-secondary btn-sm"
+            >
+              Resume registration
+            </Link>
+            <Button variant="danger" size="sm" onClick={() => setConfirmCancel(c)}>
+              Cancel registration
+            </Button>
+          </span>
+        ) : null,
+    },
+  ];
 
   return (
     <div>
@@ -145,69 +207,7 @@ export function ClusterListPage() {
       {actionError && <Alert variant="danger">{actionError}</Alert>}
 
       {visible.length > 0 && (
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Status</th>
-              {tenant === ALL_TENANTS && <th>Tenant</th>}
-              <th>Kubernetes</th>
-              <th>Labels</th>
-              <th>Capabilities</th>
-              <th>Last seen</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {visible.map((cluster) => (
-              <tr key={cluster.id}>
-                <td>
-                  <Link
-                    to={tenantLink(tenant, `clusters/${cluster.id}`)}
-                    className="table-link"
-                  >
-                    {cluster.name}
-                  </Link>
-                </td>
-                <td>
-                  <ClusterStatusBadge status={cluster.status} />
-                </td>
-                {tenant === ALL_TENANTS && <td className="mono">{cluster.tenant}</td>}
-                <td className="mono">{cluster.k8sVersion ?? "—"}</td>
-                <td>
-                  <span className="cluster-labels">
-                    {Object.entries(cluster.labels).map(([k, v]) => (
-                      <span key={k} className="tag">
-                        {k}={v}
-                      </span>
-                    ))}
-                  </span>
-                </td>
-                <td className="mono">{cluster.capabilityCount}</td>
-                <td className="mono">{formatRelative(cluster.lastSeenAt)}</td>
-                <td>
-                  {cluster.status === "pending" && (
-                    <span className="cluster-row-actions">
-                      <Link
-                        to={tenantLink(tenant, `clusters/new?cluster=${cluster.id}`)}
-                        className="btn btn-secondary btn-sm"
-                      >
-                        Resume registration
-                      </Link>
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        onClick={() => setConfirmCancel(cluster)}
-                      >
-                        Cancel registration
-                      </Button>
-                    </span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        <DataTable<ClusterSummary> columns={columns} rows={visible} rowKey="id" />
       )}
 
       <Modal

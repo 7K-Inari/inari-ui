@@ -6,10 +6,8 @@ import { useAsyncResource } from "@/api/hooks";
 import { deleteResource, listResources } from "@/api/resources";
 import { ApiError } from "@/api/client";
 import { useAuth } from "@/auth/auth-context";
-import type { ResourceHealth } from "@/api/types";
-import { Badge } from "7k-design-system/react";
-import { Button } from "7k-design-system/react";
-import { Card } from "7k-design-system/react";
+import type { ResourceHealth, ResourceInstanceSummary } from "@/api/types";
+import { Badge, Button, Card, DataTable, type DataTableColumn } from "7k-design-system/react";
 import { useTenant } from "@/tenant/tenant-context";
 import { ALL_TENANTS, tenantLink } from "@/tenant/tenant-link";
 
@@ -71,6 +69,51 @@ export function ResourceListPage() {
   );
   const showTenant = tenant === ALL_TENANTS;
 
+  const columns: DataTableColumn<ResourceInstanceSummary>[] = [
+    {
+      key: "name",
+      label: "Name",
+      render: (r) => (
+        <Link to={tenantLink(tenant, `deploys/${r.id}`)} className="table-link">
+          {r.name}
+        </Link>
+      ),
+    },
+    ...(showTenant ? [{ key: "tenant", label: "Tenant", mono: true } as const] : []),
+    { key: "catalogItemName", label: "Catalog item" },
+    { key: "clusterId", label: "Cluster", mono: true },
+    {
+      key: "health",
+      label: "Health",
+      render: (r) => <HealthBadge health={r.health} />,
+    },
+    { key: "status", label: "Status", mono: true },
+    { key: "ownerTeam", label: "Owner team", mono: true },
+    {
+      key: "version",
+      label: "Version",
+      render: (r) => (
+        <span className="mono-data">
+          {r.version}
+          {r.updateAvailable && (
+            <Badge variant="warning" className="ml-2">
+              {r.updateAvailable.to} available
+            </Badge>
+          )}
+        </span>
+      ),
+    },
+    {
+      key: "actions",
+      label: "",
+      render: (r) => (
+        <Button variant="secondary" size="sm" onClick={() => undeploy(r.id, r.name)}>
+          Delete
+        </Button>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-4">
       {confirmDialog}
@@ -124,60 +167,11 @@ export function ResourceListPage() {
       )}
 
       {visible.length > 0 && (
-        <Card>
-          <div className="card-body">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-muted-foreground">
-                  <th className="px-4 py-2 font-medium">Name</th>
-                  {showTenant && <th className="px-4 py-2 font-medium">Tenant</th>}
-                  <th className="px-4 py-2 font-medium">Catalog item</th>
-                  <th className="px-4 py-2 font-medium">Cluster</th>
-                  <th className="px-4 py-2 font-medium">Health</th>
-                  <th className="px-4 py-2 font-medium">Status</th>
-                  <th className="px-4 py-2 font-medium">Owner team</th>
-                  <th className="px-4 py-2 font-medium">Version</th>
-                  <th className="px-4 py-2 font-medium" />
-                </tr>
-              </thead>
-              <tbody>
-                {visible.map((r) => (
-                  <tr key={r.id} className="border-b last:border-0">
-                    <td className="px-4 py-2">
-                      <Link
-                        to={tenantLink(tenant, `deploys/${r.id}`)}
-                        className="font-medium hover:underline"
-                      >
-                        {r.name}
-                      </Link>
-                    </td>
-                    {showTenant && <td className="px-4 py-2">{r.tenant}</td>}
-                    <td className="px-4 py-2">{r.catalogItemName}</td>
-                    <td className="px-4 py-2">{r.clusterId}</td>
-                    <td className="px-4 py-2">
-                      <HealthBadge health={r.health} />
-                    </td>
-                    <td className="px-4 py-2">{r.status}</td>
-                    <td className="px-4 py-2">{r.ownerTeam}</td>
-                    <td className="px-4 py-2">
-                      {r.version}
-                      {r.updateAvailable && (
-                        <Badge variant="warning" className="ml-2">
-                          {r.updateAvailable.to} available
-                        </Badge>
-                      )}
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      <Button variant="secondary" size="sm" onClick={() => undeploy(r.id, r.name)}>
-                        Delete
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+        <DataTable<ResourceInstanceSummary>
+          columns={columns}
+          rows={visible}
+          rowKey="id"
+        />
       )}
     </div>
   );
