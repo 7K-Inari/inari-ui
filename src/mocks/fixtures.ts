@@ -1,4 +1,5 @@
 import type { ClusterAccessInfo, CreateClusterRequest } from "@/api/clusters";
+import type { FeatureFlag } from "@/api/feature-flags";
 import type {
   Capability,
   ClusterDetail,
@@ -132,10 +133,35 @@ function defaultAccessInfo(cluster: ClusterDetail): ClusterAccessInfo {
   };
 }
 
+// Runtime feature flags (kill-switch v2, ADR-0016). The mock registry mirrors
+// internal/featureflags/registry.go; today only kubectl_access.enabled exists.
+export const KUBECTL_ACCESS_FLAG_KEY = "kubectl_access.enabled";
+
+interface FlagDef {
+  key: string;
+  description: string;
+  defaultValue: boolean;
+}
+
+const FLAG_REGISTRY: FlagDef[] = [
+  {
+    key: KUBECTL_ACCESS_FLAG_KEY,
+    description:
+      "kubectl access via inari-kubeproxy (410 proxy/kubeconfig + tunnel rejection when off)",
+    defaultValue: true,
+  },
+];
+
 export interface MockState {
   clusters: ClusterDetail[];
   capabilities: Record<string, Capability[]>;
   accessInfo: Record<string, ClusterAccessInfo>;
+  // Platform flag rows (key → value; absent = no persisted row) plus the
+  // envPinned marker surfacing an explicit INARI_KUBECTL_ACCESS_ENABLED.
+  platformFlags: Record<string, boolean>;
+  flagEnvPinned: boolean;
+  // Cluster override rows: clusterId → flagKey → value.
+  clusterFlags: Record<string, Record<string, boolean>>;
   // Clusters whose decommission is blocked by shared (non-Inari-managed)
   // resources — the mock answers 409 until force is passed.
   decommissionBlocked: string[];
@@ -159,6 +185,9 @@ function seedState(): MockState {
     ),
     decommissionBlocked: [],
     decommissionDrain: {},
+    platformFlags: {},
+    flagEnvPinned: false,
+    clusterFlags: {},
   };
 }
 
@@ -190,7 +219,69 @@ export const mockControl = {
     const info = state.accessInfo[id];
     if (info) state.accessInfo[id] = { ...info, ...patch };
   },
+  setFlagEnvPinned(pinned: boolean) {
+    state.flagEnvPinned = pinned;
+  },
 };
+
+// ---- runtime feature flags (kill-switch v2) ----
+
+function flagView(def: FlagDef, value: boolean, overridden: boolean): FeatureFlag {
+  return {
+    key: def.key,
+    type: "boolean",
+    description: def.description,
+    default: def.defaultValue,
+    value,
+    overridden,
+    envPinned: state.flagEnvPinned,
+  };
+}
+
+export function platformFlagsList(): FeatureFlag[] {
+  return FLAG_REGISTRY.map((def) => {
+    const row = state.platformFlags[def.key];
+    return flagView(def, row ?? def.defaultValue, def.key in state.platformFlags);
+  });
+}
+
+export function clusterFlagsList(id: string): FeatureFlag[] | undefined {
+  if (!findCluster(id)) return undefined;
+  const overrides = state.clusterFlags[id] ?? {};
+  const platform = state.platformFlags;
+  return FLAG_REGISTRY.map((def) => {
+    const overridden = def.key in overrides;
+    const value = overridden ? overrides[def.key] : (platform[def.key] ?? def.defaultValue);
+    return flagView(def, value, overridden);
+  });
+}
+
+export function setPlatformFlagMock(key: string, value: boolean): boolean {
+  if (!FLAG_REGISTRY.some((d) => d.key === key)) return false;
+  state.platformFlags[key] = value;
+  return true;
+}
+
+export function clearPlatformFlagMock(key: string): boolean {
+  if (!FLAG_REGISTRY.some((d) => d.key === key)) return false;
+  delete state.platformFlags[key];
+  return true;
+}
+
+export function setClusterFlagMock(id: string, key: string, value: boolean): boolean {
+  if (!findCluster(id)) return false;
+  if (!FLAG_REGISTRY.some((d) => d.key === key)) return false;
+  (state.clusterFlags[id] ??= {})[key] = value;
+  return true;
+}
+
+export function clearClusterFlagMock(id: string, key: string): boolean {
+  if (!findCluster(id)) return false;
+  if (!FLAG_REGISTRY.some((d) => d.key === key)) return false;
+  const overrides = state.clusterFlags[id];
+  if (overrides) delete overrides[key];
+  return true;
+}
 
 // Cluster lifecycle transitions (approve/cordon/uncordon/revoke/
 // decommission). Each returns the updated cluster, or undefined when the

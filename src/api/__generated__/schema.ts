@@ -107,6 +107,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/platform/feature-flags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the runtime feature-flag catalog with platform effective values */
+        get: operations["listPlatformFeatureFlags"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/platform/feature-flags/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set a platform-scoped feature-flag value */
+        put: operations["setPlatformFeatureFlag"];
+        post?: never;
+        /** Revert a platform-scoped feature flag to its built-in default */
+        delete: operations["clearPlatformFeatureFlag"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenants": {
         parameters: {
             query?: never;
@@ -725,6 +760,41 @@ export interface paths {
         /** Decommission a cluster (ownership-checked drain, identity revocation, archived audit) */
         post: operations["decommissionCluster"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/clusters/{id}/feature-flags": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the feature-flag catalog with per-cluster effective values */
+        get: operations["listClusterFeatureFlags"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/clusters/{id}/feature-flags/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set a cluster-scoped feature-flag override (tenant admin/operator) */
+        put: operations["setClusterFeatureFlag"];
+        post?: never;
+        /** Revert a cluster-scoped feature-flag override to the platform default */
+        delete: operations["clearClusterFeatureFlag"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3115,6 +3185,15 @@ export interface components {
             credentials?: components["schemas"]["ExtensionCredentials"];
             extension: components["schemas"]["Extension"];
         };
+        FlagView: {
+            default: boolean;
+            description: string;
+            envPinned: boolean;
+            key: string;
+            overridden: boolean;
+            type: string;
+            value: boolean;
+        };
         GCPSMProvider: {
             authSecretRef: components["schemas"]["SecretRef"];
             projectId: string;
@@ -3431,6 +3510,15 @@ export interface components {
              */
             readonly $schema?: string;
             exemptions: components["schemas"]["Exemption"][] | null;
+        };
+        ListFlagsOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/ListFlagsOutputBody.json
+             */
+            readonly $schema?: string;
+            flags: components["schemas"]["FlagView"][] | null;
         };
         ListIdentityClientsOutputBody: {
             /**
@@ -4332,6 +4420,24 @@ export interface components {
             readonly $schema?: string;
             desiredAgentVersion: string;
         };
+        SetClusterFlagInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/SetClusterFlagInputBody.json
+             */
+            readonly $schema?: string;
+            value: boolean;
+        };
+        SetFlagInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/SetFlagInputBody.json
+             */
+            readonly $schema?: string;
+            value: boolean;
+        };
         StatusOutputBody: {
             /**
              * Format: uri
@@ -4888,6 +4994,97 @@ export interface operations {
             path: {
                 /** @description Keycloak user id or email of the user to grant/revoke */
                 subject: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listPlatformFeatureFlags: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListFlagsOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    setPlatformFeatureFlag: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetFlagInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    clearPlatformFeatureFlag: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
             };
             cookie?: never;
         };
@@ -6482,6 +6679,104 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["DecommissionOutputBody"];
                 };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listClusterFeatureFlags: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListFlagsOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    setClusterFeatureFlag: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SetClusterFlagInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    clearClusterFeatureFlag: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Error */
             default: {

@@ -27,6 +27,7 @@ import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
 import { ConnectTab } from "@/pages/clusters/connect-tab";
+import { KubectlAccessCard } from "@/pages/clusters/kubectl-access-card";
 import { ClusterStatusBadge } from "@/pages/clusters/status-badge";
 
 const KIND_LABELS: Record<CapabilityKind, string> = {
@@ -495,6 +496,9 @@ export function ClusterDetailPage() {
 
       {cluster.status !== "pending" && (
         <div className="space-y-4">
+          {config.features.kubectlAccess &&
+            cluster.status !== "revoked" &&
+            cluster.status !== "decommissioned" && <KubectlAccessCard clusterId={cluster.id} />}
           {cluster.status !== "revoked" && cluster.status !== "decommissioned" && (
             <RevokeCard cluster={cluster} onRevoked={refetch} />
           )}

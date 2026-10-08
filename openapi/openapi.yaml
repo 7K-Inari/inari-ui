@@ -1811,6 +1811,32 @@ components:
       required:
         - extension
       type: object
+    FlagView:
+      additionalProperties: false
+      properties:
+        default:
+          type: boolean
+        description:
+          type: string
+        envPinned:
+          type: boolean
+        key:
+          type: string
+        overridden:
+          type: boolean
+        type:
+          type: string
+        value:
+          type: boolean
+      required:
+        - key
+        - type
+        - description
+        - default
+        - value
+        - overridden
+        - envPinned
+      type: object
     GCPSMProvider:
       additionalProperties: false
       properties:
@@ -2486,6 +2512,25 @@ components:
             - "null"
       required:
         - exemptions
+      type: object
+    ListFlagsOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListFlagsOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        flags:
+          items:
+            $ref: "#/components/schemas/FlagView"
+          type:
+            - array
+            - "null"
+      required:
+        - flags
       type: object
     ListIdentityClientsOutputBody:
       additionalProperties: false
@@ -4483,6 +4528,36 @@ components:
       required:
         - desiredAgentVersion
       type: object
+    SetClusterFlagInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/SetClusterFlagInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        value:
+          type: boolean
+      required:
+        - value
+      type: object
+    SetFlagInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/SetFlagInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        value:
+          type: boolean
+      required:
+        - value
+      type: object
     StatusOutputBody:
       additionalProperties: false
       properties:
@@ -5432,6 +5507,72 @@ paths:
       security:
         - bearer: []
       summary: Grant platform admin (joins the platform admin group; org_creator tuple converges via PlatformGroupSync)
+  /api/v1/platform/feature-flags:
+    get:
+      operationId: listPlatformFeatureFlags
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListFlagsOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: List the runtime feature-flag catalog with platform effective values
+  /api/v1/platform/feature-flags/{key}:
+    delete:
+      operationId: clearPlatformFeatureFlag
+      parameters:
+        - in: path
+          name: key
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Revert a platform-scoped feature flag to its built-in default
+    put:
+      operationId: setPlatformFeatureFlag
+      parameters:
+        - in: path
+          name: key
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetFlagInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Set a platform-scoped feature-flag value
   /api/v1/tenants:
     get:
       operationId: listTenants
@@ -6972,6 +7113,103 @@ paths:
       security:
         - bearer: []
       summary: Decommission a cluster (ownership-checked drain, identity revocation, archived audit)
+  /api/v1/tenants/{org}/clusters/{id}/feature-flags:
+    get:
+      operationId: listClusterFeatureFlags
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListFlagsOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: List the feature-flag catalog with per-cluster effective values
+  /api/v1/tenants/{org}/clusters/{id}/feature-flags/{key}:
+    delete:
+      operationId: clearClusterFeatureFlag
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: key
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Revert a cluster-scoped feature-flag override to the platform default
+    put:
+      operationId: setClusterFeatureFlag
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: key
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SetClusterFlagInputBody"
+        required: true
+      responses:
+        "204":
+          description: No Content
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Set a cluster-scoped feature-flag override (tenant admin/operator)
   /api/v1/tenants/{org}/clusters/{id}/kubeconfig:
     get:
       operationId: getClusterKubeconfig

@@ -4,14 +4,20 @@ import {
   accessInfoFor,
   approveClusterMock,
   capabilitiesFor,
+  clearClusterFlagMock,
+  clearPlatformFlagMock,
+  clusterFlagsList,
   cordonClusterMock,
   decommissionClusterMock,
   findCluster,
   isDecommissionBlocked,
   listForTenant,
+  platformFlagsList,
   registerCluster,
   removeCluster,
   revokeClusterMock,
+  setClusterFlagMock,
+  setPlatformFlagMock,
   uncordonClusterMock,
 } from "@/mocks/fixtures";
 import {
@@ -357,6 +363,27 @@ export const handlers = [
   http.get("*/api/v1/tenants", () =>
     HttpResponse.json({ tenants: seededOrganizations() }),
   ),
+
+  // ---- platform feature flags (kill-switch v2, ADR-0016) ----
+  http.get("*/api/v1/platform/feature-flags", () =>
+    HttpResponse.json({ flags: platformFlagsList() }),
+  ),
+
+  http.put("*/api/v1/platform/feature-flags/:key", async ({ params, request }) => {
+    const body = (await request.json()) as { value?: boolean };
+    if (typeof body.value !== "boolean") return humaError(422, "validation failed (value)");
+    if (!setPlatformFlagMock(params.key as string, body.value)) {
+      return humaError(404, "unknown feature flag");
+    }
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.delete("*/api/v1/platform/feature-flags/:key", ({ params }) => {
+    if (!clearPlatformFlagMock(params.key as string)) {
+      return humaError(404, "unknown feature flag");
+    }
+    return new HttpResponse(null, { status: 204 });
+  }),
   http.post("*/api/v1/tenants", async ({ request }) => {
     const body = (await request.json()) as {
       slug?: string;
@@ -628,6 +655,31 @@ export const handlers = [
   http.post(`${BASE}/clusters/:id/revoke`, ({ params }) => {
     const cluster = revokeClusterMock(params.id as string);
     if (!cluster) return humaError(404, "cluster not found");
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  // ---- cluster feature flags (kill-switch v2, ADR-0016) ----
+  http.get(`${BASE}/clusters/:id/feature-flags`, ({ params }) => {
+    const flags = clusterFlagsList(params.id as string);
+    if (!flags) return humaError(404, "cluster not found");
+    return HttpResponse.json({ flags });
+  }),
+
+  http.put(`${BASE}/clusters/:id/feature-flags/:key`, async ({ params, request }) => {
+    if (!findCluster(params.id as string)) return humaError(404, "cluster not found");
+    const body = (await request.json()) as { value?: boolean };
+    if (typeof body.value !== "boolean") return humaError(422, "validation failed (value)");
+    if (!setClusterFlagMock(params.id as string, params.key as string, body.value)) {
+      return humaError(404, "unknown feature flag");
+    }
+    return new HttpResponse(null, { status: 204 });
+  }),
+
+  http.delete(`${BASE}/clusters/:id/feature-flags/:key`, ({ params }) => {
+    if (!findCluster(params.id as string)) return humaError(404, "cluster not found");
+    if (!clearClusterFlagMock(params.id as string, params.key as string)) {
+      return humaError(404, "unknown feature flag");
+    }
     return new HttpResponse(null, { status: 204 });
   }),
 
