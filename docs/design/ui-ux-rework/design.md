@@ -93,7 +93,7 @@ Accent scoping: the host app renders under `<html data-project="inari">` (or `Pr
 - Sidebar: 240px fixed, `bg-base`, 2px right border (`--border-subtle`), logo block 56px high (aligns with top bar). Nav groups keep the current Deliver / Operate / Govern labels, rendered as `.nav` with `.nav-item` (mono-label, 11px uppercase), active item = `aria-current="page"` + `.accent-secondary-border-left` 3px orange bar (Inari accent override of the magenta default) + invert text.
 - **Nav badge counts**: pending approvals and degraded clusters render a `.badge.badge-warning` / `.badge-danger` count right-aligned in the nav item.
 - Sidebar is collapsible to 64px icon rail at 1024–1279px.
-- Top bar: hamburger (mobile only), `INARI` wordmark (Geist 700, `--text-body` 16px, `.accent-secondary-underline` on the "I"? no — plain), tenant switcher as `.combobox`-style trigger (mono label showing `ORG / TEAM`), right side: `ThemeToggle` (DS component), `.avatar` with user menu (`.menu`).
+- Top bar: hamburger (mobile only), `INARI` wordmark (Geist 700, `--text-body` 16px, plain), tenant switcher as `.combobox`-style trigger (mono label showing `ORG / TEAM`), right side: `ThemeToggle` (DS component), the **7K logo mark** (`build/logos/logo-7k.svg`, 24–26px, constant identity mark — keeps its magenta tones per DS rule 5; it is *not* re-themed to Inari orange), `.avatar` with user menu (`.menu`).
 - Content: centered, max 1280px, 24px gutters, 24px vertical rhythm (`--space-6`). 12-col grid, gutter 24px.
 
 **Breakpoints**
@@ -132,7 +132,7 @@ DS components: `Nav`/`NavItem` (or `.nav` classes), `Avatar`, `ThemeToggle`, `Dr
 
 - Tenant switcher: `.btn-ghost`-style trigger, mono label `ACME-INC / PLATFORM`, `Building2` icon, chevron. Dropdown: `.menu` with section mono labels `ALL TENANTS / RECENT / ORGANIZATIONS / TEAM SCOPE`, check-mark on active, 2px dividers. Active tenant also mirrored in sidebar footer strip? No — keep single source in top bar.
 - User menu: `.avatar` (32px square, 2px border, mono initials) → `.menu` with `Sign out` `.menu-item`.
-- Sidebar groups: mono group labels (`--text-mono-label`, `--text-tertiary`, `px-2 pb-1`), items 32px tall, icons 16px. Active: orange 3px left bar + `--bg-overlay` fill. Group spacing `--space-4`.
+- Sidebar groups: mono group labels (`--text-mono-label`, `--text-tertiary`, `px-2 pb-1`), items 32px tall, **icons: the existing lucide set kept at 16px** (`lucide-react`, `currentColor` — LayoutDashboard, BookOpen, Ship, Layers, CheckCircle2, Server, Grid2X2, Cloud, Boxes, Workflow, KeyRound, FileClock, Puzzle, Settings; Resources uses CircleDot), no emoji or glyph stand-ins. Active: orange 3px left bar + `--bg-overlay` fill. Group spacing `--space-4`.
 - Sidebar footer (new): extension nav items render under a mono label `EXTENSIONS` group, separated by 2px rule.
 
 States: collapsed rail shows icons with `Tooltip`; mobile drawer locks scroll, closes on navigate.
