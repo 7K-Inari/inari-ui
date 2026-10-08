@@ -2,8 +2,6 @@ import { LayoutGrid, List, Search, X } from "lucide-react";
 import * as React from "react";
 
 import type { CatalogSort, CatalogSource, ClusterSummary } from "@/api/types";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 
 export type CatalogViewMode = "grid" | "list";
 
@@ -44,9 +42,6 @@ const SORT_OPTIONS: Array<{ value: CatalogSort; label: string }> = [
   { value: "oldest", label: "Oldest first" },
 ];
 
-const selectClass =
-  "h-9 rounded-md border border-input bg-background px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
-
 const SEARCH_DEBOUNCE_MS = 300;
 
 export function CatalogFilterBar({
@@ -74,34 +69,37 @@ export function CatalogFilterBar({
     q !== "" || source !== "all" || category !== "" || cluster !== "" || sort !== "name";
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      <div className="relative">
-        <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-        <Input
+    <div className="filter-bar">
+      <div className="input-group filter-bar-search">
+        <span className="input-addon">
+          <Search size={16} aria-hidden="true" />
+        </span>
+        <input
+          className="input"
           aria-label="Search catalog"
           placeholder="Search catalog…"
-          className="w-64 pl-8"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
         />
       </div>
 
-      <div className="flex gap-1" role="group" aria-label="Filter by source">
+      <div className="tag-group" role="group" aria-label="Filter by source">
         {SOURCE_FILTERS.map((f) => (
-          <Button
+          <button
             key={f.value}
-            variant={source === f.value ? "secondary" : "ghost"}
-            size="sm"
+            type="button"
+            className={source === f.value ? "tag tag-outlined" : "tag"}
+            aria-pressed={source === f.value}
             onClick={() => onChange({ source: f.value })}
           >
             {f.label}
-          </Button>
+          </button>
         ))}
       </div>
 
       <select
         aria-label="Filter by category"
-        className={selectClass}
+        className="select-native"
         value={category}
         onChange={(e) => onChange({ category: e.target.value })}
       >
@@ -115,7 +113,7 @@ export function CatalogFilterBar({
 
       <select
         aria-label="Filter by cluster compatibility"
-        className={selectClass}
+        className="select-native"
         value={cluster}
         onChange={(e) => onChange({ cluster: e.target.value })}
       >
@@ -129,7 +127,7 @@ export function CatalogFilterBar({
 
       <select
         aria-label="Sort catalog"
-        className={selectClass}
+        className="select-native"
         value={sort}
         onChange={(e) => onChange({ sort: e.target.value as CatalogSort })}
       >
@@ -141,29 +139,31 @@ export function CatalogFilterBar({
       </select>
 
       {hasActive && (
-        <Button variant="ghost" size="sm" onClick={onClear}>
-          <X className="mr-1 h-4 w-4" />
+        <button type="button" className="btn btn-ghost btn-sm" onClick={onClear}>
+          <X size={14} aria-hidden="true" />
           Clear filters
-        </Button>
+        </button>
       )}
 
-      <div className="ml-auto flex gap-1" role="group" aria-label="View mode">
-        <Button
-          variant={view === "grid" ? "secondary" : "ghost"}
-          size="sm"
+      <div className="btn-group filter-bar-view" role="group" aria-label="View mode">
+        <button
+          type="button"
+          className={`btn btn-icon ${view === "grid" ? "btn-secondary" : "btn-ghost"}`}
           aria-label="Grid view"
+          aria-pressed={view === "grid"}
           onClick={() => onChange({ view: "grid" })}
         >
-          <LayoutGrid className="h-4 w-4" />
-        </Button>
-        <Button
-          variant={view === "list" ? "secondary" : "ghost"}
-          size="sm"
+          <LayoutGrid size={16} aria-hidden="true" />
+        </button>
+        <button
+          type="button"
+          className={`btn btn-icon ${view === "list" ? "btn-secondary" : "btn-ghost"}`}
           aria-label="List view"
+          aria-pressed={view === "list"}
           onClick={() => onChange({ view: "list" })}
         >
-          <List className="h-4 w-4" />
-        </Button>
+          <List size={16} aria-hidden="true" />
+        </button>
       </div>
     </div>
   );

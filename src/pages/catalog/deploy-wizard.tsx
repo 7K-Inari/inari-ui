@@ -1,6 +1,6 @@
 import * as React from "react";
 import { Link, useParams, useSearchParams } from "react-router-dom";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
 
 import { getCatalogItem } from "@/api/catalog";
 import { listClusters } from "@/api/clusters";
@@ -9,12 +9,10 @@ import { createDeploy, getDeploy } from "@/api/deploys";
 import { useAsyncResource } from "@/api/hooks";
 import type { Deploy } from "@/api/types";
 import { useAuth } from "@/auth/auth-context";
+import { Alert, Badge, Button, Card, Input, Spinner } from "7k-design-system/react";
+
+import { PageHeader } from "@/components/page-header";
 import { PolicyDenialNotice } from "@/components/policy-denial";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { SchemaForm, type SchemaFormHandle } from "@/components/schema-form/schema-form";
 import { applyHintsToSchema, hintsToUiSchema } from "@/components/schema-form/ui-hints";
 import { useTenant } from "@/tenant/tenant-context";
@@ -25,23 +23,14 @@ const STEPS = ["Configure", "Review", "Status"] as const;
 
 function StepIndicator({ current }: { current: number }) {
   return (
-    <ol className="flex items-center gap-2 text-sm" aria-label="Wizard progress">
+    <ol className="stepper" aria-label="Wizard progress">
       {STEPS.map((label, i) => (
-        <li key={label} className="flex items-center gap-2">
-          <span
-            className={
-              i <= current
-                ? "flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground"
-                : "flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs text-muted-foreground"
-            }
-            aria-current={i === current ? "step" : undefined}
-          >
-            {i + 1}
-          </span>
-          <span className={i <= current ? "font-medium" : "text-muted-foreground"}>
-            {label}
-          </span>
-          {i < STEPS.length - 1 && <span className="mx-1 text-muted-foreground">→</span>}
+        <li
+          key={label}
+          className={`step${i === current ? " active" : ""}${i < current ? " completed" : ""}`}
+          aria-current={i === current ? "step" : undefined}
+        >
+          {label}
         </li>
       ))}
     </ol>
@@ -60,52 +49,49 @@ function DeployStatus({ deployId }: { deployId: string }) {
 
   if (!deploy) {
     return (
-      <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
-        <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Starting deploy…
+      <div className="wizard-status-pending">
+        <Spinner size="sm" aria-hidden /> Starting deploy…
       </div>
     );
   }
 
   if (deploy.phase === "failed") {
     return (
-      <div className="py-6 text-center">
-        <p className="font-medium text-destructive">Deploy failed</p>
-        {deploy.message && (
-          <p className="text-sm text-muted-foreground">{deploy.message}</p>
-        )}
-      </div>
+      <Alert variant="danger">
+        <span>
+          Deploy failed{deploy.message ? ` — ${deploy.message}` : ""}
+        </span>
+      </Alert>
     );
   }
 
   const terminal = deploy.phase === "healthy";
   return (
-    <div className="flex flex-col items-center gap-3 py-6 text-center">
+    <div className="wizard-status">
       {terminal ? (
-        <CheckCircle2 className="h-10 w-10 text-emerald-600" aria-hidden />
+        <CheckCircle2 size={40} className="wizard-status-ok" aria-hidden />
       ) : (
-        <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
+        <Spinner size="lg" aria-hidden />
       )}
-      <p className="font-medium">
+      <p className="wizard-status-title">
         {terminal ? "Deploy healthy" : `Deploy in progress — ${deploy.phase}`}
       </p>
-      <div className="flex gap-2">
+      <div className="wizard-status-badges">
         <Badge variant={terminal ? "success" : "warning"}>{deploy.phase}</Badge>
-        <Badge variant="muted">
+        <span className="tag">
           {deploy.gitopsMode === "pull-request" ? "pull request" : "direct commit"}
-        </Badge>
+        </span>
       </div>
-      <div className="flex gap-2">
+      <div className="wizard-status-actions">
         {deploy.prUrl && (
-          <Button asChild variant="outline" size="sm">
-            <a href={deploy.prUrl} target="_blank" rel="noreferrer">
-              Open pull request
-            </a>
-          </Button>
+          <a href={deploy.prUrl} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">
+            Open pull request
+          </a>
         )}
         {deploy.instanceId && (
-          <Button asChild size="sm">
+          <span className="btn btn-accent btn-sm">
             <InstanceLink deploy={deploy} />
-          </Button>
+          </span>
         )}
       </div>
     </div>
@@ -152,16 +138,14 @@ export function DeployWizardPage() {
   );
 
   if (item.error) {
-    return (
-      <Card>
-        <CardContent className="py-12 text-center text-sm text-destructive">
-          Failed to load catalog item: {item.error.message}
-        </CardContent>
-      </Card>
-    );
+    return <Alert variant="danger">Failed to load catalog item: {item.error.message}</Alert>;
   }
   if (!item.data || !schema) {
-    return <p className="text-sm text-muted-foreground">Loading deploy wizard…</p>;
+    return (
+      <div className="overview-card-skeleton" aria-busy="true">
+        <Spinner size="md" />
+      </div>
+    );
   }
   const itemData = item.data;
 
@@ -218,39 +202,35 @@ export function DeployWizardPage() {
     (clusters.data ?? []).find((c) => c.id === clusterId)?.name ?? clusterId;
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          Deploy {itemData.displayName}
-        </h1>
-        <p className="text-sm text-muted-foreground">Version {pinned}</p>
-      </div>
+    <div className="wizard">
+      <PageHeader
+        breadcrumb="Deliver / Catalog / Deploy"
+        title={`Deploy ${itemData.displayName}`}
+        lede={`Version ${pinned}`}
+      />
       <StepIndicator current={step} />
 
       {step === 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle>Configure</CardTitle>
-            <CardDescription>
-              Fill in the desired state for this instance.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="instance-name">Instance name</Label>
-              <Input
-                id="instance-name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="orders-db"
-              />
-              {nameError && <p className="text-xs text-destructive">{nameError}</p>}
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="target-cluster">Target cluster</Label>
+          <div className="card-header">
+            <h2 className="mono-label">Configure</h2>
+          </div>
+          <div className="card-body wizard-body">
+            <Input
+              id="instance-name"
+              label="Instance name"
+              value={name}
+              onChange={(value) => setName(value)}
+              placeholder="orders-db"
+              error={nameError ?? undefined}
+            />
+            <div className="form-group">
+              <label htmlFor="target-cluster" className="form-label">
+                Target cluster
+              </label>
               <select
                 id="target-cluster"
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
+                className="select-native"
                 value={clusterId}
                 onChange={(e) => setClusterId(e.target.value)}
               >
@@ -269,70 +249,66 @@ export function DeployWizardPage() {
               formData={formData}
               onChange={setFormData}
             />
-            {submitError && <p className="text-sm text-destructive">{submitError}</p>}
-            <div className="flex justify-end gap-2">
-              <Button variant="ghost" asChild>
-                <Link to={tenantLink(tenant, `catalog/${itemData.id}`)}>Cancel</Link>
+            {submitError && <Alert variant="danger">{submitError}</Alert>}
+            <div className="wizard-actions">
+              <Link to={tenantLink(tenant, `catalog/${itemData.id}`)} className="btn btn-ghost">
+                Cancel
+              </Link>
+              <Button variant="accent" onClick={next}>
+                Next
               </Button>
-              <Button onClick={next}>Next</Button>
             </div>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {step === 1 && (
         <Card>
-          <CardHeader>
-            <CardTitle>Review</CardTitle>
-            <CardDescription>
-              Confirm the desired state. The orchestrator renders this to tenant Git.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-              <dt className="text-muted-foreground">Name</dt>
+          <div className="card-header">
+            <h2 className="mono-label">Review</h2>
+          </div>
+          <div className="card-body wizard-body">
+            <dl className="wizard-review">
+              <dt>Name</dt>
               <dd>{name}</dd>
-              <dt className="text-muted-foreground">Catalog item</dt>
+              <dt>Catalog item</dt>
               <dd>{itemData.displayName}</dd>
-              <dt className="text-muted-foreground">Version</dt>
+              <dt>Version</dt>
               <dd>{pinned}</dd>
-              <dt className="text-muted-foreground">Target cluster</dt>
+              <dt>Target cluster</dt>
               <dd>{clusterName}</dd>
             </dl>
             {itemData.approvalPolicy !== "auto" && (
-              <Badge variant="warning">This deploy requires approval before it is applied</Badge>
+              <Alert variant="info">This deploy requires approval before it is applied</Alert>
             )}
-            <pre className="max-h-72 overflow-auto rounded-md bg-muted p-3 font-mono text-xs">
-              {JSON.stringify(reviewSpec, null, 2)}
-            </pre>
+            <pre className="code-block">{JSON.stringify(reviewSpec, null, 2)}</pre>
             {policyDenial && (
               <PolicyDenialNotice
                 reason={policyDenial.reason}
                 remediation={policyDenial.remediation}
               />
             )}
-            {submitError && <p className="text-sm text-destructive">{submitError}</p>}
-            <div className="flex justify-end gap-2">
+            {submitError && <Alert variant="danger">{submitError}</Alert>}
+            <div className="wizard-actions">
               <Button variant="ghost" onClick={() => setStep(0)}>
                 Back
               </Button>
-              <Button onClick={submit} disabled={submitting}>
+              <Button variant="glow-accent" onClick={submit} disabled={submitting}>
                 {submitting ? "Submitting…" : "Deploy"}
               </Button>
             </div>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {step === 2 && deployId && (
         <Card>
-          <CardHeader>
-            <CardTitle>Deploy status</CardTitle>
-            <CardDescription>Live status reported back from the tenant cluster.</CardDescription>
-          </CardHeader>
-          <CardContent>
+          <div className="card-header">
+            <h2 className="mono-label">Deploy status</h2>
+          </div>
+          <div className="card-body">
             <DeployStatus deployId={deployId} />
-          </CardContent>
+          </div>
         </Card>
       )}
     </div>

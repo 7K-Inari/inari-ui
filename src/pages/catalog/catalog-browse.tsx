@@ -6,9 +6,9 @@ import type { CatalogFilters } from "@/api/catalog";
 import { listClusters } from "@/api/clusters";
 import { useAsyncResource } from "@/api/hooks";
 import type { CatalogItemSummary, CatalogSort, CatalogSource } from "@/api/types";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, Card, Skeleton } from "7k-design-system/react";
+
+import { PageHeader } from "@/components/page-header";
 import type { CatalogViewMode } from "@/components/catalog/catalog-filter-bar";
 import { CatalogFilterBar } from "@/components/catalog/catalog-filter-bar";
 import { TemplateScopeBadge } from "@/components/templates/template-scope-badge";
@@ -17,19 +17,18 @@ import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
 
-const SOURCE_BADGE: Record<CatalogSource, { label: string; variant: "default" | "secondary" | "warning" }> = {
-  curated: { label: "Curated", variant: "default" },
-  discovered: { label: "Discovered", variant: "secondary" },
-  platform: { label: "Platform", variant: "warning" },
-  template: { label: "Template", variant: "secondary" },
+// Source is not machine state — neutral tag styling everywhere (design §2).
+const SOURCE_LABEL: Record<CatalogSource, string> = {
+  curated: "Curated",
+  discovered: "Discovered",
+  platform: "Platform",
+  template: "Template",
 };
 
 // Unknown/future sources must never crash the page (the catalog is a
 // projection of the server; new sources land there first).
-const SOURCE_BADGE_FALLBACK = { label: "Unknown", variant: "secondary" as const };
-
-function sourceBadge(source: string) {
-  return SOURCE_BADGE[source as CatalogSource] ?? SOURCE_BADGE_FALLBACK;
+function sourceLabel(source: string) {
+  return SOURCE_LABEL[source as CatalogSource] ?? "Unknown";
 }
 
 const PAGE_SIZE = 24;
@@ -110,13 +109,8 @@ export function CatalogBrowsePage() {
   const currentPage = Math.min(state.page, pageCount - 1);
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Catalog</h1>
-        <p className="text-sm text-muted-foreground">
-          Curated packages, discovered capabilities, and platform apps available to this scope.
-        </p>
-      </div>
+    <div>
+      <PageHeader breadcrumb="Deliver / Catalog" title="Catalog" />
 
       <CatalogFilterBar
         q={state.q}
@@ -131,34 +125,29 @@ export function CatalogBrowsePage() {
         onClear={() => setSearchParams(new URLSearchParams())}
       />
 
-      {result.error && (
-        <Card>
-          <CardContent className="py-6 text-sm text-destructive">
-            Failed to load catalog: {result.error.message}
-          </CardContent>
-        </Card>
-      )}
+      {result.error && <Alert variant="danger">Failed to load catalog: {result.error.message}</Alert>}
 
       {!result.error && result.loading && !result.data && (
-        <p className="text-sm text-muted-foreground">Loading catalog…</p>
+        <div className="catalog-grid" aria-busy="true">
+          {Array.from({ length: 8 }, (_, i) => (
+            <Skeleton key={i} height={120} />
+          ))}
+        </div>
       )}
 
       {result.data && items.length === 0 && (
-        <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
-            <p>No catalog items match the current filters.</p>
-            {state.category && state.cluster && (
-              <p className="mt-2">
-                Discovered capabilities have no category; clear the category filter to see what
-                this cluster already provides.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+        <div className="empty">
+          <span className="empty-title">No items match</span>
+          <span className="empty-text">
+            No catalog items match the current filters.
+            {state.category && state.cluster &&
+              " Discovered capabilities have no category; clear the category filter to see what this cluster already provides."}
+          </span>
+        </div>
       )}
 
       {items.length > 0 && state.view === "grid" && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="catalog-grid">
           {items.map((item) => (
             <CatalogCard key={item.id} item={item} tenant={tenant} />
           ))}
@@ -166,78 +155,60 @@ export function CatalogBrowsePage() {
       )}
 
       {items.length > 0 && state.view === "list" && (
-        <Card>
-          <CardContent className="p-0">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-muted-foreground">
-                  <th className="px-4 py-2 font-medium">Name</th>
-                  <th className="px-4 py-2 font-medium">Source</th>
-                  <th className="px-4 py-2 font-medium">Category</th>
-                  <th className="px-4 py-2 font-medium">Latest version</th>
-                  <th className="px-4 py-2 font-medium">Added</th>
-                </tr>
-              </thead>
-              <tbody>
-                {items.map((item) => (
-                  <tr key={item.id} className="border-b last:border-0">
-                    <td className="px-4 py-2">
-                      <Link
-                        to={tenantLink(tenant, `catalog/${item.id}`)}
-                        className="font-medium hover:underline"
-                      >
-                        {item.displayName}
-                      </Link>
-                      <div className="text-xs text-muted-foreground">{item.description}</div>
-                    </td>
-                    <td className="px-4 py-2">
-                      <Badge variant={sourceBadge(item.source).variant}>
-                        {sourceBadge(item.source).label}
-                      </Badge>
-                      {item.scope && (
-                        <>
-                          {" "}
-                          <TemplateScopeBadge scope={item.scope} />
-                        </>
-                      )}
-                    </td>
-                    <td className="px-4 py-2">{item.category || "—"}</td>
-                    <td className="px-4 py-2">
-                      {item.latestVersion ? `v${item.latestVersion}` : "—"}
-                    </td>
-                    <td className="px-4 py-2 text-muted-foreground">
-                      {item.createdAt ? formatRelative(item.createdAt) : "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </CardContent>
-        </Card>
+        <table className="table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Source</th>
+              <th>Category</th>
+              <th>Latest version</th>
+              <th>Added</th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((item) => (
+              <tr key={item.id}>
+                <td>
+                  <Link to={tenantLink(tenant, `catalog/${item.id}`)} className="table-link">
+                    {item.displayName}
+                  </Link>
+                  <div className="mono-caption">{item.description}</div>
+                </td>
+                <td>
+                  <span className="tag">{sourceLabel(item.source)}</span>{" "}
+                  {item.scope && <TemplateScopeBadge scope={item.scope} />}
+                </td>
+                <td className="mono">{item.category || "—"}</td>
+                <td className="mono">{item.latestVersion ? `v${item.latestVersion}` : "—"}</td>
+                <td className="mono">{item.createdAt ? formatRelative(item.createdAt) : "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
 
       {total > PAGE_SIZE && (
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>
+        <div className="pagination-row">
+          <span className="mono-caption">
             Page {currentPage + 1} of {pageCount} ({total} items)
           </span>
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="outline"
+          <div className="pagination">
+            <button
+              type="button"
+              className="page-btn"
               disabled={currentPage === 0}
               onClick={() => update({ page: currentPage - 1 })}
             >
               Previous
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
+            </button>
+            <button
+              type="button"
+              className="page-btn"
               disabled={currentPage >= pageCount - 1}
               onClick={() => update({ page: currentPage + 1 })}
             >
               Next
-            </Button>
+            </button>
           </div>
         </div>
       )}
@@ -247,31 +218,29 @@ export function CatalogBrowsePage() {
 
 function CatalogCard({ item, tenant }: { item: CatalogItemSummary; tenant: string }) {
   return (
-    <Card className="flex flex-col">
-      <CardHeader>
-        <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-base">
-            <Link to={tenantLink(tenant, `catalog/${item.id}`)} className="hover:underline">
-              {item.displayName}
-            </Link>
-          </CardTitle>
-          <Badge variant={sourceBadge(item.source).variant}>{sourceBadge(item.source).label}</Badge>
+    <Card className="catalog-card">
+      <div className="card-header catalog-card-header">
+        <Link to={tenantLink(tenant, `catalog/${item.id}`)} className="table-link catalog-card-title">
+          {item.displayName}
+        </Link>
+        <span className="tag">{sourceLabel(item.source)}</span>
+      </div>
+      <div className="card-body catalog-card-body">
+        <p className="catalog-card-desc">{item.description}</p>
+        <div className="catalog-card-meta">
+          {item.scope && <TemplateScopeBadge scope={item.scope} />}
+          {item.category && <span className="tag">{item.category}</span>}
+          {item.latestVersion ? (
+            <>
+              <span className="code-inline">v{item.latestVersion}</span>
+              {item.latestChannel && <span className="tag">{item.latestChannel}</span>}
+            </>
+          ) : (
+            <span aria-label="no version published">—</span>
+          )}
+          <CatalogCardSlots item={item} />
         </div>
-        <CardDescription>{item.description}</CardDescription>
-      </CardHeader>
-      <CardContent className="mt-auto flex flex-wrap items-center gap-2 pt-0 text-xs text-muted-foreground">
-        {item.scope && <TemplateScopeBadge scope={item.scope} />}
-        {item.category && <Badge variant="muted">{item.category}</Badge>}
-        {item.latestVersion ? (
-          <>
-            <span>v{item.latestVersion}</span>
-            {item.latestChannel && <Badge variant="muted">{item.latestChannel}</Badge>}
-          </>
-        ) : (
-          <span aria-label="no version published">—</span>
-        )}
-        <CatalogCardSlots item={item} />
-      </CardContent>
+      </div>
     </Card>
   );
 }

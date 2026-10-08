@@ -8,8 +8,8 @@ import type {
 import validator from "@rjsf/validator-ajv8";
 import * as React from "react";
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Checkbox, Input } from "7k-design-system/react";
+
 import { SlotBoundary } from "@/ext/slot-boundary";
 import { useExtensionFormWidgets } from "@/ext/slots";
 import { cn } from "@/lib/utils";
@@ -24,12 +24,12 @@ function FieldTemplate({
   displayLabel,
 }: FieldTemplateProps) {
   return (
-    <div className="space-y-1.5">
+    <div className="form-group">
       {displayLabel && label && (
-        <Label htmlFor={id}>
+        <label htmlFor={id} className="form-label">
           {label}
-          {required ? <span className="text-destructive"> *</span> : null}
-        </Label>
+          {required ? <span className="field-required"> *</span> : null}
+        </label>
       )}
       {children}
       {description}
@@ -54,9 +54,7 @@ function TextWidget({
       required={required}
       disabled={disabled || readonly}
       placeholder={placeholder}
-      onChange={(e) =>
-        onChange(e.target.value === "" ? undefined : e.target.value)
-      }
+      onChange={(v) => onChange(v === "" ? undefined : v)}
     />
   );
 }
@@ -79,9 +77,9 @@ function NumberWidget({
       disabled={disabled || readonly}
       min={schema.minimum as number | undefined}
       max={schema.maximum as number | undefined}
-      onChange={(e) => {
-        if (e.target.value === "") return onChange(undefined);
-        const n = Number(e.target.value);
+      onChange={(v) => {
+        if (v === "") return onChange(undefined);
+        const n = Number(v);
         onChange(Number.isNaN(n) ? undefined : n);
       }}
     />
@@ -98,18 +96,14 @@ function CheckboxWidget({
   label,
 }: WidgetProps) {
   return (
-    <label htmlFor={id} className="flex items-center gap-2 text-sm">
-      <input
-        id={id}
-        type="checkbox"
-        className="h-4 w-4 rounded border-input accent-primary"
-        checked={Boolean(value)}
-        required={required}
-        disabled={disabled || readonly}
-        onChange={(e) => onChange(e.target.checked)}
-      />
-      {label}
-    </label>
+    <Checkbox
+      id={id}
+      checked={Boolean(value)}
+      required={required}
+      disabled={disabled || readonly}
+      onChange={(e) => onChange(e.target.checked)}
+      label={label}
+    />
   );
 }
 
@@ -125,7 +119,7 @@ function TextareaWidget({
   return (
     <textarea
       id={id}
-      className="flex min-h-20 w-full rounded-md border border-input bg-background px-3 py-2 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+      className="textarea"
       value={(value as string) ?? ""}
       required={required}
       disabled={disabled || readonly}
@@ -149,7 +143,7 @@ function SelectWidget({
   return (
     <select
       id={id}
-      className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+      className="select-native"
       value={value === undefined || value === null ? "" : String(value)}
       required={required}
       disabled={disabled || readonly}
@@ -173,7 +167,7 @@ function SelectWidget({
 function ErrorListTemplate({ errors }: { errors?: { stack: string }[] }) {
   if (!errors || errors.length === 0) return null;
   return (
-    <ul className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+    <ul className="alert alert-danger schema-form-errors">
       {errors.map((e, i) => (
         <li key={i}>{e.stack}</li>
       ))}

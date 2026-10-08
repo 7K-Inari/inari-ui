@@ -4,10 +4,9 @@ import { Link, useParams } from "react-router-dom";
 import { getCatalogItem } from "@/api/catalog";
 import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Alert, Card, Skeleton } from "7k-design-system/react";
+
+import { PageHeader } from "@/components/page-header";
 import { SchemaForm } from "@/components/schema-form/schema-form";
 import { TemplateScopeBadge } from "@/components/templates/template-scope-badge";
 import { applyHintsToSchema, hintsToUiSchema } from "@/components/schema-form/ui-hints";
@@ -34,105 +33,106 @@ export function CatalogItemDetailPage() {
   if (error) {
     const notFound = error instanceof ApiError && error.status === 404;
     return (
-      <Card>
-        <CardContent className="py-12 text-center text-sm text-muted-foreground">
-          {notFound ? "Catalog item not found." : `Failed to load catalog item: ${error.message}`}
-        </CardContent>
-      </Card>
+      <Alert variant="danger">
+        {notFound ? "Catalog item not found." : `Failed to load catalog item: ${error.message}`}
+      </Alert>
     );
   }
 
   if (loading || !item) {
-    return <p className="text-sm text-muted-foreground">Loading catalog item…</p>;
+    return (
+      <div className="overview-card-skeleton" aria-busy="true">
+        <Skeleton height={32} width="40%" />
+        <Skeleton height={200} />
+      </div>
+    );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-semibold tracking-tight">{item.displayName}</h1>
-            <Badge variant="secondary">{item.source}</Badge>
-            {item.scope && <TemplateScopeBadge scope={item.scope} />}
-            {item.approvalPolicy !== "auto" && (
-              <Badge variant="warning">Approval required</Badge>
-            )}
-          </div>
-          <p className="text-sm text-muted-foreground">{item.description}</p>
-        </div>
-        {pinned ? (
-          <Button asChild>
+    <div>
+      <PageHeader
+        breadcrumb="Deliver / Catalog"
+        title={item.displayName}
+        lede={item.description}
+        actions={
+          pinned ? (
             <Link
               to={`${tenantLink(tenant, `catalog/${item.id}/deploy`)}?version=${encodeURIComponent(pinned)}`}
+              className="btn btn-glow-accent"
             >
               Deploy
             </Link>
-          </Button>
-        ) : (
-          <Button disabled>Deploy</Button>
-        )}
+          ) : (
+            <button type="button" className="btn btn-glow-accent" disabled>
+              Deploy
+            </button>
+          )
+        }
+      />
+      <div className="catalog-detail-tags">
+        <span className="tag">{item.source}</span>
+        {item.scope && <TemplateScopeBadge scope={item.scope} />}
+        {item.approvalPolicy !== "auto" && <span className="badge badge-warning">Approval required</span>}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Schema preview</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {schema && (
-                <SchemaForm
-                  schema={schema}
-                  uiSchema={uiSchema}
-                  formData={{}}
-                  onChange={() => undefined}
-                  disabled
-                />
-              )}
-            </CardContent>
-          </Card>
-        </div>
+      <div className="catalog-detail-grid">
+        <Card>
+          <div className="card-header">
+            <span className="mono-label">Schema preview</span>
+          </div>
+          <div className="card-body">
+            {schema && (
+              <SchemaForm
+                schema={schema}
+                uiSchema={uiSchema}
+                formData={{}}
+                onChange={() => undefined}
+                disabled
+              />
+            )}
+          </div>
+        </Card>
 
-        <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Versions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {item.versions.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No versions published yet.</p>
-              ) : (
-                <>
-                  <div className="space-y-1">
-                    <Label htmlFor="catalog-version">Version</Label>
-                    <select
-                      id="catalog-version"
-                      className="flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm"
-                      value={pinned}
-                      onChange={(e) => setVersion(e.target.value)}
-                    >
-                      {item.versions.map((v) => (
-                        <option key={v.version} value={v.version}>
-                          {v.version}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <ul className="space-y-1 text-sm">
+        <Card>
+          <div className="card-header">
+            <span className="mono-label">Versions</span>
+          </div>
+          <div className="card-body wizard-body">
+            {item.versions.length === 0 ? (
+              <div className="empty">No versions published yet.</div>
+            ) : (
+              <>
+                <div className="form-group">
+                  <label htmlFor="catalog-version" className="form-label">
+                    Version
+                  </label>
+                  <select
+                    id="catalog-version"
+                    className="select-native"
+                    value={pinned}
+                    onChange={(e) => setVersion(e.target.value)}
+                  >
                     {item.versions.map((v) => (
-                      <li key={v.version} className="flex items-center gap-2">
-                        <span className={v.version === pinned ? "font-medium" : ""}>
-                          {v.version}
-                        </span>
-                        <Badge variant="muted">{v.channel}</Badge>
-                      </li>
+                      <option key={v.version} value={v.version}>
+                        {v.version}
+                      </option>
                     ))}
-                  </ul>
-                </>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+                  </select>
+                </div>
+                <ul className="list">
+                  {item.versions.map((v) => (
+                    <li key={v.version} className="list-item overview-count-row">
+                      <span className={`mono-data${v.version === pinned ? " overview-stat-accent" : ""}`}>
+                        {v.version}
+                      </span>
+                      <span className="tag">{v.channel}</span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+        </Card>
       </div>
     </div>
   );
