@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Stepper } from "@/components/stepper";
 import { Link, useNavigate } from "react-router-dom";
 import { CheckCircle2, Loader2 } from "lucide-react";
 
@@ -17,28 +18,6 @@ const ROLE_ARN_PATTERN = /^arn:aws:iam::\d{12}:role\/.+$/;
 
 const STEPS = ["Account details", "Create the trust role", "Validate"] as const;
 
-function StepIndicator({ current }: { current: number }) {
-  return (
-    <ol className="flex items-center gap-2 text-sm" aria-label="Wizard progress">
-      {STEPS.map((label, i) => (
-        <li key={label} className="flex items-center gap-2">
-          <span
-            className={
-              i <= current
-                ? "flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground"
-                : "flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs text-muted-foreground"
-            }
-            aria-current={i === current ? "step" : undefined}
-          >
-            {i + 1}
-          </span>
-          <span className={i <= current ? "font-medium" : "text-muted-foreground"}>{label}</span>
-          {i < STEPS.length - 1 && <span className="mx-1 text-muted-foreground">→</span>}
-        </li>
-      ))}
-    </ol>
-  );
-}
 
 // The trust role values the tenant must wire into their IAM role. The platform
 // cluster OIDC provider must be trusted with these exact conditions.
@@ -172,13 +151,13 @@ export function ConnectAccountWizardPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Connect AWS account</h1>
+        <h1 className="page-header-title">Connect AWS account</h1>
         <p className="text-sm text-muted-foreground">
           Grant the platform access to an AWS account via a trust role. No access keys or
           credentials are stored.
         </p>
       </div>
-      <StepIndicator current={step} />
+      <Stepper steps={STEPS} current={step} />
 
       {step === 0 && (
         <Card>

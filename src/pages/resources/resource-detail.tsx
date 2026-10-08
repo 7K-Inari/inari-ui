@@ -308,7 +308,7 @@ export function ResourceDetailPage() {
       <div className="flex items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-2xl font-semibold tracking-tight">{resource.name}</h1>
+            <h1 className="page-header-title">{resource.name}</h1>
             <HealthBadge health={resource.health} />
             <Badge variant="neutral">{resource.status}</Badge>
           </div>

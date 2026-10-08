@@ -401,7 +401,7 @@ export function FleetOverviewPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Fleet</h1>
+        <h1 className="page-header-title">Fleet</h1>
         <p className="text-sm text-muted-foreground">
           ClusterSets, staged rollouts, drift, and agent upgrade channels.
         </p>

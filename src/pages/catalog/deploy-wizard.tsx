@@ -12,6 +12,7 @@ import { useAuth } from "@/auth/auth-context";
 import { Alert, Badge, Button, Card, Input, Spinner } from "7k-design-system/react";
 
 import { PageHeader } from "@/components/page-header";
+import { Stepper } from "@/components/stepper";
 import { PolicyDenialNotice } from "@/components/policy-denial";
 import { SchemaForm, type SchemaFormHandle } from "@/components/schema-form/schema-form";
 import { applyHintsToSchema, hintsToUiSchema } from "@/components/schema-form/ui-hints";
@@ -21,21 +22,6 @@ import { tenantLink } from "@/tenant/tenant-link";
 const NAME_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 const STEPS = ["Configure", "Review", "Status"] as const;
 
-function StepIndicator({ current }: { current: number }) {
-  return (
-    <ol className="stepper" aria-label="Wizard progress">
-      {STEPS.map((label, i) => (
-        <li
-          key={label}
-          className={`step${i === current ? " active" : ""}${i < current ? " completed" : ""}`}
-          aria-current={i === current ? "step" : undefined}
-        >
-          {label}
-        </li>
-      ))}
-    </ol>
-  );
-}
 
 function DeployStatus({ deployId }: { deployId: string }) {
   const [stopped, setStopped] = React.useState(false);
@@ -208,7 +194,7 @@ export function DeployWizardPage() {
         title={`Deploy ${itemData.displayName}`}
         lede={`Version ${pinned}`}
       />
-      <StepIndicator current={step} />
+      <Stepper steps={STEPS} current={step} />
 
       {step === 0 && (
         <Card>

@@ -97,7 +97,7 @@ export function CloudAccountDetailPage() {
             </Link>{" "}
             / <span className="font-mono">{account.accountId}</span>
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight font-mono">
+          <h1 className="page-header-title font-mono">
             {account.accountId}
           </h1>
           <p className="text-sm text-muted-foreground">

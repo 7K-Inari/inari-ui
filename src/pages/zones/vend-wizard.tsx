@@ -54,7 +54,7 @@ export function VendZoneWizardPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Vend new zone</h1>
+        <h1 className="page-header-title">Vend new zone</h1>
         <p className="text-sm text-muted-foreground">
           A zone provisions a dedicated cloud account, trust, an EKS cluster, and platform wiring.
         </p>

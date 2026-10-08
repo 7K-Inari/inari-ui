@@ -136,7 +136,7 @@ export function ZoneDetailPage() {
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight">{zone.name}</h1>
+            <h1 className="page-header-title">{zone.name}</h1>
             <ZoneStatusBadge status={zone.status} />
             <Badge variant="neutral">{zone.tier}</Badge>
           </div>

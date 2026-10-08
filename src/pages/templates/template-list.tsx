@@ -15,7 +15,7 @@ export function TemplateListPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Templates</h1>
+        <h1 className="page-header-title">Templates</h1>
         <p className="text-sm text-muted-foreground">
           Golden-path scaffolds: repo, pipeline, catalog entry, and tenant RBAC in one flow.
         </p>

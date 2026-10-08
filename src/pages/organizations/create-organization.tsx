@@ -76,7 +76,7 @@ export function CreateOrganizationPage() {
     <div className="flex min-h-screen items-center justify-center p-6">
       <div className="w-full max-w-xl space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Create organization</h1>
+          <h1 className="page-header-title">Create organization</h1>
           <p className="text-sm text-muted-foreground">
             A new organization provisions a Keycloak realm, DNS zone, and tenant
             namespaces on the platform cluster.

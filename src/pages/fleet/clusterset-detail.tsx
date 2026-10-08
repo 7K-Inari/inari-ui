@@ -44,7 +44,7 @@ export function ClusterSetDetailPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{data.name}</h1>
+        <h1 className="page-header-title">{data.name}</h1>
         <p className="text-sm text-muted-foreground">ClusterSet · label-targeted fleet group</p>
       </div>
 

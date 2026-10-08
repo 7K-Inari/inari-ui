@@ -74,7 +74,7 @@ export function AuditLogPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Audit log</h1>
+          <h1 className="page-header-title">Audit log</h1>
           <p className="text-sm text-muted-foreground">
             Every control-plane action for this tenant.
           </p>

@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Stepper } from "@/components/stepper";
 import { Link, useParams } from "react-router-dom";
 import { CheckCircle2, Circle, Loader2, XCircle } from "lucide-react";
 
@@ -34,30 +35,6 @@ const STEPS = ["Configure", "Review", "Status"] as const;
 // group, RBAC) into every scaffold; the server creates repo + pipeline +
 // catalog entry in one run.
 
-function StepIndicator({ current }: { current: number }) {
-  return (
-    <ol className="flex items-center gap-2 text-sm" aria-label="Wizard progress">
-      {STEPS.map((label, i) => (
-        <li key={label} className="flex items-center gap-2">
-          <span
-            className={
-              i <= current
-                ? "flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground"
-                : "flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs text-muted-foreground"
-            }
-            aria-current={i === current ? "step" : undefined}
-          >
-            {i + 1}
-          </span>
-          <span className={i <= current ? "font-medium" : "text-muted-foreground"}>
-            {label}
-          </span>
-          {i < STEPS.length - 1 && <span className="mx-1 text-muted-foreground">→</span>}
-        </li>
-      ))}
-    </ol>
-  );
-}
 
 function StepList({ run }: { run: ScaffoldRunViewModel }) {
   if (run.steps.length === 0) return null;
@@ -295,12 +272,12 @@ export function ScaffoldWizardPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Scaffold {tpl.displayName}</h1>
+        <h1 className="page-header-title">Scaffold {tpl.displayName}</h1>
         <p className="text-sm text-muted-foreground">
           Template v{tpl.version} · creates repo, pipeline, and catalog entry
         </p>
       </div>
-      <StepIndicator current={step} />
+      <Stepper steps={STEPS} current={step} />
 
       {step === 0 && (
         <Card>

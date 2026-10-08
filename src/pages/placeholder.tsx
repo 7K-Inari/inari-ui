@@ -18,7 +18,7 @@ export function PlaceholderPage({
 
   return (
     <div className="space-y-2">
-      <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+      <h1 className="page-header-title">{title}</h1>
       <p className="text-sm text-muted-foreground">{description}</p>
       <p className="text-xs text-muted-foreground">
         Scope: <span className="font-mono">{scope}</span> — this page is a

@@ -60,7 +60,7 @@ export function PlatformAccessPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-4 p-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Platform access</h1>
+        <h1 className="page-header-title">Platform access</h1>
         <p className="text-sm text-muted-foreground">
           Platform administrators can create organizations and manage
           platform-level settings.

@@ -51,7 +51,7 @@ export function ZoneListPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Tenant Zones</h1>
+          <h1 className="page-header-title">Tenant Zones</h1>
           <p className="text-sm text-muted-foreground">
             Isolation zones carved out for tenants — cloud account, EKS cluster, and wiring per
             zone.

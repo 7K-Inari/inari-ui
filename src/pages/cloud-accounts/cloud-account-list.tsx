@@ -22,7 +22,7 @@ export function CloudAccountListPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Cloud Accounts</h1>
+          <h1 className="page-header-title">Cloud Accounts</h1>
           <p className="text-sm text-muted-foreground">
             AWS accounts connected via trust roles — no tenant credentials are stored on the
             platform.

@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Stepper } from "@/components/stepper";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, Copy, Loader2 } from "lucide-react";
 
@@ -20,30 +21,6 @@ const WAIT_TIMEOUT_MS = 10 * 60_000;
 
 const STEPS = ["Details", "Install", "Connect"] as const;
 
-function StepIndicator({ current }: { current: number }) {
-  return (
-    <ol className="flex items-center gap-2 text-sm" aria-label="Wizard progress">
-      {STEPS.map((label, i) => (
-        <li key={label} className="flex items-center gap-2">
-          <span
-            className={
-              i <= current
-                ? "flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground"
-                : "flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs text-muted-foreground"
-            }
-            aria-current={i === current ? "step" : undefined}
-          >
-            {i + 1}
-          </span>
-          <span className={i <= current ? "font-medium" : "text-muted-foreground"}>
-            {label}
-          </span>
-          {i < STEPS.length - 1 && <span className="mx-1 text-muted-foreground">→</span>}
-        </li>
-      ))}
-    </ol>
-  );
-}
 
 function parseLabels(input: string): Record<string, string> {
   const labels: Record<string, string> = {};
@@ -272,13 +249,13 @@ export function RegisterWizardPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Register cluster</h1>
+        <h1 className="page-header-title">Register cluster</h1>
         <p className="text-sm text-muted-foreground">
           Connect a Kubernetes cluster to Inari. The agent dials out — no inbound access or
           kubeconfig required.
         </p>
       </div>
-      <StepIndicator current={step} />
+      <Stepper steps={STEPS} current={step} />
 
       {step === 0 && (
         <Card>

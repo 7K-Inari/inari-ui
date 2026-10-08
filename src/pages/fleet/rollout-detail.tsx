@@ -157,7 +157,7 @@ export function RolloutDetailPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{data.name}</h1>
+          <h1 className="page-header-title">{data.name}</h1>
           <p className="text-sm text-muted-foreground">
             {data.target.kind} <span className="font-mono text-xs">{data.target.name}@{data.target.version}</span>{" "}
             · stage {Math.min(data.currentStage + 1, data.stages.length)}/{data.stages.length}

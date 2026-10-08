@@ -75,7 +75,7 @@ export function ResourceListPage() {
     <div className="space-y-4">
       {confirmDialog}
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Resources</h1>
+        <h1 className="page-header-title">Resources</h1>
         <p className="text-sm text-muted-foreground">
           All deployed instances across clusters and cloud accounts in this scope.
         </p>
