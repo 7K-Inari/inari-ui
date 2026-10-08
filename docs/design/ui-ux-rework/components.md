@@ -43,6 +43,13 @@ Project scope: `<html data-project="inari">` (or `ProjectProvider defaultProject
 | Audit | `.table`, `Input`, `Select`, `Drawer`, `.code-block` |
 | Extensions | `Card`, `.tag`, `Badge`, `.menu`, `Button` |
 | Settings | `Nav` vertical, `.nav-item-accent` |
+| All-tenants home | `.stat`, `.list`, `Badge`, `.tag`, `Button` |
+| Resources | `.table`, `.status-dot`, `.tag` filters, `Input`, `Select`, `Button` (accent sm), `.alert-info` |
+| Zones | `.table`, `Badge` (state), `.stepper`, `Button` |
+| Cloud accounts | `Card` (`.grid-3`), `.icon-box`, `Badge` (state), `.stepper`, `.alert-success/.alert-danger` |
+| Organizations | `Card`, `.form-group`, `Input`, `Select`, `.btn-accent` |
+| Deploy/scaffold/register/vend/connect wizards | `.stepper`, `Input`, `Select`, `.code-block`, `.alert-info`, `Button` |
+| ext-argocd slots | `.card`, `.list`, `.tag` (kind + GITOPS), `Badge` (health map), `.btn-ghost.btn-sm` |
 
 ## 3. New components needed (not in DS 1.1.1) → local DS build
 
