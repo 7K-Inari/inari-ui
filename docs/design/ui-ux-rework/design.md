@@ -15,11 +15,15 @@
 | Area | Screens (current) | Notes |
 |---|---|---|
 | Shell | `AppShell`, `Sidebar`, `Header`, `TenantSwitcher` | Sidebar 256px, 4 nav sections (Deliver / Operate / Govern), header with tenant switcher, theme toggle, user menu |
-| Overview | `overview-page`, `all-tenants-home`, per-card components (`ClusterHealthCard`, `PendingApprovalsCard`, `ResourceHealthCard`, `DriftCard`, `ActivityCard`, `QuickActionsCard`, `tenant-strip`) | Card grid 2-up, all cards visually equal weight |
+| Overview | `overview-page`, `all-tenants-home` (+ `tenant-strip`, per-card components) | Card grid 2-up, all cards visually equal weight; all-tenants home stacks per-tenant strips |
 | Catalog | `catalog-browse`, `catalog-item-detail`, `deploy-wizard` | Filter bar (search/source/category/cluster/sort/view), grid/list, 3-step wizard |
 | Deliver | `templates/template-list`, `templates/scaffold-wizard`, `approvals/approvals-page` | Inbox/requested toggle, modal decision with mandatory reason |
 | Operate | `clusters/cluster-list`, `cluster-detail` (+connect tab, register wizard, kubectl card), `fleet/*`, `cloud-accounts/*`, `zones/*` | Status filter button row (9 statuses), 15s polling |
 | Govern | `platform`, `access/*` (members/roles/role-matrix/feature-flags), `audit-log`, `extensions`, `settings/*` | Settings has its own sub-nav |
+| Resources | `resources/resource-list`, `resource-detail`, `upgrade-flow` | Per-cluster resources, drift status, version upgrades |
+| Zones | `zones/zone-list`, `zone-detail`, `vend-wizard` | Tenant zones; vend wizard provisions a zone |
+| Cloud accounts | `cloud-accounts/cloud-account-list`, `cloud-account-detail`, `connect-wizard` | Status badges, connect wizard |
+| Organizations | `organizations/create-organization` | Org onboarding flow |
 | Extensions | `extensions-page` | UI + backend extension lists |
 | ext-argocd | `ClusterTab` (ArgoCD health per instance), `CatalogCard` (GitOps badge), `InstanceActions` | **Unstyled**: inline styles, hardcoded GitHub-green/amber/red hexes, pill radius 10 |
 
@@ -45,6 +49,8 @@
 13. Extension UI (ext-argocd) uses hardcoded inline-style pills with GitHub palette colors; health colors are duplicated per file and inconsistent with console status colors.
 14. The deploy wizard stepper uses arrow separators and circles; not a DS stepper, no completion states.
 15. Empty states are plain paragraphs inside bordered cards — no illustration language, no next-action hierarchy.
+16. **Resources, Zones, Cloud Accounts, Organizations are entirely un-audited surfaces**: they reuse ad-hoc status badges (`cloud-accounts/status-badge.tsx` hardcodes its own hues) and table layouts without a uniform filter/state pattern.
+17. **All-tenants home** stacks per-tenant summary strips as equal-weight cards — a multi-org user gets no aggregate "what needs me across orgs" answer; pending approvals across tenants are not surfaced.
 
 ### 1.3 What stays
 
@@ -192,11 +198,43 @@ All three slots are re-skinned to DS classes and read tokens from the host (no h
 - **HealthBadge** → DS `.badge` variants: Healthy `.badge-success`, Progressing `.badge-warning`, Degraded/Missing `.badge-danger`, Suspended/Unknown `.badge-neutral` (mono uppercase 11px, 1px border, `--status-*-bg` fills per DS rule 4). The inline `style` object and `HEALTH_COLORS` map are deleted.
 - **ClusterTab (ArgoCD health)**: container `.card` with mono header `ARGOCD HEALTH — <cluster>`; instance rows `.list-item`: instance name (mono), kind `.tag`, sync `.badge`, health `.badge`; loading `.skeleton` rows; error `.alert-danger`; empty `.empty` "No Inari-managed instances".
 - **CatalogCard (GitOps badge)**: footer strip in catalog card — `.tag` "GITOPS / ARGOCD" + health badge inline; uses `--brand-secondary` accent.
-- **InstanceActions**: `.btn-ghost.btn-sm` "Sync" / "Refresh" with `.spinner` on pending, confirm sync via host-provided `Modal` (host injects via plugin SDK — noted as SDK gap).
+- **InstanceActions**: the sync/refresh entries are `InstanceActionBlueprint` registrations in the extension's `ui/src/index.tsx` (host renders the action buttons); they re-skin as `.btn-ghost.btn-sm` with `.spinner` on pending, confirm sync via host-provided `Modal` (host injects via plugin SDK — noted as SDK gap).
 
-### 3.10 Settings / Access / Audit / Extensions / Platform
+### 3.10 All-tenants home (multi-org landing)
 
-- Settings keeps its sub-pages but replaces `settings-layout` custom nav with DS `.nav` vertical inside a 3-col layout (nav 240 / content 9 cols), active `.nav-item-accent` (orange).
+- Header: `OVERVIEW / ALL TENANTS`, H1 "All tenants"; lede omitted.
+- **Aggregate stat row (new)**: tenants (n), clusters across tenants (n healthy / n), pending approvals across tenants (`.stat-accent` when >0), degraded resources — the answer to "what needs me?" before any drill-in.
+- Tenant strips: `.list` of tenant rows — tenant name (mono), org `.tag`, per-tenant mini stats inline (clusters · approvals · drift as mono `n/n` pairs), chevron → deep link carries tenant context. Row hover `--bg-overlay`.
+- Below: per-tenant card grid collapses into these rows (replaces the current stacked equal-weight cards).
+
+### 3.11 Resources
+
+- Header: `OPERATE / RESOURCES`, H1 "Resources"; filter toolbar same pattern as catalog: `.input` search (name/kind), cluster `.select-native`, status `.tag` quick chips (Drifting, Degraded, Progressing) with counts, URL-synced.
+- Table (desktop): mono headers NAME / KIND / CLUSTER / VERSION / DRIFT / STATUS / ACTIONS; status = `.status-dot` + mono text; drift column shows mono `±n` with danger accent when >0; upgrade available → inline `.btn-accent.btn-sm` "Upgrade", else row `⋯` `.menu`.
+- Detail: header name + kind `.tag` + cluster link; stat row (replicas, age, version, drift); conditions `.list`; **upgrade flow inline in page** (not modal): version `.select-native` + `.stepper`-less confirm strip `.btn-accent` "Upgrade" + `.alert-info` policy hint; progress via `.progress-accent`.
+- Mobile: stacked `.list` rows.
+
+### 3.12 Zones
+
+- Header: `OPERATE / ZONES`, H1 "Zones"; `.btn-accent` "Vend zone".
+- Table: NAME / REGION / CLUSTER COUNT / STATE / AGE / ACTIONS; state `.badge` (Ready `.badge-success`, Provisioning `.badge-warning`, Failed `.badge-danger`).
+- Detail: stat row + provisioned clusters `.list` + capacity `.progress` bars.
+- Vend wizard follows 3.5 stepper spec (REGION → CONFIGURE → REVIEW → STATUS).
+
+### 3.13 Cloud accounts
+
+- Header: `OPERATE / CLOUD ACCOUNTS`, H1 "Cloud accounts"; `.btn-accent` "Connect account".
+- List: `.grid-3` cards (provider icon `.icon-box`, name, account-id mono caption, state `.badge`, last-sync mono relative time); states Connected `.badge-success`, Pending `.badge-warning`, Error `.badge-danger` — **delete the local `status-badge.tsx` hues, use the shared status map**.
+- Connect wizard: 3.5 stepper (PROVIDER → CREDENTIALS → VERIFY); credential fields in `.code-block`-framed `.input`s; verify step = `.progress-indeterminate` + result `.alert-success`/`.alert-danger`.
+- Detail: stat row + discovered projects `.list` + disconnect `.btn-danger` with DS `Modal` confirm.
+
+### 3.14 Organizations (create)
+
+- Full-page centered `.card` max-width 640px (not a wizard chrome — a single form): H1 "Create organization", `.form-group` fields (name, slug mono live-preview, idp `.select-native`), `.btn-accent` "Create"; error = `.field-error` per field.
+
+### 3.15 Settings / Access / Audit / Extensions / Platform
+
+- Settings keeps its sub-pages but replaces `settings-layout` custom nav with DS `.nav` vertical inside a 3-col layout (nav 240 / content 9 cols), active `.nav-item-accent` (orange). Sub-pages (org profile, idp, git + git-connections, domains, policies: approvals-config/compliance/exemptions/packs/visibility, tokens: eso-stores/registration-tokens, notifications, identity clients/scopes) all render inside this frame: section headers use the uniform page-header pattern (mono breadcrumb `SETTINGS / <SECTION>`), forms use DS `.form-group`/`.input`/`.select-native`, destructive settings (delete domain, rotate secret) use DS `Modal` confirm with `.btn-danger`, feature-flag-style toggles use `.toggle-accent`. The `capability-gate` wrapper renders as `.alert-warning` with mono policy code.
 - Access: role matrix becomes a proper `.table` with `.checkbox` cells (mono row/col headers); members list `.list` with role `.select-native` inline; feature flags become DS `.toggle` list.
 - Audit log: filter bar (actor/action/date `.input`/`.select-native`) + `.table` with mono timestamps (tabular-nums), expandable rows via `.tree-item`? — keep simple: row click opens DS `Drawer` with entry JSON in `.code-block`.
 - Extensions page: two `.card` sections (UI / Backend) with slot chips `.tag`, state `.badge`, and per-extension `.menu` actions; "Install extension" `.btn-accent` in header.
