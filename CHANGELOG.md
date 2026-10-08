@@ -1,5 +1,42 @@
 # Changelog
 
+## [2.1.0](https://github.com/7K-Inari/inari-ui/compare/v2.0.0...v2.1.0) (2026-10-08)
+
+
+### Features
+
+* **access:** RBAC Phase A access console — unified members/teams/roles UI ([#84](https://github.com/7K-Inari/inari-ui/issues/84)) ([b87554a](https://github.com/7K-Inari/inari-ui/commit/b87554a2d344ecd790315ae4d60c938c8c11c727))
+* **access:** role engine UI — role editor, role-entity matrix, permission projection ([#85](https://github.com/7K-Inari/inari-ui/issues/85)) ([68ab578](https://github.com/7K-Inari/inari-ui/commit/68ab57863408ae039b535bc88ccb5d5730555a4e))
+* **catalog:** filter bar with search, facets, sort, and list view ([cb6b078](https://github.com/7K-Inari/inari-ui/commit/cb6b07852881d945208e8df4f448660e4c748032))
+* **catalog:** filter bar with search, facets, sort, and list view ([f4f0fb8](https://github.com/7K-Inari/inari-ui/commit/f4f0fb8d14a5afdbff209e7a68ecf6e255a1afc9))
+* **chart:** HA guardrails for inari-console (liveness probe, PDB, pod spreading) ([7d5037e](https://github.com/7K-Inari/inari-ui/commit/7d5037e017324f8833081f17373fb634f45dbdcc))
+* **chart:** HA guardrails for inari-console (liveness probe, PDB, pod spreading) ([6d53854](https://github.com/7K-Inari/inari-ui/commit/6d53854e72227c9453fa7b606c8a2dbb8ae881f0))
+* **clusters:** add Connect tab with kubeconfig download ([9fdea53](https://github.com/7K-Inari/inari-ui/commit/9fdea538f25607ea6abd558c8af8b6194ac111ac))
+* **clusters:** add Connect tab with kubeconfig download ([72bb759](https://github.com/7K-Inari/inari-ui/commit/72bb759e9bb9a5d1158929d7be90cc149684763e))
+* **clusters:** alternative inari-cli/kubelogin install options on Connect tab ([f6e6996](https://github.com/7K-Inari/inari-ui/commit/f6e6996a8cb8e16efb700b137e546eb2257f25ec))
+* **deploys,clusters:** resource CRUD lifecycle + cluster delete lifecycle ([#83](https://github.com/7K-Inari/inari-ui/issues/83)) ([b632468](https://github.com/7K-Inari/inari-ui/commit/b6324687282c1fcda745c0609ebf1a3f12e916ce))
+* **ext:** extension SSO session core — adapter, classifier, retry-once, zero-prompt redirect ([7c8398c](https://github.com/7K-Inari/inari-ui/commit/7c8398cb3fb862f61f5b69aeaa373f8249b1343b))
+* **ext:** integrate SDK 0.1.7 typed errors and expose runWithSession seam ([2d4e469](https://github.com/7K-Inari/inari-ui/commit/2d4e469794b156d211f3202dc8a085ab3ca51ed1))
+* **ext:** SSO callback route, denial UI, host session seam, tenant/logout cache clearing ([7867b58](https://github.com/7K-Inari/inari-ui/commit/7867b58abff7c68b1b45b481c8db1653faf2b3a3))
+* **ext:** zero-prompt SSO bootstrap and re-auth surfacing for oidc-sso-session extensions (W4) ([05b3663](https://github.com/7K-Inari/inari-ui/commit/05b36639a7631099d4680f951ca5d5583aa9b040))
+* **feature-flags:** platform + per-cluster kubectl-access toggles (kill-switch v2) ([#116](https://github.com/7K-Inari/inari-ui/issues/116)) ([61f01d8](https://github.com/7K-Inari/inari-ui/commit/61f01d8afc3ebbdddd804562e13edb6503c95b3d))
+* **release:** move the inari-console chart to inari-release-bundle; semver edge releases ([#79](https://github.com/7K-Inari/inari-ui/issues/79)) ([2fc290a](https://github.com/7K-Inari/inari-ui/commit/2fc290a7df492fcf9bba9c585a12058b619ee048))
+* **settings:** git connections api adapter + mocks (W5) ([d923114](https://github.com/7K-Inari/inari-ui/commit/d923114ec1a391b7dbb0dc5c91636fb1fd1500b2))
+* **settings:** git connections page (W5) ([b4ba7da](https://github.com/7K-Inari/inari-ui/commit/b4ba7da935966bbcbd276b659cf7dd6fef6610f9))
+* **settings:** git connections page with connect/disconnect UX (W5) ([07aa05c](https://github.com/7K-Inari/inari-ui/commit/07aa05c6a1f1224fd960aef405fd57cfc1e75ea9))
+* **templates:** badge template identity scope and surface git fallback UX ([#76](https://github.com/7K-Inari/inari-ui/issues/76)) ([54c41a6](https://github.com/7K-Inari/inari-ui/commit/54c41a6f1e0849a6b8690157d009dd17a1fad9f0))
+
+
+### Bug Fixes
+
+* **api:** send Accept: application/json on all apiFetch calls ([#80](https://github.com/7K-Inari/inari-ui/issues/80)) ([f9f9250](https://github.com/7K-Inari/inari-ui/commit/f9f9250895bf143ec7ad32c54c68b8df23f693aa))
+* **chart:** make HA unittest suite compatible with helm-unittest v0.8.2 ([943dc0e](https://github.com/7K-Inari/inari-ui/commit/943dc0e736b54bd7bf4c8d023206b7f33eeb7c6e))
+* **ext:** force re-bootstrap on typed session-expired (drop stale cache) ([49c46dc](https://github.com/7K-Inari/inari-ui/commit/49c46dce93531b55bd172f3c4f8ed8303b7ca53b))
+* **ext:** surface remoteEntry fetch causes and validate registrations at add time ([#115](https://github.com/7K-Inari/inari-ui/issues/115)) ([7c8b08e](https://github.com/7K-Inari/inari-ui/commit/7c8b08ef5bf6b18b88a96c2fe0d02b08a66612e7))
+* **git-connections:** map the real connection wire shape ([#81](https://github.com/7K-Inari/inari-ui/issues/81)) ([d7ba3ba](https://github.com/7K-Inari/inari-ui/commit/d7ba3ba3968706a8a022d70b5161127300a53a20))
+* **settings:** align identity-clients + member-invite clients with the server contract ([#78](https://github.com/7K-Inari/inari-ui/issues/78)) ([7e4458d](https://github.com/7K-Inari/inari-ui/commit/7e4458d444966f97ee8e6039bb1f22abcd083943))
+* **settings:** hide stale git connections while refetching on tenant switch ([500c8ae](https://github.com/7K-Inari/inari-ui/commit/500c8ae70db986292661a13d8fbf902b200599d5))
+
 ## [2.0.0](https://github.com/7K-Inari/inari-ui/compare/v1.6.1...v2.0.0) (2026-09-25)
 
 
