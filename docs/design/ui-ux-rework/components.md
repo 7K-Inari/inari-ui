@@ -1,7 +1,7 @@
 # Inari UI/UX Rework — Component Mapping
 
 Foundation: `7k-design-system@1.1.1` (local checkout at `../7k-design-system`, built `dist/7k-design-system.css`).
-Project scope: `<html data-project="inari">` (or `ProjectProvider project="inari"`) — entire brand chain = Inari burnt orange (`--inari-500 #EE560D`). Magenta appears nowhere except 7K logo marks.
+Project scope: `<html data-project="inari">` (or `ProjectProvider defaultProject="inari"` — the DS React provider exposes `defaultProject`, not `project`) — entire brand chain = Inari burnt orange (`--inari-500 #EE560D`). Magenta appears nowhere except 7K logo marks.
 
 ## 1. Replaced: current → design system
 

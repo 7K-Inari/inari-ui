@@ -3,7 +3,7 @@
 - **Scope**: `inari-ui` (host console) + `inari-ext-argocd/ui` (extension surfaces)
 - **Foundation**: `7k-design-system@1.1.1` (local checkout `7k-design-system/`, built to `dist/7k-design-system.css`)
 - **Surface**: Product dashboard (DESIGN.md §5–7 rules)
-- **Project accent**: Inari — burnt orange `--inari-500: #EE560D` via `<html data-project="inari">` / `ProjectProvider project="inari"`
+- **Project accent**: Inari — burnt orange `--inari-500: #EE560D` via `<html data-project="inari">` / `ProjectProvider defaultProject="inari"`
 - **Status of this document**: Design-review draft. No feature code has been written.
 
 ---
@@ -231,13 +231,13 @@ All three slots are re-skinned to DS classes and read tokens from the host (no h
 ### 4.4 Token cheat-sheet used in specs (dark theme, Inari scope)
 
 ```
---bg-void #000000   --bg-base #0A0A0D   --bg-elevated #101014*  --bg-raised (neutral-900)
---text-primary #F5F5F7*  --text-secondary  --text-tertiary
+--bg-void #000000   --bg-base #0A0A0D   --bg-elevated #131318  --bg-raised #1C1C22
+--text-primary #FAFAFB  --text-secondary #B0B0B8  --text-tertiary #6B6B72
 --border-subtle rgba(255,255,255,.06)  --border-default rgba(255,255,255,.10)  --border-strong rgba(255,255,255,.18)
 --brand-primary #EE560D (inari-500)  -hover #E56F3F? → inari-400 #E56F3F  -active #C44813 (inari-600)
 --brand-primary-glow color-mix(#EE560D 25%, transparent)
 --border-focus #EE560D
-status: --status-success #2DA44E*-ish from success ramp, --status-warning, --status-danger, --status-neutral (+ -bg/-fg pairs)
+status: --status-success #00E676, --status-warning #FFB300, --status-danger #FF3B5C, --status-neutral #82828A (+ -bg/-fg pairs)
 type: page title --text-h3 2rem/600 (display sizes reserved for marketing); body --text-body 1rem; labels --text-mono-label 11px mono 500 .12em uppercase; data --text-mono-body 13px tabular-nums
 spacing: 4px grid; page gutters 24px (16px mobile); card padding 16–24px; section rhythm 24px
 radius: 0 on 1-bit components (buttons 4px per modern button system); borders 2px
@@ -245,7 +245,7 @@ shadow: --shadow-glow for accent emphasis; hard 8px offset only on .modal/.toast
 motion: --duration-fast 150ms / --duration-base 240ms, --ease-out
 ```
 
-\* exact values come from `7k-design-system/src/css/tokens.css` role mappings; consumers must reference role tokens, never raw hexes.
+Exact values above are the resolved dark-theme values from `7k-design-system/src/css/tokens.css` + `projects.css`; consumers must reference role tokens, never raw hexes.
 
 ---
 
