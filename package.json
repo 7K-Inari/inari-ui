@@ -14,25 +14,17 @@
     "sync:api": "./scripts/sync-api.sh"
   },
   "dependencies": {
-    "7k-design-system": "file:../7k-design-system",
     "@7k-inari/ui-plugin-sdk": "^0.1.7",
     "@module-federation/runtime": "^2.8.2",
-    "@radix-ui/react-avatar": "^1.1.1",
-    "@radix-ui/react-dialog": "^1.1.23",
-    "@radix-ui/react-dropdown-menu": "^2.1.2",
-    "@radix-ui/react-separator": "^1.1.0",
-    "@radix-ui/react-slot": "^1.1.0",
     "@rjsf/core": "^6.8.0",
     "@rjsf/utils": "^6.8.0",
     "@rjsf/validator-ajv8": "^6.8.0",
-    "class-variance-authority": "^0.7.0",
-    "clsx": "^2.1.1",
+    "7k-design-system": "file:../7k-design-system",
     "keycloak-js": "^26.0.0",
     "lucide-react": "^0.577.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^7.0.0",
-    "tailwind-merge": "^3.0.0",
     "zod": "^3.25.76"
   },
   "devDependencies": {
@@ -55,7 +47,6 @@
     "openapi-typescript": "^7.13.0",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.13",
-    "tailwindcss-animate": "^1.0.7",
     "typescript": "^5.6.2",
     "typescript-eslint": "^8.8.0",
     "vitest": "^2.1.2"

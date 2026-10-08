@@ -12,7 +12,6 @@ import { Checkbox, Input } from "7k-design-system/react";
 
 import { SlotBoundary } from "@/ext/slot-boundary";
 import { useExtensionFormWidgets } from "@/ext/slots";
-import { cn } from "@/lib/utils";
 
 function FieldTemplate({
   id,
@@ -214,7 +213,7 @@ export const SchemaForm = React.forwardRef<SchemaFormHandle, SchemaFormProps>(
     const widgetKey = Object.keys(extensionWidgets).sort().join(",");
 
     return (
-      <div className={cn("schema-form", className)}>
+      <div className={["schema-form", className].filter(Boolean).join(" ")}>
         <SlotBoundary key={widgetKey}>
           <Form
             ref={formRef}

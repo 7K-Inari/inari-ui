@@ -32,9 +32,6 @@ function unknownName(value: string): string | null {
   return value.startsWith(UNKNOWN_PREFIX) ? value.slice(UNKNOWN_PREFIX.length) : null;
 }
 
-const selectClass =
-  "flex h-9 w-full max-w-xs rounded-md border border-input bg-background px-3 text-sm";
-
 // Role engine (ADR-0013): rows are teams, the per-row select lists the org's
 // role entities (built-in + custom from GET /roles) and the write is the
 // generalized team→roleId bulk PUT. The read projection still speaks
@@ -222,7 +219,7 @@ export function RoleMatrix() {
                   <td className="px-4 py-2">
                     <select
                       aria-label={`Role for ${display}`}
-                      className={selectClass}
+                      className="select-native"
                       value={value}
                       disabled={!canManageRbac || saving || !rolesReady}
                       title={

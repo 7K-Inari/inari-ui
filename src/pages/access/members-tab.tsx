@@ -26,9 +26,6 @@ import {
 } from "@/pages/settings/components/capability-gate";
 import { useTenant } from "@/tenant/tenant-context";
 
-const selectClass =
-  "flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm";
-
 // Fallback while the roles list loads: the four built-ins are seeded per
 // tenant (ADR-0013), so "viewer" always resolves.
 function roleOptions(roles: Role[] | null): { id: string; label: string }[] {
@@ -97,7 +94,7 @@ function InviteForm({
             <label className="form-label" htmlFor="invite-role">Role</label>
             <select
               id="invite-role"
-              className={selectClass}
+              className="select-native"
               value={role}
               onChange={(e) => setRole(e.target.value)}
               disabled={disabled}
@@ -183,7 +180,7 @@ function MemberRow({
         <div className="flex items-center gap-2">
           <select
             aria-label={`Role for ${member.displayName}`}
-            className={selectClass}
+            className="select-native"
             value={current}
             disabled={!canManage || busy}
             title={
@@ -552,7 +549,7 @@ function TeamsSection({ roles }: { roles: Role[] | null }) {
               <label className="form-label" htmlFor="team-role">Role</label>
               <select
                 id="team-role"
-                className={selectClass}
+                className="select-native"
                 value={roleId}
                 onChange={(e) => setRoleId(e.target.value)}
                 disabled={!canManageTeams}

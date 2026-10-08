@@ -26,9 +26,6 @@ import { useTenant } from "@/tenant/tenant-context";
 type PolicyPack = components["schemas"]["PolicyPack"];
 type PolicyAssignment = components["schemas"]["PolicyAssignment"];
 
-const selectClass =
-  "flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm";
-
 export function PolicyPacksPage() {
   const [confirm, confirmDialog] = useConfirm();
   const { tenant } = useTenant();
@@ -188,7 +185,7 @@ export function PolicyPacksPage() {
                   <label className="form-label" htmlFor="pack-engine">Engine</label>
                   <select
                     id="pack-engine"
-                    className={selectClass}
+                    className="select-native"
                     value={engine}
                     onChange={(e) => setEngine(e.target.value)}
                   >
@@ -286,7 +283,7 @@ export function PolicyPacksPage() {
                             <label className="form-label" htmlFor={`assign-type-${pack.id}`}>Target type</label>
                             <select
                               id={`assign-type-${pack.id}`}
-                              className={selectClass}
+                              className="select-native"
                               value={targetType}
                               onChange={(e) => setTargetType(e.target.value)}
                             >

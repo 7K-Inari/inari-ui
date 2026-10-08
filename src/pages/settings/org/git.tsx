@@ -11,9 +11,6 @@ import { useOrgCapabilities } from "@/pages/settings/components/capability-gate"
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
 
-const selectClass =
-  "flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm";
-
 interface GitConfig {
   repo: string;
   baseBranch: string;
@@ -107,7 +104,7 @@ function GitConfigForm({
               <label className="form-label" htmlFor="git-policy">Commit policy</label>
               <select
                 id="git-policy"
-                className={selectClass}
+                className="select-native"
                 value={commitPolicy}
                 onChange={(e) =>
                   setCommitPolicy(e.target.value as "direct" | "pull_request")

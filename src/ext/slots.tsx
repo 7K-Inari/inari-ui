@@ -12,7 +12,7 @@ import type {
 } from "@7k-inari/ui-plugin-sdk";
 
 import type { CatalogItemSummary, ResourceInstanceSummary } from "@/api/types";
-import { Button } from "7k-design-system/react";
+import { Button, Spinner } from "7k-design-system/react";
 import { SlotBoundary } from "@/ext/slot-boundary";
 import { toSdkCatalogItem, toSdkResourceInstance } from "@/ext/mappers";
 import { useSlots, type SlotBinding } from "@/ext/registry";
@@ -142,7 +142,8 @@ export function InstanceActionButtons({
           <div key={id}>
             <Button
               variant="ghost"
-              className="w-full justify-start"
+              size="sm"
+              className="instance-action-btn"
               disabled={running !== null}
               onClick={async () => {
                 setRunning(id);
@@ -159,7 +160,7 @@ export function InstanceActionButtons({
                 }
               }}
             >
-              {running === id ? "Running…" : props.label}
+              {running === id ? <Spinner size="sm" /> : null}{running === id ? " Running…" : props.label}
             </Button>
             {errors[id] ? (
               <p className="px-3 text-xs text-destructive" role="alert">

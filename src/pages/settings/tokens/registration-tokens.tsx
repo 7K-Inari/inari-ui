@@ -10,17 +10,13 @@ import {
 } from "@/api/secrets";
 import type { IssuedToken, RegistrationToken } from "@/api/secrets";
 import { useAuth } from "@/auth/auth-context";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import { useOrgCapabilities } from "@/pages/settings/components/capability-gate";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
-
-const selectClass =
-  "flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm";
 
 function tokenState(t: RegistrationToken): "used" | "expired" | "active" {
   if (t.usedAt) return "used";
@@ -48,10 +44,10 @@ function IssuedTokenDialog({
 
   return (
     <div className="card" role="dialog" aria-label="Registration token issued">
-      <CardHeader>
-        <CardTitle className="text-base">Registration token issued</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
+      <div className="card-header">
+        <h2 className="mono-label">Registration token issued</h2>
+      </div>
+      <div className="card-body">
         <p className="text-sm text-muted-foreground">
           This token is shown once and cannot be retrieved later. Store it
           securely; it expires {formatRelative(issued.expiresAt)}.
@@ -60,14 +56,14 @@ function IssuedTokenDialog({
           {issued.token}
         </code>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={copy}>
+          <Button variant="secondary" size="sm" onClick={copy}>
             {copied ? "Copied" : "Copy token"}
           </Button>
           <Button size="sm" onClick={onClose}>
             Done
           </Button>
         </div>
-      </CardContent>
+      </div>
     </div>
   );
 }
@@ -117,7 +113,7 @@ function TokenRow({
       </td>
       <td className="px-4 py-2">
         {state === "active" && <Badge variant="success">active</Badge>}
-        {state === "used" && <Badge variant="muted">used</Badge>}
+        {state === "used" && <Badge variant="neutral">used</Badge>}
         {state === "expired" && <Badge variant="warning">expired</Badge>}
       </td>
       <td className="px-4 py-2 text-right">
@@ -125,7 +121,7 @@ function TokenRow({
           <span className="mr-2 text-xs text-destructive">{actionError}</span>
         )}
         {canWrite && state === "active" && (
-          <Button variant="outline" size="sm" disabled={busy} onClick={revoke}>
+          <Button variant="secondary" size="sm" disabled={busy} onClick={revoke}>
             Revoke
           </Button>
         )}
@@ -191,29 +187,29 @@ export function RegistrationTokensPage() {
 
       {clustersError && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load clusters: {clustersError.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!clustersError && clusters && clusters.length === 0 && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No clusters registered — register a cluster before issuing tokens.
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {clusters && clusters.length > 0 && (
         <Card>
-          <CardContent className="py-4">
+          <div className="card-body">
             <div className="flex max-w-xl items-end gap-2">
               <div className="flex-1 space-y-1.5">
-                <Label htmlFor="token-cluster">Cluster</Label>
+                <label className="form-label" htmlFor="token-cluster">Cluster</label>
                 <select
                   id="token-cluster"
-                  className={selectClass}
+                  className="select-native"
                   value={selectedCluster}
                   onChange={(e) => setClusterId(e.target.value)}
                 >
@@ -233,7 +229,7 @@ export function RegistrationTokensPage() {
             {actionError && (
               <p className="mt-3 text-sm text-destructive">{actionError}</p>
             )}
-          </CardContent>
+          </div>
         </Card>
       )}
 
@@ -243,9 +239,9 @@ export function RegistrationTokensPage() {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load tokens: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
@@ -255,9 +251,9 @@ export function RegistrationTokensPage() {
 
       {tokens && tokens.length === 0 && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No registration tokens issued for this cluster.
-          </CardContent>
+          </div>
         </Card>
       )}
 
