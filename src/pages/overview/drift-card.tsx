@@ -1,6 +1,6 @@
 import { listDrift } from "@/api/fleet";
 import type { DriftEntry } from "@/api/fleet";
-import { useAsyncResource } from "@/api/hooks";
+import { useAsyncResource, type AsyncState } from "@/api/hooks";
 import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
@@ -8,13 +8,14 @@ import { OverviewCard } from "@/pages/overview/overview-card";
 
 const LATEST_EVENTS = 3;
 
-export function DriftCard() {
+export function DriftCard({ state: shared }: { state?: AsyncState<DriftEntry[]> }) {
   const { tenant } = useTenant();
-  const state = useAsyncResource(
+  const own = useAsyncResource(
     (token) => listDrift(token, tenant, { status: "open" }),
     [tenant],
-    { refetchIntervalMs: 30_000 },
+    { refetchIntervalMs: 30_000, enabled: !shared },
   );
+  const state = shared ?? own;
 
   return (
     <OverviewCard

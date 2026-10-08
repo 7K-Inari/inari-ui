@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 
-import { useAsyncResource } from "@/api/hooks";
+import { useAsyncResource, type AsyncState } from "@/api/hooks";
 import { listResources } from "@/api/resources";
 import type { ResourceHealth, ResourceInstanceSummary } from "@/api/types";
 import { useTenant } from "@/tenant/tenant-context";
@@ -10,11 +10,17 @@ import { HealthBadge } from "@/pages/resources/resource-list";
 
 const HEALTH_ORDER: ResourceHealth[] = ["healthy", "progressing", "degraded", "unknown"];
 
-export function ResourceHealthCard() {
+export function ResourceHealthCard({
+  state: shared,
+}: {
+  state?: AsyncState<ResourceInstanceSummary[]>;
+}) {
   const { tenant } = useTenant();
-  const state = useAsyncResource((token) => listResources(token, tenant), [tenant], {
+  const own = useAsyncResource((token) => listResources(token, tenant), [tenant], {
     refetchIntervalMs: 30_000,
+    enabled: !shared,
   });
+  const state = shared ?? own;
 
   return (
     <OverviewCard

@@ -1,5 +1,10 @@
 import { Link } from "react-router-dom";
 
+import { listApprovals } from "@/api/approvals";
+import { listClusters } from "@/api/clusters";
+import { listDrift } from "@/api/fleet";
+import { useAsyncResource } from "@/api/hooks";
+import { listResources } from "@/api/resources";
 import { PageHeader } from "@/components/page-header";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
@@ -13,6 +18,24 @@ import { OverviewStatRow } from "@/pages/overview/stat-row";
 
 export function OverviewPage() {
   const { tenant } = useTenant();
+  // One fetch per resource shared between the stat row and its card — no
+  // duplicate polling.
+  const clustersState = useAsyncResource((token) => listClusters(token, tenant), [tenant], {
+    refetchIntervalMs: 30_000,
+  });
+  const approvalsState = useAsyncResource(
+    (token) => listApprovals(token, tenant, "inbox"),
+    [tenant],
+    { refetchIntervalMs: 15_000 },
+  );
+  const driftState = useAsyncResource(
+    (token) => listDrift(token, tenant, { status: "open" }),
+    [tenant],
+    { refetchIntervalMs: 30_000 },
+  );
+  const resourcesState = useAsyncResource((token) => listResources(token, tenant), [tenant], {
+    refetchIntervalMs: 30_000,
+  });
 
   return (
     <div>
@@ -30,13 +53,18 @@ export function OverviewPage() {
           </>
         }
       />
-      <OverviewStatRow />
+      <OverviewStatRow
+        clusters={clustersState}
+        approvals={approvalsState}
+        drift={driftState}
+        resources={resourcesState}
+      />
       <div className="overview-grid">
-        <ClusterHealthCard />
+        <ClusterHealthCard state={clustersState} />
         <ActivityCard />
-        <PendingApprovalsCard />
-        <ResourceHealthCard />
-        <DriftCard />
+        <PendingApprovalsCard state={approvalsState} />
+        <ResourceHealthCard state={resourcesState} />
+        <DriftCard state={driftState} />
         <QuickActionsCard />
       </div>
     </div>

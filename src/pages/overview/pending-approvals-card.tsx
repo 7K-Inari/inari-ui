@@ -1,7 +1,7 @@
 import * as React from "react";
 
 import { decideApproval, decideReason, listApprovals, type ApprovalRequest } from "@/api/approvals";
-import { useAsyncResource } from "@/api/hooks";
+import { useAsyncResource, type AsyncState } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
 import { usePermissions } from "@/auth/permissions-context";
 import { Button } from "7k-design-system/react";
@@ -85,13 +85,15 @@ export function ApprovalListItems({
   );
 }
 
-export function PendingApprovalsCard() {
+export function PendingApprovalsCard({ state: shared }: { state?: AsyncState<ApprovalRequest[]> }) {
   const { tenant } = useTenant();
   const { token } = useAuth();
   const permissions = usePermissions();
-  const state = useAsyncResource((token) => listApprovals(token, tenant, "inbox"), [tenant], {
+  const own = useAsyncResource((token) => listApprovals(token, tenant, "inbox"), [tenant], {
     refetchIntervalMs: 15_000,
+    enabled: !shared,
   });
+  const state = shared ?? own;
 
   // Per-tenant projection absent => unknown => buttons shown; an explicit
   // `false` hides them (plan §5: gate on projection when present).

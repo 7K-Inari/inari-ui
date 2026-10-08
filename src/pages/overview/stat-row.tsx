@@ -1,32 +1,25 @@
 import { Stat } from "7k-design-system/react";
 
-import { listApprovals } from "@/api/approvals";
-import { listClusters } from "@/api/clusters";
-import { listDrift } from "@/api/fleet";
-import { useAsyncResource } from "@/api/hooks";
-import { listResources } from "@/api/resources";
-import { useTenant } from "@/tenant/tenant-context";
+import type { ApprovalRequest } from "@/api/approvals";
+import type { DriftEntry } from "@/api/fleet";
+import type { AsyncState } from "@/api/hooks";
+import type { ClusterSummary, ResourceInstanceSummary } from "@/api/types";
+
+interface OverviewStatRowProps {
+  clusters: AsyncState<ClusterSummary[]>;
+  approvals: AsyncState<ApprovalRequest[]>;
+  drift: AsyncState<DriftEntry[]>;
+  resources: AsyncState<ResourceInstanceSummary[]>;
+}
 
 // Stat row at the top of the tenant overview: "is anything on fire?" in one
-// glance — clusters, pending approvals, drift, resources.
-export function OverviewStatRow() {
-  const { tenant } = useTenant();
-  const { data: clusters } = useAsyncResource((token) => listClusters(token, tenant), [tenant], {
-    refetchIntervalMs: 30_000,
-  });
-  const { data: approvals } = useAsyncResource(
-    (token) => listApprovals(token, tenant, "inbox"),
-    [tenant],
-    { refetchIntervalMs: 15_000 },
-  );
-  const { data: drift } = useAsyncResource(
-    (token) => listDrift(token, tenant, { status: "open" }),
-    [tenant],
-    { refetchIntervalMs: 30_000 },
-  );
-  const { data: resources } = useAsyncResource((token) => listResources(token, tenant), [tenant], {
-    refetchIntervalMs: 30_000 },
-  );
+// glance — clusters, pending approvals, drift, resources. The page owns the
+// fetches and shares the state with the cards (no duplicate polling).
+export function OverviewStatRow(props: OverviewStatRowProps) {
+  const { data: clusters } = props.clusters;
+  const { data: approvals } = props.approvals;
+  const { data: drift } = props.drift;
+  const { data: resources } = props.resources;
 
   const healthyClusters = (clusters ?? []).filter((c) => c.status === "connected").length;
   const totalClusters = clusters?.length ?? 0;

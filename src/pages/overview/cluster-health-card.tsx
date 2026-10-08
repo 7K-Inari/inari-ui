@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
 import { listClusters } from "@/api/clusters";
-import { useAsyncResource } from "@/api/hooks";
+import { useAsyncResource, type AsyncState } from "@/api/hooks";
 import type { ClusterStatus, ClusterSummary } from "@/api/types";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
@@ -29,11 +29,13 @@ export function ClusterStatusCounts({ clusters }: { clusters: ClusterSummary[] }
   );
 }
 
-export function ClusterHealthCard() {
+export function ClusterHealthCard({ state: shared }: { state?: AsyncState<ClusterSummary[]> }) {
   const { tenant } = useTenant();
-  const state = useAsyncResource((token) => listClusters(token, tenant), [tenant], {
+  const own = useAsyncResource((token) => listClusters(token, tenant), [tenant], {
     refetchIntervalMs: 30_000,
+    enabled: !shared,
   });
+  const state = shared ?? own;
 
   return (
     <OverviewCard
