@@ -1,6 +1,6 @@
 # Inari UI/UX Rework — Component Mapping
 
-Foundation: `7k-design-system@1.1.1` (local checkout at `../7k-design-system`, built `dist/7k-design-system.css`).
+Foundation: `7k-design-system@1.2.0` (local checkout at `../7k-design-system`, built `dist/7k-design-system.css`). 1.2.0 is the "modernize" release: Inari ramp added, project scopes override the full `--brand-primary` chain, `btn-modern-*` renamed to `.btn-*`, new React components `Spinner`, `Skeleton`, `Avatar`, `Progress`, `Listbox`, `ProjectIcon`.
 Project scope: `<html data-project="inari">` (or `ProjectProvider defaultProject="inari"` — the DS React provider exposes `defaultProject`, not `project`) — entire brand chain = Inari burnt orange (`--inari-500 #EE560D`). Magenta appears nowhere except 7K logo marks.
 
 ## 1. Replaced: current → design system

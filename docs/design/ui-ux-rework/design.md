@@ -1,7 +1,7 @@
 # Inari UI/UX Rework — Design Direction & Screen Specs
 
 - **Scope**: `inari-ui` (host console) + `inari-ext-argocd/ui` (extension surfaces)
-- **Foundation**: `7k-design-system@1.1.1` (local checkout `7k-design-system/`, built to `dist/7k-design-system.css`)
+- **Foundation**: `7k-design-system@1.2.0` (local checkout `7k-design-system/`, built to `dist/7k-design-system.css`; 1.2.0 is the "modernize" release — Inari ramp, accent-driven project scoping, modern button language, new Spinner/Skeleton/Avatar/Progress/Listbox/ProjectIcon React components)
 - **Surface**: Product dashboard (DESIGN.md §5–7 rules)
 - **Project accent**: Inari — burnt orange `--inari-500: #EE560D` via `<html data-project="inari">` / `ProjectProvider defaultProject="inari"`
 - **Status of this document**: Design-review draft. No feature code has been written.
