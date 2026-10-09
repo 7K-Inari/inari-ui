@@ -100,7 +100,7 @@ function CreateClusterSetForm({ onCreated }: { onCreated: () => void }) {
         {submitting ? "Creating…" : "Create ClusterSet"}
       </Button>
       {error && (
-        <p className="w-full text-sm text-destructive" role="alert">
+        <p className="w-full text-sm u-danger" role="alert">
           {error}
         </p>
       )}
@@ -115,7 +115,7 @@ function ClusterSetsTab() {
   const [actionError, setActionError] = React.useState<string | null>(null);
 
   if (sets.loading && !sets.data) {
-    return <p className="text-sm text-muted-foreground">Loading cluster sets…</p>;
+    return <p className="text-sm u-muted">Loading cluster sets…</p>;
   }
   return (
     <div className="space-y-4">
@@ -166,7 +166,7 @@ function ClusterSetsTab() {
                     </Badge>
                   ))}
                 </div>
-                <p className="text-muted-foreground">
+                <p className="u-muted">
                   Members resolve from the label selector server-side.
                 </p>
               </div>
@@ -175,7 +175,7 @@ function ClusterSetsTab() {
         </div>
       )}
       {actionError && (
-        <p className="text-sm text-destructive" role="alert">
+        <p className="text-sm u-danger" role="alert">
           {actionError}
         </p>
       )}
@@ -191,7 +191,7 @@ function RolloutsTab() {
   });
 
   if (rollouts.loading && !rollouts.data) {
-    return <p className="text-sm text-muted-foreground">Loading rollouts…</p>;
+    return <p className="text-sm u-muted">Loading rollouts…</p>;
   }
   if ((rollouts.data ?? []).length === 0) {
     return (
@@ -206,7 +206,7 @@ function RolloutsTab() {
     <Card>
       <div className="card-body">
         <table className="w-full text-sm">
-          <thead className="text-left text-xs text-muted-foreground">
+          <thead className="text-left text-xs u-muted">
             <tr>
               <th className="px-4 py-2 font-medium">Rollout</th>
               <th className="px-4 py-2 font-medium">Target</th>
@@ -229,7 +229,7 @@ function RolloutsTab() {
                 <td className="px-4 py-2 font-mono text-xs">
                   {rollout.target.name}@{rollout.target.version}
                 </td>
-                <td className="px-4 py-2 text-muted-foreground">
+                <td className="px-4 py-2 u-muted">
                   {rollout.stages.map((s) => s.name).join(" → ")}
                 </td>
                 <td className="px-4 py-2">
@@ -237,7 +237,7 @@ function RolloutsTab() {
                     {rollout.state}
                   </Badge>
                 </td>
-                <td className="px-4 py-2 text-muted-foreground">
+                <td className="px-4 py-2 u-muted">
                   {formatRelative(rollout.createdAt)}
                 </td>
               </tr>
@@ -256,7 +256,7 @@ function DriftTab() {
   });
 
   if (drift.loading && !drift.data) {
-    return <p className="text-sm text-muted-foreground">Checking for drift…</p>;
+    return <p className="text-sm u-muted">Checking for drift…</p>;
   }
   if ((drift.data ?? []).length === 0) {
     return (
@@ -269,13 +269,13 @@ function DriftTab() {
   }
   return (
     <div className="space-y-3">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm u-muted">
         Drift is report-only in v1 — reconcile via the owning GitOps repo.
       </p>
       <Card>
         <div className="card-body">
           <table className="w-full text-sm">
-            <thead className="text-left text-xs text-muted-foreground">
+            <thead className="text-left text-xs u-muted">
               <tr>
                 <th className="px-4 py-2 font-medium">Cluster</th>
                 <th className="px-4 py-2 font-medium">Resource</th>
@@ -292,14 +292,14 @@ function DriftTab() {
                   <td className="px-4 py-2 font-mono text-xs">
                     {entry.kind}/{entry.resourceRef ?? "unknown"}
                   </td>
-                  <td className="px-4 py-2 text-xs text-muted-foreground">
+                  <td className="px-4 py-2 text-xs u-muted">
                     {entry.detail ?? "—"}
                   </td>
                   <td className="px-4 py-2 font-mono text-xs">{entry.desiredHash}</td>
                   <td className="px-4 py-2 font-mono text-xs text-amber-700 dark:text-amber-400">
                     {entry.reportedHash}
                   </td>
-                  <td className="px-4 py-2 text-muted-foreground">
+                  <td className="px-4 py-2 u-muted">
                     {formatRelative(entry.detectedAt)}
                   </td>
                 </tr>
@@ -324,13 +324,13 @@ function AgentChannelsTab() {
   const setNameById = new Map((clusterSets.data ?? []).map((s) => [s.id, s.name]));
 
   if ((channels.loading && !channels.data) || (clusterSets.loading && !clusterSets.data)) {
-    return <p className="text-sm text-muted-foreground">Loading agent channels…</p>;
+    return <p className="text-sm u-muted">Loading agent channels…</p>;
   }
   return (
     <Card>
       <div className="card-body">
         <table className="w-full text-sm">
-          <thead className="text-left text-xs text-muted-foreground">
+          <thead className="text-left text-xs u-muted">
             <tr>
               <th className="px-4 py-2 font-medium">ClusterSet</th>
               <th className="px-4 py-2 font-medium">Channel</th>
@@ -384,7 +384,7 @@ function AgentChannelsTab() {
           </tbody>
         </table>
         {error && (
-          <p className="px-4 py-2 text-sm text-destructive" role="alert">
+          <p className="px-4 py-2 text-sm u-danger" role="alert">
             {error}
           </p>
         )}
@@ -402,7 +402,7 @@ export function FleetOverviewPage() {
     <div className="space-y-4">
       <div>
         <h1 className="page-header-title">Fleet</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm u-muted">
           ClusterSets, staged rollouts, drift, and agent upgrade channels.
         </p>
       </div>
@@ -415,8 +415,8 @@ export function FleetOverviewPage() {
             aria-selected={tab === t.id}
             className={
               tab === t.id
-                ? "border-b-2 border-primary px-3 py-2 text-sm font-medium"
-                : "px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+                ? "border-b-2 u-brand-border px-3 py-2 text-sm font-medium"
+                : "px-3 py-2 text-sm u-muted hover:u-fg"
             }
             onClick={() => setSearchParams({ tab: t.id }, { replace: true })}
           >

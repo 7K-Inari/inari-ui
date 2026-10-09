@@ -45,8 +45,8 @@ const PREREQS: { tool: string; description: string; commands: { label: string; c
 function CommandRow({ label, command }: { label?: string; command: string }) {
   return (
     <div className="flex items-center gap-2">
-      {label && <span className="w-40 shrink-0 text-xs text-muted-foreground">{label}</span>}
-      <code className="flex-1 overflow-auto rounded-md bg-muted px-3 py-2 font-mono text-xs">
+      {label && <span className="w-40 shrink-0 text-xs u-muted">{label}</span>}
+      <code className="flex-1 overflow-auto rounded-md u-raised px-3 py-2 font-mono text-xs">
         {command}
       </code>
       <CopyButton value={command} label="Copy" />
@@ -70,13 +70,13 @@ export function ConnectTab({ cluster }: { cluster: ClusterDetail }) {
 
   if (error) {
     return (
-      <p className="text-sm text-destructive">
+      <p className="text-sm u-danger">
         Failed to load connection info: {error.message}
       </p>
     );
   }
   if (loading && !accessInfo) {
-    return <p className="text-sm text-muted-foreground">Loading connection info…</p>;
+    return <p className="text-sm u-muted">Loading connection info…</p>;
   }
   if (!accessInfo) return null;
 
@@ -131,7 +131,7 @@ export function ConnectTab({ cluster }: { cluster: ClusterDetail }) {
         <div className="card-body">
           <div className="flex items-center gap-2">
             <span
-              className={`inline-block size-2 rounded-full ${tunnelAvailable ? "bg-green-500" : "bg-muted-foreground"}`}
+              className={`inline-block size-2 rounded-full ${tunnelAvailable ? "bg-green-500" : "u-raised-foreground"}`}
               aria-hidden
             />
             {tunnelAvailable
@@ -139,14 +139,14 @@ export function ConnectTab({ cluster }: { cluster: ClusterDetail }) {
               : "Gateway tunnel unavailable."}
           </div>
           {!tunnelAvailable && (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm u-muted">
               {accessInfo.tunnelUnavailableReason ??
                 "The tunnel agent is not connected. Upgrade the inari-agent chart on this cluster to enable gateway mode."}{" "}
               Direct mode still works if the API server is reachable from your machine.
             </p>
           )}
           {accessInfo.proxyUrl && (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm u-muted">
               Gateway endpoint: <span className="font-mono text-xs">{accessInfo.proxyUrl}</span>
             </p>
           )}
@@ -162,7 +162,7 @@ export function ConnectTab({ cluster }: { cluster: ClusterDetail }) {
           {PREREQS.map((p) => (
             <div key={p.tool} className="space-y-1.5">
               <p className="text-sm font-medium">{p.tool}</p>
-              <p className="text-xs text-muted-foreground">{p.description}</p>
+              <p className="text-xs u-muted">{p.description}</p>
               {p.commands.map((c) => (
                 <CommandRow key={c.command} label={c.label} command={c.command} />
               ))}
@@ -192,7 +192,7 @@ export function ConnectTab({ cluster }: { cluster: ClusterDetail }) {
               />
               <span>
                 <span className="font-medium">Gateway (via Inari proxy)</span>
-                <span className="block text-xs text-muted-foreground">
+                <span className="block text-xs u-muted">
                   Works for private clusters; requests are tunneled and authorized by the
                   platform.
                 </span>
@@ -208,7 +208,7 @@ export function ConnectTab({ cluster }: { cluster: ClusterDetail }) {
               />
               <span>
                 <span className="font-medium">Direct</span>
-                <span className="block text-xs text-muted-foreground">
+                <span className="block text-xs u-muted">
                   Your machine talks to the API server URL directly (OIDC must be configured on
                   the cluster).
                 </span>
@@ -233,13 +233,13 @@ export function ConnectTab({ cluster }: { cluster: ClusterDetail }) {
             <CommandRow command={connectCommand} />
           </div>
 
-          {downloadError && <p className="text-sm text-destructive">{downloadError}</p>}
+          {downloadError && <p className="text-sm u-danger">{downloadError}</p>}
           <div className="flex items-center gap-3">
             <Button onClick={download} disabled={downloading || !kubectlEnabled}>
               {downloading ? "Downloading…" : "Download kubeconfig"}
             </Button>
             {!kubectlEnabled && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs u-muted">
                 Unavailable while kubectl access is disabled.
               </p>
             )}

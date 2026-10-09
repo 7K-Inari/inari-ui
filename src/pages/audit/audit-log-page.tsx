@@ -75,7 +75,7 @@ export function AuditLogPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="page-header-title">Audit log</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm u-muted">
             Every control-plane action for this tenant.
           </p>
         </div>
@@ -85,7 +85,7 @@ export function AuditLogPage() {
         </Button>
       </div>
 
-      {exportError && <p className="text-sm text-destructive">{exportError}</p>}
+      {exportError && <p className="text-sm u-danger">{exportError}</p>}
 
       <div className="flex flex-wrap items-end gap-3">
         <div className="space-y-1">
@@ -153,7 +153,7 @@ export function AuditLogPage() {
       )}
 
       {!error && loading && !events && (
-        <p className="text-sm text-muted-foreground">Loading audit events…</p>
+        <p className="text-sm u-muted">Loading audit events…</p>
       )}
 
       {!error && events && items.length === 0 && (
@@ -193,7 +193,7 @@ export function AuditLogPage() {
       )}
 
       {items.length > PAGE_SIZE && (
-        <div className="flex items-center justify-between text-sm text-muted-foreground">
+        <div className="flex items-center justify-between text-sm u-muted">
           <span>
             Page {currentPage + 1} of {pageCount} ({items.length} events)
           </span>

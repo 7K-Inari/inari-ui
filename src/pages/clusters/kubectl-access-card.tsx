@@ -88,12 +88,12 @@ export function KubectlAccessCard({ clusterId }: { clusterId: string }) {
       </div>
       <div className="card-body">
         {flag.envPinned && (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm u-muted">
             Pinned by an explicitly set environment variable on the platform — changes here are
             stored but have no effect until the env override is removed.
           </p>
         )}
-        {actionError && <p className="text-sm text-destructive">{actionError}</p>}
+        {actionError && <p className="text-sm u-danger">{actionError}</p>}
         <div className="flex justify-end gap-2">
           {flag.overridden && (
             <Button

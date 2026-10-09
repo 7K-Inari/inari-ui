@@ -86,7 +86,7 @@ function GitConfigForm({
                 required
                 disabled={!canWrite}
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs u-muted">
                 owner/name or https URL of the {"<tenant>"}-inari-state repo.
               </p>
             </div>
@@ -143,7 +143,7 @@ export function GitSettingsPage() {
         description="GitOps state repository and commit policy for this organization."
         actions={
           !canWriteSettings ? (
-            <span className="text-xs text-muted-foreground">Read-only (org viewer)</span>
+            <span className="text-xs u-muted">Read-only (org viewer)</span>
           ) : undefined
         }
       />
@@ -157,7 +157,7 @@ export function GitSettingsPage() {
       )}
 
       {!error && loading && !config && (
-        <p className="text-sm text-muted-foreground">Loading git config…</p>
+        <p className="text-sm u-muted">Loading git config…</p>
       )}
 
       {!error && config && !loading && (

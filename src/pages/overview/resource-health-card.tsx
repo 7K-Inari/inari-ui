@@ -32,7 +32,7 @@ export function ResourceHealthCard({
       empty={
         <p>
           No resources deployed yet.{" "}
-          <Link to={tenantLink(tenant, "catalog")} className="text-primary hover:underline">
+          <Link to={tenantLink(tenant, "catalog")} className="u-brand hover:underline">
             Browse the catalog
           </Link>
         </p>

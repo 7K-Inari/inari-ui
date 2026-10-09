@@ -31,7 +31,7 @@ function ActionsMenu({ resource }: { resource: ResourceInstanceDetail }) {
         Actions
       </Button>
       {open && (
-        <div className="absolute right-0 z-10 mt-1 w-64 rounded-md border bg-popover p-2 text-sm shadow-md">
+        <div className="absolute right-0 z-10 mt-1 w-64 menu p-2 text-sm">
           <InstanceActionButtons instance={resource} />
         </div>
       )}
@@ -98,7 +98,7 @@ function EditSpecCard({
         {updated ? (
           <p className="text-sm">
             <Badge variant="success">Spec update submitted</Badge>{" "}
-            <span className="text-muted-foreground">The instance re-renders shortly.</span>
+            <span className="u-muted">The instance re-renders shortly.</span>
           </p>
         ) : (
           <form onSubmit={submit} className="space-y-3">
@@ -110,7 +110,7 @@ function EditSpecCard({
               onChange={setFormData}
               disabled={submitting}
             />
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            {error && <p className="text-sm u-danger">{error}</p>}
             <div className="flex justify-end">
               <Button type="submit" disabled={submitting}>
                 {submitting ? "Saving…" : "Save spec"}
@@ -166,7 +166,7 @@ function RollbackCard({
       <Card>
         <div className="card-body">
           <Badge variant="success">Rollback to {target} submitted</Badge>{" "}
-          <span className="text-muted-foreground">
+          <span className="u-muted">
             The instance re-renders at v{target} shortly.
           </span>
         </div>
@@ -188,7 +188,7 @@ function RollbackCard({
         <div className="flex items-center gap-2">
           <select
             aria-label="Target version"
-            className="h-9 rounded-md border bg-background px-3 text-sm"
+            className="h-9 rounded-md border u-base px-3 text-sm"
             value={target}
             onChange={(e) => setTarget(e.target.value)}
           >
@@ -202,7 +202,7 @@ function RollbackCard({
             {submitting ? "Rolling back…" : `Rollback to ${target}`}
           </Button>
         </div>
-        {error && <p className="text-sm text-destructive">{error}</p>}
+        {error && <p className="text-sm u-danger">{error}</p>}
       </div>
     </Card>
   );
@@ -260,7 +260,7 @@ function DeleteCard({ resource }: { resource: ResourceInstanceDetail }) {
       </div>
       <div className="card-body">
         <form onSubmit={submit} className="space-y-4">
-          {error && <p className="text-sm text-destructive">{error}</p>}
+          {error && <p className="text-sm u-danger">{error}</p>}
           <div className="flex justify-end">
             <Button type="submit" variant="danger" disabled={submitting}>
               {submitting ? "Deleting…" : "Delete resource"}
@@ -300,7 +300,7 @@ export function ResourceDetailPage() {
   }
 
   if (loading || !resource) {
-    return <p className="text-sm text-muted-foreground">Loading resource…</p>;
+    return <p className="text-sm u-muted">Loading resource…</p>;
   }
 
   return (
@@ -312,7 +312,7 @@ export function ResourceDetailPage() {
             <HealthBadge health={resource.health} />
             <Badge variant="neutral">{resource.status}</Badge>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm u-muted">
             {resource.catalogItemName} v{resource.version} · cluster {resource.clusterId} · owned by{" "}
             {resource.ownerTeam}
           </p>
@@ -328,7 +328,7 @@ export function ResourceDetailPage() {
             <h2 className="mono-label">Spec</h2>
           </div>
           <div className="card-body">
-            <pre className="max-h-96 overflow-auto rounded-md bg-muted p-3 font-mono text-xs">
+            <pre className="max-h-96 overflow-auto rounded-md u-raised p-3 font-mono text-xs">
               {JSON.stringify(resource.spec, null, 2)}
             </pre>
           </div>

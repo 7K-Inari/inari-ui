@@ -23,7 +23,7 @@ export function CloudAccountListPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="page-header-title">Cloud Accounts</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm u-muted">
             AWS accounts connected via trust roles — no tenant credentials are stored on the
             platform.
           </p>
@@ -40,13 +40,13 @@ export function CloudAccountListPage() {
       )}
 
       {!error && loading && !accounts && (
-        <p className="text-sm text-muted-foreground">Loading cloud accounts…</p>
+        <p className="text-sm u-muted">Loading cloud accounts…</p>
       )}
 
       {!error && accounts && accounts.length === 0 && (
         <Card>
           <div className="card-body">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm u-muted">
               No cloud accounts connected yet. Connect an AWS account to provision managed
               resources.
             </p>
@@ -58,7 +58,7 @@ export function CloudAccountListPage() {
       {accounts && accounts.length > 0 && (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <thead className="u-raised/50 text-left text-xs u-muted">
               <tr>
                 <th className="px-4 py-2 font-medium">Account ID</th>
                 <th className="px-4 py-2 font-medium">Role ARN</th>
@@ -68,11 +68,11 @@ export function CloudAccountListPage() {
             </thead>
             <tbody>
               {accounts.map((account) => (
-                <tr key={account.id} className="border-t hover:bg-muted/30">
+                <tr key={account.id} className="border-t hover:u-raised/30">
                   <td className="px-4 py-2">
                     <Link
                       to={tenantLink(tenant, `cloud-accounts/${account.id}`)}
-                      className="font-medium font-mono text-xs text-primary hover:underline"
+                      className="font-medium font-mono text-xs u-brand hover:underline"
                     >
                       {account.accountId}
                     </Link>
@@ -81,7 +81,7 @@ export function CloudAccountListPage() {
                   <td className="px-4 py-2">
                     <CloudAccountStatusBadge status={account.status} />
                   </td>
-                  <td className="px-4 py-2 text-muted-foreground">
+                  <td className="px-4 py-2 u-muted">
                     {formatRelative(account.lastValidatedAt)}
                   </td>
                 </tr>

@@ -213,7 +213,7 @@ export function IdpBrokeringPage() {
           <CapabilityGate
             capability="admin"
             fallback={
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs u-muted">
                 Read-only (org viewer)
               </span>
             }
@@ -234,7 +234,7 @@ export function IdpBrokeringPage() {
       )}
 
       {!error && loading && !provider && (
-        <p className="text-sm text-muted-foreground">Loading SSO provider…</p>
+        <p className="text-sm u-muted">Loading SSO provider…</p>
       )}
 
       {actionError && (
@@ -290,32 +290,32 @@ export function IdpBrokeringPage() {
             </div>
             <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
               <div>
-                <dt className="text-xs text-muted-foreground">Issuer URL</dt>
+                <dt className="text-xs u-muted">Issuer URL</dt>
                 <dd className="font-mono text-xs">{provider.issuerUrl}</dd>
               </div>
               <div>
-                <dt className="text-xs text-muted-foreground">Client ID</dt>
+                <dt className="text-xs u-muted">Client ID</dt>
                 <dd className="font-mono text-xs">{provider.clientId}</dd>
               </div>
               <div>
-                <dt className="text-xs text-muted-foreground">Claim mapping</dt>
+                <dt className="text-xs u-muted">Claim mapping</dt>
                 <dd className="font-mono text-xs">
                   email: {provider.claimMapping.email ?? "email"}, groups:{" "}
                   {provider.claimMapping.groups ?? "groups"}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-muted-foreground">Created</dt>
-                <dd className="text-xs text-muted-foreground">
+                <dt className="text-xs u-muted">Created</dt>
+                <dd className="text-xs u-muted">
                   {formatRelative(provider.createdAt)}
                 </dd>
               </div>
             </dl>
             <div>
-              <dt className="text-xs text-muted-foreground">Domain hints</dt>
+              <dt className="text-xs u-muted">Domain hints</dt>
               <dd className="mt-1 flex flex-wrap gap-1">
                 {domainHints.length === 0 && (
-                  <span className="text-xs text-muted-foreground">None</span>
+                  <span className="text-xs u-muted">None</span>
                 )}
                 {domainHints.map((d) => (
                   <Badge key={d} variant="neutral">
@@ -356,7 +356,7 @@ export function IdpBrokeringPage() {
                 value={newSecret}
                 onChange={(v) => setNewSecret(v)}
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs u-muted">
                 The secret is write-only and will not be shown again.
               </p>
             </div>

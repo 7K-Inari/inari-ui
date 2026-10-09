@@ -55,7 +55,7 @@ function ProviderRow({
 }) {
   const { label, Icon } = providerMeta(provider.id);
   return (
-    <tr className="border-t hover:bg-muted/30">
+    <tr className="border-t hover:u-raised/30">
       <td className="px-4 py-2">
         <span className="inline-flex items-center gap-2 font-medium">
           <Icon className="h-4 w-4" aria-hidden />
@@ -67,7 +67,7 @@ function ProviderRow({
         {connection ? (
           connection.login
         ) : (
-          <span className="text-xs text-muted-foreground">—</span>
+          <span className="text-xs u-muted">—</span>
         )}
       </td>
       <td className="px-4 py-2">
@@ -80,16 +80,16 @@ function ProviderRow({
             ))}
           </span>
         ) : (
-          <span className="text-xs text-muted-foreground">—</span>
+          <span className="text-xs u-muted">—</span>
         )}
       </td>
       <td className="px-4 py-2 font-mono text-xs">
         {connection?.apiBase ?? provider.apiBase ?? "—"}
       </td>
-      <td className="px-4 py-2 text-xs text-muted-foreground">
+      <td className="px-4 py-2 text-xs u-muted">
         {connection ? formatRelative(connection.createdAt) : "—"}
       </td>
-      <td className="px-4 py-2 text-xs text-muted-foreground">
+      <td className="px-4 py-2 text-xs u-muted">
         {connection
           ? connection.lastUsedAt
             ? formatRelative(connection.lastUsedAt)
@@ -219,7 +219,7 @@ export function GitConnectionsPage() {
       )}
 
       {!error && loading && !data && (
-        <p className="text-sm text-muted-foreground">Loading git connections…</p>
+        <p className="text-sm u-muted">Loading git connections…</p>
       )}
 
       {notice && (
@@ -247,7 +247,7 @@ export function GitConnectionsPage() {
       {!loading && providers.length > 0 && (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <thead className="u-raised/50 text-left text-xs u-muted">
               <tr>
                 <th className="px-4 py-2 font-medium">Provider</th>
                 <th className="px-4 py-2 font-medium">Connected login</th>

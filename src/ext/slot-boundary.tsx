@@ -30,7 +30,7 @@ export class SlotBoundary extends React.Component<SlotBoundaryProps, SlotBoundar
     if (this.state.error) {
       return (
         this.props.fallback ?? (
-          <span className="text-xs text-muted-foreground" role="note">
+          <span className="text-xs u-muted" role="note">
             Extension content unavailable
           </span>
         )

@@ -47,7 +47,7 @@ function RuleRow({
   };
 
   return (
-    <tr className="border-t hover:bg-muted/30">
+    <tr className="border-t hover:u-raised/30">
       <td className="px-4 py-2 font-medium">{rule.itemName}</td>
       <td className="px-4 py-2 font-mono text-xs">{rule.itemId}</td>
       <td className="px-4 py-2">
@@ -57,12 +57,12 @@ function RuleRow({
           <Badge variant="neutral">hidden</Badge>
         )}
       </td>
-      <td className="px-4 py-2 text-xs text-muted-foreground">
+      <td className="px-4 py-2 text-xs u-muted">
         {rule.updatedBy} · {formatRelative(rule.updatedAt)}
       </td>
       <td className="px-4 py-2 text-right">
         {actionError && (
-          <span className="mr-2 text-xs text-destructive">{actionError}</span>
+          <span className="mr-2 text-xs u-danger">{actionError}</span>
         )}
         {canWrite && (
           <Button variant="secondary" size="sm" disabled={busy} onClick={toggle}>
@@ -91,7 +91,7 @@ export function VisibilityPage() {
         description="Tenant-scoped overrides for catalog items. Hidden items are not deployable by this organization."
         actions={
           !canWriteSettings ? (
-            <span className="text-xs text-muted-foreground">Read-only (org viewer)</span>
+            <span className="text-xs u-muted">Read-only (org viewer)</span>
           ) : undefined
         }
       />
@@ -105,7 +105,7 @@ export function VisibilityPage() {
       )}
 
       {!error && loading && !rules && (
-        <p className="text-sm text-muted-foreground">Loading visibility rules…</p>
+        <p className="text-sm u-muted">Loading visibility rules…</p>
       )}
 
       {!error && rules && rules.length === 0 && (
@@ -119,7 +119,7 @@ export function VisibilityPage() {
       {rules && rules.length > 0 && (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <thead className="u-raised/50 text-left text-xs u-muted">
               <tr>
                 <th className="px-4 py-2 font-medium">Item</th>
                 <th className="px-4 py-2 font-medium">ID</th>

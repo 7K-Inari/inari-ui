@@ -83,7 +83,7 @@ export function CloudAccountDetailPage() {
     );
   }
   if (loading && !account) {
-    return <p className="text-sm text-muted-foreground">Loading cloud account…</p>;
+    return <p className="text-sm u-muted">Loading cloud account…</p>;
   }
   if (!account) return null;
 
@@ -91,7 +91,7 @@ export function CloudAccountDetailPage() {
     <div className="mx-auto max-w-3xl space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs u-muted">
             <Link to={tenantLink(tenant, "cloud-accounts")} className="hover:underline">
               Cloud Accounts
             </Link>{" "}
@@ -100,7 +100,7 @@ export function CloudAccountDetailPage() {
           <h1 className="page-header-title font-mono">
             {account.accountId}
           </h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm u-muted">
             AWS account connected via a trust role — no credentials are stored on the platform.
           </p>
         </div>
@@ -123,35 +123,35 @@ export function CloudAccountDetailPage() {
         <div className="card-body">
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Account ID</dt>
+              <dt className="u-muted">Account ID</dt>
               <dd className="font-mono text-xs">{account.accountId}</dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Role ARN</dt>
+              <dt className="u-muted">Role ARN</dt>
               <dd className="break-all text-right font-mono text-xs">{account.roleArn}</dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">ExternalId</dt>
+              <dt className="u-muted">ExternalId</dt>
               <dd className="font-mono text-xs">{account.externalId}</dd>
             </div>
             {account.issuerUrl && (
               <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">OIDC issuer</dt>
+                <dt className="u-muted">OIDC issuer</dt>
                 <dd className="break-all text-right font-mono text-xs">{account.issuerUrl}</dd>
               </div>
             )}
             <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Last validated</dt>
+              <dt className="u-muted">Last validated</dt>
               <dd>{formatRelative(account.lastValidatedAt)}</dd>
             </div>
             <div className="flex justify-between gap-4">
-              <dt className="text-muted-foreground">Created</dt>
+              <dt className="u-muted">Created</dt>
               <dd>{formatRelative(account.createdAt)}</dd>
             </div>
             {account.statusMessage && (
               <div className="flex justify-between gap-4">
-                <dt className="text-muted-foreground">Status detail</dt>
-                <dd className="text-right text-destructive">{account.statusMessage}</dd>
+                <dt className="u-muted">Status detail</dt>
+                <dd className="text-right u-danger">{account.statusMessage}</dd>
               </div>
             )}
           </dl>
@@ -193,12 +193,12 @@ export function CloudAccountDetailPage() {
           </div>
           <div className="card-body">
             <div className="flex items-center gap-2">
-              <label htmlFor="provider-config-cluster" className="text-sm text-muted-foreground">
+              <label htmlFor="provider-config-cluster" className="text-sm u-muted">
                 Cluster
               </label>
               <select
                 id="provider-config-cluster"
-                className="rounded-md border bg-background px-2 py-1 text-sm"
+                className="rounded-md border u-base px-2 py-1 text-sm"
                 value={effectiveClusterId}
                 onChange={(e) => setClusterId(e.target.value)}
               >
@@ -210,17 +210,17 @@ export function CloudAccountDetailPage() {
               </select>
             </div>
             {providerConfig.error && (
-              <p className="text-sm text-destructive">
+              <p className="text-sm u-danger">
                 Failed to render ProviderConfig: {providerConfig.error.message}
               </p>
             )}
             {!providerConfig.error && providerConfig.loading && !providerConfig.data && (
-              <p className="text-sm text-muted-foreground">Rendering ProviderConfig…</p>
+              <p className="text-sm u-muted">Rendering ProviderConfig…</p>
             )}
             {providerConfig.data && (
               <>
                 <pre
-                  className="max-h-72 overflow-auto rounded-md bg-muted p-3 font-mono text-xs"
+                  className="max-h-72 overflow-auto rounded-md u-raised p-3 font-mono text-xs"
                   data-testid="provider-config-manifest"
                 >
                   {providerConfig.data}

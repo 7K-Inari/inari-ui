@@ -47,7 +47,7 @@ export function ClusterHealthCard({ state: shared }: { state?: AsyncState<Cluste
       empty={
         <p>
           No clusters registered yet.{" "}
-          <Link to={tenantLink(tenant, "clusters/new")} className="text-primary hover:underline">
+          <Link to={tenantLink(tenant, "clusters/new")} className="u-brand hover:underline">
             Register your first cluster
           </Link>
         </p>

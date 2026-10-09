@@ -55,7 +55,7 @@ export function VendZoneWizardPage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <h1 className="page-header-title">Vend new zone</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm u-muted">
           A zone provisions a dedicated cloud account, trust, an EKS cluster, and platform wiring.
         </p>
       </div>
@@ -88,7 +88,7 @@ export function VendZoneWizardPage() {
                 placeholder="acme-analytics"
                 required
               />
-              {slugError && <p className="text-xs text-destructive">{slugError}</p>}
+              {slugError && <p className="text-xs u-danger">{slugError}</p>}
             </div>
             <div className="space-y-1.5">
               <label className="form-label" htmlFor="zone-org-unit">Org unit</label>
@@ -109,7 +109,7 @@ export function VendZoneWizardPage() {
                 placeholder="ma-platform-prod"
                 required
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs u-muted">
                 The platform management account the new cloud account is vended under.
               </p>
             </div>
@@ -119,7 +119,7 @@ export function VendZoneWizardPage() {
                 id="zone-region"
                 value={region}
                 onChange={(e) => setRegion(e.target.value)}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="input"
               >
                 {REGIONS.map((r) => (
                   <option key={r} value={r}>
@@ -134,13 +134,13 @@ export function VendZoneWizardPage() {
                 id="zone-tier"
                 value="starter"
                 disabled
-                className="flex h-9 w-full rounded-md border border-input bg-muted px-3 py-1 text-sm text-muted-foreground shadow-sm"
+                className="input u-muted"
               >
                 <option value="starter">starter</option>
               </select>
-              <p className="text-xs text-muted-foreground">Starter tier only during M3.</p>
+              <p className="text-xs u-muted">Starter tier only during M3.</p>
             </div>
-            {submitError && <p className="text-sm text-destructive">{submitError}</p>}
+            {submitError && <p className="text-sm u-danger">{submitError}</p>}
             <div className="flex justify-end gap-2">
               <Button variant="ghost" type="button" onClick={() => navigate(-1)}>
                 Cancel

@@ -130,7 +130,7 @@ export function PolicyPacksPage() {
           <CapabilityGate
             capability="admin"
             fallback={
-              <span className="text-xs text-muted-foreground">Read-only (org viewer)</span>
+              <span className="text-xs u-muted">Read-only (org viewer)</span>
             }
           >
             <Button onClick={() => setShowCreate((v) => !v)}>
@@ -149,7 +149,7 @@ export function PolicyPacksPage() {
       )}
 
       {!error && loading && !packs && (
-        <p className="text-sm text-muted-foreground">Loading policy packs…</p>
+        <p className="text-sm u-muted">Loading policy packs…</p>
       )}
 
       {actionError && (
@@ -206,7 +206,7 @@ export function PolicyPacksPage() {
                 <label className="form-label" htmlFor="pack-manifests">Manifests (JSON)</label>
                 <textarea
                   id="pack-manifests"
-                  className="min-h-24 w-full rounded-md border border-input bg-transparent px-3 py-2 font-mono text-xs"
+                  className="textarea font-mono text-xs"
                   value={manifests}
                   onChange={(e) => setManifests(e.target.value)}
                   placeholder="[]"
@@ -229,7 +229,7 @@ export function PolicyPacksPage() {
       {packs && packs.length > 0 && (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <thead className="u-raised/50 text-left text-xs u-muted">
               <tr>
                 <th className="px-4 py-2 font-medium">Name</th>
                 <th className="px-4 py-2 font-medium">Engine</th>
@@ -242,7 +242,7 @@ export function PolicyPacksPage() {
             <tbody>
               {packs.map((pack: PolicyPack) => (
                 <React.Fragment key={pack.id}>
-                  <tr className="border-t hover:bg-muted/30">
+                  <tr className="border-t hover:u-raised/30">
                     <td className="px-4 py-2 font-medium">{pack.name}</td>
                     <td className="px-4 py-2 font-mono text-xs">{pack.engine}</td>
                     <td className="px-4 py-2 font-mono text-xs">{pack.version}</td>
@@ -253,7 +253,7 @@ export function PolicyPacksPage() {
                         <Badge variant="neutral">Platform</Badge>
                       )}
                     </td>
-                    <td className="px-4 py-2 text-xs text-muted-foreground">
+                    <td className="px-4 py-2 text-xs u-muted">
                       {formatRelative(pack.createdAt)}
                     </td>
                     <td className="px-4 py-2">
@@ -273,7 +273,7 @@ export function PolicyPacksPage() {
                     </td>
                   </tr>
                   {assigningPackId === pack.id && (
-                    <tr className="border-t bg-muted/20">
+                    <tr className="border-t u-raised/20">
                       <td colSpan={6} className="px-4 py-3">
                         <form
                           className="flex flex-wrap items-end gap-3"
@@ -320,7 +320,7 @@ export function PolicyPacksPage() {
           <h2 className="text-sm font-medium">Assignments (this session)</h2>
           <div className="overflow-hidden rounded-lg border">
             <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+              <thead className="u-raised/50 text-left text-xs u-muted">
                 <tr>
                   <th className="px-4 py-2 font-medium">Pack</th>
                   <th className="px-4 py-2 font-medium">Target</th>

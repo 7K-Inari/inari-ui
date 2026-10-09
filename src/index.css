@@ -80,35 +80,32 @@ body {
   letter-spacing: 0.06em;
 }
 
-/* Legacy semantic utilities mapped onto DS tokens (used by long-tail pages) */
-.text-muted-foreground {
+/* Token-based utilities (DS role tokens, no palette hexes) */
+.u-muted {
   color: var(--text-secondary);
 }
-.text-destructive {
+.u-danger {
   color: var(--status-danger);
 }
-.bg-muted {
+.u-raised {
   background: var(--bg-raised);
 }
-.text-primary {
+.u-fg {
+  color: var(--text-primary);
+}
+.u-brand {
   color: var(--brand-secondary);
 }
-.text-foreground {
-  color: var(--text-primary);
-}
-.bg-background {
+.u-base {
   background: var(--bg-base);
 }
-.bg-destructive {
+.u-danger-bg {
   background: var(--status-danger);
 }
-.text-secondary-foreground {
-  color: var(--text-primary);
-}
-.border-primary {
+.u-brand-border {
   border-color: var(--brand-secondary);
 }
-.accent-primary {
+.u-brand-accent {
   accent-color: var(--brand-primary);
 }
 .card-lede {

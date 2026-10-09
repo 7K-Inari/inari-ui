@@ -77,7 +77,7 @@ export function CreateOrganizationPage() {
       <div className="w-full max-w-xl space-y-6">
         <div>
           <h1 className="page-header-title">Create organization</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm u-muted">
             A new organization provisions a Keycloak realm, DNS zone, and tenant
             namespaces on the platform cluster.
           </p>
@@ -112,9 +112,9 @@ export function CreateOrganizationPage() {
                   placeholder="acme-analytics"
                   required
                 />
-                {slugError && <p className="text-xs text-destructive">{slugError}</p>}
+                {slugError && <p className="text-xs u-danger">{slugError}</p>}
               </div>
-              {submitError && <p className="text-sm text-destructive">{submitError}</p>}
+              {submitError && <p className="text-sm u-danger">{submitError}</p>}
               <div className="flex justify-end gap-2">
                 <Button variant="ghost" type="button" onClick={() => navigate(-1)}>
                   Cancel

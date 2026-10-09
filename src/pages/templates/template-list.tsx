@@ -16,7 +16,7 @@ export function TemplateListPage() {
     <div className="space-y-6">
       <div>
         <h1 className="page-header-title">Templates</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm u-muted">
           Golden-path scaffolds: repo, pipeline, catalog entry, and tenant RBAC in one flow.
         </p>
       </div>
@@ -30,7 +30,7 @@ export function TemplateListPage() {
       )}
 
       {templates.loading && !templates.data && (
-        <p className="text-sm text-muted-foreground">Loading templates…</p>
+        <p className="text-sm u-muted">Loading templates…</p>
       )}
 
       {templates.data && templates.data.length === 0 && (
@@ -47,7 +47,7 @@ export function TemplateListPage() {
             <div className="card-header">
               <div className="flex items-center justify-between gap-2">
                 <h2 className="mono-label">{template.displayName}</h2>
-                <span className="text-xs text-muted-foreground">v{template.version}</span>
+                <span className="text-xs u-muted">v{template.version}</span>
               </div>
               <p className="card-lede">{template.description}</p>
             </div>

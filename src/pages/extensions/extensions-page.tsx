@@ -100,12 +100,12 @@ function AddRemoteForm({ onAdded }: { onAdded: () => void }) {
         {submitting ? "Adding…" : "Add remote"}
       </Button>
       {error && (
-        <p className="w-full text-sm text-destructive" role="alert">
+        <p className="w-full text-sm u-danger" role="alert">
           {error}
         </p>
       )}
       {notice && (
-        <p className="w-full text-sm text-muted-foreground" role="status">
+        <p className="w-full text-sm u-muted" role="status">
           {notice}
         </p>
       )}
@@ -140,7 +140,7 @@ export function ExtensionsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="page-header-title">Extensions</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm u-muted">
           Installed UI remotes (Module Federation) and backend plugins for this tenant.
         </p>
       </div>
@@ -151,12 +151,12 @@ export function ExtensionsPage() {
         </div>
         <div className="card-body">
           {entries.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm u-muted">
               No UI extensions installed. Add a remote below.
             </p>
           ) : (
             <table className="w-full text-sm">
-              <thead className="text-left text-xs text-muted-foreground">
+              <thead className="text-left text-xs u-muted">
                 <tr>
                   <th className="py-1 pr-4 font-medium">Name</th>
                   <th className="py-1 pr-4 font-medium">Version</th>
@@ -172,7 +172,7 @@ export function ExtensionsPage() {
                       <span className="font-medium">
                         {entry.remote.title ?? entry.remote.name}
                       </span>{" "}
-                      <span className="font-mono text-xs text-muted-foreground">
+                      <span className="font-mono text-xs u-muted">
                         {entry.remote.name}
                       </span>
                     </td>
@@ -194,7 +194,7 @@ export function ExtensionsPage() {
                         </Badge>
                       )}
                       {entry.error && (
-                        <p className="mt-1 text-xs text-destructive">{entry.error}</p>
+                        <p className="mt-1 text-xs u-danger">{entry.error}</p>
                       )}
                     </td>
                     <td className="py-2 text-right">
@@ -224,7 +224,7 @@ export function ExtensionsPage() {
             </table>
           )}
           {actionError && (
-            <p className="text-sm text-destructive" role="alert">
+            <p className="text-sm u-danger" role="alert">
               {actionError}
             </p>
           )}
@@ -238,12 +238,12 @@ export function ExtensionsPage() {
         </div>
         <div className="card-body">
           {backend.loading && !backend.data ? (
-            <p className="text-sm text-muted-foreground">Loading backend extensions…</p>
+            <p className="text-sm u-muted">Loading backend extensions…</p>
           ) : (backend.data ?? []).length === 0 ? (
-            <p className="text-sm text-muted-foreground">No backend extensions installed.</p>
+            <p className="text-sm u-muted">No backend extensions installed.</p>
           ) : (
             <table className="w-full text-sm">
-              <thead className="text-left text-xs text-muted-foreground">
+              <thead className="text-left text-xs u-muted">
                 <tr>
                   <th className="py-1 pr-4 font-medium">Name</th>
                   <th className="py-1 pr-4 font-medium">Version</th>
@@ -257,7 +257,7 @@ export function ExtensionsPage() {
                   <tr key={ext.id} className="border-t">
                     <td className="py-2 pr-4 font-mono text-xs">{ext.name}</td>
                     <td className="py-2 pr-4 font-mono text-xs">{ext.version}</td>
-                    <td className="py-2 pr-4 font-mono text-xs text-muted-foreground">
+                    <td className="py-2 pr-4 font-mono text-xs u-muted">
                       {ext.state}
                     </td>
                     <td className="py-2 pr-4">
@@ -297,13 +297,13 @@ export function ExtensionsPage() {
             </table>
           )}
           {rotateError && (
-            <p className="mt-3 text-sm text-destructive" role="alert">
+            <p className="mt-3 text-sm u-danger" role="alert">
               {rotateError}
             </p>
           )}
           {rotated && (
             <div
-              className="rounded-md border border-border bg-muted/40 p-3 text-sm"
+              className="rounded-md border border-border u-raised/40 p-3 text-sm"
               role="status"
             >
               <p className="font-medium">

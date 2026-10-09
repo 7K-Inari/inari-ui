@@ -112,7 +112,7 @@ function WaitingForConnection({ clusterId }: { clusterId: string }) {
       <div className="flex flex-col items-center gap-3 py-8 text-center">
         <CheckCircle2 className="h-10 w-10 text-emerald-600" aria-hidden />
         <p className="text-lg font-semibold">Cluster is online</p>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm u-muted">
           The agent connected and capability discovery has started
           {cluster.k8sVersion ? ` — Kubernetes ${cluster.k8sVersion}` : ""}.
         </p>
@@ -124,7 +124,7 @@ function WaitingForConnection({ clusterId }: { clusterId: string }) {
     return (
       <div className="space-y-3 py-6 text-center">
         <p className="font-medium">Still waiting for the agent to connect…</p>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm u-muted">
           Check that the agent was installed (`kubectl -n inari-system get pods`) and that the
           cluster has outbound HTTPS access to the control plane.
         </p>
@@ -143,9 +143,9 @@ function WaitingForConnection({ clusterId }: { clusterId: string }) {
 
   return (
     <div className="flex flex-col items-center gap-3 py-8 text-center">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
+      <Loader2 className="h-8 w-8 animate-spin u-brand" aria-hidden />
       <p className="font-medium">Waiting for the agent to connect…</p>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm u-muted">
         Run the Helm command above to install the agent. This page updates automatically once the
         agent dials home.
       </p>
@@ -182,7 +182,7 @@ function ResumedInstall({ clusterId, orgID }: { clusterId: string; orgID: string
         <div className="flex items-center justify-end">
           <TokenCountdown expiresAt={install.expiresAt} />
         </div>
-        <pre className="overflow-auto rounded-md bg-muted p-3 font-mono text-xs">
+        <pre className="overflow-auto rounded-md u-raised p-3 font-mono text-xs">
           {install.command}
         </pre>
         <CopyButton value={install.command} label="Copy command" />
@@ -192,7 +192,7 @@ function ResumedInstall({ clusterId, orgID }: { clusterId: string; orgID: string
 
   return (
     <div className="space-y-2">
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-sm u-danger">{error}</p>}
       <Button variant="secondary" size="sm" onClick={load} disabled={loading}>
         {loading ? "Issuing token…" : "Show install command"}
       </Button>
@@ -250,7 +250,7 @@ export function RegisterWizardPage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <h1 className="page-header-title">Register cluster</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm u-muted">
           Connect a Kubernetes cluster to Inari. The agent dials out — no inbound access or
           kubeconfig required.
         </p>
@@ -276,7 +276,7 @@ export function RegisterWizardPage() {
                   placeholder="kind-dev"
                   required
                 />
-                {nameError && <p className="text-xs text-destructive">{nameError}</p>}
+                {nameError && <p className="text-xs u-danger">{nameError}</p>}
               </div>
               <div className="space-y-1.5">
                 <label className="form-label" htmlFor="cluster-labels">Labels</label>
@@ -286,11 +286,11 @@ export function RegisterWizardPage() {
                   onChange={(v) => setLabelsInput(v)}
                   placeholder="env=dev, cloud=aws"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs u-muted">
                   Comma-separated key=value pairs; used for fleet targeting.
                 </p>
               </div>
-              {submitError && <p className="text-sm text-destructive">{submitError}</p>}
+              {submitError && <p className="text-sm u-danger">{submitError}</p>}
               <div className="flex justify-end gap-2">
                 <Button variant="ghost" type="button" onClick={() => navigate(-1)}>
                   Cancel
@@ -314,7 +314,7 @@ export function RegisterWizardPage() {
             </p>
           </div>
           <div className="card-body">
-            <div className="flex items-center justify-between gap-2 rounded-md border bg-muted/40 p-3">
+            <div className="flex items-center justify-between gap-2 rounded-md border u-raised/40 p-3">
               <code className="truncate font-mono text-xs" data-testid="registration-token">
                 {created.registrationToken}
               </code>
@@ -325,7 +325,7 @@ export function RegisterWizardPage() {
             </div>
 
             <div className="space-y-2">
-              <pre className="overflow-auto rounded-md bg-muted p-3 font-mono text-xs">
+              <pre className="overflow-auto rounded-md u-raised p-3 font-mono text-xs">
                 {created.install.helmCommand}
               </pre>
               <CopyButton value={created.install.helmCommand} label="Copy command" />
@@ -355,7 +355,7 @@ export function RegisterWizardPage() {
           <div className="card-body">
             {!created && resumed.error ? (
               <div className="space-y-3">
-                <p className="text-sm text-destructive">
+                <p className="text-sm u-danger">
                   This registration could not be restored — it may have been cancelled or belongs
                   to another tenant.
                 </p>

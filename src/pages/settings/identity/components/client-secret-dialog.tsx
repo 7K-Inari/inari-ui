@@ -28,12 +28,12 @@ export function ClientSecretDialog({
       <div className="card-body">
         <div className="space-y-1">
           <h2 className="text-sm font-medium">Client secret — shown once</h2>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs u-muted">
             Copy this secret now. It cannot be retrieved again after you close this
             dialog.
           </p>
         </div>
-        <code className="block rounded-md bg-muted px-3 py-2 font-mono text-xs break-all">
+        <code className="block rounded-md u-raised px-3 py-2 font-mono text-xs break-all">
           {secret.secret}
         </code>
         <div className="flex justify-end gap-2">

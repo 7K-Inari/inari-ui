@@ -94,7 +94,7 @@ export function ExemptionsPage() {
           <CapabilityGate
             capability="admin"
             fallback={
-              <span className="text-xs text-muted-foreground">Read-only (org viewer)</span>
+              <span className="text-xs u-muted">Read-only (org viewer)</span>
             }
           >
             <Button onClick={() => setShowRequest((v) => !v)}>
@@ -113,7 +113,7 @@ export function ExemptionsPage() {
       )}
 
       {!error && loading && !exemptions && (
-        <p className="text-sm text-muted-foreground">Loading exemptions…</p>
+        <p className="text-sm u-muted">Loading exemptions…</p>
       )}
 
       {actionError && (
@@ -173,7 +173,7 @@ export function ExemptionsPage() {
       {exemptions && exemptions.length > 0 && (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <thead className="u-raised/50 text-left text-xs u-muted">
               <tr>
                 <th className="px-4 py-2 font-medium">Policy</th>
                 <th className="px-4 py-2 font-medium">State</th>
@@ -185,14 +185,14 @@ export function ExemptionsPage() {
             </thead>
             <tbody>
               {exemptions.map((ex: Exemption) => (
-                <tr key={ex.id} className="border-t hover:bg-muted/30">
+                <tr key={ex.id} className="border-t hover:u-raised/30">
                   <td className="px-4 py-2 font-mono text-xs">{ex.policyId}</td>
                   <td className="px-4 py-2">
                     <Badge variant={stateVariant(ex.state)}>{ex.state}</Badge>
                   </td>
                   <td className="px-4 py-2">{ex.reason ?? "—"}</td>
                   <td className="px-4 py-2 text-xs">{ex.createdBy ?? "—"}</td>
-                  <td className="px-4 py-2 text-xs text-muted-foreground">
+                  <td className="px-4 py-2 text-xs u-muted">
                     {new Date(ex.expiresAt).toLocaleString()}
                   </td>
                   <td className="px-4 py-2">

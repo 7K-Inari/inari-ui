@@ -200,14 +200,14 @@ function StoreStatusBadge({ tenant, name }: { tenant: string; name: string }) {
     if (error) {
       return (
         <span
-          className="text-xs text-destructive"
+          className="text-xs u-danger"
           title={`Failed to load status: ${error.message}`}
         >
           status unavailable
         </span>
       );
     }
-    return <span className="text-xs text-muted-foreground">…</span>;
+    return <span className="text-xs u-muted">…</span>;
   }
   if (status.delivered) {
     return <Badge variant="success">delivered</Badge>;
@@ -217,7 +217,7 @@ function StoreStatusBadge({ tenant, name }: { tenant: string; name: string }) {
     <span className="inline-flex items-center gap-1.5">
       <Badge variant="warning">pending</Badge>
       {ready?.reason && (
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs u-muted">
           {ready.reason}
           {ready.clusterId ? ` (${ready.clusterId})` : ""}
         </span>
@@ -323,7 +323,7 @@ export function EsoStoresPage() {
           <CapabilityGate
             capability="admin"
             fallback={
-              <span className="text-xs text-muted-foreground">Read-only (org viewer)</span>
+              <span className="text-xs u-muted">Read-only (org viewer)</span>
             }
           >
             <Button onClick={() => (editing ? setEditing(null) : openCreate())}>
@@ -342,7 +342,7 @@ export function EsoStoresPage() {
       )}
 
       {!error && loading && !stores && (
-        <p className="text-sm text-muted-foreground">Loading secret stores…</p>
+        <p className="text-sm u-muted">Loading secret stores…</p>
       )}
 
       {actionError && (
@@ -356,11 +356,11 @@ export function EsoStoresPage() {
           <div className="card-body">
             <div className="space-y-1.5">
               <label className="form-label" htmlFor="secret-store-provider">
-                Provider <span className="text-destructive">*</span>
+                Provider <span className="u-danger">*</span>
               </label>
               <select
                 id="secret-store-provider"
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                className="input"
                 value={selectedProvider ?? ""}
                 onChange={(e) => {
                   const value = e.target.value;
@@ -409,7 +409,7 @@ export function EsoStoresPage() {
       {stores && stores.length > 0 && (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <thead className="u-raised/50 text-left text-xs u-muted">
               <tr>
                 <th className="px-4 py-2 font-medium">Name</th>
                 <th className="px-4 py-2 font-medium">Scope</th>
@@ -425,7 +425,7 @@ export function EsoStoresPage() {
                 const readOnly = store.scope === "platform";
                 const providerKey = secretStoreProviderKey(store.provider);
                 return (
-                  <tr key={store.name} className="border-t hover:bg-muted/30">
+                  <tr key={store.name} className="border-t hover:u-raised/30">
                     <td className="px-4 py-2 font-medium">{store.name}</td>
                     <td className="px-4 py-2">
                       {readOnly ? (
@@ -443,12 +443,12 @@ export function EsoStoresPage() {
                     <td className="px-4 py-2">
                       <StoreStatusBadge tenant={tenant} name={store.name} />
                     </td>
-                    <td className="px-4 py-2 text-xs text-muted-foreground">
+                    <td className="px-4 py-2 text-xs u-muted">
                       {formatRelative(store.createdAt)}
                     </td>
                     <td className="px-4 py-2">
                       {readOnly ? (
-                        <span className="text-xs text-muted-foreground">Read-only</span>
+                        <span className="text-xs u-muted">Read-only</span>
                       ) : (
                         <CapabilityGate capability="admin">
                           <div className="flex gap-1">

@@ -62,7 +62,7 @@ export function ExtensionSsoCallbackPage() {
     );
   }
   return (
-    <div className="mx-auto mt-16 max-w-md text-sm text-muted-foreground">
+    <div className="mx-auto mt-16 max-w-md text-sm u-muted">
       Signing you in to the extension service…
     </div>
   );

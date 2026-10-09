@@ -61,7 +61,7 @@ export function PlatformAccessPage() {
     <div className="mx-auto max-w-3xl space-y-4 p-6">
       <div>
         <h1 className="page-header-title">Platform access</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm u-muted">
           Platform administrators can create organizations and manage
           platform-level settings.
         </p>
@@ -76,7 +76,7 @@ export function PlatformAccessPage() {
       )}
 
       {!error && loading && !admins && (
-        <p className="text-sm text-muted-foreground">Loading platform admins…</p>
+        <p className="text-sm u-muted">Loading platform admins…</p>
       )}
 
       {!error && admins && admins.length === 0 && (
@@ -90,7 +90,7 @@ export function PlatformAccessPage() {
       {admins && admins.length > 0 && (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <thead className="u-raised/50 text-left text-xs u-muted">
               <tr>
                 <th className="px-4 py-2 font-medium">Name</th>
                 <th className="px-4 py-2 font-medium">Email</th>
@@ -99,9 +99,9 @@ export function PlatformAccessPage() {
             </thead>
             <tbody>
               {admins.map((admin) => (
-                <tr key={admin.userId} className="border-t hover:bg-muted/30">
+                <tr key={admin.userId} className="border-t hover:u-raised/30">
                   <td className="px-4 py-2 font-medium">{admin.displayName}</td>
-                  <td className="px-4 py-2 text-muted-foreground">
+                  <td className="px-4 py-2 u-muted">
                     {admin.email}
                   </td>
                   <td className="px-4 py-2 text-right">

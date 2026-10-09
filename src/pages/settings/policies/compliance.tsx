@@ -29,7 +29,7 @@ function ViolationList({
   if (items.length === 0) return null;
   return (
     <div className="space-y-1">
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      <p className="text-xs font-medium uppercase tracking-wide u-muted">
         {title}
       </p>
       <ul className="space-y-1">
@@ -37,7 +37,7 @@ function ViolationList({
           <li key={`${v.rule}-${i}`} className="text-sm">
             <Badge variant={variant}>{v.rule}</Badge>{" "}
             {v.reason}{" "}
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs u-muted">
               Remediation: {v.remediation}
             </span>
             {v.exempted && (
@@ -114,7 +114,7 @@ export function CompliancePage() {
       )}
 
       {!error && loading && !policies && (
-        <p className="text-sm text-muted-foreground">Loading policies…</p>
+        <p className="text-sm u-muted">Loading policies…</p>
       )}
 
       {!error && policies && policies.length === 0 && (
@@ -128,7 +128,7 @@ export function CompliancePage() {
       {policies && policies.length > 0 && (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <thead className="u-raised/50 text-left text-xs u-muted">
               <tr>
                 <th className="px-4 py-2 font-medium">Name</th>
                 <th className="px-4 py-2 font-medium">Target</th>
@@ -140,7 +140,7 @@ export function CompliancePage() {
             </thead>
             <tbody>
               {policies.map((p: Policy) => (
-                <tr key={p.id} className="border-t hover:bg-muted/30">
+                <tr key={p.id} className="border-t hover:u-raised/30">
                   <td className="px-4 py-2 font-medium">{p.name}</td>
                   <td className="px-4 py-2 font-mono text-xs">{p.target}</td>
                   <td className="px-4 py-2 font-mono text-xs">{p.engine}</td>
@@ -152,7 +152,7 @@ export function CompliancePage() {
                     )}
                   </td>
                   <td className="px-4 py-2 font-mono text-xs">v{p.version}</td>
-                  <td className="px-4 py-2 text-xs text-muted-foreground">
+                  <td className="px-4 py-2 text-xs u-muted">
                     {formatRelative(p.updatedAt)}
                   </td>
                 </tr>
@@ -201,7 +201,7 @@ export function CompliancePage() {
               <label className="form-label" htmlFor="eval-spec">Spec (JSON)</label>
               <textarea
                 id="eval-spec"
-                className="min-h-24 w-full rounded-md border border-input bg-transparent px-3 py-2 font-mono text-xs"
+                className="textarea font-mono text-xs"
                 value={spec}
                 onChange={(e) => setSpec(e.target.value)}
                 placeholder="{}"
@@ -213,7 +213,7 @@ export function CompliancePage() {
           </form>
 
           {evalError && (
-            <p className="mt-3 text-sm text-destructive">{evalError}</p>
+            <p className="mt-3 text-sm u-danger">{evalError}</p>
           )}
 
           {decision && (

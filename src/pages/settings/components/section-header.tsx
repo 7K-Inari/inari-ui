@@ -13,7 +13,7 @@ export function SettingsSectionHeader({
     <div className="flex items-center justify-between">
       <div>
         <h1 className="page-header-title">{title}</h1>
-        <p className="text-sm text-muted-foreground">{description}</p>
+        <p className="text-sm u-muted">{description}</p>
       </div>
       {actions && <div className="flex items-center gap-2">{actions}</div>}
     </div>

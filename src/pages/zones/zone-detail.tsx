@@ -38,13 +38,13 @@ function StepIcon({ status }: { status: ZoneStepStatus }) {
       return <CheckCircle2 className="h-5 w-5 text-emerald-600" aria-hidden />;
     case "running":
     case "waiting":
-      return <Loader2 className="h-5 w-5 animate-spin text-primary" aria-hidden />;
+      return <Loader2 className="h-5 w-5 animate-spin u-brand" aria-hidden />;
     case "failed":
-      return <XCircle className="h-5 w-5 text-destructive" aria-hidden />;
+      return <XCircle className="h-5 w-5 u-danger" aria-hidden />;
     case "skipped":
-      return <CheckCircle2 className="h-5 w-5 text-muted-foreground/50" aria-hidden />;
+      return <CheckCircle2 className="h-5 w-5 u-muted/50" aria-hidden />;
     default:
-      return <Circle className="h-5 w-5 text-muted-foreground/50" aria-hidden />;
+      return <Circle className="h-5 w-5 u-muted/50" aria-hidden />;
   }
 }
 
@@ -55,11 +55,11 @@ function LifecycleSteps({ steps }: { steps: ZoneStep[] }) {
         <li key={step.name} className="flex items-start gap-3">
           <StepIcon status={step.status} />
           <div>
-            <p className={step.status === "pending" ? "text-muted-foreground" : "font-medium"}>
+            <p className={step.status === "pending" ? "u-muted" : "font-medium"}>
               {stepLabel(step.name)}
-              <span className="ml-2 text-xs text-muted-foreground">{step.status}</span>
+              <span className="ml-2 text-xs u-muted">{step.status}</span>
             </p>
-            {step.detail && <p className="text-xs text-muted-foreground">{step.detail}</p>}
+            {step.detail && <p className="text-xs u-muted">{step.detail}</p>}
           </div>
         </li>
       ))}
@@ -119,7 +119,7 @@ export function ZoneDetailPage() {
   }
   if (!zone) {
     return (
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm u-muted">
         {loading ? "Loading zone…" : "Zone not found."}
       </p>
     );
@@ -140,7 +140,7 @@ export function ZoneDetailPage() {
             <ZoneStatusBadge status={zone.status} />
             <Badge variant="neutral">{zone.tier}</Badge>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm u-muted">
             {zone.slug} · OU {zone.orgUnit} · {zone.region} · created{" "}
             {formatRelative(zone.createdAt)}
           </p>
@@ -165,13 +165,13 @@ export function ZoneDetailPage() {
               <dl className="space-y-1 text-sm">
                 {zone.cloudAccountId && (
                   <div className="flex gap-2">
-                    <dt className="text-muted-foreground">Cloud account:</dt>
+                    <dt className="u-muted">Cloud account:</dt>
                     <dd className="font-mono text-xs">{zone.cloudAccountId}</dd>
                   </div>
                 )}
                 {zone.clusterId && (
                   <div className="flex gap-2">
-                    <dt className="text-muted-foreground">Cluster:</dt>
+                    <dt className="u-muted">Cluster:</dt>
                     <dd className="font-mono text-xs">{zone.clusterId}</dd>
                   </div>
                 )}
@@ -191,7 +191,7 @@ export function ZoneDetailPage() {
           </div>
           <div className="card-body">
             <form onSubmit={submitDecommission} className="space-y-4">
-              {decomError && <p className="text-sm text-destructive">{decomError}</p>}
+              {decomError && <p className="text-sm u-danger">{decomError}</p>}
               <div className="flex justify-end">
                 <Button type="submit" variant="danger" disabled={decomSubmitting}>
                   {decomSubmitting ? "Requesting…" : "Request decommission"}

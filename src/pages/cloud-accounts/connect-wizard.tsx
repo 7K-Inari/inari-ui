@@ -28,10 +28,10 @@ export function TrustRoleFacts({ account }: { account: CloudAccount }) {
     { label: "ExternalId", value: account.externalId },
   ];
   return (
-    <dl className="space-y-2 rounded-md border bg-muted/40 p-3 text-xs">
+    <dl className="space-y-2 rounded-md border u-raised/40 p-3 text-xs">
       {facts.map((f) => (
         <div key={f.label} className="flex items-start justify-between gap-4">
-          <dt className="shrink-0 text-muted-foreground">{f.label}</dt>
+          <dt className="shrink-0 u-muted">{f.label}</dt>
           <dd className="break-all text-right font-mono">{f.value}</dd>
         </div>
       ))}
@@ -55,7 +55,7 @@ export function ValidationStateView({
       <div className="flex flex-col items-center gap-3 py-6 text-center">
         <CheckCircle2 className="h-10 w-10 text-emerald-600" aria-hidden />
         <p className="text-lg font-semibold">Account connected</p>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm u-muted">
           Dry-run AssumeRole succeeded; the account is ready for managed resources.
         </p>
         <Link to={tenantLink(tenant, `cloud-accounts/${accountId}`)} className="btn btn-secondary">Open account detail</Link>
@@ -63,12 +63,12 @@ export function ValidationStateView({
     );
   }
   return (
-    <div className="space-y-3 rounded-md border border-destructive/40 bg-destructive/10 p-4">
-      <p className="text-sm font-medium text-destructive">Validation failed</p>
-      <p className="text-sm text-destructive" data-testid="validation-error">
+    <div className="space-y-3 rounded-md border border-destructive/40 u-danger-bg/10 p-4">
+      <p className="text-sm font-medium u-danger">Validation failed</p>
+      <p className="text-sm u-danger" data-testid="validation-error">
         {account.statusMessage ?? "The trust role could not be assumed."}
       </p>
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs u-muted">
         Re-check the trust policy: the OIDC issuer and subject must match the platform cluster,
         and the ExternalId condition must be present on the AssumeRole statement.
       </p>
@@ -152,7 +152,7 @@ export function ConnectAccountWizardPage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <h1 className="page-header-title">Connect AWS account</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm u-muted">
           Grant the platform access to an AWS account via a trust role. No access keys or
           credentials are stored.
         </p>
@@ -179,7 +179,7 @@ export function ConnectAccountWizardPage() {
                   placeholder="123456789012"
                   required
                 />
-                {accountIdError && <p className="text-xs text-destructive">{accountIdError}</p>}
+                {accountIdError && <p className="text-xs u-danger">{accountIdError}</p>}
               </div>
               <div className="space-y-1.5">
                 <label className="form-label" htmlFor="role-arn">Role ARN</label>
@@ -190,8 +190,8 @@ export function ConnectAccountWizardPage() {
                   placeholder="arn:aws:iam::123456789012:role/inari-platform-access"
                   required
                 />
-                {roleArnError && <p className="text-xs text-destructive">{roleArnError}</p>}
-                <p className="text-xs text-muted-foreground">
+                {roleArnError && <p className="text-xs u-danger">{roleArnError}</p>}
+                <p className="text-xs u-muted">
                   The ARN of the IAM role the platform will assume in this account.
                 </p>
               </div>
@@ -203,11 +203,11 @@ export function ConnectAccountWizardPage() {
                   onChange={(v) => setExternalIdInput(v)}
                   placeholder="Generated if left empty"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs u-muted">
                   The ExternalId condition for the AssumeRole statement in the trust policy.
                 </p>
               </div>
-              {submitError && <p className="text-sm text-destructive">{submitError}</p>}
+              {submitError && <p className="text-sm u-danger">{submitError}</p>}
               <div className="flex justify-end gap-2">
                 <Button variant="ghost" type="button" onClick={() => navigate(-1)}>
                   Cancel
@@ -262,7 +262,7 @@ export function ConnectAccountWizardPage() {
           <div className="card-body">
             {validating && (
               <div className="flex flex-col items-center gap-3 py-8 text-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
+                <Loader2 className="h-8 w-8 animate-spin u-brand" aria-hidden />
                 <p className="font-medium">Validating the trust role…</p>
               </div>
             )}

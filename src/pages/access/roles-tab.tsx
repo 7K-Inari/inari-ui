@@ -155,7 +155,7 @@ function RoleEditor({
                 required
               />
               {!nameValid && draft.name !== "" && (
-                <p className="text-xs text-destructive">
+                <p className="text-xs u-danger">
                   Lowercase alphanumeric with dashes, starting with a letter or digit.
                 </p>
               )}
@@ -186,26 +186,26 @@ function RoleEditor({
             <legend className="text-sm font-medium">Permissions</legend>
             {groupByDomain(catalog).map(([domain, permissions]) => (
               <div key={domain} className="space-y-1">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <p className="text-xs font-medium uppercase tracking-wide u-muted">
                   {domain}
                 </p>
                 <div className="grid gap-1 sm:grid-cols-2">
                   {permissions.map((p) => (
                     <label
                       key={p.slug}
-                      className="flex items-start gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted/30"
+                      className="flex items-start gap-2 rounded-md border px-3 py-2 text-sm hover:u-raised/30"
                       title={p.description}
                     >
                       <input
                         type="checkbox"
-                        className="mt-0.5 h-4 w-4 border-input accent-primary"
+                        className="checkbox"
                         checked={draft.permissions.has(p.slug)}
                         disabled={disabled}
                         onChange={() => toggle(p.slug)}
                       />
                       <span>
                         <span className="font-medium">{p.name}</span>{" "}
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs u-muted">
                           {p.slug}
                         </span>
                       </span>
@@ -217,14 +217,14 @@ function RoleEditor({
           </fieldset>
 
           {role?.builtin && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs u-muted">
               Built-in role: the name is fixed, but the permission bundle is
               editable. The server rejects edits that would leave the
               organization without an admin.
             </p>
           )}
           {actionError && (
-            <p className="text-sm text-destructive">{actionError}</p>
+            <p className="text-sm u-danger">{actionError}</p>
           )}
           <div className="flex gap-2">
             <CapabilityGate capability="manageRbac" mode="disable">
@@ -302,7 +302,7 @@ export function RolesTab() {
     );
   }
   if (loading && !roles) {
-    return <p className="text-sm text-muted-foreground">Loading roles…</p>;
+    return <p className="text-sm u-muted">Loading roles…</p>;
   }
 
   const editRole = editing && editing !== "new"
@@ -313,7 +313,7 @@ export function RolesTab() {
     <div className="space-y-4">
       {confirmDialog}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm u-muted">
           Org roles bundle permissions from the static catalog. Built-in roles
           are never deletable; custom roles bound to teams cannot be deleted.
           {!canManageRbac && (
@@ -340,7 +340,7 @@ export function RolesTab() {
       {roles && roles.length > 0 && (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <thead className="u-raised/50 text-left text-xs u-muted">
               <tr>
                 <th className="px-4 py-2 font-medium">Role</th>
                 <th className="px-4 py-2 font-medium">Permissions</th>
@@ -350,20 +350,20 @@ export function RolesTab() {
             </thead>
             <tbody>
               {roles.map((role) => (
-                <tr key={role.id} className="border-t hover:bg-muted/30">
+                <tr key={role.id} className="border-t hover:u-raised/30">
                   <td className="px-4 py-2">
                     <span className="font-medium">
                       {role.displayName || role.name}
                     </span>{" "}
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs u-muted">
                       {role.name}
                     </span>{" "}
                     {role.builtin && <Badge variant="neutral">Built-in</Badge>}
                   </td>
-                  <td className="px-4 py-2 text-muted-foreground">
+                  <td className="px-4 py-2 u-muted">
                     {(role.permissions ?? []).length}
                   </td>
-                  <td className="px-4 py-2 text-muted-foreground">
+                  <td className="px-4 py-2 u-muted">
                     {role.description}
                   </td>
                   <td className="px-4 py-2 text-right">

@@ -88,7 +88,7 @@ export function OrgDomainsPage() {
           <CapabilityGate
             capability="admin"
             fallback={
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs u-muted">
                 Read-only (org viewer)
               </span>
             }
@@ -107,7 +107,7 @@ export function OrgDomainsPage() {
       )}
 
       {!error && loading && !provider && (
-        <p className="text-sm text-muted-foreground">Loading domains…</p>
+        <p className="text-sm u-muted">Loading domains…</p>
       )}
 
       {actionError && (
@@ -151,7 +151,7 @@ export function OrgDomainsPage() {
                       Add domain
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs u-muted">
                     Exact domains match one domain; a *. wildcard matches all
                     subdomains. A domain already in use by another organization
                     is rejected.
@@ -174,7 +174,7 @@ export function OrgDomainsPage() {
           {domains.length > 0 && (
             <div className="overflow-hidden rounded-lg border">
               <table className="w-full text-sm">
-                <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+                <thead className="u-raised/50 text-left text-xs u-muted">
                   <tr>
                     <th className="px-4 py-2 font-medium">Domain</th>
                     <th className="px-4 py-2 font-medium">Match</th>
@@ -183,7 +183,7 @@ export function OrgDomainsPage() {
                 </thead>
                 <tbody>
                   {domains.map((d) => (
-                    <tr key={d} className="border-t hover:bg-muted/30">
+                    <tr key={d} className="border-t hover:u-raised/30">
                       <td className="px-4 py-2 font-mono text-xs">{d}</td>
                       <td className="px-4 py-2">
                         {d.startsWith("*.") ? (

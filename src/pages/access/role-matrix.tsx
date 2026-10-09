@@ -157,7 +157,7 @@ export function RoleMatrix() {
     );
   }
   if ((loading && !matrix) || rolesLoading && !roles) {
-    return <p className="text-sm text-muted-foreground">Loading role assignments…</p>;
+    return <p className="text-sm u-muted">Loading role assignments…</p>;
   }
   if (!matrix || matrix.groups.length === 0) {
     return (
@@ -172,7 +172,7 @@ export function RoleMatrix() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm u-muted">
           Assign each team a role. Saving applies all assignments in one
           request. <Link to={tenantLink(tenant, "access/roles")} className="underline">Manage roles</Link>
         </p>
@@ -198,7 +198,7 @@ export function RoleMatrix() {
 
       <div className="overflow-hidden rounded-lg border">
         <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+          <thead className="u-raised/50 text-left text-xs u-muted">
             <tr>
               <th className="px-4 py-2 font-medium">Team</th>
               <th className="px-4 py-2 font-medium">Role</th>
@@ -211,7 +211,7 @@ export function RoleMatrix() {
               const unknown = unknownName(value);
               const role = (roles ?? []).find((r) => r.id === value);
               return (
-                <tr key={group.path} className="border-t hover:bg-muted/30">
+                <tr key={group.path} className="border-t hover:u-raised/30">
                   <td className="px-4 py-2">
                     <span className="font-medium">{display}</span>{" "}
                     <Badge variant="neutral">{group.memberCount} members</Badge>

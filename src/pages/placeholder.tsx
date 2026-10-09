@@ -19,8 +19,8 @@ export function PlaceholderPage({
   return (
     <div className="space-y-2">
       <h1 className="page-header-title">{title}</h1>
-      <p className="text-sm text-muted-foreground">{description}</p>
-      <p className="text-xs text-muted-foreground">
+      <p className="text-sm u-muted">{description}</p>
+      <p className="text-xs u-muted">
         Scope: <span className="font-mono">{scope}</span> — this page is a
         placeholder and ships in a later milestone.
       </p>

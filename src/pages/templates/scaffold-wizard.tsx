@@ -45,14 +45,14 @@ function StepList({ run }: { run: ScaffoldRunViewModel }) {
           {step.state === "completed" ? (
             <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden />
           ) : step.state === "failed" ? (
-            <XCircle className="h-4 w-4 text-destructive" aria-hidden />
+            <XCircle className="h-4 w-4 u-danger" aria-hidden />
           ) : step.state === "running" ? (
-            <Loader2 className="h-4 w-4 animate-spin text-primary" aria-hidden />
+            <Loader2 className="h-4 w-4 animate-spin u-brand" aria-hidden />
           ) : (
-            <Circle className="h-4 w-4 text-muted-foreground" aria-hidden />
+            <Circle className="h-4 w-4 u-muted" aria-hidden />
           )}
           <span className="flex-1">{step.name}</span>
-          <span className="text-xs text-muted-foreground">{step.state}</span>
+          <span className="text-xs u-muted">{step.state}</span>
         </li>
       ))}
     </ul>
@@ -76,7 +76,7 @@ function ScaffoldStatus({ scaffoldId }: { scaffoldId: string }) {
 
   if (!run) {
     return (
-      <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
+      <div className="flex items-center gap-2 py-6 text-sm u-muted">
         <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Starting scaffold…
       </div>
     );
@@ -117,16 +117,16 @@ function ScaffoldStatus({ scaffoldId }: { scaffoldId: string }) {
   if (run.failed) {
     return (
       <div className="flex flex-col items-center gap-3 py-6 text-center">
-        <p className="font-medium text-destructive">Scaffold failed</p>
+        <p className="font-medium u-danger">Scaffold failed</p>
         <RunIdentityBadge run={run} />
         {(run.error ?? run.steps.find((s) => s.error)?.error) && (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm u-muted">
             {run.error ?? run.steps.find((s) => s.error)?.error}
           </p>
         )}
         <StepList run={run} />
         {actionError && (
-          <p className="text-sm text-destructive" role="alert">
+          <p className="text-sm u-danger" role="alert">
             {actionError}
           </p>
         )}
@@ -143,9 +143,9 @@ function ScaffoldStatus({ scaffoldId }: { scaffoldId: string }) {
       {terminal ? (
         <CheckCircle2 className="h-10 w-10 text-emerald-600" aria-hidden />
       ) : run.phase === "cancelled" ? (
-        <XCircle className="h-10 w-10 text-muted-foreground" aria-hidden />
+        <XCircle className="h-10 w-10 u-muted" aria-hidden />
       ) : (
-        <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
+        <Loader2 className="h-8 w-8 animate-spin u-brand" aria-hidden />
       )}
       <p className="font-medium">
         {terminal
@@ -158,7 +158,7 @@ function ScaffoldStatus({ scaffoldId }: { scaffoldId: string }) {
       <RunIdentityBadge run={run} />
       <StepList run={run} />
       {actionError && (
-        <p className="text-sm text-destructive" role="alert">
+        <p className="text-sm u-danger" role="alert">
           {actionError}
         </p>
       )}
@@ -225,7 +225,7 @@ export function ScaffoldWizardPage() {
     );
   }
   if (!template.data) {
-    return <p className="text-sm text-muted-foreground">Loading template…</p>;
+    return <p className="text-sm u-muted">Loading template…</p>;
   }
   const tpl = template.data;
 
@@ -273,7 +273,7 @@ export function ScaffoldWizardPage() {
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
         <h1 className="page-header-title">Scaffold {tpl.displayName}</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm u-muted">
           Template v{tpl.version} · creates repo, pipeline, and catalog entry
         </p>
       </div>
@@ -289,12 +289,12 @@ export function ScaffoldWizardPage() {
             </p>
           </div>
           <div className="card-body">
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-md bg-muted p-3 text-sm">
-              <dt className="text-muted-foreground">Tenant</dt>
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-md u-raised p-3 text-sm">
+              <dt className="u-muted">Tenant</dt>
               <dd className="font-mono text-xs">{tenant}</dd>
-              <dt className="text-muted-foreground">Namespace</dt>
+              <dt className="u-muted">Namespace</dt>
               <dd className="font-mono text-xs">{tenant}</dd>
-              <dt className="text-muted-foreground">RBAC group</dt>
+              <dt className="u-muted">RBAC group</dt>
               <dd className="font-mono text-xs">tenant-{tenant}</dd>
             </dl>
             <RunIdentityNotice
@@ -310,7 +310,7 @@ export function ScaffoldWizardPage() {
                 onChange={(v) => setName(v)}
                 placeholder="payments-api"
               />
-              {nameError && <p className="text-xs text-destructive">{nameError}</p>}
+              {nameError && <p className="text-xs u-danger">{nameError}</p>}
             </div>
             <SchemaForm
               ref={formRef}
@@ -340,13 +340,13 @@ export function ScaffoldWizardPage() {
           </div>
           <div className="card-body">
             <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-              <dt className="text-muted-foreground">Name</dt>
+              <dt className="u-muted">Name</dt>
               <dd>{name}</dd>
-              <dt className="text-muted-foreground">Template</dt>
+              <dt className="u-muted">Template</dt>
               <dd>{tpl.displayName}</dd>
-              <dt className="text-muted-foreground">Tenant</dt>
+              <dt className="u-muted">Tenant</dt>
               <dd>{tenant}</dd>
-              <dt className="text-muted-foreground">Namespace</dt>
+              <dt className="u-muted">Namespace</dt>
               <dd>{tenant}</dd>
             </dl>
             <RunIdentityNotice
@@ -354,14 +354,14 @@ export function ScaffoldWizardPage() {
               connections={gitConnections.data?.connections}
               tenant={tenant}
             />
-            <pre className="max-h-72 overflow-auto rounded-md bg-muted p-3 font-mono text-xs">
+            <pre className="max-h-72 overflow-auto rounded-md u-raised p-3 font-mono text-xs">
               {JSON.stringify(formData, null, 2)}
             </pre>
             {fallbackBlock !== null && (
               <FallbackBlockedError tenant={tenant} detail={fallbackBlock} />
             )}
             {submitError && (
-              <p className="text-sm text-destructive" role="alert">
+              <p className="text-sm u-danger" role="alert">
                 {submitError}
               </p>
             )}

@@ -106,7 +106,7 @@ function InviteForm({
               ))}
             </select>
           </div>
-          {actionError && <p className="text-sm text-destructive">{actionError}</p>}
+          {actionError && <p className="text-sm u-danger">{actionError}</p>}
           <CapabilityGate capability="manageMembers" mode="disable">
             <Button type="submit" disabled={saving || disabled}>
               {saving ? "Inviting…" : "Invite"}
@@ -173,9 +173,9 @@ function MemberRow({
   };
 
   return (
-    <tr className="border-t hover:bg-muted/30">
+    <tr className="border-t hover:u-raised/30">
       <td className="px-4 py-2 font-medium">{member.displayName}</td>
-      <td className="px-4 py-2 text-muted-foreground">{member.email}</td>
+      <td className="px-4 py-2 u-muted">{member.email}</td>
       <td className="px-4 py-2">
         <div className="flex items-center gap-2">
           <select
@@ -211,7 +211,7 @@ function MemberRow({
       </td>
       <td className="px-4 py-2 text-right">
         {actionError && (
-          <span className="mr-2 text-xs text-destructive">{actionError}</span>
+          <span className="mr-2 text-xs u-danger">{actionError}</span>
         )}
         <CapabilityGate capability="manageMembers" mode="disable">
           <Button variant="secondary" size="sm" disabled={busy} onClick={remove}>
@@ -277,9 +277,9 @@ function UserPicker({
         disabled={disabled}
       />
       {results !== null && !disabled && (
-        <ul className="absolute z-10 mt-1 w-full rounded-md border bg-background shadow-md">
+        <ul className="absolute z-10 mt-1 w-full rounded-md border u-base shadow-md">
           {visible.length === 0 && (
-            <li className="px-3 py-2 text-sm text-muted-foreground">
+            <li className="px-3 py-2 text-sm u-muted">
               No matching org members
             </li>
           )}
@@ -287,7 +287,7 @@ function UserPicker({
             <li key={m.userId}>
               <button
                 type="button"
-                className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-muted/50"
+                className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:u-raised/50"
                 onClick={() => {
                   onPick(m);
                   setQuery("");
@@ -295,7 +295,7 @@ function UserPicker({
                 }}
               >
                 <span>{m.displayName}</span>
-                <span className="text-xs text-muted-foreground">{m.email}</span>
+                <span className="text-xs u-muted">{m.email}</span>
               </button>
             </li>
           ))}
@@ -356,19 +356,19 @@ function TeamMembersPanel({
 
   if (error) {
     return (
-      <p className="px-4 py-3 text-sm text-destructive">
+      <p className="px-4 py-3 text-sm u-danger">
         Failed to load team members: {error.message}
       </p>
     );
   }
   if (loading && !members) {
-    return <p className="px-4 py-3 text-sm text-muted-foreground">Loading members…</p>;
+    return <p className="px-4 py-3 text-sm u-muted">Loading members…</p>;
   }
 
   return (
     <div className="space-y-2 px-4 py-3">
       {members && members.length === 0 && (
-        <p className="text-sm text-muted-foreground">No members in this team.</p>
+        <p className="text-sm u-muted">No members in this team.</p>
       )}
       {members && members.length > 0 && (
         <ul className="space-y-1">
@@ -376,7 +376,7 @@ function TeamMembersPanel({
             <li key={m.userId} className="flex items-center justify-between text-sm">
               <span>
                 {m.displayName}{" "}
-                <span className="text-xs text-muted-foreground">{m.email}</span>
+                <span className="text-xs u-muted">{m.email}</span>
               </span>
               <CapabilityGate capability="manageTeams" mode="disable">
                 <Button
@@ -391,7 +391,7 @@ function TeamMembersPanel({
           ))}
         </ul>
       )}
-      {actionError && <p className="text-sm text-destructive">{actionError}</p>}
+      {actionError && <p className="text-sm u-danger">{actionError}</p>}
       <UserPicker
         tenant={tenant}
         team={team.name}
@@ -454,7 +454,7 @@ function TeamsSection({ roles }: { roles: Role[] | null }) {
     <section className="space-y-3">
       <div>
         <h2 className="text-lg font-semibold tracking-tight">Teams</h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm u-muted">
           Team membership. Team roles are assigned on the Teams &amp; Roles tab.
         </p>
       </div>
@@ -468,7 +468,7 @@ function TeamsSection({ roles }: { roles: Role[] | null }) {
       )}
 
       {!error && loading && !teams && (
-        <p className="text-sm text-muted-foreground">Loading teams…</p>
+        <p className="text-sm u-muted">Loading teams…</p>
       )}
 
       {!error && teams && teams.length === 0 && (
@@ -489,7 +489,7 @@ function TeamsSection({ roles }: { roles: Role[] | null }) {
                     {team.displayName || team.name}{" "}
                     <Badge variant="neutral">{team.roleName || team.roleId}</Badge>
                   </p>
-                  <p className="text-xs text-muted-foreground">{team.name}</p>
+                  <p className="text-xs u-muted">{team.name}</p>
                 </div>
                 <div className="flex gap-2">
                   <Button
@@ -526,7 +526,7 @@ function TeamsSection({ roles }: { roles: Role[] | null }) {
         </div>
       )}
 
-      {actionError && <p className="text-sm text-destructive">{actionError}</p>}
+      {actionError && <p className="text-sm u-danger">{actionError}</p>}
 
       <Card>
         <div className="card-header">
@@ -589,7 +589,7 @@ export function MembersTab() {
       <section className="space-y-3">
         <div>
           <h2 className="text-lg font-semibold tracking-tight">Members</h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm u-muted">
             Org-wide membership and role assignment.
             {!canManageMembers && (
               <Badge variant="neutral" className="ml-2">
@@ -608,7 +608,7 @@ export function MembersTab() {
         )}
 
         {!error && loading && !members && (
-          <p className="text-sm text-muted-foreground">Loading members…</p>
+          <p className="text-sm u-muted">Loading members…</p>
         )}
 
         {!error && members && members.length === 0 && (
@@ -622,7 +622,7 @@ export function MembersTab() {
         {members && members.length > 0 && (
           <div className="overflow-hidden rounded-lg border">
             <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+              <thead className="u-raised/50 text-left text-xs u-muted">
                 <tr>
                   <th className="px-4 py-2 font-medium">Name</th>
                   <th className="px-4 py-2 font-medium">Email</th>

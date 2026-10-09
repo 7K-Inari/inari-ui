@@ -119,7 +119,7 @@ export function ResourceListPage() {
       {confirmDialog}
       <div>
         <h1 className="page-header-title">Resources</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm u-muted">
           All deployed instances across clusters and cloud accounts in this scope.
         </p>
       </div>
@@ -145,16 +145,16 @@ export function ResourceListPage() {
         </Card>
       )}
 
-      {actionError && <p className="text-sm text-destructive">{actionError}</p>}
+      {actionError && <p className="text-sm u-danger">{actionError}</p>}
 
       {!error && loading && !resources && (
-        <p className="text-sm text-muted-foreground">Loading resources…</p>
+        <p className="text-sm u-muted">Loading resources…</p>
       )}
 
       {!error && resources && visible.length === 0 && (
         <Card>
           <div className="card-body">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm u-muted">
               {resources.length === 0
                 ? "No resources yet. Deploy something from the catalog to see it here."
                 : "No resources match this filter."}

@@ -46,7 +46,7 @@ export function PlatformFeatureFlagsPage() {
     <div className="mx-auto max-w-3xl space-y-4 p-6">
       <div>
         <h1 className="page-header-title">Platform feature flags</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm u-muted">
           Platform-wide runtime defaults. Tenant admins can override cluster-scoped flags per
           cluster from the cluster detail page.
         </p>
@@ -61,7 +61,7 @@ export function PlatformFeatureFlagsPage() {
       )}
 
       {!error && loading && !flags && (
-        <p className="text-sm text-muted-foreground">Loading feature flags…</p>
+        <p className="text-sm u-muted">Loading feature flags…</p>
       )}
 
       {!error && flags && flags.length === 0 && (
@@ -94,7 +94,7 @@ export function PlatformFeatureFlagsPage() {
           </div>
           <div className="card-body">
             {flag.envPinned && (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm u-muted">
                 Pinned by an explicitly set environment variable — changes here are stored but
                 have no effect until the env override is removed.
               </p>

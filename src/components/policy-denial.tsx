@@ -12,16 +12,16 @@ export function PolicyDenialNotice({
   return (
     <div
       role="alert"
-      className="space-y-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm"
+      className="space-y-2 rounded-md border border-destructive/40 u-danger-bg/10 p-3 text-sm"
     >
-      <div className="flex items-center gap-2 font-medium text-destructive">
+      <div className="flex items-center gap-2 font-medium u-danger">
         <ShieldAlert className="h-4 w-4" aria-hidden />
         Blocked by platform policy
       </div>
-      <p className="text-destructive">{reason}</p>
+      <p className="u-danger">{reason}</p>
       {remediation && (
-        <p className="text-muted-foreground">
-          <span className="font-medium text-foreground">Remediation: </span>
+        <p className="u-muted">
+          <span className="font-medium u-fg">Remediation: </span>
           {remediation}
         </p>
       )}

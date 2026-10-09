@@ -53,7 +53,7 @@ function StageCard({
         <div className="flex items-center justify-between gap-2">
           <h2 className="mono-label">
             {stage.name}{" "}
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs u-muted">
               max {stage.maxConcurrency} concurrent
             </span>
           </h2>
@@ -69,7 +69,7 @@ function StageCard({
       </div>
       <div className="card-body">
         <table className="w-full text-sm">
-          <thead className="text-left text-xs text-muted-foreground">
+          <thead className="text-left text-xs u-muted">
             <tr>
               <th className="py-1 pr-4 font-medium">Cluster</th>
               <th className="py-1 pr-4 font-medium">Status</th>
@@ -79,7 +79,7 @@ function StageCard({
           <tbody>
             {stageTargets.length === 0 ? (
               <tr>
-                <td className="py-1.5 text-muted-foreground" colSpan={3}>
+                <td className="py-1.5 u-muted" colSpan={3}>
                   No targets assigned to this stage yet.
                 </td>
               </tr>
@@ -92,7 +92,7 @@ function StageCard({
                       {target.status}
                     </Badge>
                   </td>
-                  <td className="py-1.5 text-muted-foreground">
+                  <td className="py-1.5 u-muted">
                     {target.observedHealth ?? "—"}
                   </td>
                 </tr>
@@ -136,7 +136,7 @@ export function RolloutDetailPage() {
     const notFound = resource.error instanceof ApiError && resource.error.status === 404;
     return (
       <div className="space-y-3">
-        <p className="text-sm text-destructive">
+        <p className="text-sm u-danger">
           {notFound ? "Rollout not found." : `Failed to load rollout: ${resource.error.message}`}
         </p>
         <Link to={tenantLink(tenant, "fleet")} className="btn btn-secondary">Back to fleet</Link>
@@ -145,7 +145,7 @@ export function RolloutDetailPage() {
   }
 
   if (resource.loading && !resource.data) {
-    return <p className="text-sm text-muted-foreground">Loading rollout…</p>;
+    return <p className="text-sm u-muted">Loading rollout…</p>;
   }
   if (!resource.data) return null;
   const data = resource.data.rollout;
@@ -158,7 +158,7 @@ export function RolloutDetailPage() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="page-header-title">{data.name}</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm u-muted">
             {data.target.kind} <span className="font-mono text-xs">{data.target.name}@{data.target.version}</span>{" "}
             · stage {Math.min(data.currentStage + 1, data.stages.length)}/{data.stages.length}
           </p>
@@ -167,7 +167,7 @@ export function RolloutDetailPage() {
           <Badge variant={data.state === "completed" ? "success" : data.state === "failed" ? "danger" : "warning"}>
             {data.state}
           </Badge>
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm u-muted">
             {healthy}/{targets.length} clusters healthy
           </span>
           {(data.state === "running" || data.state === "waiting-approval" || data.state === "failed") && (
@@ -192,13 +192,13 @@ export function RolloutDetailPage() {
         </div>
       </div>
       {actionError && (
-        <p className="text-sm text-destructive" role="alert">
+        <p className="text-sm u-danger" role="alert">
           {actionError}
         </p>
       )}
 
       {data.state === "waiting-approval" && (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm u-muted">
           This rollout is waiting on an approval gate — decide the linked approval request in
           the Approvals inbox to continue.
         </p>

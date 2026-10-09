@@ -64,7 +64,7 @@ function OrgProfileForm({
             <div className="space-y-1.5">
               <label className="form-label" htmlFor="org-slug">Slug</label>
               <Input id="org-slug" value={organization.slug} disabled />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs u-muted">
                 Immutable tenant identifier used in URLs and API paths.
               </p>
             </div>
@@ -108,7 +108,7 @@ export function OrgProfilePage() {
         description="Display name and identity of this organization."
         actions={
           !canWriteSettings ? (
-            <span className="text-xs text-muted-foreground">Read-only (org viewer)</span>
+            <span className="text-xs u-muted">Read-only (org viewer)</span>
           ) : undefined
         }
       />
@@ -122,7 +122,7 @@ export function OrgProfilePage() {
       )}
 
       {!error && loading && !organization && (
-        <p className="text-sm text-muted-foreground">Loading organization…</p>
+        <p className="text-sm u-muted">Loading organization…</p>
       )}
 
       {!error && !loading && !organization && (

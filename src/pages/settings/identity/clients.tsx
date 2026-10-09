@@ -177,7 +177,7 @@ export function OidcClientsPage() {
           <CapabilityGate
             capability="admin"
             fallback={
-              <span className="text-xs text-muted-foreground">Read-only (org viewer)</span>
+              <span className="text-xs u-muted">Read-only (org viewer)</span>
             }
           >
             <Button onClick={() => (editing ? setEditing(null) : openCreate())}>
@@ -196,7 +196,7 @@ export function OidcClientsPage() {
       )}
 
       {!error && loading && !clients && (
-        <p className="text-sm text-muted-foreground">Loading OIDC clients…</p>
+        <p className="text-sm u-muted">Loading OIDC clients…</p>
       )}
 
       {actionError && (
@@ -234,7 +234,7 @@ export function OidcClientsPage() {
       {clients && clients.length > 0 && (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <thead className="u-raised/50 text-left text-xs u-muted">
               <tr>
                 <th className="px-4 py-2 font-medium">Name</th>
                 <th className="px-4 py-2 font-medium">Type</th>
@@ -246,7 +246,7 @@ export function OidcClientsPage() {
             </thead>
             <tbody>
               {clients.map((client) => (
-                <tr key={client.clientId} className="border-t hover:bg-muted/30">
+                <tr key={client.clientId} className="border-t hover:u-raised/30">
                   <td className="px-4 py-2 font-medium">{client.name}</td>
                   <td className="px-4 py-2">
                     {client.type === "public" ? (
@@ -261,7 +261,7 @@ export function OidcClientsPage() {
                   <td className="px-4 py-2 font-mono text-xs">
                     {(client.scopes ?? []).join(", ") || "—"}
                   </td>
-                  <td className="px-4 py-2 text-xs text-muted-foreground">
+                  <td className="px-4 py-2 text-xs u-muted">
                     {formatRelative(client.createdAt)}
                   </td>
                   <td className="px-4 py-2">

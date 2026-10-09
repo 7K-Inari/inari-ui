@@ -159,14 +159,14 @@ function EndpointForm({
               }
             />
             {form.kind === "slack" ? (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs u-muted">
                 Create an incoming webhook for your Slack channel at{" "}
                 <span className="font-medium">api.slack.com</span> (Apps →
                 Incoming Webhooks) and paste its URL here. Notifications arrive
                 as Slack messages.
               </p>
             ) : (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs u-muted">
                 Inari POSTs a JSON envelope{" "}
                 <code>{"{event, text, payload, sentAt}"}</code> to this URL.
                 Set a signing secret below to verify deliveries with
@@ -193,13 +193,13 @@ function EndpointForm({
 
           <div className="space-y-1.5">
             <label className="form-label">Events</label>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs u-muted">
               Select none to subscribe to all events.
             </p>
             <div className="space-y-2">
               {EVENT_GROUPS.map((group) => (
                 <div key={group}>
-                  <p className="pb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  <p className="pb-1 text-xs font-medium uppercase tracking-wide u-muted">
                     {group}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
@@ -214,8 +214,8 @@ function EndpointForm({
                             onClick={() => toggleEvent(opt.value)}
                             className={
                               active
-                                ? "rounded-md border border-transparent bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground"
-                                : "rounded-md border px-2 py-0.5 text-xs font-medium text-foreground hover:bg-accent"
+                                ? "rounded-md border border-transparent bg-primary px-2 py-0.5 text-xs font-medium u-brand-foreground"
+                                : "tag u-fg"
                             }
                           >
                             {opt.label}
@@ -239,7 +239,7 @@ function EndpointForm({
           </label>
 
           {(formError ?? error) && (
-            <p className="text-sm text-destructive">{formError ?? error}</p>
+            <p className="text-sm u-danger">{formError ?? error}</p>
           )}
 
           <div className="flex gap-2">
@@ -331,7 +331,7 @@ function EndpointRow({
   return (
     <>
       {confirmDialog}
-      <tr className="border-t hover:bg-muted/30">
+      <tr className="border-t hover:u-raised/30">
         <td className="px-4 py-2 font-medium">{endpoint.name}</td>
       <td className="px-4 py-2">
         <Badge variant={endpoint.kind === "slack" ? "neutral" : "neutral"}>
@@ -340,7 +340,7 @@ function EndpointRow({
       </td>
       <td className="px-4 py-2">
         <span
-          className="font-mono text-xs text-muted-foreground"
+          className="font-mono text-xs u-muted"
           title={maskUrl(endpoint.url)}
         >
           {maskUrl(endpoint.url)}
@@ -368,13 +368,13 @@ function EndpointRow({
           onChange={toggleEnabled}
         />
       </td>
-      <td className="px-4 py-2 text-xs text-muted-foreground">
+      <td className="px-4 py-2 text-xs u-muted">
         {formatRelative(endpoint.createdAt)}
       </td>
       <td className="px-4 py-2 text-right">
         <div className="flex items-center justify-end gap-2">
           {actionError && (
-            <span className="text-xs text-destructive">{actionError}</span>
+            <span className="text-xs u-danger">{actionError}</span>
           )}
           {testResult &&
             (testResult.status === "delivered" ? (
@@ -385,7 +385,7 @@ function EndpointRow({
                   : ""}
               </span>
             ) : (
-              <span className="text-xs text-destructive">
+              <span className="text-xs u-danger">
                 Test failed: {testResult.lastError ?? "unknown error"}
               </span>
             ))}
@@ -503,7 +503,7 @@ export function NotificationsPage() {
           canWriteSettings ? (
             <Button onClick={openCreate}>New endpoint</Button>
           ) : (
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs u-muted">
               Read-only (org viewer)
             </span>
           )
@@ -519,7 +519,7 @@ export function NotificationsPage() {
       )}
 
       {!error && loading && !endpoints && (
-        <p className="text-sm text-muted-foreground">Loading endpoints…</p>
+        <p className="text-sm u-muted">Loading endpoints…</p>
       )}
 
       {formOpen && (
@@ -537,7 +537,7 @@ export function NotificationsPage() {
       {endpoints && endpoints.length === 0 && !formOpen && (
         <Card>
           <div className="card-body">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm u-muted">
               No notification endpoints yet.
             </p>
             {canWriteSettings && (
@@ -551,7 +551,7 @@ export function NotificationsPage() {
         <>
           <div className="overflow-hidden rounded-lg border">
             <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+              <thead className="u-raised/50 text-left text-xs u-muted">
                 <tr>
                   <th className="px-4 py-2 font-medium">Name</th>
                   <th className="px-4 py-2 font-medium">Kind</th>
@@ -578,7 +578,7 @@ export function NotificationsPage() {
               </tbody>
             </table>
           </div>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs u-muted">
             Per-event delivery history is not exposed by the API yet (follow-up
             server task); use Send test to verify an endpoint.
           </p>

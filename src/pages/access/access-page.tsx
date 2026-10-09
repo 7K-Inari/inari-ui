@@ -25,7 +25,7 @@ function IdentityTab({ tenant }: { tenant: string }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <Link to={tenantLink(tenant, "settings/identity/clients")}>
-        <Card className="h-full transition-colors hover:bg-muted/30">
+        <Card className="h-full transition-colors hover:u-raised/30">
           <div className="card-header">
             <h2 className="mono-label">OIDC Clients</h2>
           </div>
@@ -35,7 +35,7 @@ function IdentityTab({ tenant }: { tenant: string }) {
         </Card>
       </Link>
       <Link to={tenantLink(tenant, "settings/identity/scopes")}>
-        <Card className="h-full transition-colors hover:bg-muted/30">
+        <Card className="h-full transition-colors hover:u-raised/30">
           <div className="card-header">
             <h2 className="mono-label">Scopes</h2>
           </div>
@@ -68,8 +68,8 @@ export function AccessPage() {
             aria-current={active === t.id ? "page" : undefined}
             className={
               active === t.id
-                ? "border-b-2 border-primary px-1 pb-2 text-sm font-medium"
-                : "px-1 pb-2 text-sm text-muted-foreground hover:text-foreground"
+                ? "border-b-2 u-brand-border px-1 pb-2 text-sm font-medium"
+                : "px-1 pb-2 text-sm u-muted hover:u-fg"
             }
           >
             {t.label}

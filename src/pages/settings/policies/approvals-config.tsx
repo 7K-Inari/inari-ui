@@ -91,7 +91,7 @@ export function ApprovalsConfigPage() {
           <CapabilityGate
             capability="admin"
             fallback={
-              <span className="text-xs text-muted-foreground">Read-only (org viewer)</span>
+              <span className="text-xs u-muted">Read-only (org viewer)</span>
             }
           >
             <Button onClick={save} disabled={!dirty}>
@@ -101,11 +101,11 @@ export function ApprovalsConfigPage() {
         }
       />
 
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs u-muted">
         Pending requests are decided on the{" "}
         <Link
           to={tenantLink(tenant, "approvals")}
-          className="underline underline-offset-2 hover:text-foreground"
+          className="underline underline-offset-2 hover:u-fg"
         >
           approvals inbox
         </Link>
@@ -121,7 +121,7 @@ export function ApprovalsConfigPage() {
       )}
 
       {!error && loading && !config && (
-        <p className="text-sm text-muted-foreground">Loading approval config…</p>
+        <p className="text-sm u-muted">Loading approval config…</p>
       )}
 
       {actionError && (
@@ -154,7 +154,7 @@ export function ApprovalsConfigPage() {
                       disabled={!canWriteSettings}
                       onChange={(v) => setThreshold(idx, Number(v))}
                     />
-                    <span className="text-xs text-muted-foreground">approvals required</span>
+                    <span className="text-xs u-muted">approvals required</span>
                   </div>
                 ))}
               </div>
@@ -199,13 +199,13 @@ export function ApprovalsConfigPage() {
             <div className="card-body">
               <h2 className="text-sm font-medium">Auto-approve rules</h2>
               {effectiveRules.length === 0 && (
-                <p className="text-sm text-muted-foreground">No auto-approve rules.</p>
+                <p className="text-sm u-muted">No auto-approve rules.</p>
               )}
               <ul className="space-y-1">
                 {effectiveRules.map((rule, idx) => (
                   <li key={`${rule.action}-${idx}`} className="flex items-center gap-3">
                     <span className="font-mono text-xs">{rule.action}</span>
-                    <span className="font-mono text-xs text-muted-foreground">
+                    <span className="font-mono text-xs u-muted">
                       {rule.condition}
                     </span>
                     {canWriteSettings && (
@@ -219,7 +219,7 @@ export function ApprovalsConfigPage() {
             </div>
           </Card>
 
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs u-muted">
             Last updated by {config.updatedBy || "unknown"} {formatRelative(config.updatedAt)}
           </p>
         </div>

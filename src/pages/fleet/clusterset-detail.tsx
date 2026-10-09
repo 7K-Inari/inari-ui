@@ -25,7 +25,7 @@ export function ClusterSetDetailPage() {
     const notFound = set.error instanceof ApiError && set.error.status === 404;
     return (
       <div className="space-y-3">
-        <p className="text-sm text-destructive">
+        <p className="text-sm u-danger">
           {notFound ? "ClusterSet not found." : `Failed to load ClusterSet: ${set.error.message}`}
         </p>
         <Link to={tenantLink(tenant, "fleet")} className="btn btn-secondary">Back to fleet</Link>
@@ -34,7 +34,7 @@ export function ClusterSetDetailPage() {
   }
 
   if (set.loading && !set.data) {
-    return <p className="text-sm text-muted-foreground">Loading ClusterSet…</p>;
+    return <p className="text-sm u-muted">Loading ClusterSet…</p>;
   }
   if (!set.data) return null;
   const data = set.data;
@@ -45,7 +45,7 @@ export function ClusterSetDetailPage() {
     <div className="space-y-4">
       <div>
         <h1 className="page-header-title">{data.name}</h1>
-        <p className="text-sm text-muted-foreground">ClusterSet · label-targeted fleet group</p>
+        <p className="text-sm u-muted">ClusterSet · label-targeted fleet group</p>
       </div>
 
       <Card>
@@ -69,16 +69,16 @@ export function ClusterSetDetailPage() {
         </div>
         <div className="card-body">
           {members.loading && !members.data ? (
-            <p className="px-6 pb-6 text-sm text-muted-foreground">
+            <p className="px-6 pb-6 text-sm u-muted">
               Resolving member clusters…
             </p>
           ) : memberList.length === 0 ? (
-            <p className="px-6 pb-6 text-sm text-muted-foreground">
+            <p className="px-6 pb-6 text-sm u-muted">
               No member clusters match this set's labels yet.
             </p>
           ) : (
             <table className="w-full text-sm">
-              <thead className="text-left text-xs text-muted-foreground">
+              <thead className="text-left text-xs u-muted">
                 <tr>
                   <th className="px-4 py-2 font-medium">Cluster</th>
                   <th className="px-4 py-2 font-medium">Status</th>

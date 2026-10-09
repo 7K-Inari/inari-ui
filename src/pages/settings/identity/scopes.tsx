@@ -78,7 +78,7 @@ export function OidcScopesPage() {
       )}
 
       {!error && loading && !scopes && (
-        <p className="text-sm text-muted-foreground">Loading scopes…</p>
+        <p className="text-sm u-muted">Loading scopes…</p>
       )}
 
       {actionError && (
@@ -90,7 +90,7 @@ export function OidcScopesPage() {
       {scopes && scopes.length > 0 && (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <thead className="u-raised/50 text-left text-xs u-muted">
               <tr>
                 <th className="px-4 py-2 font-medium">Audience</th>
                 <th className="px-4 py-2 font-medium">Scopes</th>
@@ -98,7 +98,7 @@ export function OidcScopesPage() {
             </thead>
             <tbody>
               {scopes.map((entry) => (
-                <tr key={entry.audience} className="border-t hover:bg-muted/30">
+                <tr key={entry.audience} className="border-t hover:u-raised/30">
                   <td className="px-4 py-2">
                     <Badge variant="neutral">{entry.audience}</Badge>
                   </td>
@@ -117,7 +117,7 @@ export function OidcScopesPage() {
           <h2 className="text-sm font-medium">Client assignments</h2>
           <div className="overflow-hidden rounded-lg border">
             <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+              <thead className="u-raised/50 text-left text-xs u-muted">
                 <tr>
                   <th className="px-4 py-2 font-medium">Client</th>
                   <th className="px-4 py-2 font-medium">Scopes</th>
@@ -127,7 +127,7 @@ export function OidcScopesPage() {
               <tbody>
                 {clients.map((client) => (
                   <React.Fragment key={client.clientId}>
-                    <tr className="border-t hover:bg-muted/30">
+                    <tr className="border-t hover:u-raised/30">
                       <td className="px-4 py-2 font-medium">{client.name}</td>
                       <td className="px-4 py-2 font-mono text-xs">
                         {client.scopes.join(", ") || "—"}
@@ -149,7 +149,7 @@ export function OidcScopesPage() {
                       </td>
                     </tr>
                     {assigning?.clientId === client.clientId && (
-                      <tr className="border-t bg-muted/20">
+                      <tr className="border-t u-raised/20">
                         <td colSpan={3} className="px-4 py-3">
                           <div className="flex flex-wrap items-start gap-4">
                             <div className="space-y-1.5">
@@ -162,7 +162,7 @@ export function OidcScopesPage() {
                                 >
                                   <input
                                     type="checkbox"
-                                    className="h-4 w-4 rounded border-input accent-primary"
+                                    className="checkbox"
                                     checked={selected.has(name)}
                                     onChange={() => toggle(name)}
                                   />

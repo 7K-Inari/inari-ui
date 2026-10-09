@@ -40,7 +40,7 @@ export function PlatformPage() {
     <div className="space-y-6">
       <div>
         <h1 className="page-header-title">Platform</h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm u-muted">
           Apps running on the platform cluster and the platform resources reconciled for this
           tenant.
         </p>
@@ -56,7 +56,7 @@ export function PlatformPage() {
           </Card>
         )}
         {!apps.error && apps.loading && !apps.data && (
-          <p className="text-sm text-muted-foreground">Loading platform apps…</p>
+          <p className="text-sm u-muted">Loading platform apps…</p>
         )}
         {!apps.error && apps.data && apps.data.items.length === 0 && (
           <Card>
@@ -94,7 +94,7 @@ export function PlatformPage() {
       <section className="space-y-3" aria-label="Tenant platform resources">
         <div>
           <h2 className="text-lg font-semibold tracking-tight">Tenant platform resources</h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm u-muted">
             Reconciled by inari-operator: Keycloak realm and clients, DNS zone, and tenant
             namespaces.
           </p>
@@ -107,7 +107,7 @@ export function PlatformPage() {
           </Card>
         )}
         {!resources.error && resources.loading && !resources.data && (
-          <p className="text-sm text-muted-foreground">Loading platform resources…</p>
+          <p className="text-sm u-muted">Loading platform resources…</p>
         )}
         {!resources.error && resources.data && resources.data.length === 0 && (
           <Card>
@@ -119,7 +119,7 @@ export function PlatformPage() {
         {resources.data && resources.data.length > 0 && (
           <div className="overflow-hidden rounded-lg border">
             <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+              <thead className="u-raised/50 text-left text-xs u-muted">
                 <tr>
                   <th className="px-4 py-2 font-medium">Kind</th>
                   <th className="px-4 py-2 font-medium">Name</th>
@@ -138,7 +138,7 @@ export function PlatformPage() {
                     variant: "secondary" as const,
                   };
                   return (
-                    <tr key={r.id} className="border-t hover:bg-muted/30">
+                    <tr key={r.id} className="border-t hover:u-raised/30">
                       <td className="px-4 py-2">
                         <Badge variant="neutral">{KIND_LABELS[kind] ?? r.kind}</Badge>
                       </td>
@@ -146,8 +146,8 @@ export function PlatformPage() {
                       <td className="px-4 py-2">
                         <Badge variant={status.variant}>{status.label}</Badge>
                       </td>
-                      <td className="px-4 py-2 text-muted-foreground">{r.detail}</td>
-                      <td className="px-4 py-2 text-muted-foreground">
+                      <td className="px-4 py-2 u-muted">{r.detail}</td>
+                      <td className="px-4 py-2 u-muted">
                         {formatRelative(r.updatedAt)}
                       </td>
                     </tr>

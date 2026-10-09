@@ -52,7 +52,7 @@ export function ZoneListPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="page-header-title">Tenant Zones</h1>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm u-muted">
             Isolation zones carved out for tenants — cloud account, EKS cluster, and wiring per
             zone.
           </p>
@@ -69,13 +69,13 @@ export function ZoneListPage() {
       )}
 
       {!error && loading && !zones && (
-        <p className="text-sm text-muted-foreground">Loading zones…</p>
+        <p className="text-sm u-muted">Loading zones…</p>
       )}
 
       {!error && zones && zones.length === 0 && (
         <Card>
           <div className="card-body">
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm u-muted">
               No tenant zones yet. Vend a zone to get a dedicated cloud account, EKS cluster, and
               platform wiring.
             </p>
@@ -87,7 +87,7 @@ export function ZoneListPage() {
       {zones && zones.length > 0 && (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <thead className="u-raised/50 text-left text-xs u-muted">
               <tr>
                 <th className="px-4 py-2 font-medium">Name</th>
                 <th className="px-4 py-2 font-medium">Org unit</th>
@@ -99,15 +99,15 @@ export function ZoneListPage() {
             </thead>
             <tbody>
               {zones.map((zone) => (
-                <tr key={zone.id} className="border-t hover:bg-muted/30">
+                <tr key={zone.id} className="border-t hover:u-raised/30">
                   <td className="px-4 py-2">
                     <Link
                       to={tenantLink(tenant, `tenant-zones/${zone.id}`)}
-                      className="font-medium text-primary hover:underline"
+                      className="font-medium u-brand hover:underline"
                     >
                       {zone.name}
                     </Link>
-                    <span className="ml-2 font-mono text-xs text-muted-foreground">
+                    <span className="ml-2 font-mono text-xs u-muted">
                       {zone.slug}
                     </span>
                   </td>
@@ -119,7 +119,7 @@ export function ZoneListPage() {
                   <td className="px-4 py-2">
                     <ZoneStatusBadge status={zone.status} />
                   </td>
-                  <td className="px-4 py-2 text-muted-foreground">
+                  <td className="px-4 py-2 u-muted">
                     {formatRelative(zone.createdAt)}
                   </td>
                 </tr>

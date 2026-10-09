@@ -66,7 +66,7 @@ export function ExtensionPageHost({ context }: { context: SlotContext }) {
   });
   if (!match) {
     return (
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm u-muted">
         No extension page is registered for this path.
       </p>
     );
@@ -129,7 +129,7 @@ export function InstanceActionButtons({
   const [running, setRunning] = React.useState<string | null>(null);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   if (actions.length === 0) {
-    return <p className="px-1 py-2 text-muted-foreground">No extension actions available.</p>;
+    return <p className="px-1 py-2 u-muted">No extension actions available.</p>;
   }
   const sdkInstance = toSdkResourceInstance(instance);
 
@@ -163,7 +163,7 @@ export function InstanceActionButtons({
               {running === id ? <Spinner size="sm" /> : null}{running === id ? " Running…" : props.label}
             </Button>
             {errors[id] ? (
-              <p className="px-3 text-xs text-destructive" role="alert">
+              <p className="px-3 text-xs u-danger" role="alert">
                 {errors[id]}
               </p>
             ) : null}

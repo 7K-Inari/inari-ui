@@ -48,11 +48,11 @@ function IssuedTokenDialog({
         <h2 className="mono-label">Registration token issued</h2>
       </div>
       <div className="card-body">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm u-muted">
           This token is shown once and cannot be retrieved later. Store it
           securely; it expires {formatRelative(issued.expiresAt)}.
         </p>
-        <code className="block break-all rounded-md border bg-muted/50 px-3 py-2 font-mono text-xs">
+        <code className="block break-all rounded-md border u-raised/50 px-3 py-2 font-mono text-xs">
           {issued.token}
         </code>
         <div className="flex gap-2">
@@ -102,13 +102,13 @@ function TokenRow({
   };
 
   return (
-    <tr className="border-t hover:bg-muted/30">
+    <tr className="border-t hover:u-raised/30">
       <td className="px-4 py-2 font-mono text-xs">{record.id}</td>
-      <td className="px-4 py-2 text-muted-foreground">{record.createdBy}</td>
-      <td className="px-4 py-2 text-xs text-muted-foreground">
+      <td className="px-4 py-2 u-muted">{record.createdBy}</td>
+      <td className="px-4 py-2 text-xs u-muted">
         {formatRelative(record.createdAt)}
       </td>
-      <td className="px-4 py-2 text-xs text-muted-foreground">
+      <td className="px-4 py-2 text-xs u-muted">
         {formatRelative(record.expiresAt)}
       </td>
       <td className="px-4 py-2">
@@ -118,7 +118,7 @@ function TokenRow({
       </td>
       <td className="px-4 py-2 text-right">
         {actionError && (
-          <span className="mr-2 text-xs text-destructive">{actionError}</span>
+          <span className="mr-2 text-xs u-danger">{actionError}</span>
         )}
         {canWrite && state === "active" && (
           <Button variant="secondary" size="sm" disabled={busy} onClick={revoke}>
@@ -180,7 +180,7 @@ export function RegistrationTokensPage() {
         description="One-time bootstrap tokens for connecting clusters to this organization."
         actions={
           !canWriteSettings ? (
-            <span className="text-xs text-muted-foreground">Read-only (org viewer)</span>
+            <span className="text-xs u-muted">Read-only (org viewer)</span>
           ) : undefined
         }
       />
@@ -227,7 +227,7 @@ export function RegistrationTokensPage() {
               )}
             </div>
             {actionError && (
-              <p className="mt-3 text-sm text-destructive">{actionError}</p>
+              <p className="mt-3 text-sm u-danger">{actionError}</p>
             )}
           </div>
         </Card>
@@ -246,7 +246,7 @@ export function RegistrationTokensPage() {
       )}
 
       {!error && selectedCluster && loading && !tokens && (
-        <p className="text-sm text-muted-foreground">Loading tokens…</p>
+        <p className="text-sm u-muted">Loading tokens…</p>
       )}
 
       {tokens && tokens.length === 0 && (
@@ -260,7 +260,7 @@ export function RegistrationTokensPage() {
       {tokens && tokens.length > 0 && (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <thead className="u-raised/50 text-left text-xs u-muted">
               <tr>
                 <th className="px-4 py-2 font-medium">Token ID</th>
                 <th className="px-4 py-2 font-medium">Issued by</th>
