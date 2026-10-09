@@ -19,6 +19,10 @@ export interface FilterBarSelect {
 interface FilterBarProps {
   searchParam?: string;
   searchPlaceholder?: string;
+  searchAriaLabel?: string;
+  debounceMs?: number;
+  /** Params deleted whenever any filter changes (e.g. "page"). */
+  resetParams?: string[];
   tags?: { param: string; items: FilterBarTag[] };
   selects?: FilterBarSelect[];
   children?: React.ReactNode;
@@ -27,6 +31,9 @@ interface FilterBarProps {
 export function FilterBar({
   searchParam = "q",
   searchPlaceholder = "Search…",
+  searchAriaLabel,
+  debounceMs = 0,
+  resetParams = [],
   tags,
   selects = [],
   children,
@@ -37,8 +44,20 @@ export function FilterBar({
     const next = new URLSearchParams(params);
     if (value === null || value === "" || value === "all") next.delete(key);
     else next.set(key, value);
+    for (const p of resetParams) next.delete(p);
     setParams(next, { replace: true });
   };
+
+  // Debounced free-text search so typing doesn't fire a request per keystroke.
+  const urlValue = params.get(searchParam) ?? "";
+  const [draft, setDraft] = React.useState(urlValue);
+  React.useEffect(() => setDraft(urlValue), [urlValue]);
+  React.useEffect(() => {
+    if (!debounceMs || draft === urlValue) return;
+    const t = setTimeout(() => setParam(searchParam, draft), debounceMs);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft, urlValue, debounceMs]);
 
   const activeCount =
     (params.get(searchParam) ? 1 : 0) +
@@ -81,10 +100,12 @@ export function FilterBar({
         </span>
         <input
           className="input"
-          value={params.get(searchParam) ?? ""}
-          onChange={(e) => setParam(searchParam, e.target.value)}
+          value={debounceMs ? draft : urlValue}
+          onChange={(e) =>
+            debounceMs ? setDraft(e.target.value) : setParam(searchParam, e.target.value)
+          }
           placeholder={searchPlaceholder}
-          aria-label={searchPlaceholder}
+          aria-label={searchAriaLabel ?? searchPlaceholder}
         />
       </div>
       {selects.map((s) => (
@@ -107,7 +128,7 @@ export function FilterBar({
       {children}
       {activeCount > 0 && (
         <Button variant="ghost" size="sm" onClick={clearAll}>
-          <X size={14} aria-hidden="true" /> Clear ({activeCount})
+          <X size={14} aria-hidden="true" /> Clear filters ({activeCount})
         </Button>
       )}
     </div>

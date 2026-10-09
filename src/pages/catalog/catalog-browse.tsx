@@ -1,4 +1,5 @@
 import * as React from "react";
+import { LayoutGrid, List } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 
 import { listCatalogItems } from "@/api/catalog";
@@ -8,9 +9,8 @@ import { useAsyncResource } from "@/api/hooks";
 import type { CatalogItemSummary, CatalogSort, CatalogSource } from "@/api/types";
 import { Alert, Card, Skeleton } from "7k-design-system/react";
 
+import { FilterBar } from "@/components/filter-bar";
 import { PageHeader } from "@/components/page-header";
-import type { CatalogViewMode } from "@/components/catalog/catalog-filter-bar";
-import { CatalogFilterBar } from "@/components/catalog/catalog-filter-bar";
 import { TemplateScopeBadge } from "@/components/templates/template-scope-badge";
 import { CatalogCardSlots } from "@/ext/slots";
 import { formatRelative } from "@/lib/time";
@@ -30,6 +30,8 @@ const SOURCE_LABEL: Record<CatalogSource, string> = {
 function sourceLabel(source: string) {
   return SOURCE_LABEL[source as CatalogSource] ?? "Unknown";
 }
+
+type CatalogViewMode = "grid" | "list";
 
 const PAGE_SIZE = 24;
 const SORTS: CatalogSort[] = ["name", "name-desc", "newest", "oldest"];
@@ -112,18 +114,68 @@ export function CatalogBrowsePage() {
     <div>
       <PageHeader breadcrumb="Deliver / Catalog" title="Catalog" />
 
-      <CatalogFilterBar
-        q={state.q}
-        source={state.source}
-        category={state.category}
-        cluster={state.cluster}
-        sort={state.sort}
-        view={state.view}
-        categories={categories}
-        clusters={clusters.data ?? []}
-        onChange={update}
-        onClear={() => setSearchParams(new URLSearchParams())}
-      />
+      <FilterBar
+        searchParam="q"
+        searchPlaceholder="Search catalog…"
+        searchAriaLabel="Search catalog"
+        debounceMs={300}
+        resetParams={["page"]}
+        tags={{
+          param: "source",
+          items: [
+            { value: "all", label: "All sources" },
+            ...SOURCES.map((src) => ({ value: src, label: sourceLabel(src) })),
+          ],
+        }}
+        selects={[
+          {
+            param: "category",
+            label: "Filter by category",
+            allLabel: "All categories",
+            options: categories.map((c) => ({ value: c, label: c })),
+          },
+          {
+            param: "cluster",
+            label: "Filter by cluster compatibility",
+            allLabel: "Any cluster",
+            options: (clusters.data ?? []).map((c) => ({
+              value: c.id,
+              label: `Runs on: ${c.name}`,
+            })),
+          },
+          {
+            param: "sort",
+            label: "Sort catalog",
+            allLabel: "Name A–Z",
+            options: [
+              { value: "name-desc", label: "Name Z–A" },
+              { value: "newest", label: "Newest first" },
+              { value: "oldest", label: "Oldest first" },
+            ],
+          },
+        ]}
+      >
+        <div className="btn-group filter-bar-view" role="group" aria-label="View mode">
+          <button
+            type="button"
+            className={`btn btn-icon ${state.view === "grid" ? "btn-secondary" : "btn-ghost"}`}
+            aria-label="Grid view"
+            aria-pressed={state.view === "grid"}
+            onClick={() => update({ view: "grid" })}
+          >
+            <LayoutGrid size={16} aria-hidden="true" />
+          </button>
+          <button
+            type="button"
+            className={`btn btn-icon ${state.view === "list" ? "btn-secondary" : "btn-ghost"}`}
+            aria-label="List view"
+            aria-pressed={state.view === "list"}
+            onClick={() => update({ view: "list" })}
+          >
+            <List size={16} aria-hidden="true" />
+          </button>
+        </div>
+      </FilterBar>
 
       {result.error && <Alert variant="danger">Failed to load catalog: {result.error.message}</Alert>}
 
