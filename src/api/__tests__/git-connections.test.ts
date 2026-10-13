@@ -9,7 +9,7 @@ import {
 import { policyMockControl } from "@/mocks/fixtures/m6";
 import { mockServer } from "@/mocks/server";
 
-beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
+beforeAll(() => mockServer.listen({ onUnhandledFrame: "error" }));
 afterEach(() => {
   mockServer.resetHandlers();
   policyMockControl.reset();

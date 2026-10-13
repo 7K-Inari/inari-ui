@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -18,7 +18,7 @@ vi.mock("@/tenant/tenant-context", () => ({
   useTenant: () => ({ tenant: "acme" }),
 }));
 
-beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
+beforeAll(() => mockServer.listen({ onUnhandledFrame: "error" }));
 afterEach(() => {
   mockServer.resetHandlers();
   policyMockControl.reset();
@@ -68,7 +68,9 @@ describe("ExemptionsPage", () => {
     renderPage();
     await screen.findByText("pol-max-size");
     await user.click(screen.getByRole("button", { name: "Approve" }));
-    expect(await screen.findAllByText("approved")).toHaveLength(2);
+    await waitFor(() =>
+      expect(screen.getAllByText("approved")).toHaveLength(2),
+    );
     expect(screen.queryByText("pending")).not.toBeInTheDocument();
   });
 

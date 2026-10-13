@@ -13,7 +13,7 @@ import { setCurrentTenant } from "@/tenant/current";
 
 beforeAll(() => {
   setCurrentTenant("acme"); // helpers fall back to the active tenant
-  mockServer.listen({ onUnhandledRequest: "error" });
+  mockServer.listen({ onUnhandledFrame: "error" });
 });
 afterEach(() => {
   mockServer.resetHandlers();

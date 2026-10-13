@@ -4,7 +4,7 @@ import { postExtensionSession } from "@/api/extension-session";
 import { mockControl } from "@/mocks/fixtures";
 import { mockServer } from "@/mocks/server";
 
-beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
+beforeAll(() => mockServer.listen({ onUnhandledFrame: "error" }));
 afterEach(() => {
   mockServer.resetHandlers();
   mockControl.reset();

@@ -23,7 +23,7 @@ import { config } from "@/config";
 
 beforeAll(() => {
   setCurrentTenant("acme"); // detail helpers fall back to the active tenant
-  mockServer.listen({ onUnhandledRequest: "error" });
+  mockServer.listen({ onUnhandledFrame: "error" });
 });
 afterEach(() => {
   mockServer.resetHandlers();

@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useConfirm } from "@/components/confirm";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { FolderGit2, Github, Gitlab } from "lucide-react";
+import { FolderGit2, GitBranch, GitFork } from "lucide-react";
 
 import { ApiError } from "@/api/client";
 import {
@@ -23,14 +23,14 @@ import { LoadingState } from "@/components/loading";
 
 const PROVIDER_META: Record<
   string,
-  { label: string; Icon: typeof Github }
+  { label: string; Icon: typeof FolderGit2 }
 > = {
-  github: { label: "GitHub", Icon: Github },
-  gitlab: { label: "GitLab", Icon: Gitlab },
+  github: { label: "GitHub", Icon: GitBranch },
+  gitlab: { label: "GitLab", Icon: GitFork },
   forgejo: { label: "Forgejo", Icon: FolderGit2 },
 };
 
-function providerMeta(id: string): { label: string; Icon: typeof Github } {
+function providerMeta(id: string): { label: string; Icon: typeof FolderGit2 } {
   return PROVIDER_META[id] ?? { label: id, Icon: FolderGit2 };
 }
 

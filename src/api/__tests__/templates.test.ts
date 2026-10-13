@@ -24,7 +24,7 @@ type WireRunView = RunView & {
   fallbackPolicy?: string | null;
 };
 
-beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
+beforeAll(() => mockServer.listen({ onUnhandledFrame: "error" }));
 afterEach(() => {
   mockServer.resetHandlers();
   m4MockControl.reset();

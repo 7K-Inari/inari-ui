@@ -8,7 +8,7 @@ import "@/index.css";
 async function enableMocking() {
   if (import.meta.env.VITE_MOCK_API !== "true" || !import.meta.env.DEV) return;
   const { worker } = await import("@/mocks/browser");
-  await worker.start({ onUnhandledRequest: "bypass" });
+  await worker.start({ onUnhandledFrame: "bypass" });
 }
 
 enableMocking().finally(() => {
