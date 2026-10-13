@@ -5,12 +5,12 @@ import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
 import type { ClusterDetail } from "@/api/types";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import { CopyButton } from "@/pages/cloud-accounts/copy-button";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 const PREREQS: { tool: string; description: string; commands: { label: string; command: string }[] }[] = [
   {
@@ -46,8 +46,8 @@ const PREREQS: { tool: string; description: string; commands: { label: string; c
 function CommandRow({ label, command }: { label?: string; command: string }) {
   return (
     <div className="flex items-center gap-2">
-      {label && <span className="w-40 shrink-0 text-xs text-muted-foreground">{label}</span>}
-      <code className="flex-1 overflow-auto rounded-md bg-muted px-3 py-2 font-mono text-xs">
+      {label && <span className="w-40 shrink-0 text-xs u-muted">{label}</span>}
+      <code className="flex-1 overflow-auto rounded-md u-raised px-3 py-2 font-mono text-xs">
         {command}
       </code>
       <CopyButton value={command} label="Copy" />
@@ -71,13 +71,13 @@ export function ConnectTab({ cluster }: { cluster: ClusterDetail }) {
 
   if (error) {
     return (
-      <p className="text-sm text-destructive">
+      <p className="text-sm u-danger">
         Failed to load connection info: {error.message}
       </p>
     );
   }
   if (loading && !accessInfo) {
-    return <p className="text-sm text-muted-foreground">Loading connection info…</p>;
+    return <LoadingState label="Loading connection info…" />;
   }
   if (!accessInfo) return null;
 
@@ -114,25 +114,25 @@ export function ConnectTab({ cluster }: { cluster: ClusterDetail }) {
     <div className="space-y-4">
       {!kubectlEnabled && (
         <Card>
-          <CardContent className="py-4 text-sm text-destructive">
+          <div className="card-body">
             kubectl access is disabled for this platform by an administrator. The commands and
             download below will not work until it is re-enabled.
-          </CardContent>
+          </div>
         </Card>
       )}
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Connection status</CardTitle>
-          <CardDescription>
+        <div className="card-header">
+          <h2 className="mono-label">Connection status</h2>
+          <p className="card-lede">
             kubectl talks to this cluster either through the Inari gateway tunnel or directly to
             its API server.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-2 text-sm">
+          </p>
+        </div>
+        <div className="card-body">
           <div className="flex items-center gap-2">
             <span
-              className={`inline-block size-2 rounded-full ${tunnelAvailable ? "bg-green-500" : "bg-muted-foreground"}`}
+              className={`inline-block size-2 rounded-full ${tunnelAvailable ? "bg-green-500" : "u-raised-foreground"}`}
               aria-hidden
             />
             {tunnelAvailable
@@ -140,47 +140,47 @@ export function ConnectTab({ cluster }: { cluster: ClusterDetail }) {
               : "Gateway tunnel unavailable."}
           </div>
           {!tunnelAvailable && (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm u-muted">
               {accessInfo.tunnelUnavailableReason ??
                 "The tunnel agent is not connected. Upgrade the inari-agent chart on this cluster to enable gateway mode."}{" "}
               Direct mode still works if the API server is reachable from your machine.
             </p>
           )}
           {accessInfo.proxyUrl && (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm u-muted">
               Gateway endpoint: <span className="font-mono text-xs">{accessInfo.proxyUrl}</span>
             </p>
           )}
-        </CardContent>
+        </div>
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Prerequisites</CardTitle>
-          <CardDescription>Install these tools on your machine first.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+        <div className="card-header">
+          <h2 className="mono-label">Prerequisites</h2>
+          <p className="card-lede">Install these tools on your machine first.</p>
+        </div>
+        <div className="card-body">
           {PREREQS.map((p) => (
             <div key={p.tool} className="space-y-1.5">
               <p className="text-sm font-medium">{p.tool}</p>
-              <p className="text-xs text-muted-foreground">{p.description}</p>
+              <p className="text-xs u-muted">{p.description}</p>
               {p.commands.map((c) => (
                 <CommandRow key={c.command} label={c.label} command={c.command} />
               ))}
             </div>
           ))}
-        </CardContent>
+        </div>
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Connect</CardTitle>
-          <CardDescription>
+        <div className="card-header">
+          <h2 className="mono-label">Connect</h2>
+          <p className="card-lede">
             Pick how kubectl reaches the cluster, then run the commands or download a ready-made
             kubeconfig.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
+          </p>
+        </div>
+        <div className="card-body">
           <div className="space-y-2" role="radiogroup" aria-label="Connection mode">
             <label className="flex items-start gap-2 text-sm">
               <input
@@ -193,7 +193,7 @@ export function ConnectTab({ cluster }: { cluster: ClusterDetail }) {
               />
               <span>
                 <span className="font-medium">Gateway (via Inari proxy)</span>
-                <span className="block text-xs text-muted-foreground">
+                <span className="block text-xs u-muted">
                   Works for private clusters; requests are tunneled and authorized by the
                   platform.
                 </span>
@@ -209,7 +209,7 @@ export function ConnectTab({ cluster }: { cluster: ClusterDetail }) {
               />
               <span>
                 <span className="font-medium">Direct</span>
-                <span className="block text-xs text-muted-foreground">
+                <span className="block text-xs u-muted">
                   Your machine talks to the API server URL directly (OIDC must be configured on
                   the cluster).
                 </span>
@@ -219,11 +219,11 @@ export function ConnectTab({ cluster }: { cluster: ClusterDetail }) {
 
           {mode === "direct" && (
             <div className="space-y-1.5">
-              <Label htmlFor="direct-server-url">API server URL</Label>
+              <label className="form-label" htmlFor="direct-server-url">API server URL</label>
               <Input
                 id="direct-server-url"
                 value={server}
-                onChange={(e) => setServer(e.target.value)}
+                onChange={(v) => setServer(v)}
                 placeholder="https://api.my-cluster.example.com"
               />
             </div>
@@ -234,24 +234,18 @@ export function ConnectTab({ cluster }: { cluster: ClusterDetail }) {
             <CommandRow command={connectCommand} />
           </div>
 
-          {downloadError && <p className="text-sm text-destructive">{downloadError}</p>}
+          {downloadError && <p className="text-sm u-danger">{downloadError}</p>}
           <div className="flex items-center gap-3">
-            <Button
-              onClick={download}
-              disabled={downloading || !kubectlEnabled}
-              title={
-                !kubectlEnabled ? "kubectl access is disabled for this platform" : undefined
-              }
-            >
+            <Button onClick={download} disabled={downloading || !kubectlEnabled}>
               {downloading ? "Downloading…" : "Download kubeconfig"}
             </Button>
             {!kubectlEnabled && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs u-muted">
                 Unavailable while kubectl access is disabled.
               </p>
             )}
           </div>
-        </CardContent>
+        </div>
       </Card>
     </div>
   );

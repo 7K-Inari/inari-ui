@@ -8,10 +8,10 @@ import {
   revokePlatformAdmin,
 } from "@/api/platform-admins";
 import { useAuth } from "@/auth/auth-context";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
+import { LoadingState } from "@/components/loading";
 
 // Platform-level RBAC console (/platform/access): lists platform admins and
 // grants/revokes membership in the Keycloak platform-admins group via the
@@ -61,8 +61,8 @@ export function PlatformAccessPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-4 p-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Platform access</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="page-header-title">Platform access</h1>
+        <p className="text-sm u-muted">
           Platform administrators can create organizations and manage
           platform-level settings.
         </p>
@@ -70,28 +70,28 @@ export function PlatformAccessPage() {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load platform admins: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && loading && !admins && (
-        <p className="text-sm text-muted-foreground">Loading platform admins…</p>
+        <LoadingState label="Loading platform admins…" />
       )}
 
       {!error && admins && admins.length === 0 && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No platform admins.
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {admins && admins.length > 0 && (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <thead className="u-raised/50 text-left text-xs u-muted">
               <tr>
                 <th className="px-4 py-2 font-medium">Name</th>
                 <th className="px-4 py-2 font-medium">Email</th>
@@ -100,14 +100,14 @@ export function PlatformAccessPage() {
             </thead>
             <tbody>
               {admins.map((admin) => (
-                <tr key={admin.userId} className="border-t hover:bg-muted/30">
+                <tr key={admin.userId} className="border-t hover:u-raised/30">
                   <td className="px-4 py-2 font-medium">{admin.displayName}</td>
-                  <td className="px-4 py-2 text-muted-foreground">
+                  <td className="px-4 py-2 u-muted">
                     {admin.email}
                   </td>
                   <td className="px-4 py-2 text-right">
                     <Button
-                      variant="outline"
+                      variant="secondary"
                       size="sm"
                       onClick={() => revoke(admin.userId)}
                     >
@@ -123,25 +123,25 @@ export function PlatformAccessPage() {
 
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">
+          <div className="card-body">
             {actionError}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && (
         <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Grant platform admin</CardTitle>
-          </CardHeader>
-          <CardContent>
+          <div className="card-header">
+            <h2 className="mono-label">Grant platform admin</h2>
+          </div>
+          <div className="card-body">
             <form className="flex max-w-xl items-end gap-2" onSubmit={grant}>
               <div className="flex-1 space-y-1.5">
-                <Label htmlFor="admin-subject">Email or user ID</Label>
+                <label className="form-label" htmlFor="admin-subject">Email or user ID</label>
                 <Input
                   id="admin-subject"
                   value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
+                  onChange={(v) => setSubject(v)}
                   placeholder="admin@example.com"
                   required
                 />
@@ -150,7 +150,7 @@ export function PlatformAccessPage() {
                 {busy ? "Granting…" : "Grant"}
               </Button>
             </form>
-          </CardContent>
+          </div>
         </Card>
       )}
     </div>

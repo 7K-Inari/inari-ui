@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useConfirm } from "@/components/confirm";
 
 import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
@@ -12,16 +13,16 @@ import {
   type Role,
 } from "@/api/roles";
 import { useAuth } from "@/auth/auth-context";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import {
   CapabilityGate,
   useOrgCapabilities,
 } from "@/pages/settings/components/capability-gate";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 const NAME_PATTERN = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
 
@@ -131,20 +132,20 @@ function RoleEditor({
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle className="text-base">
+      <div className="card-header">
+        <h2 className="mono-label">
           {role === null ? "Create role" : `Edit ${role.displayName || role.name}`}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+        </h2>
+      </div>
+      <div className="card-body">
         <form className="space-y-4" onSubmit={submit}>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5">
-              <Label htmlFor="role-name">Name</Label>
+              <label className="form-label" htmlFor="role-name">Name</label>
               <Input
                 id="role-name"
                 value={draft.name}
-                onChange={(e) => setDraft({ ...draft, name: e.target.value })}
+                onChange={(v) => setDraft({ ...draft, name: v })}
                 placeholder="lowercase-with-dashes"
                 disabled={disabled || !nameEditable}
                 title={
@@ -155,30 +156,28 @@ function RoleEditor({
                 required
               />
               {!nameValid && draft.name !== "" && (
-                <p className="text-xs text-destructive">
+                <p className="text-xs u-danger">
                   Lowercase alphanumeric with dashes, starting with a letter or digit.
                 </p>
               )}
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="role-display-name">Display name</Label>
+              <label className="form-label" htmlFor="role-display-name">Display name</label>
               <Input
                 id="role-display-name"
                 value={draft.displayName}
-                onChange={(e) =>
-                  setDraft({ ...draft, displayName: e.target.value })
+                onChange={(v) => setDraft({ ...draft, displayName: v })
                 }
                 disabled={disabled}
               />
             </div>
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="role-description">Description</Label>
+            <label className="form-label" htmlFor="role-description">Description</label>
             <Input
               id="role-description"
               value={draft.description}
-              onChange={(e) =>
-                setDraft({ ...draft, description: e.target.value })
+              onChange={(v) => setDraft({ ...draft, description: v })
               }
               disabled={disabled}
             />
@@ -188,26 +187,26 @@ function RoleEditor({
             <legend className="text-sm font-medium">Permissions</legend>
             {groupByDomain(catalog).map(([domain, permissions]) => (
               <div key={domain} className="space-y-1">
-                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                <p className="text-xs font-medium uppercase tracking-wide u-muted">
                   {domain}
                 </p>
                 <div className="grid gap-1 sm:grid-cols-2">
                   {permissions.map((p) => (
                     <label
                       key={p.slug}
-                      className="flex items-start gap-2 rounded-md border px-3 py-2 text-sm hover:bg-muted/30"
+                      className="flex items-start gap-2 rounded-md border px-3 py-2 text-sm hover:u-raised/30"
                       title={p.description}
                     >
                       <input
                         type="checkbox"
-                        className="mt-0.5 h-4 w-4 border-input accent-primary"
+                        className="checkbox"
                         checked={draft.permissions.has(p.slug)}
                         disabled={disabled}
                         onChange={() => toggle(p.slug)}
                       />
                       <span>
                         <span className="font-medium">{p.name}</span>{" "}
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs u-muted">
                           {p.slug}
                         </span>
                       </span>
@@ -219,14 +218,14 @@ function RoleEditor({
           </fieldset>
 
           {role?.builtin && (
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs u-muted">
               Built-in role: the name is fixed, but the permission bundle is
               editable. The server rejects edits that would leave the
               organization without an admin.
             </p>
           )}
           {actionError && (
-            <p className="text-sm text-destructive">{actionError}</p>
+            <p className="text-sm u-danger">{actionError}</p>
           )}
           <div className="flex gap-2">
             <CapabilityGate capability="manageRbac" mode="disable">
@@ -236,7 +235,7 @@ function RoleEditor({
             </CapabilityGate>
             <Button
               type="button"
-              variant="outline"
+              variant="secondary"
               onClick={onCancel}
               disabled={saving}
             >
@@ -244,12 +243,13 @@ function RoleEditor({
             </Button>
           </div>
         </form>
-      </CardContent>
+      </div>
     </Card>
   );
 }
 
 export function RolesTab() {
+  const [confirm, confirmDialog] = useConfirm();
   const { tenant } = useTenant();
   const { token } = useAuth();
   const { canManageRbac } = useOrgCapabilities();
@@ -271,9 +271,11 @@ export function RolesTab() {
 
   const remove = async (role: Role) => {
     if (
-      !window.confirm(
-        `Delete role "${role.displayName || role.name}"? Teams mapped to it will lose the mapping.`,
-      )
+      !(await confirm({
+        title: "Delete role",
+        body: `Delete role "${role.displayName || role.name}"? Teams mapped to it will lose the mapping.`,
+        confirmLabel: "Delete",
+      }))
     ) {
       return;
     }
@@ -294,14 +296,14 @@ export function RolesTab() {
   if (error) {
     return (
       <Card>
-        <CardContent className="py-6 text-sm text-destructive">
+        <div className="card-body">
           Failed to load roles: {error.message}
-        </CardContent>
+        </div>
       </Card>
     );
   }
   if (loading && !roles) {
-    return <p className="text-sm text-muted-foreground">Loading roles…</p>;
+    return <LoadingState label="Loading roles…" />;
   }
 
   const editRole = editing && editing !== "new"
@@ -310,12 +312,13 @@ export function RolesTab() {
 
   return (
     <div className="space-y-4">
+      {confirmDialog}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm u-muted">
           Org roles bundle permissions from the static catalog. Built-in roles
           are never deletable; custom roles bound to teams cannot be deleted.
           {!canManageRbac && (
-            <Badge variant="muted" className="ml-2">
+            <Badge variant="neutral" className="ml-2">
               Read-only
             </Badge>
           )}
@@ -329,16 +332,16 @@ export function RolesTab() {
 
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">
+          <div className="card-body">
             {actionError}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {roles && roles.length > 0 && (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <thead className="u-raised/50 text-left text-xs u-muted">
               <tr>
                 <th className="px-4 py-2 font-medium">Role</th>
                 <th className="px-4 py-2 font-medium">Permissions</th>
@@ -348,27 +351,27 @@ export function RolesTab() {
             </thead>
             <tbody>
               {roles.map((role) => (
-                <tr key={role.id} className="border-t hover:bg-muted/30">
+                <tr key={role.id} className="border-t hover:u-raised/30">
                   <td className="px-4 py-2">
                     <span className="font-medium">
                       {role.displayName || role.name}
                     </span>{" "}
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs u-muted">
                       {role.name}
                     </span>{" "}
-                    {role.builtin && <Badge variant="muted">Built-in</Badge>}
+                    {role.builtin && <Badge variant="neutral">Built-in</Badge>}
                   </td>
-                  <td className="px-4 py-2 text-muted-foreground">
+                  <td className="px-4 py-2 u-muted">
                     {(role.permissions ?? []).length}
                   </td>
-                  <td className="px-4 py-2 text-muted-foreground">
+                  <td className="px-4 py-2 u-muted">
                     {role.description}
                   </td>
                   <td className="px-4 py-2 text-right">
                     <div className="flex justify-end gap-2">
                       <CapabilityGate capability="manageRbac" mode="disable">
                         <Button
-                          variant="outline"
+                          variant="secondary"
                           size="sm"
                           onClick={() => setEditing(role.id)}
                         >
@@ -378,7 +381,7 @@ export function RolesTab() {
                       {!role.builtin && (
                         <CapabilityGate capability="manageRbac" mode="disable">
                           <Button
-                            variant="outline"
+                            variant="secondary"
                             size="sm"
                             disabled={deleting}
                             onClick={() => remove(role)}
@@ -398,9 +401,9 @@ export function RolesTab() {
 
       {roles && roles.length === 0 && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No roles in this organization.
-          </CardContent>
+          </div>
         </Card>
       )}
 

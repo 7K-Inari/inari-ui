@@ -12,11 +12,10 @@ import type {
 } from "@7k-inari/ui-plugin-sdk";
 
 import type { CatalogItemSummary, ResourceInstanceSummary } from "@/api/types";
-import { Button } from "@/components/ui/button";
+import { Button, Spinner } from "7k-design-system/react";
 import { SlotBoundary } from "@/ext/slot-boundary";
 import { toSdkCatalogItem, toSdkResourceInstance } from "@/ext/mappers";
 import { useSlots, type SlotBinding } from "@/ext/registry";
-import { cn } from "@/lib/utils";
 import { tenantLink } from "@/tenant/tenant-link";
 
 // Slot host components: render typed blueprint contributions (§8.4) from ready
@@ -33,34 +32,26 @@ export function ExtensionNavItems({ tenant, onNavigate }: { tenant: string; onNa
   const items = useSlots("nav-item");
   if (items.length === 0) return null;
   return (
-    <div>
-      <p className="px-2 pb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-        Extensions
-      </p>
-      <ul className="space-y-0.5">
-        {items.map((binding) => {
-          const props = binding.slot.props as NavItemProps;
-          const Icon = props.icon as React.ComponentType<{ className?: string }> | undefined;
-          return (
-            <li key={slotId(binding)}>
-              <NavLink
-                to={tenantLink(tenant, `ext/${props.path}`)}
-                onClick={onNavigate}
-                className={({ isActive }) =>
-                  cn(
-                    "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                    isActive && "bg-sidebar-accent font-medium text-sidebar-accent-foreground",
-                  )
-                }
-              >
-                {Icon ? <Icon className="h-4 w-4" /> : null}
-                {props.title}
-              </NavLink>
-            </li>
-          );
-        })}
-      </ul>
-    </div>
+    <ul>
+      {items.map((binding) => {
+        const props = binding.slot.props as NavItemProps;
+        const Icon = props.icon as React.ComponentType<{ size?: number; className?: string }> | undefined;
+        return (
+          <li key={slotId(binding)}>
+            <NavLink
+              to={tenantLink(tenant, `ext/${props.path}`)}
+              onClick={onNavigate}
+              className={({ isActive }) =>
+                `nav-item nav-item-accent${isActive ? " active" : ""}`
+              }
+            >
+              {Icon ? <Icon size={16} aria-hidden="true" /> : null}
+              <span className="sidebar-item-label">{props.title}</span>
+            </NavLink>
+          </li>
+        );
+      })}
+    </ul>
   );
 }
 
@@ -75,7 +66,7 @@ export function ExtensionPageHost({ context }: { context: SlotContext }) {
   });
   if (!match) {
     return (
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm u-muted">
         No extension page is registered for this path.
       </p>
     );
@@ -138,7 +129,7 @@ export function InstanceActionButtons({
   const [running, setRunning] = React.useState<string | null>(null);
   const [errors, setErrors] = React.useState<Record<string, string>>({});
   if (actions.length === 0) {
-    return <p className="px-1 py-2 text-muted-foreground">No extension actions available.</p>;
+    return <p className="px-1 py-2 u-muted">No extension actions available.</p>;
   }
   const sdkInstance = toSdkResourceInstance(instance);
 
@@ -151,7 +142,8 @@ export function InstanceActionButtons({
           <div key={id}>
             <Button
               variant="ghost"
-              className="w-full justify-start"
+              size="sm"
+              className="instance-action-btn"
               disabled={running !== null}
               onClick={async () => {
                 setRunning(id);
@@ -168,10 +160,10 @@ export function InstanceActionButtons({
                 }
               }}
             >
-              {running === id ? "Running…" : props.label}
+              {running === id ? <Spinner size="sm" /> : null}{running === id ? " Running…" : props.label}
             </Button>
             {errors[id] ? (
-              <p className="px-3 text-xs text-destructive" role="alert">
+              <p className="px-3 text-xs u-danger" role="alert">
                 {errors[id]}
               </p>
             ) : null}

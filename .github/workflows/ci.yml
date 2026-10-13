@@ -2,6 +2,8 @@ name: CI
 
 on:
   pull_request:
+  # Manual retrigger: GitHub occasionally drops pull_request synchronize events.
+  workflow_dispatch:
 
 jobs:
   verify:
@@ -50,3 +52,28 @@ jobs:
         with:
           name: inari-ui-bundle
           path: dist/
+
+  # Usability UI tests: axe a11y + visual regression + responsive overflow and
+  # tap targets, in Chromium against the mocked API and mock auth. Functional
+  # e2e lives in the release bundle; this job guards usability only.
+  ui-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: install chromium
+        run: npx playwright install --with-deps chromium
+      - name: usability UI tests
+        run: npm run test:ui
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: failure()
+        with:
+          name: ui-test-results
+          path: |
+            test-results/
+            playwright-report/
+          retention-days: 7

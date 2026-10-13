@@ -5,13 +5,13 @@ import { useAsyncResource } from "@/api/hooks";
 import { listTenants, patchTenant } from "@/api/tenants";
 import type { Tenant } from "@/api/tenants";
 import { useAuth } from "@/auth/auth-context";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import { useOrgCapabilities } from "@/pages/settings/components/capability-gate";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 function OrgProfileForm({
   tenant,
@@ -49,32 +49,32 @@ function OrgProfileForm({
     <>
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">{actionError}</CardContent>
+          <div className="card-body">{actionError}</div>
         </Card>
       )}
 
       {saved && !actionError && (
         <Card>
-          <CardContent className="py-3 text-sm">Organization profile saved.</CardContent>
+          <div className="card-body">Organization profile saved.</div>
         </Card>
       )}
 
       <Card>
-        <CardContent className="py-4">
+        <div className="card-body">
           <form className="max-w-xl space-y-3" onSubmit={submit}>
             <div className="space-y-1.5">
-              <Label htmlFor="org-slug">Slug</Label>
+              <label className="form-label" htmlFor="org-slug">Slug</label>
               <Input id="org-slug" value={organization.slug} disabled />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs u-muted">
                 Immutable tenant identifier used in URLs and API paths.
               </p>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="org-display-name">Display name</Label>
+              <label className="form-label" htmlFor="org-display-name">Display name</label>
               <Input
                 id="org-display-name"
                 value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
+                onChange={(v) => setDisplayName(v)}
                 required
                 disabled={!canWrite}
               />
@@ -85,7 +85,7 @@ function OrgProfileForm({
               </Button>
             )}
           </form>
-        </CardContent>
+        </div>
       </Card>
     </>
   );
@@ -109,28 +109,28 @@ export function OrgProfilePage() {
         description="Display name and identity of this organization."
         actions={
           !canWriteSettings ? (
-            <span className="text-xs text-muted-foreground">Read-only (org viewer)</span>
+            <span className="text-xs u-muted">Read-only (org viewer)</span>
           ) : undefined
         }
       />
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load organization: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && loading && !organization && (
-        <p className="text-sm text-muted-foreground">Loading organization…</p>
+        <LoadingState label="Loading organization…" />
       )}
 
       {!error && !loading && !organization && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             Organization not found.
-          </CardContent>
+          </div>
         </Card>
       )}
 

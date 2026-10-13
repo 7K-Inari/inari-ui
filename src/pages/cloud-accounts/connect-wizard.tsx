@@ -1,14 +1,14 @@
 import * as React from "react";
+import { Stepper } from "@/components/stepper";
 import { Link, useNavigate } from "react-router-dom";
 import { CheckCircle2, Loader2 } from "lucide-react";
 
 import type { CloudAccount } from "@/api/cloud-accounts";
 import { createCloudAccount, validateCloudAccount } from "@/api/cloud-accounts";
 import { useAuth } from "@/auth/auth-context";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
 import { CopyButton } from "@/pages/cloud-accounts/copy-button";
@@ -18,28 +18,6 @@ const ROLE_ARN_PATTERN = /^arn:aws:iam::\d{12}:role\/.+$/;
 
 const STEPS = ["Account details", "Create the trust role", "Validate"] as const;
 
-function StepIndicator({ current }: { current: number }) {
-  return (
-    <ol className="flex items-center gap-2 text-sm" aria-label="Wizard progress">
-      {STEPS.map((label, i) => (
-        <li key={label} className="flex items-center gap-2">
-          <span
-            className={
-              i <= current
-                ? "flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground"
-                : "flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs text-muted-foreground"
-            }
-            aria-current={i === current ? "step" : undefined}
-          >
-            {i + 1}
-          </span>
-          <span className={i <= current ? "font-medium" : "text-muted-foreground"}>{label}</span>
-          {i < STEPS.length - 1 && <span className="mx-1 text-muted-foreground">→</span>}
-        </li>
-      ))}
-    </ol>
-  );
-}
 
 // The trust role values the tenant must wire into their IAM role. The platform
 // cluster OIDC provider must be trusted with these exact conditions.
@@ -50,10 +28,10 @@ export function TrustRoleFacts({ account }: { account: CloudAccount }) {
     { label: "ExternalId", value: account.externalId },
   ];
   return (
-    <dl className="space-y-2 rounded-md border bg-muted/40 p-3 text-xs">
+    <dl className="space-y-2 rounded-md border u-raised/40 p-3 text-xs">
       {facts.map((f) => (
         <div key={f.label} className="flex items-start justify-between gap-4">
-          <dt className="shrink-0 text-muted-foreground">{f.label}</dt>
+          <dt className="shrink-0 u-muted">{f.label}</dt>
           <dd className="break-all text-right font-mono">{f.value}</dd>
         </div>
       ))}
@@ -77,22 +55,20 @@ export function ValidationStateView({
       <div className="flex flex-col items-center gap-3 py-6 text-center">
         <CheckCircle2 className="h-10 w-10 text-emerald-600" aria-hidden />
         <p className="text-lg font-semibold">Account connected</p>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm u-muted">
           Dry-run AssumeRole succeeded; the account is ready for managed resources.
         </p>
-        <Button asChild variant="outline">
-          <Link to={tenantLink(tenant, `cloud-accounts/${accountId}`)}>Open account detail</Link>
-        </Button>
+        <Link to={tenantLink(tenant, `cloud-accounts/${accountId}`)} className="btn btn-secondary">Open account detail</Link>
       </div>
     );
   }
   return (
-    <div className="space-y-3 rounded-md border border-destructive/40 bg-destructive/10 p-4">
-      <p className="text-sm font-medium text-destructive">Validation failed</p>
-      <p className="text-sm text-destructive" data-testid="validation-error">
+    <div className="space-y-3 rounded-md border u-danger-border/40 u-danger-bg/10 p-4">
+      <p className="text-sm font-medium u-danger">Validation failed</p>
+      <p className="text-sm u-danger" data-testid="validation-error">
         {account.statusMessage ?? "The trust role could not be assumed."}
       </p>
-      <p className="text-xs text-muted-foreground">
+      <p className="text-xs u-muted">
         Re-check the trust policy: the OIDC issuer and subject must match the platform cluster,
         and the ExternalId condition must be present on the AssumeRole statement.
       </p>
@@ -175,63 +151,63 @@ export function ConnectAccountWizardPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Connect AWS account</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="page-header-title">Connect AWS account</h1>
+        <p className="text-sm u-muted">
           Grant the platform access to an AWS account via a trust role. No access keys or
           credentials are stored.
         </p>
       </div>
-      <StepIndicator current={step} />
+      <Stepper steps={STEPS} current={step} />
 
       {step === 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle>Account details</CardTitle>
-            <CardDescription>
+          <div className="card-header">
+            <h2 className="mono-label">Account details</h2>
+            <p className="card-lede">
               This registers the cloud account record. You will then create the trust role in your
               AWS account and validate the connection.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            </p>
+          </div>
+          <div className="card-body">
             <form onSubmit={submit} className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="aws-account-id">AWS account ID</Label>
+                <label className="form-label" htmlFor="aws-account-id">AWS account ID</label>
                 <Input
                   id="aws-account-id"
                   value={accountIdInput}
-                  onChange={(e) => setAccountIdInput(e.target.value)}
+                  onChange={(v) => setAccountIdInput(v)}
                   placeholder="123456789012"
                   required
                 />
-                {accountIdError && <p className="text-xs text-destructive">{accountIdError}</p>}
+                {accountIdError && <p className="text-xs u-danger">{accountIdError}</p>}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="role-arn">Role ARN</Label>
+                <label className="form-label" htmlFor="role-arn">Role ARN</label>
                 <Input
                   id="role-arn"
                   value={roleArnInput}
-                  onChange={(e) => setRoleArnInput(e.target.value)}
+                  onChange={(v) => setRoleArnInput(v)}
                   placeholder="arn:aws:iam::123456789012:role/inari-platform-access"
                   required
                 />
-                {roleArnError && <p className="text-xs text-destructive">{roleArnError}</p>}
-                <p className="text-xs text-muted-foreground">
+                {roleArnError && <p className="text-xs u-danger">{roleArnError}</p>}
+                <p className="text-xs u-muted">
                   The ARN of the IAM role the platform will assume in this account.
                 </p>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="external-id">External ID (optional)</Label>
+                <label className="form-label" htmlFor="external-id">External ID (optional)</label>
                 <Input
                   id="external-id"
                   value={externalIdInput}
-                  onChange={(e) => setExternalIdInput(e.target.value)}
+                  onChange={(v) => setExternalIdInput(v)}
                   placeholder="Generated if left empty"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs u-muted">
                   The ExternalId condition for the AssumeRole statement in the trust policy.
                 </p>
               </div>
-              {submitError && <p className="text-sm text-destructive">{submitError}</p>}
+              {submitError && <p className="text-sm u-danger">{submitError}</p>}
               <div className="flex justify-end gap-2">
                 <Button variant="ghost" type="button" onClick={() => navigate(-1)}>
                   Cancel
@@ -241,23 +217,23 @@ export function ConnectAccountWizardPage() {
                 </Button>
               </div>
             </form>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {step === 1 && created && (
         <Card>
-          <CardHeader>
-            <CardTitle>Create the trust role</CardTitle>
-            <CardDescription>
+          <div className="card-header">
+            <h2 className="mono-label">Create the trust role</h2>
+            <p className="card-lede">
               No credentials are stored on the platform. In your AWS account{" "}
               <code className="font-mono text-xs">{created.accountId}</code>, create the trust role
               so the platform can assume{" "}
               <code className="font-mono text-xs">{created.roleArn}</code>. This is a one-time
               setup.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            </p>
+          </div>
+          <div className="card-body">
             <TrustRoleFacts account={created} />
             <div className="flex items-center justify-between gap-2">
               <CopyButton value={created.externalId} label="Copy ExternalId" />
@@ -270,23 +246,23 @@ export function ConnectAccountWizardPage() {
                 I&apos;ve created the role — validate
               </Button>
             </div>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {step === 2 && created && (
         <Card>
-          <CardHeader>
-            <CardTitle>Validate the connection</CardTitle>
-            <CardDescription>
+          <div className="card-header">
+            <h2 className="mono-label">Validate the connection</h2>
+            <p className="card-lede">
               The platform performs a dry-run AssumeRole against{" "}
               <code className="font-mono text-xs">{created.roleArn}</code>.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            </p>
+          </div>
+          <div className="card-body">
             {validating && (
               <div className="flex flex-col items-center gap-3 py-8 text-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
+                <Loader2 className="h-8 w-8 animate-spin u-brand" aria-hidden />
                 <p className="font-medium">Validating the trust role…</p>
               </div>
             )}
@@ -302,7 +278,7 @@ export function ConnectAccountWizardPage() {
                 <Button onClick={runValidation}>Retry validation</Button>
               </div>
             )}
-          </CardContent>
+          </div>
         </Card>
       )}
     </div>

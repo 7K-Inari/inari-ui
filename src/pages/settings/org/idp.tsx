@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useConfirm } from "@/components/confirm";
 
 import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
@@ -15,11 +16,10 @@ import {
   SchemaForm,
   type SchemaFormHandle,
 } from "@/components/schema-form/schema-form";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import {
   CapabilityGate,
@@ -27,6 +27,7 @@ import {
 } from "@/pages/settings/components/capability-gate";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 function schemaFor(isCreate: boolean): Record<string, unknown> {
   const required = [
@@ -96,6 +97,7 @@ function toInput(data: Record<string, unknown>): OidcProviderInput {
 }
 
 export function IdpBrokeringPage() {
+  const [confirm, confirmDialog] = useConfirm();
   const { tenant } = useTenant();
   const { token } = useAuth();
   const { canWriteSettings } = useOrgCapabilities();
@@ -168,9 +170,11 @@ export function IdpBrokeringPage() {
 
   const remove = async () => {
     if (
-      !window.confirm(
-        "Delete the SSO provider? Users will no longer be routed to it at login.",
-      )
+      !(await confirm({
+        title: "Delete SSO provider",
+        body: "Delete the SSO provider? Users will no longer be routed to it at login.",
+        confirmLabel: "Delete",
+      }))
     ) {
       return;
     }
@@ -184,11 +188,13 @@ export function IdpBrokeringPage() {
     }
   };
 
-  const confirmRotate = () => {
+  const confirmRotate = async () => {
     if (
-      window.confirm(
-        "Rotate the client secret? The old secret stops working immediately.",
-      )
+      await confirm({
+        title: "Rotate client secret",
+        body: "Rotate the client secret? The old secret stops working immediately.",
+        confirmLabel: "Rotate",
+      })
     ) {
       setRotating(true);
       setActionError(null);
@@ -200,6 +206,7 @@ export function IdpBrokeringPage() {
 
   return (
     <div className="space-y-4">
+      {confirmDialog}
       <SettingsSectionHeader
         title="SSO provider"
         description="Broker sign-in through your organization's OIDC identity provider. One provider per organization."
@@ -207,7 +214,7 @@ export function IdpBrokeringPage() {
           <CapabilityGate
             capability="admin"
             fallback={
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs u-muted">
                 Read-only (org viewer)
               </span>
             }
@@ -221,35 +228,35 @@ export function IdpBrokeringPage() {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load SSO provider: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && loading && !provider && (
-        <p className="text-sm text-muted-foreground">Loading SSO provider…</p>
+        <LoadingState label="Loading SSO provider…" />
       )}
 
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">
+          <div className="card-body">
             {actionError}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {notice && (
         <Card>
-          <CardContent className="py-3 text-sm text-muted-foreground">
+          <div className="card-body">
             {notice}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {editing && canWriteSettings && (
         <Card>
-          <CardContent className="space-y-3 py-4">
+          <div className="card-body">
             <SchemaForm
               ref={formRef}
               schema={schemaFor(!provider)}
@@ -263,56 +270,56 @@ export function IdpBrokeringPage() {
                 Cancel
               </Button>
             </div>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && !loading && !provider && !editing && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No SSO provider configured for this organization.
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {provider && !editing && (
         <Card>
-          <CardContent className="space-y-3 py-4">
+          <div className="card-body">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium">{provider.alias}</span>
-              <Badge variant="secondary">OIDC</Badge>
+              <Badge variant="neutral">OIDC</Badge>
             </div>
             <dl className="grid grid-cols-1 gap-2 text-sm sm:grid-cols-2">
               <div>
-                <dt className="text-xs text-muted-foreground">Issuer URL</dt>
+                <dt className="text-xs u-muted">Issuer URL</dt>
                 <dd className="font-mono text-xs">{provider.issuerUrl}</dd>
               </div>
               <div>
-                <dt className="text-xs text-muted-foreground">Client ID</dt>
+                <dt className="text-xs u-muted">Client ID</dt>
                 <dd className="font-mono text-xs">{provider.clientId}</dd>
               </div>
               <div>
-                <dt className="text-xs text-muted-foreground">Claim mapping</dt>
+                <dt className="text-xs u-muted">Claim mapping</dt>
                 <dd className="font-mono text-xs">
                   email: {provider.claimMapping.email ?? "email"}, groups:{" "}
                   {provider.claimMapping.groups ?? "groups"}
                 </dd>
               </div>
               <div>
-                <dt className="text-xs text-muted-foreground">Created</dt>
-                <dd className="text-xs text-muted-foreground">
+                <dt className="text-xs u-muted">Created</dt>
+                <dd className="text-xs u-muted">
                   {formatRelative(provider.createdAt)}
                 </dd>
               </div>
             </dl>
             <div>
-              <dt className="text-xs text-muted-foreground">Domain hints</dt>
+              <dt className="text-xs u-muted">Domain hints</dt>
               <dd className="mt-1 flex flex-wrap gap-1">
                 {domainHints.length === 0 && (
-                  <span className="text-xs text-muted-foreground">None</span>
+                  <span className="text-xs u-muted">None</span>
                 )}
                 {domainHints.map((d) => (
-                  <Badge key={d} variant="secondary">
+                  <Badge key={d} variant="neutral">
                     {d}
                   </Badge>
                 ))}
@@ -335,22 +342,22 @@ export function IdpBrokeringPage() {
                 </Button>
               </div>
             </CapabilityGate>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {rotating && (
         <Card>
-          <CardContent className="space-y-3 py-4">
+          <div className="card-body">
             <div className="space-y-1.5">
-              <Label htmlFor="idp-new-secret">New client secret</Label>
+              <label className="form-label" htmlFor="idp-new-secret">New client secret</label>
               <Input
                 id="idp-new-secret"
                 type="password"
                 value={newSecret}
-                onChange={(e) => setNewSecret(e.target.value)}
+                onChange={(v) => setNewSecret(v)}
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs u-muted">
                 The secret is write-only and will not be shown again.
               </p>
             </div>
@@ -368,7 +375,7 @@ export function IdpBrokeringPage() {
                 Cancel
               </Button>
             </div>
-          </CardContent>
+          </div>
         </Card>
       )}
     </div>

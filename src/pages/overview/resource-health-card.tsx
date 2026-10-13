@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 
-import { useAsyncResource } from "@/api/hooks";
+import { useAsyncResource, type AsyncState } from "@/api/hooks";
 import { listResources } from "@/api/resources";
 import type { ResourceHealth, ResourceInstanceSummary } from "@/api/types";
 import { useTenant } from "@/tenant/tenant-context";
@@ -10,11 +10,17 @@ import { HealthBadge } from "@/pages/resources/resource-list";
 
 const HEALTH_ORDER: ResourceHealth[] = ["healthy", "progressing", "degraded", "unknown"];
 
-export function ResourceHealthCard() {
+export function ResourceHealthCard({
+  state: shared,
+}: {
+  state?: AsyncState<ResourceInstanceSummary[]>;
+}) {
   const { tenant } = useTenant();
-  const state = useAsyncResource((token) => listResources(token, tenant), [tenant], {
+  const own = useAsyncResource((token) => listResources(token, tenant), [tenant], {
     refetchIntervalMs: 30_000,
+    enabled: !shared,
   });
+  const state = shared ?? own;
 
   return (
     <OverviewCard
@@ -26,7 +32,7 @@ export function ResourceHealthCard() {
       empty={
         <p>
           No resources deployed yet.{" "}
-          <Link to={tenantLink(tenant, "catalog")} className="text-primary hover:underline">
+          <Link to={tenantLink(tenant, "catalog")} className="u-brand hover:underline">
             Browse the catalog
           </Link>
         </p>
@@ -40,21 +46,18 @@ export function ResourceHealthCard() {
           if (i.updateAvailable) upgrades += 1;
         }
         return (
-          <div className="space-y-3">
-            <p className="text-3xl font-semibold">{instances.length}</p>
-            <ul className="space-y-1">
+          <div className="overview-card-stack">
+            <p className="stat-value">{instances.length}</p>
+            <ul className="list">
               {HEALTH_ORDER.filter((h) => counts.get(h)).map((h) => (
-                <li key={h} className="flex items-center justify-between text-sm">
+                <li key={h} className="list-item overview-count-row">
                   <HealthBadge health={h} />
-                  <span className="tabular-nums">{counts.get(h)}</span>
+                  <span className="mono-data">{counts.get(h)}</span>
                 </li>
               ))}
             </ul>
             {upgrades > 0 && (
-              <Link
-                to={tenantLink(tenant, "deploys")}
-                className="block text-sm text-primary hover:underline"
-              >
+              <Link to={tenantLink(tenant, "deploys")} className="overview-card-link">
                 {upgrades} upgrade{upgrades === 1 ? "" : "s"} available
               </Link>
             )}

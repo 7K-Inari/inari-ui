@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useConfirm } from "@/components/confirm";
 
 import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
@@ -14,9 +15,9 @@ import {
 } from "@/api/identity";
 import { useAuth } from "@/auth/auth-context";
 import { SchemaForm, type SchemaFormHandle } from "@/components/schema-form/schema-form";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import {
   CapabilityGate,
@@ -25,6 +26,7 @@ import {
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { ClientSecretDialog } from "@/pages/settings/identity/components/client-secret-dialog";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 const CLIENT_SCHEMA: Record<string, unknown> = {
   type: "object",
@@ -75,6 +77,7 @@ function toInput(data: Record<string, unknown>): OidcClientInput {
 }
 
 export function OidcClientsPage() {
+  const [confirm, confirmDialog] = useConfirm();
   const { tenant } = useTenant();
   const { token } = useAuth();
   const { canWriteSettings } = useOrgCapabilities();
@@ -130,7 +133,13 @@ export function OidcClientsPage() {
   };
 
   const rotate = async (client: OidcClient) => {
-    if (!window.confirm(`Rotate the secret for client "${client.name}"? The old secret stops working immediately.`)) {
+    if (
+      !(await confirm({
+        title: "Rotate client secret",
+        body: `Rotate the secret for client "${client.name}"? The old secret stops working immediately.`,
+        confirmLabel: "Rotate",
+      }))
+    ) {
       return;
     }
     setActionError(null);
@@ -142,7 +151,14 @@ export function OidcClientsPage() {
   };
 
   const remove = async (client: OidcClient) => {
-    if (!window.confirm(`Disable client "${client.name}"?`)) return;
+    if (
+      !(await confirm({
+        title: "Disable client",
+        body: `Disable client "${client.name}"?`,
+        confirmLabel: "Disable",
+      }))
+    )
+      return;
     setActionError(null);
     try {
       await deleteOidcClient(token, tenant, client.clientId);
@@ -154,6 +170,7 @@ export function OidcClientsPage() {
 
   return (
     <div className="space-y-4">
+      {confirmDialog}
       <SettingsSectionHeader
         title="OIDC clients"
         description="Service and public clients for agents, CLI, and CI (Keycloak inari realm)."
@@ -161,7 +178,7 @@ export function OidcClientsPage() {
           <CapabilityGate
             capability="admin"
             fallback={
-              <span className="text-xs text-muted-foreground">Read-only (org viewer)</span>
+              <span className="text-xs u-muted">Read-only (org viewer)</span>
             }
           >
             <Button onClick={() => (editing ? setEditing(null) : openCreate())}>
@@ -173,19 +190,19 @@ export function OidcClientsPage() {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load OIDC clients: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && loading && !clients && (
-        <p className="text-sm text-muted-foreground">Loading OIDC clients…</p>
+        <LoadingState label="Loading OIDC clients…" />
       )}
 
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">{actionError}</CardContent>
+          <div className="card-body">{actionError}</div>
         </Card>
       )}
 
@@ -193,7 +210,7 @@ export function OidcClientsPage() {
 
       {editing && canWriteSettings && (
         <Card>
-          <CardContent className="space-y-3 py-4">
+          <div className="card-body">
             <SchemaForm
               ref={formRef}
               schema={CLIENT_SCHEMA}
@@ -203,22 +220,22 @@ export function OidcClientsPage() {
             <Button onClick={submit}>
               {editing === "new" ? "Create client" : "Save client"}
             </Button>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && clients && clients.length === 0 && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No OIDC clients yet.
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {clients && clients.length > 0 && (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <thead className="u-raised/50 text-left text-xs u-muted">
               <tr>
                 <th className="px-4 py-2 font-medium">Name</th>
                 <th className="px-4 py-2 font-medium">Type</th>
@@ -230,13 +247,13 @@ export function OidcClientsPage() {
             </thead>
             <tbody>
               {clients.map((client) => (
-                <tr key={client.clientId} className="border-t hover:bg-muted/30">
+                <tr key={client.clientId} className="border-t hover:u-raised/30">
                   <td className="px-4 py-2 font-medium">{client.name}</td>
                   <td className="px-4 py-2">
                     {client.type === "public" ? (
-                      <Badge variant="secondary">Public</Badge>
+                      <Badge variant="neutral">Public</Badge>
                     ) : (
-                      <Badge variant="muted">Service</Badge>
+                      <Badge variant="neutral">Service</Badge>
                     )}
                   </td>
                   <td className="px-4 py-2 font-mono text-xs">
@@ -245,7 +262,7 @@ export function OidcClientsPage() {
                   <td className="px-4 py-2 font-mono text-xs">
                     {(client.scopes ?? []).join(", ") || "—"}
                   </td>
-                  <td className="px-4 py-2 text-xs text-muted-foreground">
+                  <td className="px-4 py-2 text-xs u-muted">
                     {formatRelative(client.createdAt)}
                   </td>
                   <td className="px-4 py-2">

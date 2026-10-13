@@ -1,28 +1,26 @@
 import * as React from "react";
+import {
+  Alert,
+  Badge,
+  Button,
+  Modal,
+  Skeleton,
+  Textarea,
+} from "7k-design-system/react";
 
 import { decideApproval, listApprovals } from "@/api/approvals";
 import type { ApprovalRequest, ApprovalStatus } from "@/api/approvals";
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { PageHeader } from "@/components/page-header";
 import { formatRelative } from "@/lib/time";
+import { statusToBadge } from "@/lib/status-badges";
 import { useTenant } from "@/tenant/tenant-context";
 
 type View = "inbox" | "requested";
 
-const STATUS_VARIANTS: Record<ApprovalStatus, "warning" | "success" | "destructive" | "muted"> = {
-  pending: "warning",
-  approved: "success",
-  rejected: "destructive",
-  cancelled: "muted",
-  expired: "muted",
-};
-
 function StatusBadge({ status }: { status: ApprovalStatus }) {
-  return <Badge variant={STATUS_VARIANTS[status]}>{status}</Badge>;
+  return <Badge variant={statusToBadge(status)}>{status}</Badge>;
 }
 
 export function ApprovalsPage() {
@@ -67,193 +65,155 @@ export function ApprovalsPage() {
   }
 
   const items = approvals ?? [];
+  const pendingCount = view === "inbox" ? items.filter((a) => a.status === "pending").length : 0;
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Approvals</h1>
-        <p className="text-sm text-muted-foreground">
-          Requests waiting for a decision, and requests you filed.
-        </p>
-      </div>
-
-      <div className="flex gap-1" role="group" aria-label="Approvals view">
-        <Button
-          variant={view === "inbox" ? "secondary" : "ghost"}
-          size="sm"
-          onClick={() => setView("inbox")}
-        >
-          Inbox
-        </Button>
-        <Button
-          variant={view === "requested" ? "secondary" : "ghost"}
-          size="sm"
-          onClick={() => setView("requested")}
-        >
-          Requested
-        </Button>
-      </div>
+    <div>
+      <PageHeader
+        breadcrumb="Deliver / Approvals"
+        title="Approvals"
+        actions={
+          <div className="tabs" role="group" aria-label="Approvals view">
+            <button
+              type="button"
+              className={`tab tab-accent${view === "inbox" ? " active" : ""}`}
+              onClick={() => setView("inbox")}
+            >
+              Inbox {pendingCount > 0 && <Badge variant="warning">{pendingCount}</Badge>}
+            </button>
+            <button
+              type="button"
+              className={`tab tab-accent${view === "requested" ? " active" : ""}`}
+              onClick={() => setView("requested")}
+            >
+              Requested
+            </button>
+          </div>
+        }
+      />
 
       {error && (
-        <Card>
-          <CardContent className="py-6 text-sm text-destructive">
-            Failed to load approvals: {error.message}
-          </CardContent>
-        </Card>
+        <Alert variant="danger">
+          <span>Failed to load approvals: {error.message}</span>
+          <Button variant="secondary" size="sm" onClick={refetch}>
+            Retry
+          </Button>
+        </Alert>
       )}
 
       {!error && loading && !approvals && (
-        <p className="text-sm text-muted-foreground">Loading approvals…</p>
+        <div className="overview-card-skeleton" aria-busy="true">
+          {Array.from({ length: 5 }, (_, i) => (
+            <Skeleton key={i} height={40} />
+          ))}
+        </div>
       )}
 
       {!error && approvals && items.length === 0 && (
-        <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+        <div className="empty">
+          <span className="empty-title">
+            {view === "inbox" ? "No pending approvals" : "No requests filed"}
+          </span>
+          <span className="empty-text">
             {view === "inbox"
               ? "Nothing waiting for your decision."
               : "You have not filed any approval requests."}
-          </CardContent>
-        </Card>
+          </span>
+          {view === "inbox" && <Badge variant="success">Queue clear</Badge>}
+        </div>
       )}
 
       {items.length > 0 && (
-        <div className="overflow-hidden rounded-lg border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
-              <tr>
-                <th className="px-4 py-2 font-medium">Kind</th>
-                <th className="px-4 py-2 font-medium">Request</th>
-                <th className="px-4 py-2 font-medium">Requested by</th>
-                <th className="px-4 py-2 font-medium">Requested</th>
-                <th className="px-4 py-2 font-medium">Status</th>
-                <th className="px-4 py-2 font-medium">Decision</th>
-                {view === "inbox" && <th className="px-4 py-2 font-medium">Actions</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((approval) => (
-                <ApprovalRow
-                  key={approval.id}
-                  approval={approval}
-                  view={view}
-                  deciding={deciding}
-                  reason={reason}
-                  submitting={submitting}
-                  decisionError={decisionError}
-                  onStartDecision={startDecision}
-                  onCancelDecision={() => setDeciding(null)}
-                  onReasonChange={setReason}
-                  onConfirm={() => void confirmDecision()}
-                />
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ul className="list approvals-list">
+          {items.map((approval) => (
+            <ApprovalRow
+              key={approval.id}
+              approval={approval}
+              view={view}
+              onStartDecision={startDecision}
+            />
+          ))}
+        </ul>
       )}
+
+      <Modal
+        open={deciding !== null}
+        onClose={() => setDeciding(null)}
+        aria-label="Approval decision"
+      >
+        {deciding && (
+          <div className="decision-modal">
+            <h2 className="mono-label">
+              Reason for {deciding.decision === "approve" ? "approval" : "rejection"}
+            </h2>
+            <Textarea
+              aria-label="Decision reason"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Required"
+            />
+            {decisionError && <p className="field-error">{decisionError}</p>}
+            <div className="wizard-actions">
+              <Button variant="ghost" disabled={submitting} onClick={() => setDeciding(null)}>
+                Cancel
+              </Button>
+              <Button
+                variant={deciding.decision === "approve" ? "accent" : "danger"}
+                disabled={submitting || !reason.trim()}
+                onClick={() => void confirmDecision()}
+              >
+                Confirm {deciding.decision}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   );
-}
-
-interface ApprovalRowProps {
-  approval: ApprovalRequest;
-  view: View;
-  deciding: { id: string; decision: "approve" | "reject" } | null;
-  reason: string;
-  submitting: boolean;
-  decisionError: string | null;
-  onStartDecision: (id: string, decision: "approve" | "reject") => void;
-  onCancelDecision: () => void;
-  onReasonChange: (reason: string) => void;
-  onConfirm: () => void;
 }
 
 function ApprovalRow({
   approval,
   view,
-  deciding,
-  reason,
-  submitting,
-  decisionError,
   onStartDecision,
-  onCancelDecision,
-  onReasonChange,
-  onConfirm,
-}: ApprovalRowProps) {
-  const isDeciding = deciding?.id === approval.id;
+}: {
+  approval: ApprovalRequest;
+  view: View;
+  onStartDecision: (id: string, decision: "approve" | "reject") => void;
+}) {
   const decided = approval.status !== "pending";
 
   return (
-    <React.Fragment>
-      <tr className="border-t hover:bg-muted/30">
-        <td className="px-4 py-2">
-          <Badge variant="outline">{approval.kind}</Badge>
-        </td>
-        <td className="px-4 py-2">
-          <div className="font-medium">{approval.title}</div>
-        </td>
-        <td className="px-4 py-2 font-mono text-xs">{approval.requestedBy}</td>
-        <td className="px-4 py-2 text-muted-foreground">
-          <span title={approval.requestedAt}>{formatRelative(approval.requestedAt)}</span>
-        </td>
-        <td className="px-4 py-2">
-          <StatusBadge status={approval.status} />
-        </td>
-        <td className="px-4 py-2 text-xs">
-          {decided && approval.decidedBy ? (
-            <div>
-              <div className="font-mono">{approval.decidedBy}</div>
-              {approval.decisionReason && (
-                <div className="text-muted-foreground">{approval.decisionReason}</div>
-              )}
-            </div>
-          ) : (
-            <span className="text-muted-foreground">—</span>
+    <li className="list-item approvals-row">
+      <span className="tag">{approval.kind}</span>
+      <div className="approvals-row-main">
+        <p className="overview-approval-title">{approval.title}</p>
+        <p className="mono-caption">{approval.requestedBy}</p>
+      </div>
+      <span className="mono-caption" title={approval.requestedAt}>
+        {formatRelative(approval.requestedAt)}
+      </span>
+      <StatusBadge status={approval.status} />
+      {decided && approval.decidedBy ? (
+        <span className="approvals-row-decision">
+          <span className="mono-caption">{approval.decidedBy}</span>
+          {approval.decisionReason && (
+            <span className="mono-caption">{approval.decisionReason}</span>
           )}
-        </td>
-        {view === "inbox" && (
-          <td className="px-4 py-2">
-            {approval.status === "pending" && !isDeciding && (
-              <div className="flex gap-1">
-                <Button size="sm" variant="outline" onClick={() => onStartDecision(approval.id, "approve")}>
-                  Approve
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onStartDecision(approval.id, "reject")}
-                >
-                  Reject
-                </Button>
-              </div>
-            )}
-          </td>
-        )}
-      </tr>
-      {isDeciding && (
-        <tr className="border-t bg-muted/30">
-          <td className="px-4 py-2" colSpan={view === "inbox" ? 7 : 6}>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-sm">
-                Reason for {deciding.decision === "approve" ? "approval" : "rejection"}:
-              </span>
-              <Input
-                aria-label="Decision reason"
-                value={reason}
-                onChange={(e) => onReasonChange(e.target.value)}
-                placeholder="Required"
-                className="h-8 w-72"
-              />
-              <Button size="sm" disabled={submitting || !reason.trim()} onClick={onConfirm}>
-                Confirm {deciding.decision}
-              </Button>
-              <Button size="sm" variant="ghost" disabled={submitting} onClick={onCancelDecision}>
-                Cancel
-              </Button>
-              {decisionError && <span className="text-sm text-destructive">{decisionError}</span>}
-            </div>
-          </td>
-        </tr>
+        </span>
+      ) : (
+        <span className="mono-caption">—</span>
       )}
-    </React.Fragment>
+      {view === "inbox" && approval.status === "pending" && (
+        <div className="approvals-row-actions">
+          <Button size="sm" variant="accent" onClick={() => onStartDecision(approval.id, "approve")}>
+            Approve
+          </Button>
+          <Button size="sm" variant="danger" onClick={() => onStartDecision(approval.id, "reject")}>
+            Reject
+          </Button>
+        </div>
+      )}
+    </li>
   );
 }

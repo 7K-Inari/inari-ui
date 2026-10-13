@@ -16,6 +16,18 @@ export interface AuthState {
 
 const AuthContext = React.createContext<AuthState | null>(null);
 
+// Dev-only auth bypass for local smoke testing without a Keycloak instance.
+// Enable with VITE_MOCK_AUTH=true (never honored in production builds).
+const MOCK_AUTH = import.meta.env.DEV && import.meta.env.VITE_MOCK_AUTH === "true";
+const MOCK_TOKEN: Record<string, unknown> = {
+  name: "Dev User",
+  preferred_username: "dev",
+  organization: {
+    acme: { name: "Acme", role: "admin" },
+    globex: { name: "Globex", role: "admin" },
+  },
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [initialized, setInitialized] = React.useState(false);
   const [authenticated, setAuthenticated] = React.useState(false);
@@ -27,6 +39,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [attempt, setAttempt] = React.useState(0);
 
   React.useEffect(() => {
+    if (MOCK_AUTH) {
+      setError(null);
+      setAuthenticated(true);
+      setToken("mock-dev-token");
+      setParsedToken(MOCK_TOKEN);
+      setInitialized(true);
+      return;
+    }
     let cancelled = false;
     let redirectingForOrgSwitch = false;
     initKeycloak()
@@ -70,10 +90,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     error,
     token,
     parsedToken,
-    login: () => keycloak.login(),
+    login: () => (MOCK_AUTH ? window.location.reload() : keycloak.login()),
     logout: () => {
       clearExtensionSessions();
-      keycloak.logout();
+      if (MOCK_AUTH) window.location.reload();
+      else keycloak.logout();
     },
     retry: () => {
       setInitialized(false);

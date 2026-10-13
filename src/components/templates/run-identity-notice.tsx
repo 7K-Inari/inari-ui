@@ -4,7 +4,7 @@ import { ShieldAlert, UserCircle2 } from "lucide-react";
 import type { GitConnectionViewModel } from "@/api/git-connections";
 import type { ScaffoldRunViewModel } from "@/api/templates";
 import type { TemplateScope } from "@/api/types";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "7k-design-system/react";
 import { tenantLink } from "@/tenant/tenant-link";
 
 const PROVIDER_LABEL: Record<string, string> = {
@@ -33,9 +33,9 @@ export function RunIdentityNotice({
 }) {
   if (scope === "platform") {
     return (
-      <p className="rounded-md bg-muted p-3 text-sm text-muted-foreground">
+      <p className="rounded-md u-raised p-3 text-sm u-muted">
         This template commits as the{" "}
-        <span className="font-medium text-foreground">platform App</span> (bot
+        <span className="font-medium u-fg">platform App</span> (bot
         identity).
       </p>
     );
@@ -46,11 +46,11 @@ export function RunIdentityNotice({
   const connection = connections[0];
   if (connection) {
     return (
-      <p className="flex items-center gap-2 rounded-md bg-muted p-3 text-sm text-muted-foreground">
+      <p className="flex items-center gap-2 rounded-md u-raised p-3 text-sm u-muted">
         <UserCircle2 className="h-4 w-4 shrink-0" aria-hidden />
         <span>
           This run will commit as{" "}
-          <span className="font-medium text-foreground">
+          <span className="font-medium u-fg">
             {connection.login}
           </span>{" "}
           ({providerLabel(connection.provider)}).
@@ -68,16 +68,16 @@ export function RunIdentityNotice({
         <ShieldAlert className="h-4 w-4" aria-hidden />
         No personal git connection
       </div>
-      <p className="text-muted-foreground">
+      <p className="u-muted">
         This template commits with your personal git identity. If the tenant
         fallback policy allows it, the run will use the{" "}
-        <span className="font-medium text-foreground">platform App</span>{" "}
+        <span className="font-medium u-fg">platform App</span>{" "}
         identity instead and the run is audited; otherwise the run will be
         blocked.
       </p>
       <Link
         to={tenantLink(tenant, "settings/org/git-connections")}
-        className="inline-flex font-medium text-primary hover:underline"
+        className="inline-flex font-medium u-brand hover:underline"
       >
         Connect a git account
       </Link>
@@ -99,15 +99,15 @@ export function RunIdentityBadge({ run }: { run: ScaffoldRunViewModel }) {
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+      <div className="flex items-center gap-2 text-sm u-muted">
         <span>Commits as</span>
-        <Badge variant={identity.kind === "user" ? "secondary" : "warning"}>
+        <Badge variant={identity.kind === "user" ? "neutral" : "warning"}>
           {label}
         </Badge>
         {run.usedFallback && <Badge variant="warning">fallback</Badge>}
       </div>
       {run.usedFallback && (
-        <p className="max-w-md text-xs text-muted-foreground">
+        <p className="max-w-md text-xs u-muted">
           The platform App identity was used for this run (personal git
           fallback). The run is audited.
         </p>

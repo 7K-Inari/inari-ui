@@ -212,12 +212,13 @@ describe("NotificationsPage", () => {
   });
 
   it("deletes an endpoint after confirmation", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     const user = userEvent.setup();
     renderPage();
     await screen.findByText("ops-slack");
     const row = screen.getByText("ops-slack").closest("tr")!;
     await user.click(within(row).getByRole("button", { name: "Delete" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Delete" }));
     expect(
       policyMockControl
         .getState()
@@ -226,12 +227,13 @@ describe("NotificationsPage", () => {
   });
 
   it("keeps the endpoint when confirmation is cancelled", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(false);
     const user = userEvent.setup();
     renderPage();
     await screen.findByText("ops-slack");
     const row = screen.getByText("ops-slack").closest("tr")!;
     await user.click(within(row).getByRole("button", { name: "Delete" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
     expect(
       policyMockControl
         .getState()

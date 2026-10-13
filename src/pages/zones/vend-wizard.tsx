@@ -3,10 +3,9 @@ import { useNavigate } from "react-router-dom";
 
 import { createZone } from "@/api/zones";
 import { useAuth } from "@/auth/auth-context";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
 
@@ -55,72 +54,72 @@ export function VendZoneWizardPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Vend new zone</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="page-header-title">Vend new zone</h1>
+        <p className="text-sm u-muted">
           A zone provisions a dedicated cloud account, trust, an EKS cluster, and platform wiring.
         </p>
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Zone details</CardTitle>
-          <CardDescription>
+        <div className="card-header">
+          <h2 className="mono-label">Zone details</h2>
+          <p className="card-lede">
             This requests a new tenant zone; provisioning starts once the request is accepted.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </p>
+        </div>
+        <div className="card-body">
           <form onSubmit={submit} className="space-y-4">
             <div className="space-y-1.5">
-              <Label htmlFor="zone-name">Name</Label>
+              <label className="form-label" htmlFor="zone-name">Name</label>
               <Input
                 id="zone-name"
                 value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
+                onChange={(v) => setDisplayName(v)}
                 placeholder="acme-analytics"
                 required
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="zone-slug">Slug</Label>
+              <label className="form-label" htmlFor="zone-slug">Slug</label>
               <Input
                 id="zone-slug"
                 value={slug}
-                onChange={(e) => setSlug(e.target.value)}
+                onChange={(v) => setSlug(v)}
                 placeholder="acme-analytics"
                 required
               />
-              {slugError && <p className="text-xs text-destructive">{slugError}</p>}
+              {slugError && <p className="text-xs u-danger">{slugError}</p>}
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="zone-org-unit">Org unit</Label>
+              <label className="form-label" htmlFor="zone-org-unit">Org unit</label>
               <Input
                 id="zone-org-unit"
                 value={ouId}
-                onChange={(e) => setOuId(e.target.value)}
+                onChange={(v) => setOuId(v)}
                 placeholder="acme-data"
                 required
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="zone-management-account">Management account ID</Label>
+              <label className="form-label" htmlFor="zone-management-account">Management account ID</label>
               <Input
                 id="zone-management-account"
                 value={managementAccountId}
-                onChange={(e) => setManagementAccountId(e.target.value)}
+                onChange={(v) => setManagementAccountId(v)}
                 placeholder="ma-platform-prod"
                 required
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs u-muted">
                 The platform management account the new cloud account is vended under.
               </p>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="zone-region">Region</Label>
+              <label className="form-label" htmlFor="zone-region">Region</label>
               <select
                 id="zone-region"
                 value={region}
                 onChange={(e) => setRegion(e.target.value)}
-                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="input"
               >
                 {REGIONS.map((r) => (
                   <option key={r} value={r}>
@@ -130,18 +129,18 @@ export function VendZoneWizardPage() {
               </select>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="zone-tier">Tier</Label>
+              <label className="form-label" htmlFor="zone-tier">Tier</label>
               <select
                 id="zone-tier"
                 value="starter"
                 disabled
-                className="flex h-9 w-full rounded-md border border-input bg-muted px-3 py-1 text-sm text-muted-foreground shadow-sm"
+                className="input u-muted"
               >
                 <option value="starter">starter</option>
               </select>
-              <p className="text-xs text-muted-foreground">Starter tier only during M3.</p>
+              <p className="text-xs u-muted">Starter tier only during M3.</p>
             </div>
-            {submitError && <p className="text-sm text-destructive">{submitError}</p>}
+            {submitError && <p className="text-sm u-danger">{submitError}</p>}
             <div className="flex justify-end gap-2">
               <Button variant="ghost" type="button" onClick={() => navigate(-1)}>
                 Cancel
@@ -154,7 +153,7 @@ export function VendZoneWizardPage() {
               </Button>
             </div>
           </form>
-        </CardContent>
+        </div>
       </Card>
     </div>
   );

@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 
 import { listClusters } from "@/api/clusters";
-import { useAsyncResource } from "@/api/hooks";
+import { useAsyncResource, type AsyncState } from "@/api/hooks";
 import type { ClusterStatus, ClusterSummary } from "@/api/types";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
@@ -18,22 +18,24 @@ export function ClusterStatusCounts({ clusters }: { clusters: ClusterSummary[] }
     counts.set(c.status, (counts.get(c.status) ?? 0) + 1);
   }
   return (
-    <ul className="space-y-1">
+    <ul className="list">
       {STATUS_ORDER.filter((s) => counts.get(s)).map((s) => (
-        <li key={s} className="flex items-center justify-between text-sm">
+        <li key={s} className="list-item overview-count-row">
           <ClusterStatusBadge status={s} />
-          <span className="tabular-nums">{counts.get(s)}</span>
+          <span className="mono-data">{counts.get(s)}</span>
         </li>
       ))}
     </ul>
   );
 }
 
-export function ClusterHealthCard() {
+export function ClusterHealthCard({ state: shared }: { state?: AsyncState<ClusterSummary[]> }) {
   const { tenant } = useTenant();
-  const state = useAsyncResource((token) => listClusters(token, tenant), [tenant], {
+  const own = useAsyncResource((token) => listClusters(token, tenant), [tenant], {
     refetchIntervalMs: 30_000,
+    enabled: !shared,
   });
+  const state = shared ?? own;
 
   return (
     <OverviewCard
@@ -45,15 +47,15 @@ export function ClusterHealthCard() {
       empty={
         <p>
           No clusters registered yet.{" "}
-          <Link to={tenantLink(tenant, "clusters/new")} className="text-primary hover:underline">
+          <Link to={tenantLink(tenant, "clusters/new")} className="u-brand hover:underline">
             Register your first cluster
           </Link>
         </p>
       }
     >
       {(clusters: ClusterSummary[]) => (
-        <div className="space-y-3">
-          <p className="text-3xl font-semibold">{clusters.length}</p>
+        <div className="overview-card-stack">
+          <p className="stat-value">{clusters.length}</p>
           <ClusterStatusCounts clusters={clusters} />
         </div>
       )}

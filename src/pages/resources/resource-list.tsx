@@ -1,16 +1,16 @@
 import * as React from "react";
+import { useConfirm } from "@/components/confirm";
 import { Link } from "react-router-dom";
 
 import { useAsyncResource } from "@/api/hooks";
 import { deleteResource, listResources } from "@/api/resources";
 import { ApiError } from "@/api/client";
 import { useAuth } from "@/auth/auth-context";
-import type { ResourceHealth } from "@/api/types";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import type { ResourceHealth, ResourceInstanceSummary } from "@/api/types";
+import { Badge, Button, Card, DataTable, type DataTableColumn } from "7k-design-system/react";
 import { useTenant } from "@/tenant/tenant-context";
 import { ALL_TENANTS, tenantLink } from "@/tenant/tenant-link";
+import { LoadingState } from "@/components/loading";
 
 export function HealthBadge({ health }: { health: ResourceHealth }) {
   const variant =
@@ -19,8 +19,8 @@ export function HealthBadge({ health }: { health: ResourceHealth }) {
       : health === "progressing"
         ? "warning"
         : health === "degraded"
-          ? "destructive"
-          : "muted";
+          ? "danger"
+          : "neutral";
   return <Badge variant={variant}>{health}</Badge>;
 }
 
@@ -32,6 +32,7 @@ const HEALTH_FILTERS: Array<{ value: ResourceHealth | "all"; label: string }> = 
 ];
 
 export function ResourceListPage() {
+  const [confirm, confirmDialog] = useConfirm();
   const { tenant } = useTenant();
   const { token } = useAuth();
   const [healthFilter, setHealthFilter] = React.useState<ResourceHealth | "all">("all");
@@ -46,7 +47,13 @@ export function ResourceListPage() {
   });
 
   const undeploy = async (id: string, name: string) => {
-    if (!window.confirm(`Undeploy "${name}"? This removes the instance and its desired state.`)) {
+    if (
+      !(await confirm({
+        title: "Undeploy resource",
+        body: `Undeploy "${name}"? This removes the instance and its desired state.`,
+        confirmLabel: "Undeploy",
+      }))
+    ) {
       return;
     }
     setActionError(null);
@@ -63,11 +70,57 @@ export function ResourceListPage() {
   );
   const showTenant = tenant === ALL_TENANTS;
 
+  const columns: DataTableColumn<ResourceInstanceSummary>[] = [
+    {
+      key: "name",
+      label: "Name",
+      render: (r) => (
+        <Link to={tenantLink(tenant, `deploys/${r.id}`)} className="table-link">
+          {r.name}
+        </Link>
+      ),
+    },
+    ...(showTenant ? [{ key: "tenant", label: "Tenant", mono: true } as const] : []),
+    { key: "catalogItemName", label: "Catalog item" },
+    { key: "clusterId", label: "Cluster", mono: true },
+    {
+      key: "health",
+      label: "Health",
+      render: (r) => <HealthBadge health={r.health} />,
+    },
+    { key: "status", label: "Status", mono: true },
+    { key: "ownerTeam", label: "Owner team", mono: true },
+    {
+      key: "version",
+      label: "Version",
+      render: (r) => (
+        <span className="mono-data">
+          {r.version}
+          {r.updateAvailable && (
+            <Badge variant="warning" className="ml-2">
+              {r.updateAvailable.to} available
+            </Badge>
+          )}
+        </span>
+      ),
+    },
+    {
+      key: "actions",
+      label: "",
+      render: (r) => (
+        <Button variant="secondary" size="sm" onClick={() => undeploy(r.id, r.name)}>
+          Delete
+        </Button>
+      ),
+    },
+  ];
+
   return (
     <div className="space-y-4">
+      {confirmDialog}
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Resources</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="page-header-title">Resources</h1>
+        <p className="text-sm u-muted">
           All deployed instances across clusters and cloud accounts in this scope.
         </p>
       </div>
@@ -87,90 +140,39 @@ export function ResourceListPage() {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load resources: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
-      {actionError && <p className="text-sm text-destructive">{actionError}</p>}
+      {actionError && <p className="text-sm u-danger">{actionError}</p>}
 
       {!error && loading && !resources && (
-        <p className="text-sm text-muted-foreground">Loading resources…</p>
+        <LoadingState label="Loading resources…" />
       )}
 
       {!error && resources && visible.length === 0 && (
         <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-            <p className="text-sm text-muted-foreground">
+          <div className="card-body">
+            <p className="text-sm u-muted">
               {resources.length === 0
                 ? "No resources yet. Deploy something from the catalog to see it here."
                 : "No resources match this filter."}
             </p>
             {resources.length === 0 && (
-              <Button asChild variant="outline">
-                <Link to={tenantLink(tenant, "catalog")}>Browse catalog</Link>
-              </Button>
+              <Link to={tenantLink(tenant, "catalog")} className="btn btn-secondary">Browse catalog</Link>
             )}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {visible.length > 0 && (
-        <Card>
-          <CardContent className="p-0">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-muted-foreground">
-                  <th className="px-4 py-2 font-medium">Name</th>
-                  {showTenant && <th className="px-4 py-2 font-medium">Tenant</th>}
-                  <th className="px-4 py-2 font-medium">Catalog item</th>
-                  <th className="px-4 py-2 font-medium">Cluster</th>
-                  <th className="px-4 py-2 font-medium">Health</th>
-                  <th className="px-4 py-2 font-medium">Status</th>
-                  <th className="px-4 py-2 font-medium">Owner team</th>
-                  <th className="px-4 py-2 font-medium">Version</th>
-                  <th className="px-4 py-2 font-medium" />
-                </tr>
-              </thead>
-              <tbody>
-                {visible.map((r) => (
-                  <tr key={r.id} className="border-b last:border-0">
-                    <td className="px-4 py-2">
-                      <Link
-                        to={tenantLink(tenant, `deploys/${r.id}`)}
-                        className="font-medium hover:underline"
-                      >
-                        {r.name}
-                      </Link>
-                    </td>
-                    {showTenant && <td className="px-4 py-2">{r.tenant}</td>}
-                    <td className="px-4 py-2">{r.catalogItemName}</td>
-                    <td className="px-4 py-2">{r.clusterId}</td>
-                    <td className="px-4 py-2">
-                      <HealthBadge health={r.health} />
-                    </td>
-                    <td className="px-4 py-2">{r.status}</td>
-                    <td className="px-4 py-2">{r.ownerTeam}</td>
-                    <td className="px-4 py-2">
-                      {r.version}
-                      {r.updateAvailable && (
-                        <Badge variant="warning" className="ml-2">
-                          {r.updateAvailable.to} available
-                        </Badge>
-                      )}
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      <Button variant="outline" size="sm" onClick={() => undeploy(r.id, r.name)}>
-                        Delete
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </CardContent>
-        </Card>
+        <DataTable<ResourceInstanceSummary>
+          columns={columns}
+          rows={visible}
+          rowKey="id"
+        />
       )}
     </div>
   );

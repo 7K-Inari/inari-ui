@@ -2,12 +2,12 @@ import { Link } from "react-router-dom";
 
 import { listCloudAccounts } from "@/api/cloud-accounts";
 import { useAsyncResource } from "@/api/hooks";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
 import { CloudAccountStatusBadge } from "@/pages/cloud-accounts/status-badge";
+import { LoadingState } from "@/components/loading";
 
 export function CloudAccountListPage() {
   const { tenant } = useTenant();
@@ -23,47 +23,43 @@ export function CloudAccountListPage() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Cloud Accounts</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="page-header-title">Cloud Accounts</h1>
+          <p className="text-sm u-muted">
             AWS accounts connected via trust roles — no tenant credentials are stored on the
             platform.
           </p>
         </div>
-        <Button asChild>
-          <Link to={tenantLink(tenant, "cloud-accounts/new")}>Connect AWS account</Link>
-        </Button>
+        <Link to={tenantLink(tenant, "cloud-accounts/new")} className="btn btn-primary">Connect AWS account</Link>
       </div>
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load cloud accounts: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && loading && !accounts && (
-        <p className="text-sm text-muted-foreground">Loading cloud accounts…</p>
+        <LoadingState label="Loading cloud accounts…" />
       )}
 
       {!error && accounts && accounts.length === 0 && (
         <Card>
-          <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-            <p className="text-sm text-muted-foreground">
+          <div className="card-body">
+            <p className="text-sm u-muted">
               No cloud accounts connected yet. Connect an AWS account to provision managed
               resources.
             </p>
-            <Button asChild>
-              <Link to={tenantLink(tenant, "cloud-accounts/new")}>Connect your first account</Link>
-            </Button>
-          </CardContent>
+            <Link to={tenantLink(tenant, "cloud-accounts/new")} className="btn btn-primary">Connect your first account</Link>
+          </div>
         </Card>
       )}
 
       {accounts && accounts.length > 0 && (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <thead className="u-raised/50 text-left text-xs u-muted">
               <tr>
                 <th className="px-4 py-2 font-medium">Account ID</th>
                 <th className="px-4 py-2 font-medium">Role ARN</th>
@@ -73,11 +69,11 @@ export function CloudAccountListPage() {
             </thead>
             <tbody>
               {accounts.map((account) => (
-                <tr key={account.id} className="border-t hover:bg-muted/30">
+                <tr key={account.id} className="border-t hover:u-raised/30">
                   <td className="px-4 py-2">
                     <Link
                       to={tenantLink(tenant, `cloud-accounts/${account.id}`)}
-                      className="font-medium font-mono text-xs text-primary hover:underline"
+                      className="font-medium font-mono text-xs u-brand hover:underline"
                     >
                       {account.accountId}
                     </Link>
@@ -86,7 +82,7 @@ export function CloudAccountListPage() {
                   <td className="px-4 py-2">
                     <CloudAccountStatusBadge status={account.status} />
                   </td>
-                  <td className="px-4 py-2 text-muted-foreground">
+                  <td className="px-4 py-2 u-muted">
                     {formatRelative(account.lastValidatedAt)}
                   </td>
                 </tr>

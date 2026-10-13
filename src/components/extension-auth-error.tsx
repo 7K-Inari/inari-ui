@@ -23,20 +23,20 @@ export function ExtensionAuthErrorNotice({
     return (
       <div
         role="alert"
-        className="space-y-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm"
+        className="space-y-2 rounded-md border u-danger-border/40 u-danger-bg/10 p-3 text-sm"
       >
-        <div className="flex items-center gap-2 font-medium text-destructive">
+        <div className="flex items-center gap-2 font-medium u-danger">
           <ShieldAlert className="h-4 w-4" aria-hidden />
           Insufficient {extensionName} permissions
         </div>
-        <p className="text-destructive">
+        <p className="u-danger">
           Your account doesn't have permission to perform this action in {extensionName}.
         </p>
-        <p className="text-muted-foreground">
-          <span className="font-medium text-foreground">Detail: </span>
+        <p className="u-muted">
+          <span className="font-medium u-fg">Detail: </span>
           {error.message}
         </p>
-        <p className="text-muted-foreground">
+        <p className="u-muted">
           Ask your {extensionName} administrator to grant the required role, then try again.
         </p>
       </div>
@@ -47,20 +47,20 @@ export function ExtensionAuthErrorNotice({
     return (
       <div
         role="alert"
-        className="space-y-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm"
+        className="space-y-2 rounded-md border u-danger-border/40 u-danger-bg/10 p-3 text-sm"
       >
-        <div className="flex items-center gap-2 font-medium text-destructive">
+        <div className="flex items-center gap-2 font-medium u-danger">
           <KeyRound className="h-4 w-4" aria-hidden />
           Extension sign-in failed
         </div>
-        <p className="text-destructive">
+        <p className="u-danger">
           We couldn't sign you in to {extensionName}. {error.message}
         </p>
         {onRetry && (
           <button
             type="button"
             onClick={onRetry}
-            className="rounded-md border border-destructive/40 px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10"
+            className="rounded-md border u-danger-border/40 px-2 py-1 text-xs font-medium u-danger hover:u-danger-bg/10"
           >
             Retry sign-in
           </button>
@@ -72,13 +72,13 @@ export function ExtensionAuthErrorNotice({
   return (
     <div
       role="alert"
-      className="space-y-2 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm"
+      className="space-y-2 rounded-md border u-danger-border/40 u-danger-bg/10 p-3 text-sm"
     >
-      <div className="flex items-center gap-2 font-medium text-destructive">
+      <div className="flex items-center gap-2 font-medium u-danger">
         <ShieldAlert className="h-4 w-4" aria-hidden />
         Extension action failed
       </div>
-      <p className="text-destructive">Something went wrong: {error.message}</p>
+      <p className="u-danger">Something went wrong: {error.message}</p>
     </div>
   );
 }

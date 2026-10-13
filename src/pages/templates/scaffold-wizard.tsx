@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Stepper } from "@/components/stepper";
 import { Link, useParams } from "react-router-dom";
 import { CheckCircle2, Circle, Loader2, XCircle } from "lucide-react";
 
@@ -20,13 +21,13 @@ import {
   RunIdentityBadge,
   RunIdentityNotice,
 } from "@/components/templates/run-identity-notice";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
+import { LoadingState } from "@/components/loading";
 
 const NAME_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 const STEPS = ["Configure", "Review", "Status"] as const;
@@ -35,30 +36,6 @@ const STEPS = ["Configure", "Review", "Status"] as const;
 // group, RBAC) into every scaffold; the server creates repo + pipeline +
 // catalog entry in one run.
 
-function StepIndicator({ current }: { current: number }) {
-  return (
-    <ol className="flex items-center gap-2 text-sm" aria-label="Wizard progress">
-      {STEPS.map((label, i) => (
-        <li key={label} className="flex items-center gap-2">
-          <span
-            className={
-              i <= current
-                ? "flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground"
-                : "flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs text-muted-foreground"
-            }
-            aria-current={i === current ? "step" : undefined}
-          >
-            {i + 1}
-          </span>
-          <span className={i <= current ? "font-medium" : "text-muted-foreground"}>
-            {label}
-          </span>
-          {i < STEPS.length - 1 && <span className="mx-1 text-muted-foreground">→</span>}
-        </li>
-      ))}
-    </ol>
-  );
-}
 
 function StepList({ run }: { run: ScaffoldRunViewModel }) {
   if (run.steps.length === 0) return null;
@@ -69,14 +46,14 @@ function StepList({ run }: { run: ScaffoldRunViewModel }) {
           {step.state === "completed" ? (
             <CheckCircle2 className="h-4 w-4 text-emerald-600" aria-hidden />
           ) : step.state === "failed" ? (
-            <XCircle className="h-4 w-4 text-destructive" aria-hidden />
+            <XCircle className="h-4 w-4 u-danger" aria-hidden />
           ) : step.state === "running" ? (
-            <Loader2 className="h-4 w-4 animate-spin text-primary" aria-hidden />
+            <Loader2 className="h-4 w-4 animate-spin u-brand" aria-hidden />
           ) : (
-            <Circle className="h-4 w-4 text-muted-foreground" aria-hidden />
+            <Circle className="h-4 w-4 u-muted" aria-hidden />
           )}
           <span className="flex-1">{step.name}</span>
-          <span className="text-xs text-muted-foreground">{step.state}</span>
+          <span className="text-xs u-muted">{step.state}</span>
         </li>
       ))}
     </ul>
@@ -100,7 +77,7 @@ function ScaffoldStatus({ scaffoldId }: { scaffoldId: string }) {
 
   if (!run) {
     return (
-      <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
+      <div className="flex items-center gap-2 py-6 text-sm u-muted">
         <Loader2 className="h-4 w-4 animate-spin" aria-hidden /> Starting scaffold…
       </div>
     );
@@ -141,16 +118,16 @@ function ScaffoldStatus({ scaffoldId }: { scaffoldId: string }) {
   if (run.failed) {
     return (
       <div className="flex flex-col items-center gap-3 py-6 text-center">
-        <p className="font-medium text-destructive">Scaffold failed</p>
+        <p className="font-medium u-danger">Scaffold failed</p>
         <RunIdentityBadge run={run} />
         {(run.error ?? run.steps.find((s) => s.error)?.error) && (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm u-muted">
             {run.error ?? run.steps.find((s) => s.error)?.error}
           </p>
         )}
         <StepList run={run} />
         {actionError && (
-          <p className="text-sm text-destructive" role="alert">
+          <p className="text-sm u-danger" role="alert">
             {actionError}
           </p>
         )}
@@ -167,9 +144,9 @@ function ScaffoldStatus({ scaffoldId }: { scaffoldId: string }) {
       {terminal ? (
         <CheckCircle2 className="h-10 w-10 text-emerald-600" aria-hidden />
       ) : run.phase === "cancelled" ? (
-        <XCircle className="h-10 w-10 text-muted-foreground" aria-hidden />
+        <XCircle className="h-10 w-10 u-muted" aria-hidden />
       ) : (
-        <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
+        <Loader2 className="h-8 w-8 animate-spin u-brand" aria-hidden />
       )}
       <p className="font-medium">
         {terminal
@@ -182,36 +159,30 @@ function ScaffoldStatus({ scaffoldId }: { scaffoldId: string }) {
       <RunIdentityBadge run={run} />
       <StepList run={run} />
       {actionError && (
-        <p className="text-sm text-destructive" role="alert">
+        <p className="text-sm u-danger" role="alert">
           {actionError}
         </p>
       )}
       {!run.terminal && (
-        <Button variant="outline" size="sm" onClick={cancel} disabled={acting}>
+        <Button variant="secondary" size="sm" onClick={cancel} disabled={acting}>
           {acting ? "Cancelling…" : "Cancel run"}
         </Button>
       )}
       <div className="flex flex-wrap justify-center gap-2">
         {run.outputs.repoUrl && (
-          <Button asChild variant="outline" size="sm">
-            <a href={run.outputs.repoUrl} target="_blank" rel="noreferrer">
+          <a href={run.outputs.repoUrl} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">
               Open repository
             </a>
-          </Button>
         )}
         {run.outputs.pipelineUrl && (
-          <Button asChild variant="outline" size="sm">
-            <a href={run.outputs.pipelineUrl} target="_blank" rel="noreferrer">
+          <a href={run.outputs.pipelineUrl} target="_blank" rel="noreferrer" className="btn btn-secondary btn-sm">
               Open pipeline
             </a>
-          </Button>
         )}
         {run.outputs.catalogItemId && (
-          <Button asChild size="sm">
-            <Link to={tenantLink(tenant, `catalog/${run.outputs.catalogItemId}`)}>
+          <Link to={tenantLink(tenant, `catalog/${run.outputs.catalogItemId}`)} className="btn btn-primary btn-sm">
               View catalog entry
             </Link>
-          </Button>
         )}
       </div>
     </div>
@@ -248,14 +219,14 @@ export function ScaffoldWizardPage() {
   if (template.error) {
     return (
       <Card>
-        <CardContent className="py-12 text-center text-sm text-destructive">
+        <div className="card-body">
           Failed to load template: {template.error.message}
-        </CardContent>
+        </div>
       </Card>
     );
   }
   if (!template.data) {
-    return <p className="text-sm text-muted-foreground">Loading template…</p>;
+    return <LoadingState label="Loading template…" />;
   }
   const tpl = template.data;
 
@@ -302,29 +273,29 @@ export function ScaffoldWizardPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Scaffold {tpl.displayName}</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="page-header-title">Scaffold {tpl.displayName}</h1>
+        <p className="text-sm u-muted">
           Template v{tpl.version} · creates repo, pipeline, and catalog entry
         </p>
       </div>
-      <StepIndicator current={step} />
+      <Stepper steps={STEPS} current={step} />
 
       {step === 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle>Configure</CardTitle>
-            <CardDescription>
+          <div className="card-header">
+            <h2 className="mono-label">Configure</h2>
+            <p className="card-lede">
               The tenant context is bound automatically: namespace, owning group, and RBAC
               are derived from the current tenant.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <dl className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-md bg-muted p-3 text-sm">
-              <dt className="text-muted-foreground">Tenant</dt>
+            </p>
+          </div>
+          <div className="card-body">
+            <dl className="grid grid-cols-2 gap-x-4 gap-y-1 rounded-md u-raised p-3 text-sm">
+              <dt className="u-muted">Tenant</dt>
               <dd className="font-mono text-xs">{tenant}</dd>
-              <dt className="text-muted-foreground">Namespace</dt>
+              <dt className="u-muted">Namespace</dt>
               <dd className="font-mono text-xs">{tenant}</dd>
-              <dt className="text-muted-foreground">RBAC group</dt>
+              <dt className="u-muted">RBAC group</dt>
               <dd className="font-mono text-xs">tenant-{tenant}</dd>
             </dl>
             <RunIdentityNotice
@@ -333,14 +304,14 @@ export function ScaffoldWizardPage() {
               tenant={tenant}
             />
             <div className="space-y-1.5">
-              <Label htmlFor="service-name">Service name</Label>
+              <label className="form-label" htmlFor="service-name">Service name</label>
               <Input
                 id="service-name"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(v) => setName(v)}
                 placeholder="payments-api"
               />
-              {nameError && <p className="text-xs text-destructive">{nameError}</p>}
+              {nameError && <p className="text-xs u-danger">{nameError}</p>}
             </div>
             <SchemaForm
               ref={formRef}
@@ -350,33 +321,33 @@ export function ScaffoldWizardPage() {
               onChange={setFormData}
             />
             <div className="flex justify-end gap-2">
-              <Button variant="ghost" asChild>
-                <Link to={tenantLink(tenant, "templates")}>Cancel</Link>
-              </Button>
+              <Link to={tenantLink(tenant, "templates")} className="btn btn-ghost">
+                Cancel
+              </Link>
               <Button onClick={next}>Next</Button>
             </div>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {step === 1 && (
         <Card>
-          <CardHeader>
-            <CardTitle>Review</CardTitle>
-            <CardDescription>
+          <div className="card-header">
+            <h2 className="mono-label">Review</h2>
+            <p className="card-lede">
               The scaffold run creates the repository, CI pipeline, and a discovered catalog
               entry, then binds tenant RBAC.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            </p>
+          </div>
+          <div className="card-body">
             <dl className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-              <dt className="text-muted-foreground">Name</dt>
+              <dt className="u-muted">Name</dt>
               <dd>{name}</dd>
-              <dt className="text-muted-foreground">Template</dt>
+              <dt className="u-muted">Template</dt>
               <dd>{tpl.displayName}</dd>
-              <dt className="text-muted-foreground">Tenant</dt>
+              <dt className="u-muted">Tenant</dt>
               <dd>{tenant}</dd>
-              <dt className="text-muted-foreground">Namespace</dt>
+              <dt className="u-muted">Namespace</dt>
               <dd>{tenant}</dd>
             </dl>
             <RunIdentityNotice
@@ -384,14 +355,14 @@ export function ScaffoldWizardPage() {
               connections={gitConnections.data?.connections}
               tenant={tenant}
             />
-            <pre className="max-h-72 overflow-auto rounded-md bg-muted p-3 font-mono text-xs">
+            <pre className="max-h-72 overflow-auto rounded-md u-raised p-3 font-mono text-xs">
               {JSON.stringify(formData, null, 2)}
             </pre>
             {fallbackBlock !== null && (
               <FallbackBlockedError tenant={tenant} detail={fallbackBlock} />
             )}
             {submitError && (
-              <p className="text-sm text-destructive" role="alert">
+              <p className="text-sm u-danger" role="alert">
                 {submitError}
               </p>
             )}
@@ -403,21 +374,21 @@ export function ScaffoldWizardPage() {
                 {submitting ? "Starting…" : "Scaffold"}
               </Button>
             </div>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {step === 2 && run && (
         <Card>
-          <CardHeader>
-            <CardTitle>Scaffold status</CardTitle>
-            <CardDescription>
+          <div className="card-header">
+            <h2 className="mono-label">Scaffold status</h2>
+            <p className="card-lede">
               Repo, pipeline, and catalog entry are created by the scaffold run.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            </p>
+          </div>
+          <div className="card-body">
             <ScaffoldStatus scaffoldId={run.id} />
-          </CardContent>
+          </div>
         </Card>
       )}
     </div>

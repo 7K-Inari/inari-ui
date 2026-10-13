@@ -3,11 +3,11 @@ import { Link, useParams } from "react-router-dom";
 import { ApiError } from "@/api/client";
 import { getClusterSet, listClusterSetMembers } from "@/api/fleet";
 import { useAsyncResource } from "@/api/hooks";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
+import { LoadingState } from "@/components/loading";
 
 export function ClusterSetDetailPage() {
   const { tenant } = useTenant();
@@ -26,18 +26,16 @@ export function ClusterSetDetailPage() {
     const notFound = set.error instanceof ApiError && set.error.status === 404;
     return (
       <div className="space-y-3">
-        <p className="text-sm text-destructive">
+        <p className="text-sm u-danger">
           {notFound ? "ClusterSet not found." : `Failed to load ClusterSet: ${set.error.message}`}
         </p>
-        <Button asChild variant="outline">
-          <Link to={tenantLink(tenant, "fleet")}>Back to fleet</Link>
-        </Button>
+        <Link to={tenantLink(tenant, "fleet")} className="btn btn-secondary">Back to fleet</Link>
       </div>
     );
   }
 
   if (set.loading && !set.data) {
-    return <p className="text-sm text-muted-foreground">Loading ClusterSet…</p>;
+    return <LoadingState label="Loading ClusterSet…" />;
   }
   if (!set.data) return null;
   const data = set.data;
@@ -47,41 +45,41 @@ export function ClusterSetDetailPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">{data.name}</h1>
-        <p className="text-sm text-muted-foreground">ClusterSet · label-targeted fleet group</p>
+        <h1 className="page-header-title">{data.name}</h1>
+        <p className="text-sm u-muted">ClusterSet · label-targeted fleet group</p>
       </div>
 
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Targeting labels</CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-wrap gap-1 pt-0">
+        <div className="card-header">
+          <h2 className="mono-label">Targeting labels</h2>
+        </div>
+        <div className="card-body">
           {Object.entries(data.labels).map(([k, v]) => (
-            <Badge key={k} variant="outline" className="font-mono">
+            <Badge key={k} variant="neutral" className="font-mono">
               {k}={v}
             </Badge>
           ))}
-        </CardContent>
+        </div>
       </Card>
 
       <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">
+        <div className="card-header">
+          <h2 className="mono-label">
             Member clusters ({memberList.length})
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
+          </h2>
+        </div>
+        <div className="card-body">
           {members.loading && !members.data ? (
-            <p className="px-6 pb-6 text-sm text-muted-foreground">
+            <p className="px-6 pb-6 text-sm u-muted">
               Resolving member clusters…
             </p>
           ) : memberList.length === 0 ? (
-            <p className="px-6 pb-6 text-sm text-muted-foreground">
+            <p className="px-6 pb-6 text-sm u-muted">
               No member clusters match this set's labels yet.
             </p>
           ) : (
             <table className="w-full text-sm">
-              <thead className="text-left text-xs text-muted-foreground">
+              <thead className="text-left text-xs u-muted">
                 <tr>
                   <th className="px-4 py-2 font-medium">Cluster</th>
                   <th className="px-4 py-2 font-medium">Status</th>
@@ -99,7 +97,7 @@ export function ClusterSetDetailPage() {
                       </Link>
                     </td>
                     <td className="px-4 py-2">
-                      <Badge variant={cluster.state === "active" ? "success" : "muted"}>
+                      <Badge variant={cluster.state === "active" ? "success" : "neutral"}>
                         {cluster.state}
                       </Badge>
                     </td>
@@ -108,7 +106,7 @@ export function ClusterSetDetailPage() {
               </tbody>
             </table>
           )}
-        </CardContent>
+        </div>
       </Card>
     </div>
   );

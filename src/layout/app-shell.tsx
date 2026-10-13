@@ -5,11 +5,13 @@ import { Sidebar } from "@/layout/sidebar";
 
 export function AppShell() {
   return (
-    <div className="flex h-screen">
+    <div className="app-shell">
       <Sidebar />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="app-shell-main">
         <Header />
-        <main className="flex-1 overflow-y-auto p-6">
+        {/* tabIndex: the content pane scrolls independently — keyboard users
+            must be able to focus it to scroll (axe scrollable-region-focusable). */}
+        <main className="app-content" tabIndex={0}>
           <Outlet />
         </main>
       </div>

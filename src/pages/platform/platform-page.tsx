@@ -2,10 +2,11 @@ import { listCatalogItems } from "@/api/catalog";
 import { useAsyncResource } from "@/api/hooks";
 import type { PlatformResourceKind, PlatformResourceStatus } from "@/api/platform";
 import { listTenantPlatformResources } from "@/api/platform";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 const KIND_LABELS: Record<PlatformResourceKind, string> = {
   "keycloak-realm": "Keycloak realm",
@@ -16,11 +17,11 @@ const KIND_LABELS: Record<PlatformResourceKind, string> = {
 
 const RESOURCE_STATUS: Record<
   PlatformResourceStatus,
-  { label: string; variant: "success" | "warning" | "destructive" }
+  { label: string; variant: "success" | "warning" | "danger" }
 > = {
   ready: { label: "Ready", variant: "success" },
   reconciling: { label: "Reconciling", variant: "warning" },
-  failed: { label: "Failed", variant: "destructive" },
+  failed: { label: "Failed", variant: "danger" },
 };
 
 export function PlatformPage() {
@@ -39,8 +40,8 @@ export function PlatformPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Platform</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="page-header-title">Platform</h1>
+        <p className="text-sm u-muted">
           Apps running on the platform cluster and the platform resources reconciled for this
           tenant.
         </p>
@@ -50,40 +51,40 @@ export function PlatformPage() {
         <h2 className="text-lg font-semibold tracking-tight">Platform cluster apps</h2>
         {apps.error && (
           <Card>
-            <CardContent className="py-6 text-sm text-destructive">
+            <div className="card-body">
               Failed to load platform apps: {apps.error.message}
-            </CardContent>
+            </div>
           </Card>
         )}
         {!apps.error && apps.loading && !apps.data && (
-          <p className="text-sm text-muted-foreground">Loading platform apps…</p>
+          <LoadingState label="Loading platform apps…" />
         )}
         {!apps.error && apps.data && apps.data.items.length === 0 && (
           <Card>
-            <CardContent className="py-8 text-center text-sm text-muted-foreground">
+            <div className="card-body">
               No platform apps discovered yet.
-            </CardContent>
+            </div>
           </Card>
         )}
         {apps.data && apps.data.items.length > 0 && (
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {apps.data.items.map((item) => (
               <Card key={item.id}>
-                <CardHeader className="pb-2">
+                <div className="card-header">
                   <div className="flex items-center justify-between gap-2">
-                    <CardTitle className="text-base">{item.displayName}</CardTitle>
+                    <h2 className="mono-label">{item.displayName}</h2>
                     {item.latestVersion && (
-                      <Badge variant="outline" className="font-mono">
+                      <Badge variant="neutral" className="font-mono">
                         {item.latestVersion}
                       </Badge>
                     )}
                   </div>
-                  <CardDescription className="font-mono text-xs">{item.name}</CardDescription>
-                </CardHeader>
+                  <p className="card-lede">{item.name}</p>
+                </div>
                 {item.description && (
-                  <CardContent className="text-sm text-muted-foreground">
+                  <div className="card-body">
                     {item.description}
-                  </CardContent>
+                  </div>
                 )}
               </Card>
             ))}
@@ -94,32 +95,32 @@ export function PlatformPage() {
       <section className="space-y-3" aria-label="Tenant platform resources">
         <div>
           <h2 className="text-lg font-semibold tracking-tight">Tenant platform resources</h2>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm u-muted">
             Reconciled by inari-operator: Keycloak realm and clients, DNS zone, and tenant
             namespaces.
           </p>
         </div>
         {resources.error && (
           <Card>
-            <CardContent className="py-6 text-sm text-destructive">
+            <div className="card-body">
               Failed to load platform resources: {resources.error.message}
-            </CardContent>
+            </div>
           </Card>
         )}
         {!resources.error && resources.loading && !resources.data && (
-          <p className="text-sm text-muted-foreground">Loading platform resources…</p>
+          <LoadingState label="Loading platform resources…" />
         )}
         {!resources.error && resources.data && resources.data.length === 0 && (
           <Card>
-            <CardContent className="py-8 text-center text-sm text-muted-foreground">
+            <div className="card-body">
               No platform resources for this tenant yet.
-            </CardContent>
+            </div>
           </Card>
         )}
         {resources.data && resources.data.length > 0 && (
           <div className="overflow-hidden rounded-lg border">
             <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+              <thead className="u-raised/50 text-left text-xs u-muted">
                 <tr>
                   <th className="px-4 py-2 font-medium">Kind</th>
                   <th className="px-4 py-2 font-medium">Name</th>
@@ -138,16 +139,16 @@ export function PlatformPage() {
                     variant: "secondary" as const,
                   };
                   return (
-                    <tr key={r.id} className="border-t hover:bg-muted/30">
+                    <tr key={r.id} className="border-t hover:u-raised/30">
                       <td className="px-4 py-2">
-                        <Badge variant="outline">{KIND_LABELS[kind] ?? r.kind}</Badge>
+                        <Badge variant="neutral">{KIND_LABELS[kind] ?? r.kind}</Badge>
                       </td>
                       <td className="px-4 py-2 font-medium">{r.name}</td>
                       <td className="px-4 py-2">
                         <Badge variant={status.variant}>{status.label}</Badge>
                       </td>
-                      <td className="px-4 py-2 text-muted-foreground">{r.detail}</td>
-                      <td className="px-4 py-2 text-muted-foreground">
+                      <td className="px-4 py-2 u-muted">{r.detail}</td>
+                      <td className="px-4 py-2 u-muted">
                         {formatRelative(r.updatedAt)}
                       </td>
                     </tr>

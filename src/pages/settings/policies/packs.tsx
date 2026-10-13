@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useConfirm } from "@/components/confirm";
 
 import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
@@ -10,11 +11,10 @@ import {
 } from "@/api/policies";
 import { useAuth } from "@/auth/auth-context";
 import type { components } from "@/api/__generated__/schema";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import {
   CapabilityGate,
@@ -22,14 +22,13 @@ import {
 } from "@/pages/settings/components/capability-gate";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 type PolicyPack = components["schemas"]["PolicyPack"];
 type PolicyAssignment = components["schemas"]["PolicyAssignment"];
 
-const selectClass =
-  "flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm";
-
 export function PolicyPacksPage() {
+  const [confirm, confirmDialog] = useConfirm();
   const { tenant } = useTenant();
   const { token } = useAuth();
   const { canWriteSettings } = useOrgCapabilities();
@@ -104,7 +103,13 @@ export function PolicyPacksPage() {
   };
 
   const removeAssignment = async (assignment: PolicyAssignment) => {
-    if (!window.confirm(`Remove assignment of this pack to ${assignment.targetType} "${assignment.targetId}"?`)) {
+    if (
+      !(await confirm({
+        title: "Remove pack assignment",
+        body: `Remove assignment of this pack to ${assignment.targetType} "${assignment.targetId}"?`,
+        confirmLabel: "Remove",
+      }))
+    ) {
       return;
     }
     setActionError(null);
@@ -118,6 +123,7 @@ export function PolicyPacksPage() {
 
   return (
     <div className="space-y-4">
+      {confirmDialog}
       <SettingsSectionHeader
         title="Policy packs"
         description="Kyverno / CEL-VAP policy packs available to this organization (org and platform-global)."
@@ -125,7 +131,7 @@ export function PolicyPacksPage() {
           <CapabilityGate
             capability="admin"
             fallback={
-              <span className="text-xs text-muted-foreground">Read-only (org viewer)</span>
+              <span className="text-xs u-muted">Read-only (org viewer)</span>
             }
           >
             <Button onClick={() => setShowCreate((v) => !v)}>
@@ -137,50 +143,50 @@ export function PolicyPacksPage() {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load policy packs: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && loading && !packs && (
-        <p className="text-sm text-muted-foreground">Loading policy packs…</p>
+        <LoadingState label="Loading policy packs…" />
       )}
 
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">{actionError}</CardContent>
+          <div className="card-body">{actionError}</div>
         </Card>
       )}
 
       {showCreate && canWriteSettings && (
         <Card>
-          <CardContent className="py-4">
+          <div className="card-body">
             <form className="space-y-3" onSubmit={submitCreate}>
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label htmlFor="pack-name">Name</Label>
+                  <label className="form-label" htmlFor="pack-name">Name</label>
                   <Input
                     id="pack-name"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    onChange={(v) => setName(v)}
                     required
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="pack-version">Version</Label>
+                  <label className="form-label" htmlFor="pack-version">Version</label>
                   <Input
                     id="pack-version"
                     value={version}
-                    onChange={(e) => setVersion(e.target.value)}
+                    onChange={(v) => setVersion(v)}
                     required
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="pack-engine">Engine</Label>
+                  <label className="form-label" htmlFor="pack-engine">Engine</label>
                   <select
                     id="pack-engine"
-                    className={selectClass}
+                    className="select-native"
                     value={engine}
                     onChange={(e) => setEngine(e.target.value)}
                   >
@@ -189,19 +195,19 @@ export function PolicyPacksPage() {
                   </select>
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="pack-oci">OCI reference (optional)</Label>
+                  <label className="form-label" htmlFor="pack-oci">OCI reference (optional)</label>
                   <Input
                     id="pack-oci"
                     value={ociRef}
-                    onChange={(e) => setOciRef(e.target.value)}
+                    onChange={(v) => setOciRef(v)}
                   />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="pack-manifests">Manifests (JSON)</Label>
+                <label className="form-label" htmlFor="pack-manifests">Manifests (JSON)</label>
                 <textarea
                   id="pack-manifests"
-                  className="min-h-24 w-full rounded-md border border-input bg-transparent px-3 py-2 font-mono text-xs"
+                  className="textarea font-mono text-xs"
                   value={manifests}
                   onChange={(e) => setManifests(e.target.value)}
                   placeholder="[]"
@@ -209,22 +215,22 @@ export function PolicyPacksPage() {
               </div>
               <Button type="submit">Create pack</Button>
             </form>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && packs && packs.length === 0 && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No policy packs available yet.
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {packs && packs.length > 0 && (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <thead className="u-raised/50 text-left text-xs u-muted">
               <tr>
                 <th className="px-4 py-2 font-medium">Name</th>
                 <th className="px-4 py-2 font-medium">Engine</th>
@@ -237,18 +243,18 @@ export function PolicyPacksPage() {
             <tbody>
               {packs.map((pack: PolicyPack) => (
                 <React.Fragment key={pack.id}>
-                  <tr className="border-t hover:bg-muted/30">
+                  <tr className="border-t hover:u-raised/30">
                     <td className="px-4 py-2 font-medium">{pack.name}</td>
                     <td className="px-4 py-2 font-mono text-xs">{pack.engine}</td>
                     <td className="px-4 py-2 font-mono text-xs">{pack.version}</td>
                     <td className="px-4 py-2">
                       {pack.orgId ? (
-                        <Badge variant="secondary">Org</Badge>
+                        <Badge variant="neutral">Org</Badge>
                       ) : (
-                        <Badge variant="muted">Platform</Badge>
+                        <Badge variant="neutral">Platform</Badge>
                       )}
                     </td>
-                    <td className="px-4 py-2 text-xs text-muted-foreground">
+                    <td className="px-4 py-2 text-xs u-muted">
                       {formatRelative(pack.createdAt)}
                     </td>
                     <td className="px-4 py-2">
@@ -268,17 +274,17 @@ export function PolicyPacksPage() {
                     </td>
                   </tr>
                   {assigningPackId === pack.id && (
-                    <tr className="border-t bg-muted/20">
+                    <tr className="border-t u-raised/20">
                       <td colSpan={6} className="px-4 py-3">
                         <form
                           className="flex flex-wrap items-end gap-3"
                           onSubmit={submitAssign}
                         >
                           <div className="space-y-1.5">
-                            <Label htmlFor={`assign-type-${pack.id}`}>Target type</Label>
+                            <label className="form-label" htmlFor={`assign-type-${pack.id}`}>Target type</label>
                             <select
                               id={`assign-type-${pack.id}`}
-                              className={selectClass}
+                              className="select-native"
                               value={targetType}
                               onChange={(e) => setTargetType(e.target.value)}
                             >
@@ -288,11 +294,11 @@ export function PolicyPacksPage() {
                             </select>
                           </div>
                           <div className="min-w-56 flex-1 space-y-1.5">
-                            <Label htmlFor={`assign-target-${pack.id}`}>Target ID</Label>
+                            <label className="form-label" htmlFor={`assign-target-${pack.id}`}>Target ID</label>
                             <Input
                               id={`assign-target-${pack.id}`}
                               value={targetId}
-                              onChange={(e) => setTargetId(e.target.value)}
+                              onChange={(v) => setTargetId(v)}
                               required
                             />
                           </div>
@@ -315,7 +321,7 @@ export function PolicyPacksPage() {
           <h2 className="text-sm font-medium">Assignments (this session)</h2>
           <div className="overflow-hidden rounded-lg border">
             <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+              <thead className="u-raised/50 text-left text-xs u-muted">
                 <tr>
                   <th className="px-4 py-2 font-medium">Pack</th>
                   <th className="px-4 py-2 font-medium">Target</th>

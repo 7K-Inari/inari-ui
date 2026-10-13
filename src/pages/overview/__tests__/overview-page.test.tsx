@@ -130,6 +130,7 @@ describe("OverviewPage", () => {
 
       renderPage();
       await act(async () => {});
+      // The page fetches each resource once and shares it with the stat row.
       expect(clusterCalls).toBe(1);
       expect(approvalCalls).toBe(1);
 
@@ -233,14 +234,15 @@ describe("OverviewPage", () => {
 
       renderPage();
       await act(async () => {});
-      // Two cards consume /instances now (resource health + recent activity).
+      // /instances is fetched once by the page (shared with resource health)
+      // plus the recent-activity card.
       expect(instanceCalls).toBe(2);
       expect(driftCalls).toBe(1);
 
       await act(async () => {
         await vi.advanceTimersByTimeAsync(30_000);
       });
-      // Only the resource-health card polls at 30s; activity polls at 60s.
+      // The page polls at 30s; activity polls at 60s.
       expect(instanceCalls).toBe(3);
       expect(driftCalls).toBe(2);
     } finally {

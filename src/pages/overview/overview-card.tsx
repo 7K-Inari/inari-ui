@@ -1,10 +1,9 @@
 import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { Alert, Button, Card, Skeleton } from "7k-design-system/react";
 
 import { ApiError } from "@/api/client";
 import type { AsyncState } from "@/api/hooks";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface OverviewCardProps<T> {
   title: string;
@@ -13,6 +12,8 @@ interface OverviewCardProps<T> {
   state: AsyncState<T>;
   isEmpty: (data: T) => boolean;
   empty: ReactNode;
+  accentTop?: boolean;
+  className?: string;
   children: (data: T) => ReactNode;
 }
 
@@ -33,6 +34,8 @@ export function OverviewCard<T>({
   state,
   isEmpty,
   empty,
+  accentTop = false,
+  className,
   children,
 }: OverviewCardProps<T>) {
   const { data, loading, error, refetch } = state;
@@ -44,38 +47,41 @@ export function OverviewCard<T>({
   let body: ReactNode;
   if (error && !data) {
     body = (
-      <div className="flex flex-col items-start gap-3 py-2">
-        <p className="text-sm text-destructive">Failed to load: {error.message}</p>
-        <Button variant="outline" size="sm" onClick={refetch}>
+      <Alert variant="danger">
+        <span>Failed to load: {error.message}</span>
+        <Button variant="secondary" size="sm" onClick={refetch}>
           Retry
         </Button>
-      </div>
+      </Alert>
     );
   } else if (!data && loading) {
     body = (
-      <div className="space-y-2 py-1" aria-busy="true">
-        <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
-        <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
-        <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+      <div className="overview-card-skeleton" aria-busy="true">
+        <Skeleton width="66%" height={14} />
+        <Skeleton width="50%" height={14} />
+        <Skeleton width="75%" height={14} />
       </div>
     );
   } else if (data !== null && isEmpty(data)) {
-    body = <div className="py-2 text-sm text-muted-foreground">{empty}</div>;
+    body = <div className="empty">{empty}</div>;
   } else if (data !== null) {
     body = children(data);
   }
 
   return (
-    <Card data-testid={testId}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0">
-        <CardTitle className="text-base">{title}</CardTitle>
+    <Card
+      data-testid={testId}
+      className={`${accentTop ? "accent-secondary-border-top " : ""}${className ?? ""}`}
+    >
+      <div className="card-header overview-card-header">
+        <span className="mono-label">{title}</span>
         {href && (
-          <Link to={href} className="text-sm text-primary hover:underline">
+          <Link to={href} className="overview-card-link">
             View all
           </Link>
         )}
-      </CardHeader>
-      <CardContent>{body}</CardContent>
+      </div>
+      <div className="card-body">{body}</div>
     </Card>
   );
 }

@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom";
+import { Card } from "7k-design-system/react";
 
 import type { TenantPermissions } from "@/api/me";
 import { usePermissions } from "@/auth/permissions-context";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
 
@@ -32,23 +32,20 @@ export function QuickActionsCard() {
 
   return (
     <Card data-testid="card-quick-actions">
-      <CardHeader>
-        <CardTitle className="text-base">Quick actions</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ul className="space-y-2">
+      <div className="card-header overview-card-header">
+        <span className="mono-label">Quick actions</span>
+      </div>
+      <div className="card-body">
+        <ul className="list">
           {visible.map((a) => (
-            <li key={a.label}>
-              <Link
-                to={tenantLink(tenant, a.path)}
-                className="text-sm text-primary hover:underline"
-              >
+            <li key={a.label} className="list-item">
+              <Link to={tenantLink(tenant, a.path)} className="overview-card-link">
                 {a.label}
               </Link>
             </li>
           ))}
         </ul>
-      </CardContent>
+      </div>
     </Card>
   );
 }

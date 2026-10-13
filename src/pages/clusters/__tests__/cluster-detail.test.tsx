@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -144,19 +144,18 @@ describe("ClusterDetailPage", () => {
 
   it("cancels a pending registration and navigates back to the list", async () => {
     const user = userEvent.setup();
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     mockControl.setClusterStatus("cl-eks-prod", "pending");
     renderDetail("cl-eks-prod");
     await screen.findByRole("heading", { name: "eks-prod-eu" });
     await user.click(screen.getByRole("button", { name: "Cancel registration" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Cancel registration" }));
     expect(await screen.findByText("cluster list")).toBeInTheDocument();
     expect(mockControl.getState().clusters.map((c) => c.id)).not.toContain("cl-eks-prod");
-    vi.restoreAllMocks();
   });
 
   it("surfaces API errors when cancelling fails", async () => {
     const user = userEvent.setup();
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     const { http, HttpResponse } = await import("msw");
     mockServer.use(
       http.delete("*/api/v1/tenants/acme/clusters/:id", () =>
@@ -167,8 +166,9 @@ describe("ClusterDetailPage", () => {
     renderDetail("cl-eks-prod");
     await screen.findByRole("heading", { name: "eks-prod-eu" });
     await user.click(screen.getByRole("button", { name: "Cancel registration" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Cancel registration" }));
     expect(await screen.findByText(/forbidden/)).toBeInTheDocument();
-    vi.restoreAllMocks();
   });
 });
 

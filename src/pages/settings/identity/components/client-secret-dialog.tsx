@@ -1,8 +1,7 @@
 import * as React from "react";
 
 import type { ClientSecret } from "@/api/identity";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "7k-design-system/react";
 
 // One-time secret display: shown once after client create/rotate and never
 // retrievable again, so the copy affordance is front and center.
@@ -25,16 +24,16 @@ export function ClientSecretDialog({
   };
 
   return (
-    <Card role="dialog" aria-label="Client secret" className="border-primary/50">
-      <CardContent className="space-y-3 py-4">
+    <div className="card" role="dialog" aria-label="Client secret">
+      <div className="card-body">
         <div className="space-y-1">
           <h2 className="text-sm font-medium">Client secret — shown once</h2>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-xs u-muted">
             Copy this secret now. It cannot be retrieved again after you close this
             dialog.
           </p>
         </div>
-        <code className="block rounded-md bg-muted px-3 py-2 font-mono text-xs break-all">
+        <code className="block rounded-md u-raised px-3 py-2 font-mono text-xs break-all">
           {secret.secret}
         </code>
         <div className="flex justify-end gap-2">
@@ -43,7 +42,7 @@ export function ClientSecretDialog({
           </Button>
           <Button onClick={onClose}>Done</Button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }

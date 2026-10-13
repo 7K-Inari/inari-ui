@@ -6,10 +6,9 @@ import { useAsyncResource } from "@/api/hooks";
 import type { ZoneStep, ZoneStepStatus } from "@/api/zones";
 import { getZone, requestZoneDecommission } from "@/api/zones";
 import { useAuth } from "@/auth/auth-context";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
@@ -39,13 +38,13 @@ function StepIcon({ status }: { status: ZoneStepStatus }) {
       return <CheckCircle2 className="h-5 w-5 text-emerald-600" aria-hidden />;
     case "running":
     case "waiting":
-      return <Loader2 className="h-5 w-5 animate-spin text-primary" aria-hidden />;
+      return <Loader2 className="h-5 w-5 animate-spin u-brand" aria-hidden />;
     case "failed":
-      return <XCircle className="h-5 w-5 text-destructive" aria-hidden />;
+      return <XCircle className="h-5 w-5 u-danger" aria-hidden />;
     case "skipped":
-      return <CheckCircle2 className="h-5 w-5 text-muted-foreground/50" aria-hidden />;
+      return <CheckCircle2 className="h-5 w-5 u-muted/50" aria-hidden />;
     default:
-      return <Circle className="h-5 w-5 text-muted-foreground/50" aria-hidden />;
+      return <Circle className="h-5 w-5 u-muted/50" aria-hidden />;
   }
 }
 
@@ -56,11 +55,11 @@ function LifecycleSteps({ steps }: { steps: ZoneStep[] }) {
         <li key={step.name} className="flex items-start gap-3">
           <StepIcon status={step.status} />
           <div>
-            <p className={step.status === "pending" ? "text-muted-foreground" : "font-medium"}>
+            <p className={step.status === "pending" ? "u-muted" : "font-medium"}>
               {stepLabel(step.name)}
-              <span className="ml-2 text-xs text-muted-foreground">{step.status}</span>
+              <span className="ml-2 text-xs u-muted">{step.status}</span>
             </p>
-            {step.detail && <p className="text-xs text-muted-foreground">{step.detail}</p>}
+            {step.detail && <p className="text-xs u-muted">{step.detail}</p>}
           </div>
         </li>
       ))}
@@ -112,15 +111,15 @@ export function ZoneDetailPage() {
   if (error) {
     return (
       <Card>
-        <CardContent className="py-6 text-sm text-destructive">
+        <div className="card-body">
           Failed to load zone: {error.message}
-        </CardContent>
+        </div>
       </Card>
     );
   }
   if (!zone) {
     return (
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm u-muted">
         {loading ? "Loading zone…" : "Zone not found."}
       </p>
     );
@@ -137,77 +136,75 @@ export function ZoneDetailPage() {
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-semibold tracking-tight">{zone.name}</h1>
+            <h1 className="page-header-title">{zone.name}</h1>
             <ZoneStatusBadge status={zone.status} />
-            <Badge variant="outline">{zone.tier}</Badge>
+            <Badge variant="neutral">{zone.tier}</Badge>
           </div>
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm u-muted">
             {zone.slug} · OU {zone.orgUnit} · {zone.region} · created{" "}
             {formatRelative(zone.createdAt)}
           </p>
         </div>
-        <Button asChild variant="outline">
-          <Link to={tenantLink(tenant, "tenant-zones")}>Back to zones</Link>
-        </Button>
+        <Link to={tenantLink(tenant, "tenant-zones")} className="btn btn-secondary">Back to zones</Link>
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Lifecycle</CardTitle>
-          <CardDescription>
+        <div className="card-header">
+          <h2 className="mono-label">Lifecycle</h2>
+          <p className="card-lede">
             {zone.status === "decommissioning"
               ? "Teardown in progress — steps roll back in reverse order."
               : "Provisioning pipeline: preflight, cloud account, trust, EKS cluster, then platform wiring."}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+          </p>
+        </div>
+        <div className="card-body">
           <LifecycleSteps steps={zone.steps} />
           {(zone.cloudAccountId || zone.clusterId) && (
             <>
-              <Separator className="my-4" />
+              <hr className="rule" />
               <dl className="space-y-1 text-sm">
                 {zone.cloudAccountId && (
                   <div className="flex gap-2">
-                    <dt className="text-muted-foreground">Cloud account:</dt>
+                    <dt className="u-muted">Cloud account:</dt>
                     <dd className="font-mono text-xs">{zone.cloudAccountId}</dd>
                   </div>
                 )}
                 {zone.clusterId && (
                   <div className="flex gap-2">
-                    <dt className="text-muted-foreground">Cluster:</dt>
+                    <dt className="u-muted">Cluster:</dt>
                     <dd className="font-mono text-xs">{zone.clusterId}</dd>
                   </div>
                 )}
               </dl>
             </>
           )}
-        </CardContent>
+        </div>
       </Card>
 
       {zone.status === "active" && !requested && (
         <Card>
-          <CardHeader>
-            <CardTitle>Decommission</CardTitle>
-            <CardDescription>
+          <div className="card-header">
+            <h2 className="mono-label">Decommission</h2>
+            <p className="card-lede">
               Tears down the zone. This is gated on approval before any teardown starts.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            </p>
+          </div>
+          <div className="card-body">
             <form onSubmit={submitDecommission} className="space-y-4">
-              {decomError && <p className="text-sm text-destructive">{decomError}</p>}
+              {decomError && <p className="text-sm u-danger">{decomError}</p>}
               <div className="flex justify-end">
-                <Button type="submit" variant="destructive" disabled={decomSubmitting}>
+                <Button type="submit" variant="danger" disabled={decomSubmitting}>
                   {decomSubmitting ? "Requesting…" : "Request decommission"}
                 </Button>
               </div>
             </form>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {requested && zone.status !== "decommissioning" && zone.status !== "closed" && (
         <Card>
-          <CardContent className="py-6 text-sm text-muted-foreground">
+          <div className="card-body">
             {decomApprovalId === null ? (
               <>Decommission requested. Teardown has started.</>
             ) : (
@@ -216,7 +213,7 @@ export function ZoneDetailPage() {
                 the Approvals inbox, and the operator tears the zone down once it is approved.
               </>
             )}
-          </CardContent>
+          </div>
         </Card>
       )}
     </div>

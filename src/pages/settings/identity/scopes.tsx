@@ -9,12 +9,13 @@ import {
   type OidcClient,
 } from "@/api/identity";
 import { useAuth } from "@/auth/auth-context";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
 import { CapabilityGate } from "@/pages/settings/components/capability-gate";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 export function OidcScopesPage() {
   const { tenant } = useTenant();
@@ -71,26 +72,26 @@ export function OidcScopesPage() {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load scopes: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && loading && !scopes && (
-        <p className="text-sm text-muted-foreground">Loading scopes…</p>
+        <LoadingState label="Loading scopes…" />
       )}
 
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">{actionError}</CardContent>
+          <div className="card-body">{actionError}</div>
         </Card>
       )}
 
       {scopes && scopes.length > 0 && (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <thead className="u-raised/50 text-left text-xs u-muted">
               <tr>
                 <th className="px-4 py-2 font-medium">Audience</th>
                 <th className="px-4 py-2 font-medium">Scopes</th>
@@ -98,9 +99,9 @@ export function OidcScopesPage() {
             </thead>
             <tbody>
               {scopes.map((entry) => (
-                <tr key={entry.audience} className="border-t hover:bg-muted/30">
+                <tr key={entry.audience} className="border-t hover:u-raised/30">
                   <td className="px-4 py-2">
-                    <Badge variant="muted">{entry.audience}</Badge>
+                    <Badge variant="neutral">{entry.audience}</Badge>
                   </td>
                   <td className="px-4 py-2 font-mono text-xs">
                     {entry.scopes.join(", ")}
@@ -117,7 +118,7 @@ export function OidcScopesPage() {
           <h2 className="text-sm font-medium">Client assignments</h2>
           <div className="overflow-hidden rounded-lg border">
             <table className="w-full text-sm">
-              <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+              <thead className="u-raised/50 text-left text-xs u-muted">
                 <tr>
                   <th className="px-4 py-2 font-medium">Client</th>
                   <th className="px-4 py-2 font-medium">Scopes</th>
@@ -127,7 +128,7 @@ export function OidcScopesPage() {
               <tbody>
                 {clients.map((client) => (
                   <React.Fragment key={client.clientId}>
-                    <tr className="border-t hover:bg-muted/30">
+                    <tr className="border-t hover:u-raised/30">
                       <td className="px-4 py-2 font-medium">{client.name}</td>
                       <td className="px-4 py-2 font-mono text-xs">
                         {client.scopes.join(", ") || "—"}
@@ -149,7 +150,7 @@ export function OidcScopesPage() {
                       </td>
                     </tr>
                     {assigning?.clientId === client.clientId && (
-                      <tr className="border-t bg-muted/20">
+                      <tr className="border-t u-raised/20">
                         <td colSpan={3} className="px-4 py-3">
                           <div className="flex flex-wrap items-start gap-4">
                             <div className="space-y-1.5">
@@ -162,7 +163,7 @@ export function OidcScopesPage() {
                                 >
                                   <input
                                     type="checkbox"
-                                    className="h-4 w-4 rounded border-input accent-primary"
+                                    className="checkbox"
                                     checked={selected.has(name)}
                                     onChange={() => toggle(name)}
                                   />

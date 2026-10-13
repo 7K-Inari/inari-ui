@@ -2,11 +2,10 @@ import { Link } from "react-router-dom";
 
 import { decideApproval, decideReason, listApprovalsInbox } from "@/api/approvals";
 import type { ApprovalRequest } from "@/api/approvals";
-import { useAsyncResource } from "@/api/hooks";
+import { useAsyncResource, type AsyncState } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
 import { usePermissions } from "@/auth/permissions-context";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, Button, Card, Skeleton } from "7k-design-system/react";
 import { tenantLink } from "@/tenant/tenant-link";
 import { isForbidden } from "@/pages/overview/overview-card";
 import { ApprovalListItems, type DecideFn } from "@/pages/overview/pending-approvals-card";
@@ -15,6 +14,9 @@ export const ALL_TENANTS_POLL_MS = 60_000;
 
 interface SectionProps {
   orgNames: Map<string, string>;
+  // Optional shared inbox state (e.g. when the page-level stat row already
+  // fetched the aggregate inbox) — avoids a duplicate request.
+  state?: AsyncState<ApprovalRequest[]>;
 }
 
 export function OrgErrorChip({
@@ -29,24 +31,21 @@ export function OrgErrorChip({
   onRetry: () => void;
 }) {
   return (
-    <div
-      data-testid={`org-error-${org}`}
-      className="flex items-center gap-3 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm"
-    >
-      <span className="text-destructive">
+    <Alert variant="danger" data-testid={`org-error-${org}`}>
+      <span>
         {name}: failed to load ({message})
       </span>
-      <Button variant="outline" size="sm" className="ml-auto" onClick={onRetry}>
+      <Button variant="secondary" size="sm" onClick={onRetry}>
         Retry
       </Button>
-    </div>
+    </Alert>
   );
 }
 
 export function OverflowNote({ count }: { count: number }) {
   if (count <= 0) return null;
   return (
-    <p className="text-xs text-muted-foreground">
+    <p className="mono-caption">
       …and {count} more {count === 1 ? "organization" : "organizations"} not shown
     </p>
   );
@@ -54,10 +53,10 @@ export function OverflowNote({ count }: { count: number }) {
 
 function SectionSkeleton() {
   return (
-    <div className="space-y-2 py-1" aria-busy="true">
-      <div className="h-4 w-2/3 animate-pulse rounded bg-muted" />
-      <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
-      <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+    <div className="overview-card-skeleton" aria-busy="true">
+      <Skeleton width="66%" height={14} />
+      <Skeleton width="50%" height={14} />
+      <Skeleton width="75%" height={14} />
     </div>
   );
 }
@@ -67,14 +66,14 @@ export { SectionSkeleton };
 // Pending approvals from the caller-scoped aggregate endpoint
 // (GET /approvals/inbox, server v1.6.0), grouped client-side by org. One
 // request covers every org — no fan-out cap, so no org is ever hidden.
-export function AllTenantsApprovalsSection({ orgNames }: SectionProps) {
+export function AllTenantsApprovalsSection({ orgNames, state }: SectionProps) {
   const { token } = useAuth();
   const permissions = usePermissions();
-  const { data, loading, error, refetch } = useAsyncResource(
-    (tok) => listApprovalsInbox(tok),
-    [],
-    { refetchIntervalMs: ALL_TENANTS_POLL_MS },
-  );
+  const own = useAsyncResource((tok) => listApprovalsInbox(tok), [], {
+    refetchIntervalMs: ALL_TENANTS_POLL_MS,
+    enabled: !state,
+  });
+  const { data, loading, error, refetch } = state ?? own;
 
   const decideFor = (org: string): DecideFn | undefined =>
     permissions.tenants?.[org]?.canDecideApprovals === false
@@ -96,43 +95,34 @@ export function AllTenantsApprovalsSection({ orgNames }: SectionProps) {
 
   return (
     <Card data-testid="all-approvals">
-      <CardHeader>
-        <CardTitle className="text-base">Pending approvals</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
+      <div className="card-header overview-card-header">
+        <span className="mono-label">Pending approvals</span>
+      </div>
+      <div className="card-body overview-card-stack">
         {firstLoad && <SectionSkeleton />}
         {[...groups.entries()].map(([org, approvals]) => (
           <div key={org} data-testid={`all-approvals-org-${org}`} className="space-y-2">
             <div className="flex items-center justify-between">
-              <Link
-                to={tenantLink(org, "approvals")}
-                className="text-sm font-medium text-primary hover:underline"
-              >
+              <Link to={tenantLink(org, "approvals")} className="overview-card-link">
                 {orgNames.get(org) ?? org}
               </Link>
-              <span className="text-xs text-muted-foreground">
-                {approvals.length} pending
-              </span>
+              <span className="mono-caption">{approvals.length} pending</span>
             </div>
             <ApprovalListItems approvals={approvals} onDecide={decideFor(org)} />
           </div>
         ))}
         {showError && (
-          <div className="flex items-center gap-3 rounded-md border border-destructive/40 bg-destructive/5 px-3 py-2 text-sm">
-            <span className="text-destructive">
-              Failed to load ({error?.message ?? "Request failed"})
-            </span>
-            <Button variant="outline" size="sm" className="ml-auto" onClick={refetch}>
+          <Alert variant="danger">
+            <span>Failed to load ({error?.message ?? "Request failed"})</span>
+            <Button variant="secondary" size="sm" onClick={refetch}>
               Retry
             </Button>
-          </div>
+          </Alert>
         )}
         {allEmpty && (
-          <p className="py-2 text-sm text-muted-foreground">
-            No pending approvals across your organizations.
-          </p>
+          <div className="empty">No pending approvals across your organizations.</div>
         )}
-      </CardContent>
+      </div>
     </Card>
   );
 }

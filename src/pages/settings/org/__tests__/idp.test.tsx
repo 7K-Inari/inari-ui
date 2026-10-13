@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import {
@@ -158,12 +158,13 @@ describe("IdpBrokeringPage", () => {
   });
 
   it("rotates the client secret after confirmation", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     seedProvider();
     const user = userEvent.setup();
     renderPage();
     await screen.findByText("acme-sso");
     await user.click(screen.getByRole("button", { name: "Rotate secret" }));
+    const rotateDialog = await screen.findByRole("dialog");
+    await user.click(within(rotateDialog).getByRole("button", { name: "Rotate" }));
     await user.type(
       await screen.findByLabelText(/New client secret/),
       "sec-rotated",
@@ -174,12 +175,13 @@ describe("IdpBrokeringPage", () => {
   });
 
   it("deletes the provider after confirmation", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     seedProvider();
     const user = userEvent.setup();
     renderPage();
     await screen.findByText("acme-sso");
     await user.click(screen.getByRole("button", { name: "Delete" }));
+    const deleteDialog = await screen.findByRole("dialog");
+    await user.click(within(deleteDialog).getByRole("button", { name: "Delete" }));
     expect(
       await screen.findByText(/no SSO provider configured/i),
     ).toBeInTheDocument();

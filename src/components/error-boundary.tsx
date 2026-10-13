@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "7k-design-system/react";
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -29,11 +29,11 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
       return (
         <div className="flex h-screen flex-col items-center justify-center gap-4 p-6 text-center">
           <p className="text-lg font-semibold">Something went wrong</p>
-          <p className="max-w-md text-sm text-muted-foreground">
+          <p className="max-w-md text-sm u-muted">
             The console hit an unexpected error. Reload to try again; if the
             problem persists after a reload, contact a platform administrator.
           </p>
-          <p className="max-w-md break-all text-xs text-muted-foreground">
+          <p className="max-w-md break-all text-xs u-muted">
             {this.state.error.message}
           </p>
           <Button onClick={() => window.location.reload()}>Reload</Button>

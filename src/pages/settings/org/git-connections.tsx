@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useConfirm } from "@/components/confirm";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { FolderGit2, Github, Gitlab } from "lucide-react";
 
@@ -12,12 +13,13 @@ import {
 } from "@/api/git-connections";
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 const PROVIDER_META: Record<
   string,
@@ -54,41 +56,41 @@ function ProviderRow({
 }) {
   const { label, Icon } = providerMeta(provider.id);
   return (
-    <tr className="border-t hover:bg-muted/30">
+    <tr className="border-t hover:u-raised/30">
       <td className="px-4 py-2">
         <span className="inline-flex items-center gap-2 font-medium">
           <Icon className="h-4 w-4" aria-hidden />
           {label}
-          {!provider.enabled && <Badge variant="muted">not available</Badge>}
+          {!provider.enabled && <Badge variant="neutral">not available</Badge>}
         </span>
       </td>
       <td className="px-4 py-2">
         {connection ? (
           connection.login
         ) : (
-          <span className="text-xs text-muted-foreground">—</span>
+          <span className="text-xs u-muted">—</span>
         )}
       </td>
       <td className="px-4 py-2">
         {connection && connection.scopes.length > 0 ? (
           <span className="inline-flex flex-wrap gap-1">
             {connection.scopes.map((scope) => (
-              <Badge key={scope} variant="muted">
+              <Badge key={scope} variant="neutral">
                 {scope}
               </Badge>
             ))}
           </span>
         ) : (
-          <span className="text-xs text-muted-foreground">—</span>
+          <span className="text-xs u-muted">—</span>
         )}
       </td>
       <td className="px-4 py-2 font-mono text-xs">
         {connection?.apiBase ?? provider.apiBase ?? "—"}
       </td>
-      <td className="px-4 py-2 text-xs text-muted-foreground">
+      <td className="px-4 py-2 text-xs u-muted">
         {connection ? formatRelative(connection.createdAt) : "—"}
       </td>
-      <td className="px-4 py-2 text-xs text-muted-foreground">
+      <td className="px-4 py-2 text-xs u-muted">
         {connection
           ? connection.lastUsedAt
             ? formatRelative(connection.lastUsedAt)
@@ -120,6 +122,7 @@ function ProviderRow({
 }
 
 export function GitConnectionsPage() {
+  const [confirm, confirmDialog] = useConfirm();
   const { tenant } = useTenant();
   const { token } = useAuth();
   const navigate = useNavigate();
@@ -177,7 +180,14 @@ export function GitConnectionsPage() {
 
   const disconnect = async (connection: GitConnectionViewModel) => {
     const { label } = providerMeta(connection.provider);
-    if (!window.confirm(`Disconnect ${label} (${connection.login})?`)) return;
+    if (
+      !(await confirm({
+        title: "Disconnect git connection",
+        body: `Disconnect ${label} (${connection.login})?`,
+        confirmLabel: "Disconnect",
+      }))
+    )
+      return;
     setNotice(null);
     setActionError(null);
     try {
@@ -195,6 +205,7 @@ export function GitConnectionsPage() {
 
   return (
     <div className="space-y-4">
+      {confirmDialog}
       <SettingsSectionHeader
         title="Git connections"
         description="Your personal Git provider accounts for this organization. Credentials are stored server-side — tokens are never shown here."
@@ -202,42 +213,42 @@ export function GitConnectionsPage() {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load git connections: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && loading && !data && (
-        <p className="text-sm text-muted-foreground">Loading git connections…</p>
+        <LoadingState label="Loading git connections…" />
       )}
 
       {notice && (
         <Card>
-          <CardContent className="py-3 text-sm">{notice}</CardContent>
+          <div className="card-body">{notice}</div>
         </Card>
       )}
 
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">
+          <div className="card-body">
             {actionError}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && !loading && data && providers.length === 0 && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No Git providers are configured for this organization.
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!loading && providers.length > 0 && (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <thead className="u-raised/50 text-left text-xs u-muted">
               <tr>
                 <th className="px-4 py-2 font-medium">Provider</th>
                 <th className="px-4 py-2 font-medium">Connected login</th>

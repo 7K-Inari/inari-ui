@@ -11,24 +11,25 @@ import {
 } from "@/api/fleet";
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
+import { LoadingState } from "@/components/loading";
 
-const TARGET_STATUS_VARIANT: Record<string, "success" | "warning" | "destructive" | "muted"> = {
+const TARGET_STATUS_VARIANT: Record<string, "success" | "warning" | "danger" | "neutral"> = {
   healthy: "success",
   deployed: "success",
   deploying: "warning",
   running: "warning",
-  failed: "destructive",
-  pending: "muted",
+  failed: "danger",
+  pending: "neutral",
 };
 
-const GATE_VARIANT: Record<string, "success" | "warning" | "destructive" | "muted"> = {
+const GATE_VARIANT: Record<string, "success" | "warning" | "danger" | "neutral"> = {
   approval: "warning",
-  auto: "muted",
+  auto: "neutral",
 };
 
 interface RolloutWithTargets {
@@ -49,27 +50,27 @@ function StageCard({
 
   return (
     <Card>
-      <CardHeader className="pb-2">
+      <div className="card-header">
         <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-base">
+          <h2 className="mono-label">
             {stage.name}{" "}
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs u-muted">
               max {stage.maxConcurrency} concurrent
             </span>
-          </CardTitle>
+          </h2>
           <div className="flex items-center gap-2">
             {stage.gates.map((gate) => (
-              <Badge key={gate.when} variant={GATE_VARIANT[gate.type] ?? "muted"}>
+              <Badge key={`${gate.type}-${gate.when}`} variant={GATE_VARIANT[gate.type] ?? "neutral"}>
                 {gate.type} gate ({gate.when}
                 {gate.waitSeconds != null ? `, ${gate.waitSeconds}s` : ""})
               </Badge>
             ))}
           </div>
         </div>
-      </CardHeader>
-      <CardContent className="pt-0">
+      </div>
+      <div className="card-body">
         <table className="w-full text-sm">
-          <thead className="text-left text-xs text-muted-foreground">
+          <thead className="text-left text-xs u-muted">
             <tr>
               <th className="py-1 pr-4 font-medium">Cluster</th>
               <th className="py-1 pr-4 font-medium">Status</th>
@@ -79,7 +80,7 @@ function StageCard({
           <tbody>
             {stageTargets.length === 0 ? (
               <tr>
-                <td className="py-1.5 text-muted-foreground" colSpan={3}>
+                <td className="py-1.5 u-muted" colSpan={3}>
                   No targets assigned to this stage yet.
                 </td>
               </tr>
@@ -88,11 +89,11 @@ function StageCard({
                 <tr key={target.clusterId} className="border-t">
                   <td className="py-1.5 pr-4 font-mono text-xs">{target.clusterId}</td>
                   <td className="py-1.5 pr-4">
-                    <Badge variant={TARGET_STATUS_VARIANT[target.status] ?? "muted"}>
+                    <Badge variant={TARGET_STATUS_VARIANT[target.status] ?? "neutral"}>
                       {target.status}
                     </Badge>
                   </td>
-                  <td className="py-1.5 text-muted-foreground">
+                  <td className="py-1.5 u-muted">
                     {target.observedHealth ?? "—"}
                   </td>
                 </tr>
@@ -100,7 +101,7 @@ function StageCard({
             )}
           </tbody>
         </table>
-      </CardContent>
+      </div>
     </Card>
   );
 }
@@ -136,18 +137,16 @@ export function RolloutDetailPage() {
     const notFound = resource.error instanceof ApiError && resource.error.status === 404;
     return (
       <div className="space-y-3">
-        <p className="text-sm text-destructive">
+        <p className="text-sm u-danger">
           {notFound ? "Rollout not found." : `Failed to load rollout: ${resource.error.message}`}
         </p>
-        <Button asChild variant="outline">
-          <Link to={tenantLink(tenant, "fleet")}>Back to fleet</Link>
-        </Button>
+        <Link to={tenantLink(tenant, "fleet")} className="btn btn-secondary">Back to fleet</Link>
       </div>
     );
   }
 
   if (resource.loading && !resource.data) {
-    return <p className="text-sm text-muted-foreground">Loading rollout…</p>;
+    return <LoadingState label="Loading rollout…" />;
   }
   if (!resource.data) return null;
   const data = resource.data.rollout;
@@ -159,22 +158,22 @@ export function RolloutDetailPage() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">{data.name}</h1>
-          <p className="text-sm text-muted-foreground">
+          <h1 className="page-header-title">{data.name}</h1>
+          <p className="text-sm u-muted">
             {data.target.kind} <span className="font-mono text-xs">{data.target.name}@{data.target.version}</span>{" "}
             · stage {Math.min(data.currentStage + 1, data.stages.length)}/{data.stages.length}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant={data.state === "completed" ? "success" : data.state === "failed" ? "destructive" : "warning"}>
+          <Badge variant={data.state === "completed" ? "success" : data.state === "failed" ? "danger" : "warning"}>
             {data.state}
           </Badge>
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm u-muted">
             {healthy}/{targets.length} clusters healthy
           </span>
           {(data.state === "running" || data.state === "waiting-approval" || data.state === "failed") && (
             <Button
-              variant="outline"
+              variant="secondary"
               size="sm"
               onClick={async () => {
                 setActionError(null);
@@ -194,13 +193,13 @@ export function RolloutDetailPage() {
         </div>
       </div>
       {actionError && (
-        <p className="text-sm text-destructive" role="alert">
+        <p className="text-sm u-danger" role="alert">
           {actionError}
         </p>
       )}
 
       {data.state === "waiting-approval" && (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm u-muted">
           This rollout is waiting on an approval gate — decide the linked approval request in
           the Approvals inbox to continue.
         </p>

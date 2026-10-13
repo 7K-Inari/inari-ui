@@ -215,12 +215,13 @@ describe("EsoStoresPage", () => {
   });
 
   it("deletes an org-owned store after confirmation", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     const user = userEvent.setup();
     renderPage();
     await screen.findByText("acme-vault");
     const row = screen.getByText("acme-vault").closest("tr")!;
     await user.click(within(row).getByRole("button", { name: "Delete" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Delete" }));
     expect(
       policyMockControl
         .getState()
@@ -238,12 +239,13 @@ describe("EsoStoresPage", () => {
         ),
       ),
     );
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     const user = userEvent.setup();
     renderPage();
     await screen.findByText("acme-vault");
     const row = screen.getByText("acme-vault").closest("tr")!;
     await user.click(within(row).getByRole("button", { name: "Delete" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Delete" }));
     expect(await screen.findByText(/delete boom/)).toBeInTheDocument();
     expect(
       policyMockControl

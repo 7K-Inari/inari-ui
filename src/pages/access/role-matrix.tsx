@@ -6,9 +6,9 @@ import { useAsyncResource } from "@/api/hooks";
 import { getRbacMatrix, putTeamRoleMappings } from "@/api/rbac";
 import { listRoles } from "@/api/roles";
 import { useAuth } from "@/auth/auth-context";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
 import { teamDisplayName } from "@/pages/access/role-catalog";
 import {
   CapabilityGate,
@@ -17,6 +17,7 @@ import {
 import { resolveTenant } from "@/tenant/current";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
+import { LoadingState } from "@/components/loading";
 
 // Sentinel for the per-row "No role" option: a team with no mapping holds no
 // tenant ClusterRole.
@@ -31,9 +32,6 @@ const UNKNOWN_PREFIX = "unknown:";
 function unknownName(value: string): string | null {
   return value.startsWith(UNKNOWN_PREFIX) ? value.slice(UNKNOWN_PREFIX.length) : null;
 }
-
-const selectClass =
-  "flex h-9 w-full max-w-xs rounded-md border border-input bg-background px-3 text-sm";
 
 // Role engine (ADR-0013): rows are teams, the per-row select lists the org's
 // role entities (built-in + custom from GET /roles) and the write is the
@@ -144,30 +142,30 @@ export function RoleMatrix() {
   if (error) {
     return (
       <Card>
-        <CardContent className="py-6 text-sm text-destructive">
+        <div className="card-body">
           Failed to load role assignments: {error.message}
-        </CardContent>
+        </div>
       </Card>
     );
   }
   if (rolesError) {
     return (
       <Card>
-        <CardContent className="py-6 text-sm text-destructive">
+        <div className="card-body">
           Failed to load roles: {rolesError.message}
-        </CardContent>
+        </div>
       </Card>
     );
   }
   if ((loading && !matrix) || rolesLoading && !roles) {
-    return <p className="text-sm text-muted-foreground">Loading role assignments…</p>;
+    return <LoadingState label="Loading role assignments…" />;
   }
   if (!matrix || matrix.groups.length === 0) {
     return (
       <Card>
-        <CardContent className="py-12 text-center text-sm text-muted-foreground">
+        <div className="card-body">
           No teams in this organization.
-        </CardContent>
+        </div>
       </Card>
     );
   }
@@ -175,13 +173,13 @@ export function RoleMatrix() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm u-muted">
           Assign each team a role. Saving applies all assignments in one
           request. <Link to={tenantLink(tenant, "access/roles")} className="underline">Manage roles</Link>
         </p>
         <div className="flex items-center gap-2">
           {dirty && (
-            <Button variant="outline" size="sm" onClick={reset} disabled={saving}>
+            <Button variant="secondary" size="sm" onClick={reset} disabled={saving}>
               Discard
             </Button>
           )}
@@ -195,13 +193,13 @@ export function RoleMatrix() {
 
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">{actionError}</CardContent>
+          <div className="card-body">{actionError}</div>
         </Card>
       )}
 
       <div className="overflow-hidden rounded-lg border">
         <table className="w-full text-sm">
-          <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+          <thead className="u-raised/50 text-left text-xs u-muted">
             <tr>
               <th className="px-4 py-2 font-medium">Team</th>
               <th className="px-4 py-2 font-medium">Role</th>
@@ -214,15 +212,15 @@ export function RoleMatrix() {
               const unknown = unknownName(value);
               const role = (roles ?? []).find((r) => r.id === value);
               return (
-                <tr key={group.path} className="border-t hover:bg-muted/30">
+                <tr key={group.path} className="border-t hover:u-raised/30">
                   <td className="px-4 py-2">
                     <span className="font-medium">{display}</span>{" "}
-                    <Badge variant="muted">{group.memberCount} members</Badge>
+                    <Badge variant="neutral">{group.memberCount} members</Badge>
                   </td>
                   <td className="px-4 py-2">
                     <select
                       aria-label={`Role for ${display}`}
-                      className={selectClass}
+                      className="select-native"
                       value={value}
                       disabled={!canManageRbac || saving || !rolesReady}
                       title={

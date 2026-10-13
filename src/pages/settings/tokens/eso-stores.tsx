@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useConfirm } from "@/components/confirm";
 
 import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
@@ -19,10 +20,9 @@ import {
 } from "@/api/secret-stores";
 import { useAuth } from "@/auth/auth-context";
 import { SchemaForm, type SchemaFormHandle } from "@/components/schema-form/schema-form";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import {
   CapabilityGate,
@@ -30,6 +30,7 @@ import {
 } from "@/pages/settings/components/capability-gate";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 const PROVIDER_LABELS: Record<SecretStoreProviderKey, string> = {
   awsSM: "AWS Secrets Manager",
@@ -200,14 +201,14 @@ function StoreStatusBadge({ tenant, name }: { tenant: string; name: string }) {
     if (error) {
       return (
         <span
-          className="text-xs text-destructive"
+          className="text-xs u-danger"
           title={`Failed to load status: ${error.message}`}
         >
           status unavailable
         </span>
       );
     }
-    return <span className="text-xs text-muted-foreground">…</span>;
+    return <span className="text-xs u-muted">…</span>;
   }
   if (status.delivered) {
     return <Badge variant="success">delivered</Badge>;
@@ -217,7 +218,7 @@ function StoreStatusBadge({ tenant, name }: { tenant: string; name: string }) {
     <span className="inline-flex items-center gap-1.5">
       <Badge variant="warning">pending</Badge>
       {ready?.reason && (
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs u-muted">
           {ready.reason}
           {ready.clusterId ? ` (${ready.clusterId})` : ""}
         </span>
@@ -227,6 +228,7 @@ function StoreStatusBadge({ tenant, name }: { tenant: string; name: string }) {
 }
 
 export function EsoStoresPage() {
+  const [confirm, confirmDialog] = useConfirm();
   const { tenant } = useTenant();
   const { token } = useAuth();
   const { canWriteSettings } = useOrgCapabilities();
@@ -291,7 +293,14 @@ export function EsoStoresPage() {
   };
 
   const remove = async (store: SecretStore) => {
-    if (!window.confirm(`Delete secret store "${store.name}"?`)) return;
+    if (
+      !(await confirm({
+        title: "Delete secret store",
+        body: `Delete secret store "${store.name}"?`,
+        confirmLabel: "Delete",
+      }))
+    )
+      return;
     setActionError(null);
     try {
       await deleteSecretStore(token, tenant, store.name);
@@ -307,6 +316,7 @@ export function EsoStoresPage() {
 
   return (
     <div className="space-y-4">
+      {confirmDialog}
       <SettingsSectionHeader
         title="ESO secret stores"
         description="External Secrets Operator SecretStore registry. Credentials stay on the cluster as Kubernetes Secrets — the hub stores references only and never displays secret values."
@@ -314,7 +324,7 @@ export function EsoStoresPage() {
           <CapabilityGate
             capability="admin"
             fallback={
-              <span className="text-xs text-muted-foreground">Read-only (org viewer)</span>
+              <span className="text-xs u-muted">Read-only (org viewer)</span>
             }
           >
             <Button onClick={() => (editing ? setEditing(null) : openCreate())}>
@@ -326,32 +336,32 @@ export function EsoStoresPage() {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load secret stores: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && loading && !stores && (
-        <p className="text-sm text-muted-foreground">Loading secret stores…</p>
+        <LoadingState label="Loading secret stores…" />
       )}
 
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">{actionError}</CardContent>
+          <div className="card-body">{actionError}</div>
         </Card>
       )}
 
       {editing && canWriteSettings && (
         <Card>
-          <CardContent className="space-y-3 py-4">
+          <div className="card-body">
             <div className="space-y-1.5">
-              <Label htmlFor="secret-store-provider">
-                Provider <span className="text-destructive">*</span>
-              </Label>
+              <label className="form-label" htmlFor="secret-store-provider">
+                Provider <span className="u-danger">*</span>
+              </label>
               <select
                 id="secret-store-provider"
-                className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                className="input"
                 value={selectedProvider ?? ""}
                 onChange={(e) => {
                   const value = e.target.value;
@@ -385,22 +395,22 @@ export function EsoStoresPage() {
                   ? "Create store"
                   : "Save store"}
             </Button>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && stores && stores.length === 0 && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No secret stores registered for this organization.
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {stores && stores.length > 0 && (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <thead className="u-raised/50 text-left text-xs u-muted">
               <tr>
                 <th className="px-4 py-2 font-medium">Name</th>
                 <th className="px-4 py-2 font-medium">Scope</th>
@@ -416,13 +426,13 @@ export function EsoStoresPage() {
                 const readOnly = store.scope === "platform";
                 const providerKey = secretStoreProviderKey(store.provider);
                 return (
-                  <tr key={store.name} className="border-t hover:bg-muted/30">
+                  <tr key={store.name} className="border-t hover:u-raised/30">
                     <td className="px-4 py-2 font-medium">{store.name}</td>
                     <td className="px-4 py-2">
                       {readOnly ? (
-                        <Badge variant="secondary">Platform</Badge>
+                        <Badge variant="neutral">Platform</Badge>
                       ) : (
-                        <Badge variant="muted">Cluster</Badge>
+                        <Badge variant="neutral">Cluster</Badge>
                       )}
                     </td>
                     <td className="px-4 py-2 font-mono text-xs">
@@ -434,12 +444,12 @@ export function EsoStoresPage() {
                     <td className="px-4 py-2">
                       <StoreStatusBadge tenant={tenant} name={store.name} />
                     </td>
-                    <td className="px-4 py-2 text-xs text-muted-foreground">
+                    <td className="px-4 py-2 text-xs u-muted">
                       {formatRelative(store.createdAt)}
                     </td>
                     <td className="px-4 py-2">
                       {readOnly ? (
-                        <span className="text-xs text-muted-foreground">Read-only</span>
+                        <span className="text-xs u-muted">Read-only</span>
                       ) : (
                         <CapabilityGate capability="admin">
                           <div className="flex gap-1">

@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Stepper } from "@/components/stepper";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { CheckCircle2, Copy, Loader2 } from "lucide-react";
 
@@ -6,11 +7,10 @@ import { buildHelmCommand, createCluster, getCluster, issueRegistrationToken } f
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
 import type { ClusterStatus, CreateClusterResponse } from "@/api/types";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import { formatCountdown } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
@@ -21,30 +21,6 @@ const WAIT_TIMEOUT_MS = 10 * 60_000;
 
 const STEPS = ["Details", "Install", "Connect"] as const;
 
-function StepIndicator({ current }: { current: number }) {
-  return (
-    <ol className="flex items-center gap-2 text-sm" aria-label="Wizard progress">
-      {STEPS.map((label, i) => (
-        <li key={label} className="flex items-center gap-2">
-          <span
-            className={
-              i <= current
-                ? "flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground"
-                : "flex h-6 w-6 items-center justify-center rounded-full bg-muted text-xs text-muted-foreground"
-            }
-            aria-current={i === current ? "step" : undefined}
-          >
-            {i + 1}
-          </span>
-          <span className={i <= current ? "font-medium" : "text-muted-foreground"}>
-            {label}
-          </span>
-          {i < STEPS.length - 1 && <span className="mx-1 text-muted-foreground">→</span>}
-        </li>
-      ))}
-    </ol>
-  );
-}
 
 function parseLabels(input: string): Record<string, string> {
   const labels: Record<string, string> = {};
@@ -59,7 +35,7 @@ function CopyButton({ value, label }: { value: string; label: string }) {
   const [copied, setCopied] = React.useState(false);
   return (
     <Button
-      variant="outline"
+      variant="secondary"
       size="sm"
       onClick={async () => {
         try {
@@ -84,7 +60,7 @@ function TokenCountdown({ expiresAt }: { expiresAt: string }) {
   }, []);
   const remaining = formatCountdown(expiresAt, now);
   return (
-    <Badge variant={remaining === "expired" ? "destructive" : "warning"}>
+    <Badge variant={remaining === "expired" ? "danger" : "warning"}>
       {remaining === "expired" ? "Token expired" : `Token expires in ${remaining}`}
     </Badge>
   );
@@ -136,7 +112,7 @@ function WaitingForConnection({ clusterId }: { clusterId: string }) {
       <div className="flex flex-col items-center gap-3 py-8 text-center">
         <CheckCircle2 className="h-10 w-10 text-emerald-600" aria-hidden />
         <p className="text-lg font-semibold">Cluster is online</p>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm u-muted">
           The agent connected and capability discovery has started
           {cluster.k8sVersion ? ` — Kubernetes ${cluster.k8sVersion}` : ""}.
         </p>
@@ -148,12 +124,12 @@ function WaitingForConnection({ clusterId }: { clusterId: string }) {
     return (
       <div className="space-y-3 py-6 text-center">
         <p className="font-medium">Still waiting for the agent to connect…</p>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm u-muted">
           Check that the agent was installed (`kubectl -n inari-system get pods`) and that the
           cluster has outbound HTTPS access to the control plane.
         </p>
         <Button
-          variant="outline"
+          variant="secondary"
           onClick={() => {
             setTimedOut(false);
             setPollKey((k) => k + 1);
@@ -167,9 +143,9 @@ function WaitingForConnection({ clusterId }: { clusterId: string }) {
 
   return (
     <div className="flex flex-col items-center gap-3 py-8 text-center">
-      <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden />
+      <Loader2 className="h-8 w-8 animate-spin u-brand" aria-hidden />
       <p className="font-medium">Waiting for the agent to connect…</p>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm u-muted">
         Run the Helm command above to install the agent. This page updates automatically once the
         agent dials home.
       </p>
@@ -206,7 +182,7 @@ function ResumedInstall({ clusterId, orgID }: { clusterId: string; orgID: string
         <div className="flex items-center justify-end">
           <TokenCountdown expiresAt={install.expiresAt} />
         </div>
-        <pre className="overflow-auto rounded-md bg-muted p-3 font-mono text-xs">
+        <pre className="overflow-auto rounded-md u-raised p-3 font-mono text-xs">
           {install.command}
         </pre>
         <CopyButton value={install.command} label="Copy command" />
@@ -216,8 +192,8 @@ function ResumedInstall({ clusterId, orgID }: { clusterId: string; orgID: string
 
   return (
     <div className="space-y-2">
-      {error && <p className="text-sm text-destructive">{error}</p>}
-      <Button variant="outline" size="sm" onClick={load} disabled={loading}>
+      {error && <p className="text-sm u-danger">{error}</p>}
+      <Button variant="secondary" size="sm" onClick={load} disabled={loading}>
         {loading ? "Issuing token…" : "Show install command"}
       </Button>
     </div>
@@ -273,48 +249,48 @@ export function RegisterWizardPage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Register cluster</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="page-header-title">Register cluster</h1>
+        <p className="text-sm u-muted">
           Connect a Kubernetes cluster to Inari. The agent dials out — no inbound access or
           kubeconfig required.
         </p>
       </div>
-      <StepIndicator current={step} />
+      <Stepper steps={STEPS} current={step} />
 
       {step === 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle>Cluster details</CardTitle>
-            <CardDescription>
+          <div className="card-header">
+            <h2 className="mono-label">Cluster details</h2>
+            <p className="card-lede">
               This creates a cluster record and issues a one-time registration token.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+            </p>
+          </div>
+          <div className="card-body">
             <form onSubmit={submit} className="space-y-4">
               <div className="space-y-1.5">
-                <Label htmlFor="cluster-name">Name</Label>
+                <label className="form-label" htmlFor="cluster-name">Name</label>
                 <Input
                   id="cluster-name"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={(v) => setName(v)}
                   placeholder="kind-dev"
                   required
                 />
-                {nameError && <p className="text-xs text-destructive">{nameError}</p>}
+                {nameError && <p className="text-xs u-danger">{nameError}</p>}
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="cluster-labels">Labels</Label>
+                <label className="form-label" htmlFor="cluster-labels">Labels</label>
                 <Input
                   id="cluster-labels"
                   value={labelsInput}
-                  onChange={(e) => setLabelsInput(e.target.value)}
+                  onChange={(v) => setLabelsInput(v)}
                   placeholder="env=dev, cloud=aws"
                 />
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs u-muted">
                   Comma-separated key=value pairs; used for fleet targeting.
                 </p>
               </div>
-              {submitError && <p className="text-sm text-destructive">{submitError}</p>}
+              {submitError && <p className="text-sm u-danger">{submitError}</p>}
               <div className="flex justify-end gap-2">
                 <Button variant="ghost" type="button" onClick={() => navigate(-1)}>
                   Cancel
@@ -324,21 +300,21 @@ export function RegisterWizardPage() {
                 </Button>
               </div>
             </form>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {step === 1 && created && (
         <Card>
-          <CardHeader>
-            <CardTitle>Install the agent</CardTitle>
-            <CardDescription>
+          <div className="card-header">
+            <h2 className="mono-label">Install the agent</h2>
+            <p className="card-lede">
               The token below is shown once and embeds cluster identity. Install the agent within
               the token lifetime.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between gap-2 rounded-md border bg-muted/40 p-3">
+            </p>
+          </div>
+          <div className="card-body">
+            <div className="flex items-center justify-between gap-2 rounded-md border u-raised/40 p-3">
               <code className="truncate font-mono text-xs" data-testid="registration-token">
                 {created.registrationToken}
               </code>
@@ -349,7 +325,7 @@ export function RegisterWizardPage() {
             </div>
 
             <div className="space-y-2">
-              <pre className="overflow-auto rounded-md bg-muted p-3 font-mono text-xs">
+              <pre className="overflow-auto rounded-md u-raised p-3 font-mono text-xs">
                 {created.install.helmCommand}
               </pre>
               <CopyButton value={created.install.helmCommand} label="Copy command" />
@@ -358,15 +334,15 @@ export function RegisterWizardPage() {
             <div className="flex justify-end">
               <Button onClick={() => setStep(2)}>I&apos;ve installed it — watch for connection</Button>
             </div>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {step === 2 && clusterId && (
         <Card>
-          <CardHeader>
-            <CardTitle>Waiting for connection</CardTitle>
-            <CardDescription>
+          <div className="card-header">
+            <h2 className="mono-label">Waiting for connection</h2>
+            <p className="card-lede">
               {created
                 ? `Cluster "${created.cluster.name}" was registered.`
                 : resumed.error
@@ -374,18 +350,16 @@ export function RegisterWizardPage() {
                   : resumed.data
                     ? `Cluster "${resumed.data.name}".`
                     : "Restoring registration…"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+            </p>
+          </div>
+          <div className="card-body">
             {!created && resumed.error ? (
               <div className="space-y-3">
-                <p className="text-sm text-destructive">
+                <p className="text-sm u-danger">
                   This registration could not be restored — it may have been cancelled or belongs
                   to another tenant.
                 </p>
-                <Button asChild variant="outline" size="sm">
-                  <Link to={tenantLink(tenant, "clusters/new")}>Start a new registration</Link>
-                </Button>
+                <Link to={tenantLink(tenant, "clusters/new")} className="btn btn-secondary btn-sm">Start a new registration</Link>
               </div>
             ) : (
               <>
@@ -394,13 +368,11 @@ export function RegisterWizardPage() {
                   <ResumedInstall clusterId={clusterId} orgID={resumed.data.tenant} />
                 )}
                 <div className="flex justify-end">
-                  <Button asChild variant="outline">
-                    <Link to={tenantLink(tenant, `clusters/${clusterId}`)}>Open cluster detail</Link>
-                  </Button>
+                  <Link to={tenantLink(tenant, `clusters/${clusterId}`)} className="btn btn-secondary">Open cluster detail</Link>
                 </div>
               </>
             )}
-          </CardContent>
+          </div>
         </Card>
       )}
     </div>

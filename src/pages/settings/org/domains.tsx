@@ -4,17 +4,17 @@ import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
 import { getIdentityProvider, putDomainHints } from "@/api/idp";
 import { useAuth } from "@/auth/auth-context";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import {
   CapabilityGate,
   useOrgCapabilities,
 } from "@/pages/settings/components/capability-gate";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 const DOMAIN_PATTERN =
   /^(\*\.)?[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;
@@ -89,7 +89,7 @@ export function OrgDomainsPage() {
           <CapabilityGate
             capability="admin"
             fallback={
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs u-muted">
                 Read-only (org viewer)
               </span>
             }
@@ -101,30 +101,30 @@ export function OrgDomainsPage() {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load domains: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && loading && !provider && (
-        <p className="text-sm text-muted-foreground">Loading domains…</p>
+        <LoadingState label="Loading domains…" />
       )}
 
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">
+          <div className="card-body">
             {actionError}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && !provider && !loading && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No domains claimed. Configure an SSO provider first — claimed
             domains route users to it at login.
-          </CardContent>
+          </div>
         </Card>
       )}
 
@@ -132,15 +132,15 @@ export function OrgDomainsPage() {
         <>
           {canWriteSettings && (
             <Card>
-              <CardContent className="space-y-2 py-4">
+              <div className="card-body">
                 <div className="space-y-1.5">
-                  <Label htmlFor="new-domain">Add domain</Label>
+                  <label className="form-label" htmlFor="new-domain">Add domain</label>
                   <div className="flex gap-2">
                     <Input
                       id="new-domain"
                       placeholder="acme.example or *.acme.example"
                       value={newDomain}
-                      onChange={(e) => setNewDomain(e.target.value)}
+                      onChange={(v) => setNewDomain(v)}
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
                           e.preventDefault();
@@ -152,30 +152,30 @@ export function OrgDomainsPage() {
                       Add domain
                     </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs u-muted">
                     Exact domains match one domain; a *. wildcard matches all
                     subdomains. A domain already in use by another organization
                     is rejected.
                   </p>
                 </div>
-              </CardContent>
+              </div>
             </Card>
           )}
 
           {domains.length === 0 && (
             <Card>
-              <CardContent className="py-12 text-center text-sm text-muted-foreground">
+              <div className="card-body">
                 No domains claimed yet. Add a domain so users with matching
                 email addresses are routed to this organization&apos;s SSO
                 provider at login.
-              </CardContent>
+              </div>
             </Card>
           )}
 
           {domains.length > 0 && (
             <div className="overflow-hidden rounded-lg border">
               <table className="w-full text-sm">
-                <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+                <thead className="u-raised/50 text-left text-xs u-muted">
                   <tr>
                     <th className="px-4 py-2 font-medium">Domain</th>
                     <th className="px-4 py-2 font-medium">Match</th>
@@ -184,13 +184,13 @@ export function OrgDomainsPage() {
                 </thead>
                 <tbody>
                   {domains.map((d) => (
-                    <tr key={d} className="border-t hover:bg-muted/30">
+                    <tr key={d} className="border-t hover:u-raised/30">
                       <td className="px-4 py-2 font-mono text-xs">{d}</td>
                       <td className="px-4 py-2">
                         {d.startsWith("*.") ? (
-                          <Badge variant="secondary">Wildcard</Badge>
+                          <Badge variant="neutral">Wildcard</Badge>
                         ) : (
-                          <Badge variant="muted">Exact</Badge>
+                          <Badge variant="neutral">Exact</Badge>
                         )}
                       </td>
                       <td className="px-4 py-2">

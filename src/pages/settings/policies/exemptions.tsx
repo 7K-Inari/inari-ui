@@ -9,30 +9,30 @@ import {
 } from "@/api/policies";
 import { useAuth } from "@/auth/auth-context";
 import type { components } from "@/api/__generated__/schema";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import {
   CapabilityGate,
   useOrgCapabilities,
 } from "@/pages/settings/components/capability-gate";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 type Exemption = components["schemas"]["Exemption"];
 
-function stateVariant(state: string): "warning" | "success" | "destructive" | "muted" {
+function stateVariant(state: string): "warning" | "success" | "danger" | "neutral" {
   switch (state) {
     case "pending":
       return "warning";
     case "approved":
       return "success";
     case "rejected":
-      return "destructive";
+      return "danger";
     default:
-      return "muted";
+      return "neutral";
   }
 }
 
@@ -95,7 +95,7 @@ export function ExemptionsPage() {
           <CapabilityGate
             capability="admin"
             fallback={
-              <span className="text-xs text-muted-foreground">Read-only (org viewer)</span>
+              <span className="text-xs u-muted">Read-only (org viewer)</span>
             }
           >
             <Button onClick={() => setShowRequest((v) => !v)}>
@@ -107,74 +107,74 @@ export function ExemptionsPage() {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load exemptions: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && loading && !exemptions && (
-        <p className="text-sm text-muted-foreground">Loading exemptions…</p>
+        <LoadingState label="Loading exemptions…" />
       )}
 
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">{actionError}</CardContent>
+          <div className="card-body">{actionError}</div>
         </Card>
       )}
 
       {showRequest && canWriteSettings && (
         <Card>
-          <CardContent className="py-4">
+          <div className="card-body">
             <form className="space-y-3" onSubmit={submitRequest}>
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="space-y-1.5">
-                  <Label htmlFor="ex-policy">Policy ID</Label>
+                  <label className="form-label" htmlFor="ex-policy">Policy ID</label>
                   <Input
                     id="ex-policy"
                     value={policyId}
-                    onChange={(e) => setPolicyId(e.target.value)}
+                    onChange={(v) => setPolicyId(v)}
                     required
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <Label htmlFor="ex-expires">Expires at</Label>
+                  <label className="form-label" htmlFor="ex-expires">Expires at</label>
                   <Input
                     id="ex-expires"
                     type="datetime-local"
                     value={expiresAt}
-                    onChange={(e) => setExpiresAt(e.target.value)}
+                    onChange={(v) => setExpiresAt(v)}
                     required
                   />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="ex-reason">Reason</Label>
+                <label className="form-label" htmlFor="ex-reason">Reason</label>
                 <Input
                   id="ex-reason"
                   value={reason}
-                  onChange={(e) => setReason(e.target.value)}
+                  onChange={(v) => setReason(v)}
                   required
                 />
               </div>
               <Button type="submit">Submit request</Button>
             </form>
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && exemptions && exemptions.length === 0 && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No exemptions requested yet.
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {exemptions && exemptions.length > 0 && (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <thead className="u-raised/50 text-left text-xs u-muted">
               <tr>
                 <th className="px-4 py-2 font-medium">Policy</th>
                 <th className="px-4 py-2 font-medium">State</th>
@@ -186,14 +186,14 @@ export function ExemptionsPage() {
             </thead>
             <tbody>
               {exemptions.map((ex: Exemption) => (
-                <tr key={ex.id} className="border-t hover:bg-muted/30">
+                <tr key={ex.id} className="border-t hover:u-raised/30">
                   <td className="px-4 py-2 font-mono text-xs">{ex.policyId}</td>
                   <td className="px-4 py-2">
                     <Badge variant={stateVariant(ex.state)}>{ex.state}</Badge>
                   </td>
                   <td className="px-4 py-2">{ex.reason ?? "—"}</td>
                   <td className="px-4 py-2 text-xs">{ex.createdBy ?? "—"}</td>
-                  <td className="px-4 py-2 text-xs text-muted-foreground">
+                  <td className="px-4 py-2 text-xs u-muted">
                     {new Date(ex.expiresAt).toLocaleString()}
                   </td>
                   <td className="px-4 py-2">

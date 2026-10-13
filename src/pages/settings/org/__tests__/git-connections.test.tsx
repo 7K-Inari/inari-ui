@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -150,11 +150,12 @@ describe("GitConnectionsPage", () => {
 
   it("disconnects after confirmation", async () => {
     const user = userEvent.setup();
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     renderPage();
     await user.click(
       await screen.findByRole("button", { name: "Disconnect" }),
     );
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Disconnect" }));
     expect(await screen.findByText("GitHub disconnected.")).toBeInTheDocument();
     expect(screen.queryByText("ada-dev")).not.toBeInTheDocument();
     expect(policyMockControl.getState().gitConnections.acme).toEqual([]);
@@ -166,11 +167,12 @@ describe("GitConnectionsPage", () => {
       detail: "revocation failed",
     };
     const user = userEvent.setup();
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     renderPage();
     await user.click(
       await screen.findByRole("button", { name: "Disconnect" }),
     );
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Disconnect" }));
     expect(await screen.findByText("revocation failed")).toBeInTheDocument();
     expect(screen.getByText("ada-dev")).toBeInTheDocument();
   });

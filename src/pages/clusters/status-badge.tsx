@@ -1,25 +1,23 @@
-import { Badge } from "@/components/ui/badge";
-import type { ClusterStatus } from "@/api/types";
+import { Badge } from "7k-design-system/react";
 
-const STATUS_CONFIG: Record<
-  ClusterStatus,
-  { label: string; variant: "success" | "warning" | "destructive" | "muted" }
-> = {
-  connected: { label: "Connected", variant: "success" },
-  pending: { label: "Pending", variant: "warning" },
-  pending_approval: { label: "Pending approval", variant: "warning" },
-  degraded: { label: "Degraded", variant: "warning" },
-  cordoned: { label: "Cordoned", variant: "muted" },
-  revoked: { label: "Revoked", variant: "destructive" },
-  decommissioned: { label: "Decommissioned", variant: "muted" },
-  disconnected: { label: "Disconnected", variant: "destructive" },
+import type { ClusterStatus } from "@/api/types";
+import { statusToBadge } from "@/lib/status-badges";
+
+const STATUS_LABEL: Record<ClusterStatus, string> = {
+  connected: "Connected",
+  pending: "Pending",
+  pending_approval: "Pending approval",
+  degraded: "Degraded",
+  cordoned: "Cordoned",
+  revoked: "Revoked",
+  decommissioned: "Decommissioned",
+  disconnected: "Disconnected",
 };
 
 export function ClusterStatusBadge({ status }: { status: ClusterStatus }) {
-  const config = STATUS_CONFIG[status];
   return (
-    <Badge variant={config.variant} data-testid={`status-${status}`}>
-      {config.label}
+    <Badge variant={statusToBadge(status)} data-testid={`status-${status}`}>
+      {STATUS_LABEL[status]}
     </Badge>
   );
 }

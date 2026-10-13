@@ -3,11 +3,11 @@ import { Link } from "react-router-dom";
 import { listTemplates } from "@/api/templates";
 import { useAsyncResource } from "@/api/hooks";
 import { TemplateScopeBadge } from "@/components/templates/template-scope-badge";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
+import { LoadingState } from "@/components/loading";
 
 export function TemplateListPage() {
   const { tenant } = useTenant();
@@ -16,57 +16,60 @@ export function TemplateListPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Templates</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="page-header-title">Templates</h1>
+        <p className="text-sm u-muted">
           Golden-path scaffolds: repo, pipeline, catalog entry, and tenant RBAC in one flow.
         </p>
       </div>
 
       {templates.error && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-destructive">
+          <div className="card-body">
             Failed to load templates: {templates.error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {templates.loading && !templates.data && (
-        <p className="text-sm text-muted-foreground">Loading templates…</p>
+        <LoadingState label="Loading templates…" />
       )}
 
       {templates.data && templates.data.length === 0 && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No templates published yet.
-          </CardContent>
+          </div>
         </Card>
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {(templates.data ?? []).map((template) => (
           <Card key={template.id} className="flex flex-col">
-            <CardHeader>
+            <div className="card-header">
               <div className="flex items-center justify-between gap-2">
-                <CardTitle className="text-base">{template.displayName}</CardTitle>
-                <span className="text-xs text-muted-foreground">v{template.version}</span>
+                <h2 className="mono-label">{template.displayName}</h2>
+                <span className="text-xs u-muted">v{template.version}</span>
               </div>
-              <CardDescription>{template.description}</CardDescription>
-            </CardHeader>
-            <CardContent className="mt-auto flex items-center justify-between gap-2 pt-0">
+              <p className="card-lede">{template.description}</p>
+            </div>
+            <div className="card-body flex flex-1 flex-col">
               <div className="flex flex-wrap gap-1">
                 <TemplateScopeBadge scope={template.scope} />
                 {template.tags.map((tag) => (
-                  <Badge key={tag} variant="muted">
+                  <Badge key={tag} variant="neutral">
                     {tag}
                   </Badge>
                 ))}
               </div>
-              <Button asChild size="sm">
-                <Link to={tenantLink(tenant, `templates/${template.name}/scaffold`)}>
+              <div className="mt-auto flex justify-end pt-3">
+                <Link
+                  to={tenantLink(tenant, `templates/${template.name}/scaffold`)}
+                  className="btn btn-primary btn-sm"
+                >
                   Scaffold
                 </Link>
-              </Button>
-            </CardContent>
+              </div>
+            </div>
           </Card>
         ))}
       </div>

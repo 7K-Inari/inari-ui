@@ -4,16 +4,13 @@ import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
 import { getGitConfig, putGitConfig } from "@/api/tenants";
 import { useAuth } from "@/auth/auth-context";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import { useOrgCapabilities } from "@/pages/settings/components/capability-gate";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
-
-const selectClass =
-  "flex h-9 w-full rounded-md border border-input bg-background px-3 text-sm";
+import { LoadingState } from "@/components/loading";
 
 interface GitConfig {
   repo: string;
@@ -67,48 +64,48 @@ function GitConfigForm({
     <>
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">{actionError}</CardContent>
+          <div className="card-body">{actionError}</div>
         </Card>
       )}
 
       {saved && !actionError && (
         <Card>
-          <CardContent className="py-3 text-sm">Git config saved.</CardContent>
+          <div className="card-body">Git config saved.</div>
         </Card>
       )}
 
       <Card>
-        <CardContent className="py-4">
+        <div className="card-body">
           <form className="max-w-xl space-y-3" onSubmit={submit}>
             <div className="space-y-1.5">
-              <Label htmlFor="git-repo">Repository</Label>
+              <label className="form-label" htmlFor="git-repo">Repository</label>
               <Input
                 id="git-repo"
                 value={repo}
-                onChange={(e) => setRepo(e.target.value)}
+                onChange={(v) => setRepo(v)}
                 placeholder="owner/name or https URL"
                 required
                 disabled={!canWrite}
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs u-muted">
                 owner/name or https URL of the {"<tenant>"}-inari-state repo.
               </p>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="git-branch">Base branch</Label>
+              <label className="form-label" htmlFor="git-branch">Base branch</label>
               <Input
                 id="git-branch"
                 value={baseBranch}
-                onChange={(e) => setBaseBranch(e.target.value)}
+                onChange={(v) => setBaseBranch(v)}
                 placeholder="main"
                 disabled={!canWrite}
               />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="git-policy">Commit policy</Label>
+              <label className="form-label" htmlFor="git-policy">Commit policy</label>
               <select
                 id="git-policy"
-                className={selectClass}
+                className="select-native"
                 value={commitPolicy}
                 onChange={(e) =>
                   setCommitPolicy(e.target.value as "direct" | "pull_request")
@@ -125,7 +122,7 @@ function GitConfigForm({
               </Button>
             )}
           </form>
-        </CardContent>
+        </div>
       </Card>
     </>
   );
@@ -147,21 +144,21 @@ export function GitSettingsPage() {
         description="GitOps state repository and commit policy for this organization."
         actions={
           !canWriteSettings ? (
-            <span className="text-xs text-muted-foreground">Read-only (org viewer)</span>
+            <span className="text-xs u-muted">Read-only (org viewer)</span>
           ) : undefined
         }
       />
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load git config: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && loading && !config && (
-        <p className="text-sm text-muted-foreground">Loading git config…</p>
+        <LoadingState label="Loading git config…" />
       )}
 
       {!error && config && !loading && (

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -83,29 +83,27 @@ describe("ResourceListPage", () => {
 describe("row delete", () => {
   it("deletes a resource after confirmation", async () => {
     const user = userEvent.setup();
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(true);
     renderPage();
     await screen.findByText("orders-db");
     await user.click(screen.getAllByRole("button", { name: "Delete" })[0]);
-    expect(confirmSpy).toHaveBeenCalled();
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Undeploy" }));
     const { waitFor } = await import("@testing-library/react");
     await waitFor(() => expect(screen.queryByText("orders-db")).not.toBeInTheDocument());
-    confirmSpy.mockRestore();
   });
 
   it("keeps the resource when the confirmation is declined", async () => {
     const user = userEvent.setup();
-    const confirmSpy = vi.spyOn(window, "confirm").mockReturnValue(false);
     renderPage();
     await screen.findByText("orders-db");
     await user.click(screen.getAllByRole("button", { name: "Delete" })[0]);
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
     expect(screen.getByText("orders-db")).toBeInTheDocument();
-    confirmSpy.mockRestore();
   });
 
   it("surfaces API errors", async () => {
     const user = userEvent.setup();
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     const { http, HttpResponse } = await import("msw");
     mockServer.use(
       http.delete("*/api/v1/tenants/acme/instances/:id", () =>
@@ -115,6 +113,8 @@ describe("row delete", () => {
     renderPage();
     await screen.findByText("orders-db");
     await user.click(screen.getAllByRole("button", { name: "Delete" })[0]);
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Undeploy" }));
     expect(await screen.findByText(/boom/)).toBeInTheDocument();
     vi.restoreAllMocks();
   });

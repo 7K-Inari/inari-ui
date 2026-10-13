@@ -8,13 +8,14 @@ import {
 } from "@/api/policies";
 import type { CatalogVisibilityRule } from "@/api/policies";
 import { useAuth } from "@/auth/auth-context";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import { useOrgCapabilities } from "@/pages/settings/components/capability-gate";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 function RuleRow({
   tenant,
@@ -47,25 +48,25 @@ function RuleRow({
   };
 
   return (
-    <tr className="border-t hover:bg-muted/30">
+    <tr className="border-t hover:u-raised/30">
       <td className="px-4 py-2 font-medium">{rule.itemName}</td>
       <td className="px-4 py-2 font-mono text-xs">{rule.itemId}</td>
       <td className="px-4 py-2">
         {rule.visible ? (
           <Badge variant="success">visible</Badge>
         ) : (
-          <Badge variant="muted">hidden</Badge>
+          <Badge variant="neutral">hidden</Badge>
         )}
       </td>
-      <td className="px-4 py-2 text-xs text-muted-foreground">
+      <td className="px-4 py-2 text-xs u-muted">
         {rule.updatedBy} · {formatRelative(rule.updatedAt)}
       </td>
       <td className="px-4 py-2 text-right">
         {actionError && (
-          <span className="mr-2 text-xs text-destructive">{actionError}</span>
+          <span className="mr-2 text-xs u-danger">{actionError}</span>
         )}
         {canWrite && (
-          <Button variant="outline" size="sm" disabled={busy} onClick={toggle}>
+          <Button variant="secondary" size="sm" disabled={busy} onClick={toggle}>
             {rule.visible ? "Hide" : "Show"}
           </Button>
         )}
@@ -91,35 +92,35 @@ export function VisibilityPage() {
         description="Tenant-scoped overrides for catalog items. Hidden items are not deployable by this organization."
         actions={
           !canWriteSettings ? (
-            <span className="text-xs text-muted-foreground">Read-only (org viewer)</span>
+            <span className="text-xs u-muted">Read-only (org viewer)</span>
           ) : undefined
         }
       />
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load visibility rules: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && loading && !rules && (
-        <p className="text-sm text-muted-foreground">Loading visibility rules…</p>
+        <LoadingState label="Loading visibility rules…" />
       )}
 
       {!error && rules && rules.length === 0 && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No visibility overrides — the catalog follows platform defaults.
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {rules && rules.length > 0 && (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <thead className="u-raised/50 text-left text-xs u-muted">
               <tr>
                 <th className="px-4 py-2 font-medium">Item</th>
                 <th className="px-4 py-2 font-medium">ID</th>

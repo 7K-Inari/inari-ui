@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from "react-router-dom";
 
-import { cn } from "@/lib/utils";
+import { PageHeader } from "@/components/page-header";
 import { useOrgCapabilities } from "@/pages/settings/components/capability-gate";
 import { visibleSettingsSections } from "@/pages/settings/settings-nav";
 import { useTenant } from "@/tenant/tenant-context";
@@ -12,12 +12,12 @@ export function SettingsLayout() {
 
   if (tenant === ALL_TENANTS) {
     return (
-      <div className="space-y-2">
-        <h1 className="text-2xl font-semibold tracking-tight">Settings</h1>
-        <p className="text-sm text-muted-foreground">
-          Select a specific tenant to manage its settings — every settings
-          endpoint is tenant-scoped.
-        </p>
+      <div className="stack">
+        <PageHeader
+          breadcrumb="Govern / Settings"
+          title="Settings"
+          lede="Select a specific tenant to manage its settings — every settings endpoint is tenant-scoped."
+        />
       </div>
     );
   }
@@ -25,30 +25,23 @@ export function SettingsLayout() {
   const sections = visibleSettingsSections(isAdmin);
 
   return (
-    <div className="flex gap-6">
-      <nav
-        aria-label="Settings"
-        className="w-52 shrink-0 space-y-4 border-r pr-4"
-      >
+    <div className="settings-layout">
+      <nav aria-label="Settings" className="nav nav-vertical settings-nav">
         {sections.map((section) => (
-          <div key={section.title}>
-            <p className="px-2 pb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {section.title}
-            </p>
-            <ul className="space-y-0.5">
+          <div key={section.title} className="sidebar-group">
+            <p className="mono-label sidebar-group-label">{section.title}</p>
+            <ul>
               {section.items.map((item) => (
                 <li key={item.path}>
                   <NavLink
                     to={item.path}
+                    end={item.path === "" || item.path === "org"}
                     className={({ isActive }) =>
-                      cn(
-                        "flex items-center gap-2 rounded-md px-2 py-1.5 text-sm hover:bg-accent hover:text-accent-foreground",
-                        isActive && "bg-accent font-medium text-accent-foreground",
-                      )
+                      `nav-item nav-item-accent${isActive ? " active" : ""}`
                     }
                   >
-                    <item.icon className="h-4 w-4" />
-                    {item.label}
+                    <item.icon size={16} aria-hidden="true" />
+                    <span className="sidebar-item-label">{item.label}</span>
                   </NavLink>
                 </li>
               ))}
@@ -56,7 +49,7 @@ export function SettingsLayout() {
           </div>
         ))}
       </nav>
-      <div className="min-w-0 flex-1">
+      <div className="settings-content">
         <Outlet />
       </div>
     </div>

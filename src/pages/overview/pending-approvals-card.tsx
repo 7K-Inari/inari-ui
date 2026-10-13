@@ -1,10 +1,10 @@
 import * as React from "react";
 
 import { decideApproval, decideReason, listApprovals, type ApprovalRequest } from "@/api/approvals";
-import { useAsyncResource } from "@/api/hooks";
+import { useAsyncResource, type AsyncState } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
 import { usePermissions } from "@/auth/permissions-context";
-import { Button } from "@/components/ui/button";
+import { Button } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
@@ -42,19 +42,19 @@ export function ApprovalListItems({
   }
 
   return (
-    <div className="space-y-2">
-      <ul className="space-y-2">
+    <div className="overview-card-stack">
+      <ul className="list">
         {approvals.slice(0, MAX_ITEMS).map((a) => (
-          <li key={a.id} className="flex items-center justify-between gap-4 text-sm">
-            <div className="min-w-0">
-              <p className="truncate font-medium">{a.title}</p>
-              <p className="text-xs text-muted-foreground">{a.requestedBy}</p>
+          <li key={a.id} className="list-item overview-approval-row">
+            <div className="overview-approval-main">
+              <p className="overview-approval-title">{a.title}</p>
+              <p className="mono-caption">{a.requestedBy}</p>
             </div>
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="overview-approval-actions">
               {onDecide && (
                 <>
                   <Button
-                    variant="outline"
+                    variant="accent"
                     size="sm"
                     disabled={pendingId !== null}
                     onClick={() => handle(a.id, "approve")}
@@ -62,7 +62,7 @@ export function ApprovalListItems({
                     Approve
                   </Button>
                   <Button
-                    variant="destructive"
+                    variant="danger"
                     size="sm"
                     disabled={pendingId !== null}
                     onClick={() => handle(a.id, "reject")}
@@ -71,15 +71,13 @@ export function ApprovalListItems({
                   </Button>
                 </>
               )}
-              <span className="text-xs text-muted-foreground">
-                {formatRelative(a.requestedAt)}
-              </span>
+              <span className="mono-caption">{formatRelative(a.requestedAt)}</span>
             </div>
           </li>
         ))}
       </ul>
       {decideError && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="alert alert-danger">
           Decision failed: {decideError}
         </p>
       )}
@@ -87,13 +85,15 @@ export function ApprovalListItems({
   );
 }
 
-export function PendingApprovalsCard() {
+export function PendingApprovalsCard({ state: shared }: { state?: AsyncState<ApprovalRequest[]> }) {
   const { tenant } = useTenant();
   const { token } = useAuth();
   const permissions = usePermissions();
-  const state = useAsyncResource((token) => listApprovals(token, tenant, "inbox"), [tenant], {
+  const own = useAsyncResource((token) => listApprovals(token, tenant, "inbox"), [tenant], {
     refetchIntervalMs: 15_000,
+    enabled: !shared,
   });
+  const state = shared ?? own;
 
   // Per-tenant projection absent => unknown => buttons shown; an explicit
   // `false` hides them (plan §5: gate on projection when present).
@@ -106,20 +106,22 @@ export function PendingApprovalsCard() {
       }
     : undefined;
 
+  const pendingCount = state.data?.length ?? 0;
+
   return (
     <OverviewCard
       title="Pending approvals"
       testId="card-pending-approvals"
       href={tenantLink(tenant, "approvals")}
       state={state}
+      accentTop={pendingCount > 0}
       isEmpty={(approvals) => approvals.length === 0}
       empty={<p>No pending approvals. Requests that need a decision will appear here.</p>}
     >
       {(approvals: ApprovalRequest[]) => (
-        <div className="space-y-3">
-          <p className="text-sm text-muted-foreground">
-            <span className="text-3xl font-semibold text-foreground">{approvals.length}</span>{" "}
-            pending
+        <div className="overview-card-stack">
+          <p className={pendingCount > 0 ? "overview-stat-accent" : undefined}>
+            <span className="stat-value">{approvals.length}</span> pending
           </p>
           <ApprovalListItems approvals={approvals} onDecide={onDecide} />
         </div>

@@ -5,14 +5,14 @@ import { useAsyncResource } from "@/api/hooks";
 import { evaluatePolicies, listPolicies } from "@/api/policies";
 import { useAuth } from "@/auth/auth-context";
 import type { components } from "@/api/__generated__/schema";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 type Policy = components["schemas"]["Policy"];
 type PolicyDecision = components["schemas"]["PolicyDecision"];
@@ -25,12 +25,12 @@ function ViolationList({
 }: {
   title: string;
   items: PolicyViolation[];
-  variant: "destructive" | "warning";
+  variant: "danger" | "warning";
 }) {
   if (items.length === 0) return null;
   return (
     <div className="space-y-1">
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      <p className="text-xs font-medium uppercase tracking-wide u-muted">
         {title}
       </p>
       <ul className="space-y-1">
@@ -38,11 +38,11 @@ function ViolationList({
           <li key={`${v.rule}-${i}`} className="text-sm">
             <Badge variant={variant}>{v.rule}</Badge>{" "}
             {v.reason}{" "}
-            <span className="text-xs text-muted-foreground">
+            <span className="text-xs u-muted">
               Remediation: {v.remediation}
             </span>
             {v.exempted && (
-              <Badge variant="muted" className="ml-1">
+              <Badge variant="neutral" className="ml-1">
                 exempted
               </Badge>
             )}
@@ -108,28 +108,28 @@ export function CompliancePage() {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load policies: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && loading && !policies && (
-        <p className="text-sm text-muted-foreground">Loading policies…</p>
+        <LoadingState label="Loading policies…" />
       )}
 
       {!error && policies && policies.length === 0 && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No policies defined for this organization.
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {policies && policies.length > 0 && (
         <div className="overflow-hidden rounded-lg border">
           <table className="w-full text-sm">
-            <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+            <thead className="u-raised/50 text-left text-xs u-muted">
               <tr>
                 <th className="px-4 py-2 font-medium">Name</th>
                 <th className="px-4 py-2 font-medium">Target</th>
@@ -141,7 +141,7 @@ export function CompliancePage() {
             </thead>
             <tbody>
               {policies.map((p: Policy) => (
-                <tr key={p.id} className="border-t hover:bg-muted/30">
+                <tr key={p.id} className="border-t hover:u-raised/30">
                   <td className="px-4 py-2 font-medium">{p.name}</td>
                   <td className="px-4 py-2 font-mono text-xs">{p.target}</td>
                   <td className="px-4 py-2 font-mono text-xs">{p.engine}</td>
@@ -149,11 +149,11 @@ export function CompliancePage() {
                     {p.enabled ? (
                       <Badge variant="success">enabled</Badge>
                     ) : (
-                      <Badge variant="muted">disabled</Badge>
+                      <Badge variant="neutral">disabled</Badge>
                     )}
                   </td>
                   <td className="px-4 py-2 font-mono text-xs">v{p.version}</td>
-                  <td className="px-4 py-2 text-xs text-muted-foreground">
+                  <td className="px-4 py-2 text-xs u-muted">
                     {formatRelative(p.updatedAt)}
                   </td>
                 </tr>
@@ -164,45 +164,45 @@ export function CompliancePage() {
       )}
 
       <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Dry-run evaluation</CardTitle>
-        </CardHeader>
-        <CardContent>
+        <div className="card-header">
+          <h2 className="mono-label">Dry-run evaluation</h2>
+        </div>
+        <div className="card-body">
           <form className="space-y-3" onSubmit={submitEvaluate}>
             <div className="grid gap-3 md:grid-cols-3">
               <div className="space-y-1.5">
-                <Label htmlFor="eval-item">Catalog item ID</Label>
+                <label className="form-label" htmlFor="eval-item">Catalog item ID</label>
                 <Input
                   id="eval-item"
                   value={itemId}
-                  onChange={(e) => setItemId(e.target.value)}
+                  onChange={(v) => setItemId(v)}
                   required
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="eval-version">Version</Label>
+                <label className="form-label" htmlFor="eval-version">Version</label>
                 <Input
                   id="eval-version"
                   value={version}
-                  onChange={(e) => setVersion(e.target.value)}
+                  onChange={(v) => setVersion(v)}
                   required
                 />
               </div>
               <div className="space-y-1.5">
-                <Label htmlFor="eval-cluster">Cluster ID</Label>
+                <label className="form-label" htmlFor="eval-cluster">Cluster ID</label>
                 <Input
                   id="eval-cluster"
                   value={clusterId}
-                  onChange={(e) => setClusterId(e.target.value)}
+                  onChange={(v) => setClusterId(v)}
                   required
                 />
               </div>
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="eval-spec">Spec (JSON)</Label>
+              <label className="form-label" htmlFor="eval-spec">Spec (JSON)</label>
               <textarea
                 id="eval-spec"
-                className="min-h-24 w-full rounded-md border border-input bg-transparent px-3 py-2 font-mono text-xs"
+                className="textarea font-mono text-xs"
                 value={spec}
                 onChange={(e) => setSpec(e.target.value)}
                 placeholder="{}"
@@ -214,7 +214,7 @@ export function CompliancePage() {
           </form>
 
           {evalError && (
-            <p className="mt-3 text-sm text-destructive">{evalError}</p>
+            <p className="mt-3 text-sm u-danger">{evalError}</p>
           )}
 
           {decision && (
@@ -224,13 +224,13 @@ export function CompliancePage() {
                 {decision.allow ? (
                   <Badge variant="success">allow</Badge>
                 ) : (
-                  <Badge variant="destructive">deny</Badge>
+                  <Badge variant="danger">deny</Badge>
                 )}
               </p>
               <ViolationList
                 title="Violations"
                 items={decision.violations ?? []}
-                variant="destructive"
+                variant="danger"
               />
               <ViolationList
                 title="Warnings"
@@ -239,7 +239,7 @@ export function CompliancePage() {
               />
             </div>
           )}
-        </CardContent>
+        </div>
       </Card>
     </div>
   );

@@ -18,23 +18,19 @@ export function ActivityListItems({
   orgNames?: Map<string, string>;
 }) {
   return (
-    <ul className="space-y-2">
+    <ul className="list">
       {items.map((item) => (
-        <li key={item.id} className="flex items-center justify-between gap-4 text-sm">
-          <div className="min-w-0">
-            <p className="truncate font-medium">
+        <li key={item.id} className="list-item overview-approval-row">
+          <div className="overview-approval-main">
+            <p className="overview-approval-title">
               {orgNames && (
-                <span className="text-muted-foreground">
-                  {orgNames.get(item.org) ?? item.org} ·{" "}
-                </span>
+                <span className="mono-caption">{orgNames.get(item.org) ?? item.org} · </span>
               )}
               {item.title}
             </p>
-            <p className="truncate text-xs text-muted-foreground">{item.detail}</p>
+            <p className="mono-caption">{item.detail}</p>
           </div>
-          <span className="shrink-0 text-xs text-muted-foreground">
-            {formatRelative(item.at)}
-          </span>
+          <span className="mono-caption">{formatRelative(item.at)}</span>
         </li>
       ))}
     </ul>

@@ -8,9 +8,10 @@ import {
 } from "@/api/feature-flags";
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { LoadingState } from "@/components/loading";
 
 // Platform feature flags (/platform/feature-flags): runtime kill-switches and
 // toggles from the feature-flags API (kill-switch v2, ADR-0016). Platform
@@ -45,8 +46,8 @@ export function PlatformFeatureFlagsPage() {
   return (
     <div className="mx-auto max-w-3xl space-y-4 p-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Platform feature flags</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="page-header-title">Platform feature flags</h1>
+        <p className="text-sm u-muted">
           Platform-wide runtime defaults. Tenant admins can override cluster-scoped flags per
           cluster from the cluster detail page.
         </p>
@@ -54,47 +55,47 @@ export function PlatformFeatureFlagsPage() {
 
       {error && (
         <Card>
-          <CardContent className="py-6 text-sm text-destructive">
+          <div className="card-body">
             Failed to load feature flags: {error.message}
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {!error && loading && !flags && (
-        <p className="text-sm text-muted-foreground">Loading feature flags…</p>
+        <LoadingState label="Loading feature flags…" />
       )}
 
       {!error && flags && flags.length === 0 && (
         <Card>
-          <CardContent className="py-12 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No runtime feature flags registered.
-          </CardContent>
+          </div>
         </Card>
       )}
 
       {actionError && (
         <Card>
-          <CardContent className="py-3 text-sm text-destructive">{actionError}</CardContent>
+          <div className="card-body">{actionError}</div>
         </Card>
       )}
 
       {flags?.map((flag) => (
         <Card key={flag.key}>
-          <CardHeader>
+          <div className="card-header">
             <div className="flex items-center justify-between gap-2">
-              <CardTitle className="font-mono text-base">{flag.key}</CardTitle>
+              <h2 className="mono-label">{flag.key}</h2>
               <div className="flex items-center gap-2">
-                {flag.overridden && <Badge variant="outline">override</Badge>}
-                <Badge variant={flag.value ? "success" : "destructive"}>
+                {flag.overridden && <Badge variant="neutral">override</Badge>}
+                <Badge variant={flag.value ? "success" : "danger"}>
                   {flag.value ? "Enabled" : "Disabled"}
                 </Badge>
               </div>
             </div>
-            <CardDescription>{flag.description}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
+            <p className="card-lede">{flag.description}</p>
+          </div>
+          <div className="card-body">
             {flag.envPinned && (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm u-muted">
                 Pinned by an explicitly set environment variable — changes here are stored but
                 have no effect until the env override is removed.
               </p>
@@ -102,7 +103,7 @@ export function PlatformFeatureFlagsPage() {
             <div className="flex justify-end gap-2">
               {flag.overridden && (
                 <Button
-                  variant="outline"
+                  variant="secondary"
                   size="sm"
                   disabled={busyKey === flag.key}
                   onClick={() =>
@@ -117,7 +118,7 @@ export function PlatformFeatureFlagsPage() {
                 </Button>
               )}
               <Button
-                variant={flag.value ? "destructive" : "default"}
+                variant={flag.value ? "danger" : "primary"}
                 size="sm"
                 disabled={busyKey === flag.key}
                 onClick={() =>
@@ -135,7 +136,7 @@ export function PlatformFeatureFlagsPage() {
                     : "Enable platform-wide"}
               </Button>
             </div>
-          </CardContent>
+          </div>
         </Card>
       ))}
     </div>

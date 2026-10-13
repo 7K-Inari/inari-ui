@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -60,11 +60,12 @@ describe("OidcClientsPage", () => {
   });
 
   it("rotates a secret and shows the new one-time secret", async () => {
-    vi.spyOn(window, "confirm").mockReturnValue(true);
     const user = userEvent.setup();
     renderPage();
     await screen.findByText("ci-deployer");
     await user.click(screen.getByRole("button", { name: "Rotate secret" }));
+    const confirmDialog = await screen.findByRole("dialog");
+    await user.click(within(confirmDialog).getByRole("button", { name: "Rotate" }));
     expect(await screen.findByRole("dialog", { name: "Client secret" })).toBeInTheDocument();
     expect(screen.getByText("sec-org-acme-ci-deployer-rotated")).toBeInTheDocument();
   });

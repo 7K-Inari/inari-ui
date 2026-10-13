@@ -14,14 +14,14 @@ import {
 import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Badge } from "7k-design-system/react";
+import { Button } from "7k-design-system/react";
+import { Card } from "7k-design-system/react";
+import { Input } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
+import { LoadingState } from "@/components/loading";
 
 const TABS = [
   { id: "clustersets", label: "ClusterSets" },
@@ -32,12 +32,12 @@ const TABS = [
 
 type TabId = (typeof TABS)[number]["id"];
 
-const ROLLOUT_STATE_VARIANT: Record<string, "success" | "warning" | "destructive" | "muted"> = {
+const ROLLOUT_STATE_VARIANT: Record<string, "success" | "warning" | "danger" | "neutral"> = {
   running: "warning",
   "waiting-approval": "warning",
   completed: "success",
-  failed: "destructive",
-  "rolled-back": "muted",
+  failed: "danger",
+  "rolled-back": "neutral",
 };
 
 function parseLabels(input: string): Record<string, string> {
@@ -79,21 +79,21 @@ function CreateClusterSetForm({ onCreated }: { onCreated: () => void }) {
       }}
     >
       <div className="space-y-1.5">
-        <Label htmlFor="cs-name">Name</Label>
+        <label className="form-label" htmlFor="cs-name">Name</label>
         <Input
           id="cs-name"
           value={name}
-          onChange={(e) => setName(e.target.value)}
+          onChange={(v) => setName(v)}
           placeholder="prod-us"
           required
         />
       </div>
       <div className="min-w-64 space-y-1.5">
-        <Label htmlFor="cs-labels">Targeting labels</Label>
+        <label className="form-label" htmlFor="cs-labels">Targeting labels</label>
         <Input
           id="cs-labels"
           value={labels}
-          onChange={(e) => setLabels(e.target.value)}
+          onChange={(v) => setLabels(v)}
           placeholder="region=us, env=prod"
         />
       </div>
@@ -101,7 +101,7 @@ function CreateClusterSetForm({ onCreated }: { onCreated: () => void }) {
         {submitting ? "Creating…" : "Create ClusterSet"}
       </Button>
       {error && (
-        <p className="w-full text-sm text-destructive" role="alert">
+        <p className="w-full text-sm u-danger" role="alert">
           {error}
         </p>
       )}
@@ -116,22 +116,22 @@ function ClusterSetsTab() {
   const [actionError, setActionError] = React.useState<string | null>(null);
 
   if (sets.loading && !sets.data) {
-    return <p className="text-sm text-muted-foreground">Loading cluster sets…</p>;
+    return <LoadingState label="Loading cluster sets…" />;
   }
   return (
     <div className="space-y-4">
       {(sets.data ?? []).length === 0 ? (
         <Card>
-          <CardContent className="py-10 text-center text-sm text-muted-foreground">
+          <div className="card-body">
             No ClusterSets defined yet.
-          </CardContent>
+          </div>
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {(sets.data ?? []).map((set) => (
             <Card key={set.id}>
-              <CardHeader className="pb-2">
-                <CardTitle className="flex items-center justify-between gap-2 text-base">
+              <div className="card-header">
+                <h2 className="mono-label">
                   <Link
                     to={tenantLink(tenant, `fleet/clustersets/${set.id}`)}
                     className="hover:underline"
@@ -139,7 +139,7 @@ function ClusterSetsTab() {
                     {set.name}
                   </Link>
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     size="sm"
                     onClick={async () => {
                       setActionError(null);
@@ -157,26 +157,26 @@ function ClusterSetsTab() {
                   >
                     Delete
                   </Button>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2 pt-0 text-sm">
+                </h2>
+              </div>
+              <div className="card-body">
                 <div className="flex flex-wrap gap-1">
                   {Object.entries(set.labels).map(([k, v]) => (
-                    <Badge key={k} variant="outline" className="font-mono">
+                    <Badge key={k} variant="neutral" className="font-mono">
                       {k}={v}
                     </Badge>
                   ))}
                 </div>
-                <p className="text-muted-foreground">
+                <p className="u-muted">
                   Members resolve from the label selector server-side.
                 </p>
-              </CardContent>
+              </div>
             </Card>
           ))}
         </div>
       )}
       {actionError && (
-        <p className="text-sm text-destructive" role="alert">
+        <p className="text-sm u-danger" role="alert">
           {actionError}
         </p>
       )}
@@ -192,22 +192,22 @@ function RolloutsTab() {
   });
 
   if (rollouts.loading && !rollouts.data) {
-    return <p className="text-sm text-muted-foreground">Loading rollouts…</p>;
+    return <LoadingState label="Loading rollouts…" />;
   }
   if ((rollouts.data ?? []).length === 0) {
     return (
       <Card>
-        <CardContent className="py-10 text-center text-sm text-muted-foreground">
+        <div className="card-body">
           No rollouts in flight.
-        </CardContent>
+        </div>
       </Card>
     );
   }
   return (
     <Card>
-      <CardContent className="p-0">
+      <div className="card-body">
         <table className="w-full text-sm">
-          <thead className="text-left text-xs text-muted-foreground">
+          <thead className="text-left text-xs u-muted">
             <tr>
               <th className="px-4 py-2 font-medium">Rollout</th>
               <th className="px-4 py-2 font-medium">Target</th>
@@ -230,22 +230,22 @@ function RolloutsTab() {
                 <td className="px-4 py-2 font-mono text-xs">
                   {rollout.target.name}@{rollout.target.version}
                 </td>
-                <td className="px-4 py-2 text-muted-foreground">
+                <td className="px-4 py-2 u-muted">
                   {rollout.stages.map((s) => s.name).join(" → ")}
                 </td>
                 <td className="px-4 py-2">
-                  <Badge variant={ROLLOUT_STATE_VARIANT[rollout.state] ?? "muted"}>
+                  <Badge variant={ROLLOUT_STATE_VARIANT[rollout.state] ?? "neutral"}>
                     {rollout.state}
                   </Badge>
                 </td>
-                <td className="px-4 py-2 text-muted-foreground">
+                <td className="px-4 py-2 u-muted">
                   {formatRelative(rollout.createdAt)}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-      </CardContent>
+      </div>
     </Card>
   );
 }
@@ -257,26 +257,26 @@ function DriftTab() {
   });
 
   if (drift.loading && !drift.data) {
-    return <p className="text-sm text-muted-foreground">Checking for drift…</p>;
+    return <p className="text-sm u-muted">Checking for drift…</p>;
   }
   if ((drift.data ?? []).length === 0) {
     return (
       <Card>
-        <CardContent className="py-10 text-center text-sm text-muted-foreground">
+        <div className="card-body">
           No drift detected — desired and reported state match everywhere.
-        </CardContent>
+        </div>
       </Card>
     );
   }
   return (
     <div className="space-y-3">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm u-muted">
         Drift is report-only in v1 — reconcile via the owning GitOps repo.
       </p>
       <Card>
-        <CardContent className="p-0">
+        <div className="card-body">
           <table className="w-full text-sm">
-            <thead className="text-left text-xs text-muted-foreground">
+            <thead className="text-left text-xs u-muted">
               <tr>
                 <th className="px-4 py-2 font-medium">Cluster</th>
                 <th className="px-4 py-2 font-medium">Resource</th>
@@ -293,21 +293,21 @@ function DriftTab() {
                   <td className="px-4 py-2 font-mono text-xs">
                     {entry.kind}/{entry.resourceRef ?? "unknown"}
                   </td>
-                  <td className="px-4 py-2 text-xs text-muted-foreground">
+                  <td className="px-4 py-2 text-xs u-muted">
                     {entry.detail ?? "—"}
                   </td>
                   <td className="px-4 py-2 font-mono text-xs">{entry.desiredHash}</td>
                   <td className="px-4 py-2 font-mono text-xs text-amber-700 dark:text-amber-400">
                     {entry.reportedHash}
                   </td>
-                  <td className="px-4 py-2 text-muted-foreground">
+                  <td className="px-4 py-2 u-muted">
                     {formatRelative(entry.detectedAt)}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-        </CardContent>
+        </div>
       </Card>
     </div>
   );
@@ -325,13 +325,13 @@ function AgentChannelsTab() {
   const setNameById = new Map((clusterSets.data ?? []).map((s) => [s.id, s.name]));
 
   if ((channels.loading && !channels.data) || (clusterSets.loading && !clusterSets.data)) {
-    return <p className="text-sm text-muted-foreground">Loading agent channels…</p>;
+    return <LoadingState label="Loading agent channels…" />;
   }
   return (
     <Card>
-      <CardContent className="p-0">
+      <div className="card-body">
         <table className="w-full text-sm">
-          <thead className="text-left text-xs text-muted-foreground">
+          <thead className="text-left text-xs u-muted">
             <tr>
               <th className="px-4 py-2 font-medium">ClusterSet</th>
               <th className="px-4 py-2 font-medium">Channel</th>
@@ -346,7 +346,7 @@ function AgentChannelsTab() {
                   {setNameById.get(assignment.clusterSetId) ?? assignment.clusterSetId}
                 </td>
                 <td className="px-4 py-2">
-                  <Badge variant={assignment.channel === "canary" ? "warning" : "secondary"}>
+                  <Badge variant={assignment.channel === "canary" ? "warning" : "neutral"}>
                     {assignment.channel}
                   </Badge>
                 </td>
@@ -355,7 +355,7 @@ function AgentChannelsTab() {
                 </td>
                 <td className="px-4 py-2 text-right">
                   <Button
-                    variant="outline"
+                    variant="secondary"
                     size="sm"
                     onClick={async () => {
                       setError(null);
@@ -385,11 +385,11 @@ function AgentChannelsTab() {
           </tbody>
         </table>
         {error && (
-          <p className="px-4 py-2 text-sm text-destructive" role="alert">
+          <p className="px-4 py-2 text-sm u-danger" role="alert">
             {error}
           </p>
         )}
-      </CardContent>
+      </div>
     </Card>
   );
 }
@@ -402,8 +402,8 @@ export function FleetOverviewPage() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Fleet</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="page-header-title">Fleet</h1>
+        <p className="text-sm u-muted">
           ClusterSets, staged rollouts, drift, and agent upgrade channels.
         </p>
       </div>
@@ -416,8 +416,8 @@ export function FleetOverviewPage() {
             aria-selected={tab === t.id}
             className={
               tab === t.id
-                ? "border-b-2 border-primary px-3 py-2 text-sm font-medium"
-                : "px-3 py-2 text-sm text-muted-foreground hover:text-foreground"
+                ? "border-b-2 u-brand-border px-3 py-2 text-sm font-medium"
+                : "px-3 py-2 text-sm u-muted hover:u-fg"
             }
             onClick={() => setSearchParams({ tab: t.id }, { replace: true })}
           >

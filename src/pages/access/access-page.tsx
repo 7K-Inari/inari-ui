@@ -1,6 +1,6 @@
 import { Link, useParams } from "react-router-dom";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "7k-design-system/react";
 import { MembersTab } from "@/pages/access/members-tab";
 import { RoleMatrix } from "@/pages/access/role-matrix";
 import { RolesTab } from "@/pages/access/roles-tab";
@@ -25,23 +25,23 @@ function IdentityTab({ tenant }: { tenant: string }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <Link to={tenantLink(tenant, "settings/identity/clients")}>
-        <Card className="h-full transition-colors hover:bg-muted/30">
-          <CardHeader>
-            <CardTitle className="text-base">OIDC Clients</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
+        <Card className="h-full transition-colors hover:u-raised/30">
+          <div className="card-header">
+            <h2 className="mono-label">OIDC Clients</h2>
+          </div>
+          <div className="card-body">
             Manage OIDC clients and service accounts for this organization.
-          </CardContent>
+          </div>
         </Card>
       </Link>
       <Link to={tenantLink(tenant, "settings/identity/scopes")}>
-        <Card className="h-full transition-colors hover:bg-muted/30">
-          <CardHeader>
-            <CardTitle className="text-base">Scopes</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
+        <Card className="h-full transition-colors hover:u-raised/30">
+          <div className="card-header">
+            <h2 className="mono-label">Scopes</h2>
+          </div>
+          <div className="card-body">
             Configure audience scopes granted to organization clients.
-          </CardContent>
+          </div>
         </Card>
       </Link>
     </div>
@@ -68,8 +68,8 @@ export function AccessPage() {
             aria-current={active === t.id ? "page" : undefined}
             className={
               active === t.id
-                ? "border-b-2 border-primary px-1 pb-2 text-sm font-medium"
-                : "px-1 pb-2 text-sm text-muted-foreground hover:text-foreground"
+                ? "border-b-2 u-brand-border px-1 pb-2 text-sm font-medium"
+                : "px-1 pb-2 text-sm u-muted hover:u-fg"
             }
           >
             {t.label}

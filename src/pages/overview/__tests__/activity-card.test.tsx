@@ -216,7 +216,7 @@ describe("AllTenantsHome activity section", () => {
     // the fan-out can still be in its skeleton state when the sibling
     // settles, so a bare queryByTestId races and flakes.
     const approvals = await screen.findByTestId("all-approvals");
-    await within(approvals).findByText(/pending|No pending/i);
+    await within(approvals).findAllByText(/No pending approvals across|\d+ pending/);
     await waitFor(() =>
       expect(screen.queryByTestId("all-activity")).not.toBeInTheDocument(),
     );
