@@ -14,7 +14,7 @@ import { setCurrentTenant } from "@/tenant/current";
 
 beforeAll(() => {
   setCurrentTenant("acme");
-  mockServer.listen({ onUnhandledRequest: "error" });
+  mockServer.listen({ onUnhandledFrame: "error" });
 });
 afterEach(() => {
   mockServer.resetHandlers();

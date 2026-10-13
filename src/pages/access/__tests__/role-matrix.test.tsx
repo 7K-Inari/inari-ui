@@ -23,7 +23,7 @@ vi.mock("@/tenant/tenant-context", () => ({
   useTenant: () => ({ tenant: mockTenant }),
 }));
 
-beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
+beforeAll(() => mockServer.listen({ onUnhandledFrame: "error" }));
 afterEach(() => {
   mockServer.resetHandlers();
   m3MockControl.reset();
@@ -258,7 +258,10 @@ describe("RoleMatrix", () => {
     await vi.waitFor(() =>
       expect(screen.getByRole("button", { name: "Save changes" })).toBeDisabled(),
     );
-    expect(screen.getByLabelText("Role for Data")).toHaveValue("role-editor");
+    // The post-save refetch repopulates the select asynchronously.
+    await vi.waitFor(() =>
+      expect(screen.getByLabelText("Role for Data")).toHaveValue("role-editor"),
+    );
     expect(screen.queryByText(/Unknown role/)).not.toBeInTheDocument();
   });
 

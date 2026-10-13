@@ -16,7 +16,7 @@ vi.mock("@/auth/keycloak", () => ({
   keycloak: { updateToken: vi.fn().mockResolvedValue(true) },
 }));
 
-beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
+beforeAll(() => mockServer.listen({ onUnhandledFrame: "error" }));
 afterEach(() => mockServer.resetHandlers());
 afterAll(() => mockServer.close());
 

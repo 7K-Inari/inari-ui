@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import {
@@ -27,7 +27,7 @@ vi.mock("@/tenant/tenant-context", () => ({
   useTenant: () => ({ tenant: "acme" }),
 }));
 
-beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
+beforeAll(() => mockServer.listen({ onUnhandledFrame: "error" }));
 afterEach(() => {
   mockServer.resetHandlers();
   policyMockControl.reset();
@@ -145,7 +145,9 @@ describe("OrgDomainsPage", () => {
         (b) => b.textContent === "Remove",
       )!,
     );
-    expect(screen.queryByText("mail.acme.example")).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByText("mail.acme.example")).not.toBeInTheDocument(),
+    );
     expect(screen.getByText("acme.example")).toBeInTheDocument();
   });
 

@@ -16,7 +16,7 @@ vi.mock("@/tenant/tenant-context", () => ({
   useTenant: () => ({ tenant: mockTenant }),
 }));
 
-beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
+beforeAll(() => mockServer.listen({ onUnhandledFrame: "error" }));
 afterEach(() => {
   mockServer.resetHandlers();
   policyMockControl.reset();
@@ -145,7 +145,7 @@ describe("GitConnectionsPage", () => {
     expect(
       await screen.findByText(/authorization to github was denied/i),
     ).toBeInTheDocument();
-    expect(screen.getByText("ada-dev")).toBeInTheDocument();
+    expect(await screen.findByText("ada-dev")).toBeInTheDocument();
   });
 
   it("disconnects after confirmation", async () => {

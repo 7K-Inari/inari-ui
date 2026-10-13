@@ -16,7 +16,7 @@ vi.mock("@/tenant/tenant-context", () => ({
   useTenant: () => ({ tenant: mockTenant }),
 }));
 
-beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
+beforeAll(() => mockServer.listen({ onUnhandledFrame: "error" }));
 afterEach(() => mockServer.resetHandlers());
 beforeEach(() => {
   mockTenant = "acme";
@@ -137,7 +137,9 @@ describe("RegisterWizardPage", () => {
     mockControl.setClusterStatus("cl-kind-dev", "pending");
     renderWizard("/acme/clusters/new?cluster=cl-kind-dev");
     await screen.findByText("Waiting for the agent to connect…");
-    await user.click(screen.getByRole("button", { name: "Show install command" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Show install command" }),
+    );
     const command = await screen.findByText(/helm install inari-agent/);
     expect(command.textContent).toContain("--set config.registrationToken=");
     expect(command.textContent).toContain("--set config.tenantID=");

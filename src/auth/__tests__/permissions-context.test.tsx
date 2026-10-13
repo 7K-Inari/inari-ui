@@ -11,7 +11,7 @@ vi.mock("@/auth/auth-context", () => ({
   useAuth: () => ({ token: mockToken, authenticated: mockAuthenticated }),
 }));
 
-beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
+beforeAll(() => mockServer.listen({ onUnhandledFrame: "error" }));
 afterEach(() => {
   mockServer.resetHandlers();
   mockToken = "test-token";

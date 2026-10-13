@@ -9,7 +9,7 @@ import {
 import { m3MockControl, rbacMatrixFor } from "@/mocks/fixtures/m3";
 import { mockServer } from "@/mocks/server";
 
-beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
+beforeAll(() => mockServer.listen({ onUnhandledFrame: "error" }));
 afterEach(() => {
   mockServer.resetHandlers();
   m3MockControl.reset();
