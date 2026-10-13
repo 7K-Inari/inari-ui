@@ -63,7 +63,7 @@ export function ValidationStateView({
     );
   }
   return (
-    <div className="space-y-3 rounded-md border border-destructive/40 u-danger-bg/10 p-4">
+    <div className="space-y-3 rounded-md border u-danger-border/40 u-danger-bg/10 p-4">
       <p className="text-sm font-medium u-danger">Validation failed</p>
       <p className="text-sm u-danger" data-testid="validation-error">
         {account.statusMessage ?? "The trust role could not be assumed."}

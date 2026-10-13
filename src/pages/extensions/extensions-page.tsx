@@ -303,7 +303,7 @@ export function ExtensionsPage() {
           )}
           {rotated && (
             <div
-              className="rounded-md border border-border u-raised/40 p-3 text-sm"
+              className="rounded-md border u-border u-raised/40 p-3 text-sm"
               role="status"
             >
               <p className="font-medium">

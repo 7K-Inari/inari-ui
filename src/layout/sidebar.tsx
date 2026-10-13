@@ -9,16 +9,16 @@ import { NAV_SECTIONS } from "@/layout/nav";
 import { tenantLink } from "@/tenant/tenant-link";
 import { useTenant } from "@/tenant/tenant-context";
 
-function useNavCounts(tenant: string) {
+function useNavCounts(tenant: string, enabled = true) {
   const { data: approvals } = useAsyncResource(
     (token) => listApprovalsInbox(token),
     [tenant],
-    { refetchIntervalMs: 30_000 },
+    { refetchIntervalMs: 30_000, enabled },
   );
   const { data: clusters } = useAsyncResource(
     (token) => listClusters(token, tenant),
     [tenant],
-    { refetchIntervalMs: 30_000 },
+    { refetchIntervalMs: 30_000, enabled },
   );
   return {
     pendingApprovals: approvals?.length ?? 0,
@@ -26,21 +26,29 @@ function useNavCounts(tenant: string) {
   };
 }
 
+interface NavCounts {
+  pendingApprovals: number;
+  degradedClusters: number;
+}
+
 export function SidebarNav({
   onNavigate,
   collapsed = false,
+  counts,
 }: {
   onNavigate?: () => void;
   collapsed?: boolean;
+  counts?: NavCounts;
 }) {
   const { tenant } = useTenant();
-  const counts = useNavCounts(tenant);
+  const ownCounts = useNavCounts(tenant, !counts);
+  const effectiveCounts = counts ?? ownCounts;
 
   const badgeFor = (path: string) => {
-    if (path === "approvals" && counts.pendingApprovals > 0)
-      return <Badge variant="warning">{counts.pendingApprovals}</Badge>;
-    if (path === "clusters" && counts.degradedClusters > 0)
-      return <Badge variant="danger">{counts.degradedClusters}</Badge>;
+    if (path === "approvals" && effectiveCounts.pendingApprovals > 0)
+      return <Badge variant="warning">{effectiveCounts.pendingApprovals}</Badge>;
+    if (path === "clusters" && effectiveCounts.degradedClusters > 0)
+      return <Badge variant="danger">{effectiveCounts.degradedClusters}</Badge>;
     return null;
   };
 
@@ -99,13 +107,15 @@ export function SidebarNav({
 }
 
 export function Sidebar() {
+  const { tenant } = useTenant();
+  const counts = useNavCounts(tenant);
   return (
     <>
       <aside className="sidebar sidebar-full" aria-label="Sidebar">
-        <SidebarNav />
+        <SidebarNav counts={counts} />
       </aside>
       <aside className="sidebar sidebar-rail" aria-label="Sidebar">
-        <SidebarNav collapsed />
+        <SidebarNav collapsed counts={counts} />
       </aside>
     </>
   );

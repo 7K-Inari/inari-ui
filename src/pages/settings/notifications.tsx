@@ -214,7 +214,7 @@ function EndpointForm({
                             onClick={() => toggleEvent(opt.value)}
                             className={
                               active
-                                ? "rounded-md border border-transparent bg-primary px-2 py-0.5 text-xs font-medium u-brand-foreground"
+                                ? "rounded-md border border-transparent u-brand-bg px-2 py-0.5 text-xs font-medium u-brand-foreground"
                                 : "tag u-fg"
                             }
                           >
@@ -268,6 +268,7 @@ function EndpointRow({
   onChanged,
   onEdit,
   onTested,
+  confirm,
 }: {
   tenant: string;
   endpoint: NotificationEndpoint;
@@ -276,8 +277,8 @@ function EndpointRow({
   onChanged: () => void;
   onEdit: () => void;
   onTested: (endpointId: string, delivery: NotificationDelivery) => void;
+  confirm: (options: { title: string; body: string; confirmLabel?: string }) => Promise<boolean>;
 }) {
-  const [confirm, confirmDialog] = useConfirm();
   const { token } = useAuth();
   const [busy, setBusy] = React.useState(false);
   const [actionError, setActionError] = React.useState<string | null>(null);
@@ -329,14 +330,10 @@ function EndpointRow({
   };
 
   return (
-    <>
-      {confirmDialog}
-      <tr className="border-t hover:u-raised/30">
-        <td className="px-4 py-2 font-medium">{endpoint.name}</td>
+    <tr className="border-t hover:u-raised/30">
+      <td className="px-4 py-2 font-medium">{endpoint.name}</td>
       <td className="px-4 py-2">
-        <Badge variant={endpoint.kind === "slack" ? "neutral" : "neutral"}>
-          {endpoint.kind}
-        </Badge>
+        <Badge variant="neutral">{endpoint.kind}</Badge>
       </td>
       <td className="px-4 py-2">
         <span
@@ -420,8 +417,6 @@ function EndpointRow({
         </div>
       </td>
     </tr>
-    </>
-  
   );
 }
 
@@ -429,6 +424,7 @@ export function NotificationsPage() {
   const { tenant } = useTenant();
   const { token } = useAuth();
   const { canWriteSettings } = useOrgCapabilities();
+  const [confirm, confirmDialog] = useConfirm();
 
   const {
     data: endpoints,
@@ -496,6 +492,7 @@ export function NotificationsPage() {
 
   return (
     <div className="space-y-4">
+      {confirmDialog}
       <SettingsSectionHeader
         title="Notifications"
         description="Send tenant events to Slack or a webhook endpoint you control."
@@ -573,6 +570,7 @@ export function NotificationsPage() {
                     onChanged={refetch}
                     onEdit={() => openEdit(ep)}
                     onTested={onTested}
+                    confirm={confirm}
                   />
                 ))}
               </tbody>

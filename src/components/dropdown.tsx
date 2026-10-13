@@ -39,9 +39,16 @@ export function Dropdown({ trigger, label, children, align = "start", className 
 
   const close = () => setOpen(false);
 
+  const triggerRef = React.useRef<HTMLElement | null>(null);
+
+  const closeAndFocusTrigger = () => {
+    setOpen(false);
+    triggerRef.current?.focus();
+  };
+
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Escape") {
-      setOpen(false);
+      closeAndFocusTrigger();
       return;
     }
     if (!open) {
@@ -81,6 +88,13 @@ export function Dropdown({ trigger, label, children, align = "start", className 
     "aria-haspopup": "menu",
     "aria-expanded": open,
     "aria-label": label,
+    ref: (el: HTMLElement | null) => {
+      triggerRef.current = el;
+      const originalRef = (trigger as { ref?: React.Ref<HTMLElement> }).ref;
+      if (typeof originalRef === "function") originalRef(el);
+      else if (originalRef && typeof originalRef === "object")
+        (originalRef as React.MutableRefObject<HTMLElement | null>).current = el;
+    },
     onClick: (e: React.MouseEvent) => {
       trigger.props.onClick?.(e);
       setOpen((v) => !v);

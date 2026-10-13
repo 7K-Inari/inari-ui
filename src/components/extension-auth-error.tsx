@@ -23,7 +23,7 @@ export function ExtensionAuthErrorNotice({
     return (
       <div
         role="alert"
-        className="space-y-2 rounded-md border border-destructive/40 u-danger-bg/10 p-3 text-sm"
+        className="space-y-2 rounded-md border u-danger-border/40 u-danger-bg/10 p-3 text-sm"
       >
         <div className="flex items-center gap-2 font-medium u-danger">
           <ShieldAlert className="h-4 w-4" aria-hidden />
@@ -47,7 +47,7 @@ export function ExtensionAuthErrorNotice({
     return (
       <div
         role="alert"
-        className="space-y-2 rounded-md border border-destructive/40 u-danger-bg/10 p-3 text-sm"
+        className="space-y-2 rounded-md border u-danger-border/40 u-danger-bg/10 p-3 text-sm"
       >
         <div className="flex items-center gap-2 font-medium u-danger">
           <KeyRound className="h-4 w-4" aria-hidden />
@@ -60,7 +60,7 @@ export function ExtensionAuthErrorNotice({
           <button
             type="button"
             onClick={onRetry}
-            className="rounded-md border border-destructive/40 px-2 py-1 text-xs font-medium u-danger hover:u-danger-bg/10"
+            className="rounded-md border u-danger-border/40 px-2 py-1 text-xs font-medium u-danger hover:u-danger-bg/10"
           >
             Retry sign-in
           </button>
@@ -72,7 +72,7 @@ export function ExtensionAuthErrorNotice({
   return (
     <div
       role="alert"
-      className="space-y-2 rounded-md border border-destructive/40 u-danger-bg/10 p-3 text-sm"
+      className="space-y-2 rounded-md border u-danger-border/40 u-danger-bg/10 p-3 text-sm"
     >
       <div className="flex items-center gap-2 font-medium u-danger">
         <ShieldAlert className="h-4 w-4" aria-hidden />

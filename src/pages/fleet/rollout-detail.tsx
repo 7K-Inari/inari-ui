@@ -59,7 +59,7 @@ function StageCard({
           </h2>
           <div className="flex items-center gap-2">
             {stage.gates.map((gate) => (
-              <Badge variant={GATE_VARIANT[gate.type] ?? "neutral"}>
+              <Badge key={`${gate.type}-${gate.when}`} variant={GATE_VARIANT[gate.type] ?? "neutral"}>
                 {gate.type} gate ({gate.when}
                 {gate.waitSeconds != null ? `, ${gate.waitSeconds}s` : ""})
               </Badge>

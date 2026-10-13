@@ -6,10 +6,7 @@ import { exportAuditEvents, listAuditEvents } from "@/api/audit";
 import type { AuditEvent, AuditFilters } from "@/api/audit";
 import { useAsyncResource } from "@/api/hooks";
 import { useAuth } from "@/auth/auth-context";
-import { Badge , DataTable } from "7k-design-system/react";
-import { Button } from "7k-design-system/react";
-import { Card } from "7k-design-system/react";
-import { Input } from "7k-design-system/react";
+import { Badge, Button, Card, DataTable, Input } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 

@@ -16,7 +16,7 @@ export function FallbackBlockedError({
   return (
     <div
       role="alert"
-      className="space-y-2 rounded-md border border-destructive/40 u-danger-bg/10 p-3 text-sm"
+      className="space-y-2 rounded-md border u-danger-border/40 u-danger-bg/10 p-3 text-sm"
     >
       <div className="flex items-center gap-2 font-medium u-danger">
         <ShieldAlert className="h-4 w-4" aria-hidden />
@@ -28,9 +28,12 @@ export function FallbackBlockedError({
         Connect a git account, then try again.
       </p>
       {detail && <p className="text-xs u-muted">{detail}</p>}
-      <Link to={tenantLink(tenant, "settings/org/git-connections")} className="btn btn-secondary btn-sm">
-          Connect a git account
-        </Link>
+      <Link
+        to={tenantLink(tenant, "settings/org/git-connections")}
+        className="btn btn-secondary btn-sm"
+      >
+        Connect a git account
+      </Link>
     </div>
   );
 }

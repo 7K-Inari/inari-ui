@@ -15,16 +15,20 @@ export function useConfirm() {
   const [state, setState] = React.useState<
     (ConfirmOptions & { resolve: (ok: boolean) => void }) | null
   >(null);
+  const pendingRef = React.useRef<((ok: boolean) => void) | null>(null);
 
   const confirm = React.useCallback(
     (options: ConfirmOptions) =>
       new Promise<boolean>((resolve) => {
+        pendingRef.current?.(false);
+        pendingRef.current = resolve;
         setState({ ...options, resolve });
       }),
     [],
   );
 
   const close = (ok: boolean) => {
+    pendingRef.current = null;
     state?.resolve(ok);
     setState(null);
   };
