@@ -25,11 +25,6 @@ const FIXED_NOW = new Date("2026-10-13T12:00:00Z");
 async function preparePage(page: Page) {
   // Freeze time so relative timestamps ("15m ago") are stable in snapshots.
   await page.clock.install({ now: FIXED_NOW });
-  // CDN fonts are unreachable in some environments; stub them so rendering
-  // (and screenshots) use the same fallback fonts everywhere.
-  await page.route("**/cdn.jsdelivr.net/**", (route) =>
-    route.fulfill({ status: 200, contentType: "text/css", body: "" }),
-  );
   // No extension remoteEntry in this environment; fail it fast and
   // deterministically so the error UI settles before screenshots.
   await page.route("**/extensions/**/remoteEntry.js", (route) =>

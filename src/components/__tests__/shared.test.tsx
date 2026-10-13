@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, useLocation } from "react-router-dom";
 import { describe, expect, it } from "vitest";
@@ -152,7 +152,10 @@ describe("Dropdown", () => {
     screen.getByRole("button", { name: "More actions" }).focus();
     await user.keyboard("{ArrowDown}");
     expect(await screen.findByRole("menu")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Item one" })).toHaveFocus();
+    // Focus moves on the next animation frame.
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: "Item one" })).toHaveFocus(),
+    );
   });
 });
 
