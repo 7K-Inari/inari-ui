@@ -51,7 +51,7 @@ export function TemplateListPage() {
               </div>
               <p className="card-lede">{template.description}</p>
             </div>
-            <div className="card-body">
+            <div className="card-body flex flex-1 flex-col">
               <div className="flex flex-wrap gap-1">
                 <TemplateScopeBadge scope={template.scope} />
                 {template.tags.map((tag) => (
@@ -60,9 +60,14 @@ export function TemplateListPage() {
                   </Badge>
                 ))}
               </div>
-              <Link to={tenantLink(tenant, `templates/${template.name}/scaffold`)} className="btn btn-primary btn-sm">
+              <div className="mt-auto flex justify-end pt-3">
+                <Link
+                  to={tenantLink(tenant, `templates/${template.name}/scaffold`)}
+                  className="btn btn-primary btn-sm"
+                >
                   Scaffold
                 </Link>
+              </div>
             </div>
           </Card>
         ))}

@@ -40,13 +40,17 @@ export function FilterBar({
 }: FilterBarProps) {
   const [params, setParams] = useSearchParams();
 
-  const setParam = (key: string, value: string | null) => {
-    const next = new URLSearchParams(params);
-    if (value === null || value === "" || value === "all") next.delete(key);
-    else next.set(key, value);
-    for (const p of resetParams) next.delete(p);
-    setParams(next, { replace: true });
-  };
+  const resetParamsKey = resetParams.join(" ");
+  const setParam = React.useCallback(
+    (key: string, value: string | null) => {
+      const next = new URLSearchParams(params);
+      if (value === null || value === "" || value === "all") next.delete(key);
+      else next.set(key, value);
+      for (const p of resetParamsKey.split(" ")) if (p) next.delete(p);
+      setParams(next, { replace: true });
+    },
+    [params, setParams, resetParamsKey],
+  );
 
   // Debounced free-text search so typing doesn't fire a request per keystroke.
   const urlValue = params.get(searchParam) ?? "";
@@ -56,8 +60,7 @@ export function FilterBar({
     if (!debounceMs || draft === urlValue) return;
     const t = setTimeout(() => setParam(searchParam, draft), debounceMs);
     return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [draft, urlValue, debounceMs]);
+  }, [draft, urlValue, debounceMs, searchParam, setParam]);
 
   const activeCount =
     (params.get(searchParam) ? 1 : 0) +
