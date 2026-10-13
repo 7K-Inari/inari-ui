@@ -22,6 +22,7 @@ import {
 } from "@/pages/cloud-accounts/connect-wizard";
 import { CopyButton } from "@/pages/cloud-accounts/copy-button";
 import { CloudAccountStatusBadge } from "@/pages/cloud-accounts/status-badge";
+import { LoadingState } from "@/components/loading";
 
 export function CloudAccountDetailPage() {
   const { tenant } = useTenant();
@@ -83,7 +84,7 @@ export function CloudAccountDetailPage() {
     );
   }
   if (loading && !account) {
-    return <p className="text-sm u-muted">Loading cloud account…</p>;
+    return <LoadingState label="Loading cloud account…" />;
   }
   if (!account) return null;
 

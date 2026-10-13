@@ -27,6 +27,7 @@ import {
 } from "@/pages/settings/components/capability-gate";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 function schemaFor(isCreate: boolean): Record<string, unknown> {
   const required = [
@@ -234,7 +235,7 @@ export function IdpBrokeringPage() {
       )}
 
       {!error && loading && !provider && (
-        <p className="text-sm u-muted">Loading SSO provider…</p>
+        <LoadingState label="Loading SSO provider…" />
       )}
 
       {actionError && (

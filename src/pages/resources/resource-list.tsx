@@ -10,6 +10,7 @@ import type { ResourceHealth, ResourceInstanceSummary } from "@/api/types";
 import { Badge, Button, Card, DataTable, type DataTableColumn } from "7k-design-system/react";
 import { useTenant } from "@/tenant/tenant-context";
 import { ALL_TENANTS, tenantLink } from "@/tenant/tenant-link";
+import { LoadingState } from "@/components/loading";
 
 export function HealthBadge({ health }: { health: ResourceHealth }) {
   const variant =
@@ -148,7 +149,7 @@ export function ResourceListPage() {
       {actionError && <p className="text-sm u-danger">{actionError}</p>}
 
       {!error && loading && !resources && (
-        <p className="text-sm u-muted">Loading resources…</p>
+        <LoadingState label="Loading resources…" />
       )}
 
       {!error && resources && visible.length === 0 && (

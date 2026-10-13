@@ -16,6 +16,7 @@ import { Button } from "7k-design-system/react";
 import { Card } from "7k-design-system/react";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
+import { LoadingState } from "@/components/loading";
 
 const TARGET_STATUS_VARIANT: Record<string, "success" | "warning" | "danger" | "neutral"> = {
   healthy: "success",
@@ -145,7 +146,7 @@ export function RolloutDetailPage() {
   }
 
   if (resource.loading && !resource.data) {
-    return <p className="text-sm u-muted">Loading rollout…</p>;
+    return <LoadingState label="Loading rollout…" />;
   }
   if (!resource.data) return null;
   const data = resource.data.rollout;

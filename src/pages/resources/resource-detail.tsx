@@ -22,6 +22,7 @@ import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
 import { HealthBadge } from "@/pages/resources/resource-list";
 import { UpgradeCard } from "@/pages/resources/upgrade-flow";
+import { LoadingState } from "@/components/loading";
 
 function ActionsMenu({ resource }: { resource: ResourceInstanceDetail }) {
   const [open, setOpen] = React.useState(false);
@@ -300,7 +301,7 @@ export function ResourceDetailPage() {
   }
 
   if (loading || !resource) {
-    return <p className="text-sm u-muted">Loading resource…</p>;
+    return <LoadingState label="Loading resource…" />;
   }
 
   return (

@@ -21,6 +21,7 @@ import { Input } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
+import { LoadingState } from "@/components/loading";
 
 const TABS = [
   { id: "clustersets", label: "ClusterSets" },
@@ -115,7 +116,7 @@ function ClusterSetsTab() {
   const [actionError, setActionError] = React.useState<string | null>(null);
 
   if (sets.loading && !sets.data) {
-    return <p className="text-sm u-muted">Loading cluster sets…</p>;
+    return <LoadingState label="Loading cluster sets…" />;
   }
   return (
     <div className="space-y-4">
@@ -191,7 +192,7 @@ function RolloutsTab() {
   });
 
   if (rollouts.loading && !rollouts.data) {
-    return <p className="text-sm u-muted">Loading rollouts…</p>;
+    return <LoadingState label="Loading rollouts…" />;
   }
   if ((rollouts.data ?? []).length === 0) {
     return (
@@ -324,7 +325,7 @@ function AgentChannelsTab() {
   const setNameById = new Map((clusterSets.data ?? []).map((s) => [s.id, s.name]));
 
   if ((channels.loading && !channels.data) || (clusterSets.loading && !clusterSets.data)) {
-    return <p className="text-sm u-muted">Loading agent channels…</p>;
+    return <LoadingState label="Loading agent channels…" />;
   }
   return (
     <Card>

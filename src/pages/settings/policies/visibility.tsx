@@ -15,6 +15,7 @@ import { formatRelative } from "@/lib/time";
 import { useOrgCapabilities } from "@/pages/settings/components/capability-gate";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 function RuleRow({
   tenant,
@@ -105,7 +106,7 @@ export function VisibilityPage() {
       )}
 
       {!error && loading && !rules && (
-        <p className="text-sm u-muted">Loading visibility rules…</p>
+        <LoadingState label="Loading visibility rules…" />
       )}
 
       {!error && rules && rules.length === 0 && (

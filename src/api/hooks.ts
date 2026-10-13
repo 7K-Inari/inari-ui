@@ -59,7 +59,15 @@ export function useAsyncResource<T>(
       if (typeof document !== "undefined" && document.hidden) return;
       setTick((t) => t + 1);
     }, refetchIntervalMs);
-    return () => clearInterval(id);
+    // Refresh immediately when the tab becomes visible again.
+    const onVisible = () => {
+      if (!document.hidden) setTick((t) => t + 1);
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
   }, [enabled, refetchIntervalMs]);
 
   const refetch = React.useCallback(() => setTick((t) => t + 1), []);

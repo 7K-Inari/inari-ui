@@ -22,6 +22,7 @@ import {
 } from "@/pages/settings/components/capability-gate";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 type PolicyPack = components["schemas"]["PolicyPack"];
 type PolicyAssignment = components["schemas"]["PolicyAssignment"];
@@ -149,7 +150,7 @@ export function PolicyPacksPage() {
       )}
 
       {!error && loading && !packs && (
-        <p className="text-sm u-muted">Loading policy packs…</p>
+        <LoadingState label="Loading policy packs…" />
       )}
 
       {actionError && (

@@ -9,6 +9,7 @@ import { useAuth } from "@/auth/auth-context";
 import { Badge, Button, Card, DataTable, Input } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 type AuditListQuery = paths["/api/v1/tenants/{org}/audit"]["get"]["parameters"]["query"];
 
@@ -150,7 +151,7 @@ export function AuditLogPage() {
       )}
 
       {!error && loading && !events && (
-        <p className="text-sm u-muted">Loading audit events…</p>
+        <LoadingState label="Loading audit events…" />
       )}
 
       {!error && events && items.length === 0 && (

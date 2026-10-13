@@ -10,6 +10,7 @@ import { Input } from "7k-design-system/react";
 import { useOrgCapabilities } from "@/pages/settings/components/capability-gate";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 interface GitConfig {
   repo: string;
@@ -157,7 +158,7 @@ export function GitSettingsPage() {
       )}
 
       {!error && loading && !config && (
-        <p className="text-sm u-muted">Loading git config…</p>
+        <LoadingState label="Loading git config…" />
       )}
 
       {!error && config && !loading && (

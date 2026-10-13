@@ -17,6 +17,7 @@ import { formatRelative } from "@/lib/time";
 import { useOrgCapabilities } from "@/pages/settings/components/capability-gate";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 function tokenState(t: RegistrationToken): "used" | "expired" | "active" {
   if (t.usedAt) return "used";
@@ -246,7 +247,7 @@ export function RegistrationTokensPage() {
       )}
 
       {!error && selectedCluster && loading && !tokens && (
-        <p className="text-sm u-muted">Loading tokens…</p>
+        <LoadingState label="Loading tokens…" />
       )}
 
       {tokens && tokens.length === 0 && (

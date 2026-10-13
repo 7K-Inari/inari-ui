@@ -15,6 +15,7 @@ import { Card } from "7k-design-system/react";
 import { CapabilityGate } from "@/pages/settings/components/capability-gate";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 export function OidcScopesPage() {
   const { tenant } = useTenant();
@@ -78,7 +79,7 @@ export function OidcScopesPage() {
       )}
 
       {!error && loading && !scopes && (
-        <p className="text-sm u-muted">Loading scopes…</p>
+        <LoadingState label="Loading scopes…" />
       )}
 
       {actionError && (

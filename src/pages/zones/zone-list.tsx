@@ -8,6 +8,7 @@ import { Card } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
+import { LoadingState } from "@/components/loading";
 
 const STATUS_CONFIG: Record<
   ZoneStatus,
@@ -69,7 +70,7 @@ export function ZoneListPage() {
       )}
 
       {!error && loading && !zones && (
-        <p className="text-sm u-muted">Loading zones…</p>
+        <LoadingState label="Loading zones…" />
       )}
 
       {!error && zones && zones.length === 0 && (

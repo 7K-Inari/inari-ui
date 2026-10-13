@@ -27,6 +27,7 @@ import { Card } from "7k-design-system/react";
 import { Input } from "7k-design-system/react";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
+import { LoadingState } from "@/components/loading";
 
 const NAME_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 const STEPS = ["Configure", "Review", "Status"] as const;
@@ -225,7 +226,7 @@ export function ScaffoldWizardPage() {
     );
   }
   if (!template.data) {
-    return <p className="text-sm u-muted">Loading template…</p>;
+    return <LoadingState label="Loading template…" />;
   }
   const tpl = template.data;
 

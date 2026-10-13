@@ -6,6 +6,7 @@ import { Badge } from "7k-design-system/react";
 import { Card } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 const KIND_LABELS: Record<PlatformResourceKind, string> = {
   "keycloak-realm": "Keycloak realm",
@@ -56,7 +57,7 @@ export function PlatformPage() {
           </Card>
         )}
         {!apps.error && apps.loading && !apps.data && (
-          <p className="text-sm u-muted">Loading platform apps…</p>
+          <LoadingState label="Loading platform apps…" />
         )}
         {!apps.error && apps.data && apps.data.items.length === 0 && (
           <Card>
@@ -107,7 +108,7 @@ export function PlatformPage() {
           </Card>
         )}
         {!resources.error && resources.loading && !resources.data && (
-          <p className="text-sm u-muted">Loading platform resources…</p>
+          <LoadingState label="Loading platform resources…" />
         )}
         {!resources.error && resources.data && resources.data.length === 0 && (
           <Card>

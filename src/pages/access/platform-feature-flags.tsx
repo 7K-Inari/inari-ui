@@ -11,6 +11,7 @@ import { useAuth } from "@/auth/auth-context";
 import { Badge } from "7k-design-system/react";
 import { Button } from "7k-design-system/react";
 import { Card } from "7k-design-system/react";
+import { LoadingState } from "@/components/loading";
 
 // Platform feature flags (/platform/feature-flags): runtime kill-switches and
 // toggles from the feature-flags API (kill-switch v2, ADR-0016). Platform
@@ -61,7 +62,7 @@ export function PlatformFeatureFlagsPage() {
       )}
 
       {!error && loading && !flags && (
-        <p className="text-sm u-muted">Loading feature flags…</p>
+        <LoadingState label="Loading feature flags…" />
       )}
 
       {!error && flags && flags.length === 0 && (

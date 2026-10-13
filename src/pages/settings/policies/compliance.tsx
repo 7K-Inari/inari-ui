@@ -12,6 +12,7 @@ import { Input } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 type Policy = components["schemas"]["Policy"];
 type PolicyDecision = components["schemas"]["PolicyDecision"];
@@ -114,7 +115,7 @@ export function CompliancePage() {
       )}
 
       {!error && loading && !policies && (
-        <p className="text-sm u-muted">Loading policies…</p>
+        <LoadingState label="Loading policies…" />
       )}
 
       {!error && policies && policies.length === 0 && (

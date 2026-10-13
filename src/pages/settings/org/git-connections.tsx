@@ -19,6 +19,7 @@ import { Card } from "7k-design-system/react";
 import { formatRelative } from "@/lib/time";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 const PROVIDER_META: Record<
   string,
@@ -219,7 +220,7 @@ export function GitConnectionsPage() {
       )}
 
       {!error && loading && !data && (
-        <p className="text-sm u-muted">Loading git connections…</p>
+        <LoadingState label="Loading git connections…" />
       )}
 
       {notice && (

@@ -7,6 +7,7 @@ import { Badge } from "7k-design-system/react";
 import { Card } from "7k-design-system/react";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
+import { LoadingState } from "@/components/loading";
 
 export function TemplateListPage() {
   const { tenant } = useTenant();
@@ -30,7 +31,7 @@ export function TemplateListPage() {
       )}
 
       {templates.loading && !templates.data && (
-        <p className="text-sm u-muted">Loading templates…</p>
+        <LoadingState label="Loading templates…" />
       )}
 
       {templates.data && templates.data.length === 0 && (

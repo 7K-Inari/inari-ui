@@ -11,6 +11,7 @@ import { Input } from "7k-design-system/react";
 import { useOrgCapabilities } from "@/pages/settings/components/capability-gate";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 function OrgProfileForm({
   tenant,
@@ -122,7 +123,7 @@ export function OrgProfilePage() {
       )}
 
       {!error && loading && !organization && (
-        <p className="text-sm u-muted">Loading organization…</p>
+        <LoadingState label="Loading organization…" />
       )}
 
       {!error && !loading && !organization && (

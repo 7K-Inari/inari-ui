@@ -19,6 +19,7 @@ import {
 } from "@/pages/settings/components/capability-gate";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 type Exemption = components["schemas"]["Exemption"];
 
@@ -113,7 +114,7 @@ export function ExemptionsPage() {
       )}
 
       {!error && loading && !exemptions && (
-        <p className="text-sm u-muted">Loading exemptions…</p>
+        <LoadingState label="Loading exemptions…" />
       )}
 
       {actionError && (

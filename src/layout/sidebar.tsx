@@ -33,11 +33,9 @@ interface NavCounts {
 
 export function SidebarNav({
   onNavigate,
-  collapsed = false,
   counts,
 }: {
   onNavigate?: () => void;
-  collapsed?: boolean;
   counts?: NavCounts;
 }) {
   const { tenant } = useTenant();
@@ -56,12 +54,12 @@ export function SidebarNav({
     <>
       <div className="sidebar-logo">
         <ProjectIcon size={24} />
-        {!collapsed && <span className="sidebar-wordmark">INARI</span>}
+        <span className="sidebar-wordmark">INARI</span>
       </div>
       <nav className="nav nav-vertical sidebar-nav" aria-label="Primary">
         {NAV_SECTIONS.map((section, i) => (
           <div key={section.title ?? `section-${i}`} className="sidebar-group">
-            {section.title && !collapsed && (
+            {section.title && (
               <p className="mono-label sidebar-group-label">{section.title}</p>
             )}
             <ul>
@@ -75,32 +73,28 @@ export function SidebarNav({
                     className={({ isActive }) =>
                       `nav-item nav-item-accent${isActive ? " active" : ""}`
                     }
-                    aria-label={collapsed ? item.label : undefined}
+                    aria-label={item.label}
                   >
                     <item.icon size={16} aria-hidden="true" />
-                    {!collapsed && <span className="sidebar-item-label">{item.label}</span>}
-                    {!collapsed && badge && <span className="sidebar-item-badge">{badge}</span>}
+                    <span className="sidebar-item-label">{item.label}</span>
+                    {badge && <span className="sidebar-item-badge">{badge}</span>}
                   </NavLink>
                 );
                 return (
                   <li key={item.path}>
-                    {collapsed ? (
-                      <Tooltip content={item.label}>{link}</Tooltip>
-                    ) : (
-                      link
-                    )}
+                    <Tooltip content={item.label} position="right">
+                      {link}
+                    </Tooltip>
                   </li>
                 );
               })}
             </ul>
           </div>
         ))}
-        {!collapsed && (
-          <div className="sidebar-group sidebar-extensions">
-            <p className="mono-label sidebar-group-label">Extensions</p>
-            <ExtensionNavItems tenant={tenant} onNavigate={onNavigate} />
-          </div>
-        )}
+        <div className="sidebar-group sidebar-extensions">
+          <p className="mono-label sidebar-group-label">Extensions</p>
+          <ExtensionNavItems tenant={tenant} onNavigate={onNavigate} />
+        </div>
       </nav>
     </>
   );
@@ -110,13 +104,8 @@ export function Sidebar() {
   const { tenant } = useTenant();
   const counts = useNavCounts(tenant);
   return (
-    <>
-      <aside className="sidebar sidebar-full" aria-label="Sidebar">
-        <SidebarNav counts={counts} />
-      </aside>
-      <aside className="sidebar sidebar-rail" aria-label="Sidebar">
-        <SidebarNav collapsed counts={counts} />
-      </aside>
-    </>
+    <aside className="sidebar" aria-label="Sidebar">
+      <SidebarNav counts={counts} />
+    </aside>
   );
 }

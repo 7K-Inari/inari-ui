@@ -14,6 +14,7 @@ import {
 } from "@/pages/settings/components/capability-gate";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 const DOMAIN_PATTERN =
   /^(\*\.)?[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/;
@@ -107,7 +108,7 @@ export function OrgDomainsPage() {
       )}
 
       {!error && loading && !provider && (
-        <p className="text-sm u-muted">Loading domains…</p>
+        <LoadingState label="Loading domains…" />
       )}
 
       {actionError && (

@@ -30,6 +30,7 @@ import {
 } from "@/pages/settings/components/capability-gate";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 const PROVIDER_LABELS: Record<SecretStoreProviderKey, string> = {
   awsSM: "AWS Secrets Manager",
@@ -342,7 +343,7 @@ export function EsoStoresPage() {
       )}
 
       {!error && loading && !stores && (
-        <p className="text-sm u-muted">Loading secret stores…</p>
+        <LoadingState label="Loading secret stores…" />
       )}
 
       {actionError && (

@@ -26,6 +26,7 @@ import {
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { ClientSecretDialog } from "@/pages/settings/identity/components/client-secret-dialog";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 const CLIENT_SCHEMA: Record<string, unknown> = {
   type: "object",
@@ -196,7 +197,7 @@ export function OidcClientsPage() {
       )}
 
       {!error && loading && !clients && (
-        <p className="text-sm u-muted">Loading OIDC clients…</p>
+        <LoadingState label="Loading OIDC clients…" />
       )}
 
       {actionError && (

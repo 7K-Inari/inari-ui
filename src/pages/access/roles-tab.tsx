@@ -22,6 +22,7 @@ import {
   useOrgCapabilities,
 } from "@/pages/settings/components/capability-gate";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 const NAME_PATTERN = /^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/;
 
@@ -302,7 +303,7 @@ export function RolesTab() {
     );
   }
   if (loading && !roles) {
-    return <p className="text-sm u-muted">Loading roles…</p>;
+    return <LoadingState label="Loading roles…" />;
   }
 
   const editRole = editing && editing !== "new"

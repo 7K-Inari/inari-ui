@@ -17,6 +17,7 @@ import { ApiError } from "@/api/client";
 import { checkRemoteEntryHealth } from "@/ext/load-extension";
 import { useExtensions, type ExtensionLoadState } from "@/ext/registry";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 const STATE_VARIANT: Record<ExtensionLoadState, "neutral" | "success" | "danger"> = {
   loading: "neutral",
@@ -238,7 +239,7 @@ export function ExtensionsPage() {
         </div>
         <div className="card-body">
           {backend.loading && !backend.data ? (
-            <p className="text-sm u-muted">Loading backend extensions…</p>
+            <LoadingState label="Loading backend extensions…" />
           ) : (backend.data ?? []).length === 0 ? (
             <p className="text-sm u-muted">No backend extensions installed.</p>
           ) : (

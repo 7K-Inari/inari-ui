@@ -17,6 +17,7 @@ import {
 import { resolveTenant } from "@/tenant/current";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
+import { LoadingState } from "@/components/loading";
 
 // Sentinel for the per-row "No role" option: a team with no mapping holds no
 // tenant ClusterRole.
@@ -157,7 +158,7 @@ export function RoleMatrix() {
     );
   }
   if ((loading && !matrix) || rolesLoading && !roles) {
-    return <p className="text-sm u-muted">Loading role assignments…</p>;
+    return <LoadingState label="Loading role assignments…" />;
   }
   if (!matrix || matrix.groups.length === 0) {
     return (

@@ -28,6 +28,7 @@ import { formatRelative } from "@/lib/time";
 import { useOrgCapabilities } from "@/pages/settings/components/capability-gate";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 const EVENT_GROUPS = [...new Set(EVENT_OPTIONS.map((o) => o.group))];
 
@@ -516,7 +517,7 @@ export function NotificationsPage() {
       )}
 
       {!error && loading && !endpoints && (
-        <p className="text-sm u-muted">Loading endpoints…</p>
+        <LoadingState label="Loading endpoints…" />
       )}
 
       {formOpen && (

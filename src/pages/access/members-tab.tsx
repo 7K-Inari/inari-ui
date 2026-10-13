@@ -25,6 +25,7 @@ import {
   useOrgCapabilities,
 } from "@/pages/settings/components/capability-gate";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 // Fallback while the roles list loads: the four built-ins are seeded per
 // tenant (ADR-0013), so "viewer" always resolves.
@@ -362,7 +363,7 @@ function TeamMembersPanel({
     );
   }
   if (loading && !members) {
-    return <p className="px-4 py-3 text-sm u-muted">Loading members…</p>;
+    return <LoadingState label="Loading members…" />;
   }
 
   return (
@@ -468,7 +469,7 @@ function TeamsSection({ roles }: { roles: Role[] | null }) {
       )}
 
       {!error && loading && !teams && (
-        <p className="text-sm u-muted">Loading teams…</p>
+        <LoadingState label="Loading teams…" />
       )}
 
       {!error && teams && teams.length === 0 && (
@@ -608,7 +609,7 @@ export function MembersTab() {
         )}
 
         {!error && loading && !members && (
-          <p className="text-sm u-muted">Loading members…</p>
+          <LoadingState label="Loading members…" />
         )}
 
         {!error && members && members.length === 0 && (

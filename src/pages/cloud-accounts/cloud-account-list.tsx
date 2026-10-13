@@ -7,6 +7,7 @@ import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
 import { CloudAccountStatusBadge } from "@/pages/cloud-accounts/status-badge";
+import { LoadingState } from "@/components/loading";
 
 export function CloudAccountListPage() {
   const { tenant } = useTenant();
@@ -40,7 +41,7 @@ export function CloudAccountListPage() {
       )}
 
       {!error && loading && !accounts && (
-        <p className="text-sm u-muted">Loading cloud accounts…</p>
+        <LoadingState label="Loading cloud accounts…" />
       )}
 
       {!error && accounts && accounts.length === 0 && (

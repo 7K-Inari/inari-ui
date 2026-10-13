@@ -11,6 +11,7 @@ import { useAuth } from "@/auth/auth-context";
 import { Button } from "7k-design-system/react";
 import { Card } from "7k-design-system/react";
 import { Input } from "7k-design-system/react";
+import { LoadingState } from "@/components/loading";
 
 // Platform-level RBAC console (/platform/access): lists platform admins and
 // grants/revokes membership in the Keycloak platform-admins group via the
@@ -76,7 +77,7 @@ export function PlatformAccessPage() {
       )}
 
       {!error && loading && !admins && (
-        <p className="text-sm u-muted">Loading platform admins…</p>
+        <LoadingState label="Loading platform admins…" />
       )}
 
       {!error && admins && admins.length === 0 && (

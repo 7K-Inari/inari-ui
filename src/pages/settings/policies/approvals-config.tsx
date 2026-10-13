@@ -21,6 +21,7 @@ import {
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
+import { LoadingState } from "@/components/loading";
 
 export function ApprovalsConfigPage() {
   const { tenant } = useTenant();
@@ -121,7 +122,7 @@ export function ApprovalsConfigPage() {
       )}
 
       {!error && loading && !config && (
-        <p className="text-sm u-muted">Loading approval config…</p>
+        <LoadingState label="Loading approval config…" />
       )}
 
       {actionError && (

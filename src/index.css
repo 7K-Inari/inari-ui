@@ -80,78 +80,7 @@ body {
   letter-spacing: 0.06em;
 }
 
-/* Token-based utilities (DS role tokens, no palette hexes) */
-.u-muted {
-  color: var(--text-secondary);
-}
-.u-danger {
-  color: var(--status-danger);
-}
-.u-raised {
-  background: var(--bg-raised);
-}
-.u-fg {
-  color: var(--text-primary);
-}
-.u-brand {
-  color: var(--brand-secondary);
-}
-.u-base {
-  background: var(--bg-base);
-}
-.u-danger-bg {
-  background: var(--status-danger);
-}
-.u-brand-border {
-  border-color: var(--brand-secondary);
-}
-.u-brand-accent {
-  accent-color: var(--brand-primary);
-}
-.u-brand-bg {
-  background: var(--brand-primary);
-}
-.u-brand-foreground {
-  color: var(--text-on-brand);
-}
-/* Opacity and hover variants of the plain utilities above. Tailwind cannot
-   generate modifiers for hand-written classes, so define them explicitly. */
-.u-raised\/50 {
-  background: color-mix(in srgb, var(--bg-raised) 50%, transparent);
-}
-.u-raised\/40 {
-  background: color-mix(in srgb, var(--bg-raised) 40%, transparent);
-}
-.u-raised\/20 {
-  background: color-mix(in srgb, var(--bg-raised) 20%, transparent);
-}
-.u-muted\/50 {
-  color: color-mix(in srgb, var(--text-secondary) 50%, transparent);
-}
-.u-danger-bg\/10 {
-  background: color-mix(in srgb, var(--status-danger) 10%, transparent);
-}
-.hover\:u-raised\/30:hover {
-  background: color-mix(in srgb, var(--bg-raised) 30%, transparent);
-}
-.hover\:u-raised\/50:hover {
-  background: color-mix(in srgb, var(--bg-raised) 50%, transparent);
-}
-.hover\:u-fg:hover {
-  color: var(--text-primary);
-}
-.hover\:u-danger-bg\/10:hover {
-  background: color-mix(in srgb, var(--status-danger) 10%, transparent);
-}
-.u-raised-foreground {
-  background: var(--text-secondary);
-}
-.u-border {
-  border-color: var(--border-subtle);
-}
-.u-danger-border\/40 {
-  border-color: color-mix(in srgb, var(--status-danger) 40%, transparent);
-}
+/* Token-based u-* utilities live in 7k-design-system (css/utilities.css). */
 .card-lede {
   font-size: 0.875rem;
   color: var(--text-secondary);
@@ -453,21 +382,41 @@ body {
   border-right: 2px solid var(--border-subtle);
   overflow-y: auto;
 }
-.sidebar-full {
-  width: 240px;
+@media (min-width: 1024px) {
+  .sidebar {
+    display: flex;
+    width: 240px;
+  }
 }
-.sidebar-rail {
-  width: 64px;
-}
+/* Rail mode: single tree, labels/badges/wordmark/extensions hidden via CSS;
+   icon tooltips provide labels. */
 @media (min-width: 1024px) and (max-width: 1279px) {
-  .sidebar-rail {
-    display: flex;
+  .sidebar {
+    width: 64px;
+  }
+  .sidebar .sidebar-logo {
+    justify-content: center;
+    padding: 0;
+  }
+  .sidebar .sidebar-wordmark,
+  .sidebar .sidebar-item-label,
+  .sidebar .sidebar-item-badge,
+  .sidebar .sidebar-group-label,
+  .sidebar .sidebar-extensions {
+    display: none;
+  }
+  .sidebar .sidebar-nav .nav-item {
+    justify-content: center;
   }
 }
+/* Tooltips duplicate the visible label in the full sidebar. */
 @media (min-width: 1280px) {
-  .sidebar-full {
-    display: flex;
+  .sidebar .tooltip {
+    display: none;
   }
+}
+.sidebar .tooltip-trigger {
+  display: block;
 }
 .sidebar-logo {
   display: flex;
@@ -477,10 +426,6 @@ body {
   padding: 0 16px;
   border-bottom: 2px solid var(--border-subtle);
   flex-shrink: 0;
-}
-.sidebar-rail .sidebar-logo {
-  justify-content: center;
-  padding: 0;
 }
 .sidebar-wordmark {
   font-weight: 700;
@@ -517,9 +462,6 @@ body {
   color: var(--text-secondary);
   text-decoration: none;
   position: relative;
-}
-.sidebar-rail .nav-item {
-  justify-content: center;
 }
 .sidebar-item-label {
   flex: 1;

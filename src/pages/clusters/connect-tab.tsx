@@ -10,6 +10,7 @@ import { Card } from "7k-design-system/react";
 import { Input } from "7k-design-system/react";
 import { CopyButton } from "@/pages/cloud-accounts/copy-button";
 import { useTenant } from "@/tenant/tenant-context";
+import { LoadingState } from "@/components/loading";
 
 const PREREQS: { tool: string; description: string; commands: { label: string; command: string }[] }[] = [
   {
@@ -76,7 +77,7 @@ export function ConnectTab({ cluster }: { cluster: ClusterDetail }) {
     );
   }
   if (loading && !accessInfo) {
-    return <p className="text-sm u-muted">Loading connection info…</p>;
+    return <LoadingState label="Loading connection info…" />;
   }
   if (!accessInfo) return null;
 
