@@ -17,6 +17,8 @@ export default defineConfig({
     },
     setupFiles: ["./src/test/setup.ts"],
     css: false,
+    // tests/ui holds the Playwright usability suite (npm run test:ui).
+    exclude: ["tests/ui/**", "**/node_modules/**"],
     // The sandbox shell exports NODE_ENV=production, which makes Vite resolve
     // React's production build and breaks @testing-library's act(). Pin the
     // test env so tests run regardless of the ambient NODE_ENV.
