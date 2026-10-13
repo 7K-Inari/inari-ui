@@ -181,6 +181,13 @@ function TenantAccessRedirect({ tab }: { tab: string }) {
   return <Navigate to={`/${tenant}/access/${tab}`} replace />;
 }
 
+// Catch-all redirects must be tenant-absolute: a relative Navigate under a
+// "*" route appends to the unmatched path and loops ("/x/overview/overview/…").
+function TenantCatchAll({ to }: { to: string }) {
+  const { tenant } = useParams();
+  return <Navigate to={`/${tenant}/${to}`} replace />;
+}
+
 export function AppRoutes() {
   return (
     <RequireAuth>
@@ -246,9 +253,9 @@ export function AppRoutes() {
             <Route path="policies/approvals" element={<ApprovalsConfigPage />} />
             <Route path="tokens/registration" element={<RegistrationTokensPage />} />
             <Route path="tokens/eso-stores" element={<EsoStoresPage />} />
-            <Route path="*" element={<Navigate to="org/git" replace />} />
+            <Route path="*" element={<TenantCatchAll to="settings/org/git" />} />
           </Route>
-          <Route path="*" element={<Navigate to="overview" replace />} />
+          <Route path="*" element={<TenantCatchAll to="overview" />} />
         </Route>
       </Routes>
       </React.Suspense>
