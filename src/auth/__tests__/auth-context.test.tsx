@@ -10,12 +10,16 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("keycloak-js", () => ({
-  default: vi.fn().mockImplementation(() => ({
-    init: mocks.init,
-    login: mocks.login,
-    logout: mocks.logout,
-    updateToken: mocks.updateToken,
-  })),
+  // vitest v4 requires a constructable (non-arrow) implementation for mocks
+  // invoked with `new`.
+  default: vi.fn().mockImplementation(function () {
+    return {
+      init: mocks.init,
+      login: mocks.login,
+      logout: mocks.logout,
+      updateToken: mocks.updateToken,
+    };
+  }),
 }));
 
 async function renderGuarded() {
