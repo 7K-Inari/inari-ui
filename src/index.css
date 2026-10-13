@@ -415,9 +415,6 @@ body {
     display: none;
   }
 }
-.sidebar .tooltip-trigger {
-  display: block;
-}
 .sidebar-logo {
   display: flex;
   align-items: center;

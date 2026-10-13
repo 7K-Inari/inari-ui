@@ -4,7 +4,9 @@ import { MemoryRouter, useLocation } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 
 import { useConfirm } from "@/components/confirm";
+import { Dropdown } from "@/components/dropdown";
 import { FilterBar } from "@/components/filter-bar";
+import { LoadingState } from "@/components/loading";
 import { PageHeader } from "@/components/page-header";
 import { healthToBadge, statusToBadge, statusToDot } from "@/lib/status-badges";
 
@@ -105,5 +107,59 @@ describe("useConfirm", () => {
     dialog = await screen.findByRole("dialog");
     await user.click(within(dialog).getByRole("button", { name: "Cancel" }));
     expect(results).toEqual([true, false]);
+  });
+
+  it("resolves a superseded confirm as false instead of hanging", async () => {
+    const user = userEvent.setup();
+    const results: boolean[] = [];
+    render(<ConfirmHarness onResult={(ok) => results.push(ok)} />);
+
+    await user.click(screen.getByRole("button", { name: "Trigger" }));
+    await screen.findByRole("dialog");
+    // A second confirm before the first resolves must not orphan the first promise.
+    await user.click(screen.getByRole("button", { name: "Trigger" }));
+    const dialog = await screen.findByRole("dialog");
+    await user.click(within(dialog).getByRole("button", { name: "Delete" }));
+    expect(results).toEqual([false, true]);
+  });
+});
+
+describe("Dropdown", () => {
+  it("closes on Escape and returns focus to the trigger", async () => {
+    const user = userEvent.setup();
+    render(
+      <Dropdown label="More actions" trigger={<button>More</button>}>
+        <button className="menu-item">Item one</button>
+      </Dropdown>,
+    );
+    const trigger = screen.getByRole("button", { name: "More actions" });
+    await user.click(trigger);
+    const item = screen.getByRole("button", { name: "Item one" });
+    item.focus();
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(trigger).toHaveFocus();
+  });
+
+  it("opens with ArrowDown and focuses the first item", async () => {
+    const user = userEvent.setup();
+    render(
+      <Dropdown label="More actions" trigger={<button>More</button>}>
+        <button className="menu-item">Item one</button>
+        <button className="menu-item">Item two</button>
+      </Dropdown>,
+    );
+    screen.getByRole("button", { name: "More actions" }).focus();
+    await user.keyboard("{ArrowDown}");
+    expect(await screen.findByRole("menu")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Item one" })).toHaveFocus();
+  });
+});
+
+describe("LoadingState", () => {
+  it("renders skeletons with an accessible status label", () => {
+    render(<LoadingState label="Loading clusters…" />);
+    const status = screen.getByRole("status", { name: "Loading clusters…" });
+    expect(status.querySelectorAll(".skeleton").length).toBeGreaterThan(0);
   });
 });

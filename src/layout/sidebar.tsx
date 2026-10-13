@@ -82,7 +82,11 @@ export function SidebarNav({
                 );
                 return (
                   <li key={item.path}>
-                    <Tooltip content={item.label} position="right">
+                    <Tooltip
+                      content={item.label}
+                      position="right"
+                      style={{ display: "block", width: "100%" }}
+                    >
                       {link}
                     </Tooltip>
                   </li>
