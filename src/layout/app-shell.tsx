@@ -9,7 +9,9 @@ export function AppShell() {
       <Sidebar />
       <div className="app-shell-main">
         <Header />
-        <main className="app-content">
+        {/* tabIndex: the content pane scrolls independently — keyboard users
+            must be able to focus it to scroll (axe scrollable-region-focusable). */}
+        <main className="app-content" tabIndex={0}>
           <Outlet />
         </main>
       </div>

@@ -81,6 +81,29 @@ body {
 }
 
 /* Token-based u-* utilities live in 7k-design-system (css/utilities.css). */
+
+/* Mobile tap targets (WCAG 2.5.8): interactive elements ≥24px on small
+   viewports. Links in data displays get inline-flex so padding counts. */
+@media (max-width: 1023px) {
+  .btn,
+  .tag,
+  .chip,
+  .menu-item {
+    min-height: 24px;
+  }
+  .table a,
+  .list a,
+  .card a,
+  td a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 24px;
+  }
+  input[type="checkbox"] {
+    width: 24px;
+    height: 24px;
+  }
+}
 .card-lede {
   font-size: 0.875rem;
   color: var(--text-secondary);

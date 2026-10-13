@@ -2,6 +2,8 @@ node_modules/
 dist/
 .env
 *.local
+test-results/
+playwright-report/
 .DS_Store
 core.*
 inari-ui-bundle.tar.gz

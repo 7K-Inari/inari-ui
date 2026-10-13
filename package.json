@@ -10,6 +10,8 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "NODE_ENV=test vitest run",
+    "test:ui": "playwright test",
+    "test:ui:update": "playwright test --update-snapshots",
     "codegen": "openapi-typescript openapi/openapi.yaml -o src/api/__generated__/schema.ts",
     "sync:api": "./scripts/sync-api.sh"
   },
@@ -19,7 +21,7 @@
     "@rjsf/core": "^6.8.0",
     "@rjsf/utils": "^6.8.0",
     "@rjsf/validator-ajv8": "^6.8.0",
-    "7k-design-system": "file:../7k-design-system",
+    "7k-design-system": "edge",
     "keycloak-js": "^26.0.0",
     "lucide-react": "^0.577.0",
     "react": "^18.3.1",
@@ -28,8 +30,10 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
     "@eslint/js": "^9.11.1",
     "@module-federation/vite": "^1.0.2",
+    "@playwright/test": "^1.64.0",
     "@testing-library/jest-dom": "^7.0.0",
     "@testing-library/react": "^16.0.1",
     "@testing-library/user-event": "^14.5.2",
