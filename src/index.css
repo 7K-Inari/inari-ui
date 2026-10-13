@@ -533,7 +533,9 @@ body {
 .tenant-switcher-spacer {
   width: 14px;
 }
-.menu-item {
+/* Reset for <button class="menu-item"> so it inherits DS menu-item styling.
+   Scoped to the element to avoid redefining the DS class. */
+button.menu-item {
   display: flex;
   align-items: center;
   gap: 8px;
