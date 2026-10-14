@@ -12,12 +12,17 @@
   color utility to any element that depends on these defaults.
 */
 @layer base {
+  :root {
+    /* v3's preflight default border color (gray-200); without this the v4
+       fallback (currentcolor) shifts every bare `border` element. */
+    --color-gray-200: #e5e7eb;
+  }
   *,
   ::after,
   ::before,
   ::backdrop,
   ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
+    border-color: var(--color-gray-200, #e5e7eb);
   }
 }
 
