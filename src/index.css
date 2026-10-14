@@ -1,3 +1,4 @@
+@import '7k-design-system/css' layer(base);
 @import '@7k-inari/ui-plugin-sdk/tokens.css' layer(base);
 
 @import 'tailwindcss';
