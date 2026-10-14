@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
 import path from "node:path";
 
 // The Module Federation host runtime is initialized at runtime via
@@ -16,7 +17,7 @@ export default defineConfig({
   // white-screens the app. If a pathPrefix deployment is ever needed,
   // build with base set to that prefix ("/console/"), never "./".
   base: "/",
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "src"),
