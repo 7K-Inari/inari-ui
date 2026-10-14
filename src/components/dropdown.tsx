@@ -96,7 +96,7 @@ export function Dropdown({ trigger, label, children, align = "start", className 
         (originalRef as React.MutableRefObject<HTMLElement | null>).current = el;
     },
     onClick: (e: React.MouseEvent) => {
-      trigger.props.onClick?.(e);
+      (trigger.props as { onClick?: (e: React.MouseEvent) => void }).onClick?.(e);
       setOpen((v) => !v);
     },
     onKeyDown,

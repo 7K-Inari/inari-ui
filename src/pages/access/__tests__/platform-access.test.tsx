@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { http, HttpResponse } from "msw";
 import { MemoryRouter } from "react-router-dom";
@@ -12,7 +12,7 @@ vi.mock("@/auth/auth-context", () => ({
   useAuth: () => ({ token: "test-token", parsedToken: {} }),
 }));
 
-beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
+beforeAll(() => mockServer.listen({ onUnhandledFrame: "error" }));
 afterEach(() => {
   mockServer.resetHandlers();
   policyMockControl.reset();
@@ -55,7 +55,9 @@ describe("PlatformAccessPage", () => {
     renderPage();
     const row = (await screen.findByText("Root Admin")).closest("tr")!;
     await user.click(within(row).getByRole("button", { name: "Revoke" }));
-    expect(screen.queryByText("Root Admin")).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByText("Root Admin")).not.toBeInTheDocument(),
+    );
     expect(policyMockControl.getState().platformAdmins).toHaveLength(0);
   });
 

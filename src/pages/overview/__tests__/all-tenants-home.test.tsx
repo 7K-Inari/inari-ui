@@ -18,7 +18,7 @@ vi.mock("@/tenant/tenant-context", () => ({
   useTenant: () => ({ tenant: "all", recents: mockRecents }),
 }));
 
-beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
+beforeAll(() => mockServer.listen({ onUnhandledFrame: "error" }));
 afterEach(() => {
   mockServer.resetHandlers();
   mockControl.reset();
@@ -128,7 +128,8 @@ describe("AllTenantsHome", () => {
     expect(decideCalls).toEqual([
       { org: "globex", id: "ap-4", approve: true },
     ]);
-    expect(inboxCalls).toBeGreaterThan(before);
+    // The aggregate inbox refetch is async after the decide mutation.
+    await vi.waitFor(() => expect(inboxCalls).toBeGreaterThan(before));
   });
 
   it("shows a single error with retry when the inbox request fails", async () => {
@@ -305,11 +306,16 @@ describe("AllTenantsHome", () => {
       );
 
       renderPage();
-      await act(async () => {});
-      await act(async () => {});
-      expect(tenantCalls).toBe(1);
-      expect(approvalCalls).toBe(1);
-      expect(clusterCalls).toBe(1);
+      // React 19 needs more than fixed act() flushes for the initial
+      // fetch chain (tenants → fan-out) to settle under fake timers.
+      await vi.waitFor(
+        () => {
+          expect(tenantCalls).toBe(1);
+          expect(approvalCalls).toBe(1);
+          expect(clusterCalls).toBe(1);
+        },
+        { timeout: 10_000 },
+      );
 
       await act(async () => {
         await vi.advanceTimersByTimeAsync(59_000);

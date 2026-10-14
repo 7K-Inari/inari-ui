@@ -26,7 +26,7 @@ vi.mock("@/tenant/tenant-context", () => ({
   useTenant: () => ({ tenant: "acme" }),
 }));
 
-beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
+beforeAll(() => mockServer.listen({ onUnhandledFrame: "error" }));
 afterEach(() => mockServer.resetHandlers());
 // stubAnchor spies on document.createElement; without restoring, a second
 // call binds the previous spy as "original" and recurses (vitest v4 no

@@ -26,7 +26,7 @@ vi.mock("@/tenant/tenant-context", () => ({
   useTenant: () => ({ tenant: "acme" }),
 }));
 
-beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
+beforeAll(() => mockServer.listen({ onUnhandledFrame: "error" }));
 afterEach(() => {
   mockServer.resetHandlers();
   m3MockControl.reset();

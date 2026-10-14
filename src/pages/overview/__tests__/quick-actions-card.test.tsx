@@ -25,7 +25,7 @@ vi.mock("@/auth/permissions-context", () => ({
   usePermissions: () => mockPermissions,
 }));
 
-beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
+beforeAll(() => mockServer.listen({ onUnhandledFrame: "error" }));
 afterEach(() => {
   mockServer.resetHandlers();
   mockControl.reset();

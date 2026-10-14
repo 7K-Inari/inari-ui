@@ -18,7 +18,7 @@ vi.mock("@/tenant/tenant-context", () => ({
   useTenant: () => ({ tenant: mockTenant }),
 }));
 
-beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
+beforeAll(() => mockServer.listen({ onUnhandledFrame: "error" }));
 afterEach(() => {
   mockServer.resetHandlers();
   mockControl.reset();
@@ -129,10 +129,15 @@ describe("OverviewPage", () => {
       );
 
       renderPage();
-      await act(async () => {});
       // The page fetches each resource once and shares it with the stat row.
-      expect(clusterCalls).toBe(1);
-      expect(approvalCalls).toBe(1);
+      // React 19 needs timer-aware waiting for the initial fetches to settle.
+      await vi.waitFor(
+        () => {
+          expect(clusterCalls).toBe(1);
+          expect(approvalCalls).toBe(1);
+        },
+        { timeout: 10_000 },
+      );
 
       await act(async () => {
         await vi.advanceTimersByTimeAsync(15_000);
@@ -233,11 +238,15 @@ describe("OverviewPage", () => {
       );
 
       renderPage();
-      await act(async () => {});
       // /instances is fetched once by the page (shared with resource health)
       // plus the recent-activity card.
-      expect(instanceCalls).toBe(2);
-      expect(driftCalls).toBe(1);
+      await vi.waitFor(
+        () => {
+          expect(instanceCalls).toBe(2);
+          expect(driftCalls).toBe(1);
+        },
+        { timeout: 10_000 },
+      );
 
       await act(async () => {
         await vi.advanceTimersByTimeAsync(30_000);

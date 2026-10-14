@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
@@ -16,7 +16,7 @@ vi.mock("@/tenant/tenant-context", () => ({
   useTenant: () => ({ tenant: "acme" }),
 }));
 
-beforeAll(() => mockServer.listen({ onUnhandledRequest: "error" }));
+beforeAll(() => mockServer.listen({ onUnhandledFrame: "error" }));
 afterEach(() => {
   mockServer.resetHandlers();
   m4MockControl.reset();
@@ -62,7 +62,9 @@ describe("FleetOverviewPage", () => {
     await user.click(deletes[0]);
     await screen.findByText(/No ClusterSets defined yet|prod-eu/);
     // canary (first card) is gone; prod-eu remains.
-    expect(screen.queryByText("canary")).not.toBeInTheDocument();
+    await waitFor(() =>
+      expect(screen.queryByText("canary")).not.toBeInTheDocument(),
+    );
     expect(screen.getByText("prod-eu")).toBeInTheDocument();
   });
 
@@ -91,8 +93,9 @@ describe("FleetOverviewPage", () => {
     const switches = screen.getAllByRole("button", { name: /Switch to/ });
     await user.click(switches[1]);
     // prod-eu flips stable → canary; both rows now show canary.
-    await screen.findAllByRole("button", { name: "Switch to stable" });
-    expect(screen.getAllByRole("button", { name: "Switch to stable" })).toHaveLength(2);
+    await waitFor(() =>
+      expect(screen.getAllByRole("button", { name: "Switch to stable" })).toHaveLength(2),
+    );
   });
 });
 
