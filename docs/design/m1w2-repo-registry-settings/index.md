@@ -8,7 +8,7 @@
 - **Surface**: Product dashboard (DESIGN.md §5–7 rules)
 - **DS breakpoints**: 1440px (all boards are 1440×900)
 
-> **Component usage note**: Boards use `Shell` and `Settings Sidebar` component instances from the local Inari Console library (inherited from cloned screens) and one `button/primary` from the 7K DS shared library. All other elements are raw shapes built to match DS component specs exactly (colors, sizes, typography, borders from the token tables below). The Penpot plugin API loses `componentInstance` links when instances are moved between parents, so DS `Input`/`Select`/`Toggle` instances cannot be reliably placed via the plugin. Implementers should map each documented element to its corresponding DS React component (e.g., `Input`, `Select`, `Badge`, `Drawer`, `Modal`) using the token values in this index.
+> **Component usage note**: All screens in this file use the same component pattern: `Shell`, `Topbar`, `Sidebar`, `Settings Sidebar` from the local Inari Console library; icon components from the 7K DS shared library; raw shapes for all form elements (inputs, selects, buttons, badges, tables). No screen uses DS form component instances (`Input`, `Select`, `Badge`, etc.) — those are placed manually in the Penpot editor by human designers. The boards in this index follow the same convention: raw shapes styled to match DS component specs exactly. Implementers should map each documented element to its corresponding DS React component using the token values below.
 
 ---
 
