@@ -4,7 +4,7 @@
 - **Parent plan**: Multi-repo GitOps, Feature A (Kandev: 8f8c472a-4633-4965-99d0-8ef7a3ae62b3)
 - **Penpot file**: [Inari Console](https://penpot.7kgroup.org/workspace/58349be9-a075-8103-8008-ccc4498f00ba) — project `inari-ui`, file `Inari Console`, page `Screens`
 - **Shared library**: `7K Design System` (connected, id `12a76929-1c9e-81ad-8008-ca822821d110`)
-- **Project accent**: Inari — burnt orange `--inari-500: #EE560D` via `data-project="inari"` / `ProjectProvider defaultProject="inari"`
+- **Project accent**: Inari — burnt orange `--inari-500: #EE560D` — all accent-colored elements in the Penpot file use this color directly (the DS default magenta `#FF00FF` is overridden to `#EE560D` to match the Inari project scope)
 - **Surface**: Product dashboard (DESIGN.md §5–7 rules)
 - **DS breakpoints**: 1440px (all boards are 1440×900)
 
