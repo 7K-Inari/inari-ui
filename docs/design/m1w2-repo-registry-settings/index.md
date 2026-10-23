@@ -8,7 +8,7 @@
 - **Surface**: Product dashboard (DESIGN.md §5–7 rules)
 - **DS breakpoints**: 1440px (all boards are 1440×900)
 
-> **Component usage**: Boards use `Shell`, `Topbar`, `Sidebar`, `Settings Sidebar` from the local Inari Console library; `Input`, `Select`, `Radio`, `Toggle`, `button/primary` from the 7K DS shared library; DS icon components (`GitBranch`, `GitFork`, `FolderGit2`, `Copy`, `KeyRound`, etc.). Elements that have no DS component equivalent (scope/policy/default badges, repo option cards, table rows, stat cards) are raw shapes styled to match DS token specs.
+> **Component usage**: Boards use `Shell`, `Topbar`, `Sidebar`, `Settings Sidebar` from the local Inari Console library; `Input`, `Select`, `Radio`, `Toggle`, `button/primary`, `badge/default` (with Tone variants: accent, neutral, warning, success), `alert/default`, `modal/default` from the 7K DS shared library; DS icon components (`GitBranch`, `GitFork`, `FolderGit2`, `Copy`, `KeyRound`, etc.). Elements that have no DS component equivalent (repo option cards, table structure, org defaults card, GitOps repo card) are raw shapes styled to match DS token specs.
 
 ---
 
