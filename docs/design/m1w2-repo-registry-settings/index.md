@@ -8,7 +8,7 @@
 - **Surface**: Product dashboard (DESIGN.md §5–7 rules)
 - **DS breakpoints**: 1440px (all boards are 1440×900)
 
-> **Component usage note**: All screens in this file use the same component pattern: `Shell`, `Topbar`, `Sidebar`, `Settings Sidebar` from the local Inari Console library; icon components from the 7K DS shared library; raw shapes for all form elements (inputs, selects, buttons, badges, tables). No screen uses DS form component instances (`Input`, `Select`, `Badge`, etc.) — those are placed manually in the Penpot editor by human designers. The boards in this index follow the same convention: raw shapes styled to match DS component specs exactly. Implementers should map each documented element to its corresponding DS React component using the token values below.
+> **Component usage**: Boards use `Shell`, `Topbar`, `Sidebar`, `Settings Sidebar` from the local Inari Console library; `Input`, `Select`, `Radio`, `Toggle`, `button/primary` from the 7K DS shared library; DS icon components (`GitBranch`, `GitFork`, `FolderGit2`, `Copy`, `KeyRound`, etc.). Elements that have no DS component equivalent (scope/policy/default badges, repo option cards, table rows, stat cards) are raw shapes styled to match DS token specs.
 
 ---
 
