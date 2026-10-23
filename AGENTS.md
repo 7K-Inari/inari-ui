@@ -35,6 +35,38 @@ Stack: React, TypeScript, Vite, Tailwind, shadcn/ui, RJSF, Module Federation
 - Helm chart **moved to `7K-Inari/inari-release-bundle`** (`charts/inari-console` there; tags `inari-console-vX.Y.Z`, published to `oci://ghcr.io/7k-inari/charts`). This repo no longer carries chart code, chart CI, or release-please chart components. Old OCI artifacts at `oci://ghcr.io/7k-inari/inari-ui/charts` stay published but are deprecated.
 - Canonical architecture & development plan: https://github.com/7K-Inari/inari-docs/blob/main/docs/architecture/inari-platform-plan.md (section references below point into it).
 
+## Penpot Design Conventions
+
+### File Structure
+- One Penpot project per repo, named after the repo
+- One file per task, named after the task slug
+- Boards named: `screens / <screen-name>` for screens, `components / <name>` for composites
+- Boards organized into groups by functional area (Settings, Operate, Deliver, etc.)
+
+### Component Usage
+- Always use DS shared-library components (7K Design System) — never create local copies
+- Use local Inari Console components for layout (Shell, Topbar, Sidebar, Settings Sidebar)
+- Raw shapes ONLY for elements with no DS equivalent (custom cards, table structures)
+- Fix DS components at the source — never build workarounds
+
+### Color Scheme
+- Inari accent: `#EE560D` (burnt orange) — override DS magenta in Penpot
+- Semantic colors: use DS tokens (danger `#FF3B5C`, warning `#FFB300`, success `#00E676`, info `#3F8EFF`)
+- Never use semantic colors for decorative purposes
+
+### Variant Components
+- Access via: `comp.mainInstance().parent.variants.variantComponents()`
+- Never search `dsLib.components` by `variantProps` — returns wrong components
+- Always instantiate the correct variant directly — don't use `switchVariant()`
+
+### Batch Operations
+- Write helper functions before starting design work
+- One tool call per board, not per element type
+- Use `penpotUtils.setParentXY()` for all positioning
+
+### DS Component Internals
+See the 7K Design System Penpot file → Read me page for component-specific internals (Radio, Select, Button, Badge).
+
 ## Platform design principles (apply everywhere)
 1. Tenant-aware to the core — every object carries a tenant ID; every API decision is tenant-scoped.
 2. Zero tenant credentials on the hub — no tenant kubeconfigs or cloud keys in the control plane.
