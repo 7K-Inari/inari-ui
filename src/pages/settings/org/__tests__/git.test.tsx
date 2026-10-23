@@ -151,10 +151,9 @@ describe("GitSettingsPage (repo registry)", () => {
   });
 
   it("shows an empty state when no repos are registered", async () => {
-    // globex has no repos
-    vi.mocked(await import("@/tenant/tenant-context")).useTenant = () => ({
-      tenant: "globex",
-    }) as never;
+    // globex has no repos — render with a different tenant mock.
+    const tenantModule = await import("@/tenant/tenant-context");
+    vi.spyOn(tenantModule, "useTenant").mockReturnValue({ tenant: "globex" } as never);
     render(
       <MemoryRouter initialEntries={["/globex/settings/org/git"]}>
         <Routes>

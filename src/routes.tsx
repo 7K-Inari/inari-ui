@@ -115,6 +115,9 @@ const OidcScopesPage = React.lazy(() =>
 const GitSettingsPage = React.lazy(() =>
   import("@/pages/settings/org/git").then((m) => ({ default: m.GitSettingsPage })),
 );
+const GitOpsRepoNewPage = React.lazy(() =>
+  import("@/pages/settings/org/git/gitops-repo-new").then((m) => ({ default: m.GitOpsRepoNewPage })),
+);
 const GitConnectionsPage = React.lazy(() =>
   import("@/pages/settings/org/git-connections").then((m) => ({ default: m.GitConnectionsPage })),
 );
@@ -239,6 +242,7 @@ export function AppRoutes() {
             <Route path="org/members" element={<TenantAccessRedirect tab="members" />} />
             <Route path="org/teams" element={<TenantAccessRedirect tab="teams" />} />
             <Route path="org/git" element={<GitSettingsPage />} />
+            <Route path="org/git/new" element={<GitOpsRepoNewPage />} />
             <Route path="org/git-connections" element={<GitConnectionsPage />} />
             <Route path="org/idp" element={<IdpBrokeringPage />} />
             <Route path="org/domains" element={<OrgDomainsPage />} />

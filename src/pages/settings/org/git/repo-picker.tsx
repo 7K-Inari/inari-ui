@@ -1,4 +1,3 @@
-import * as React from "react";
 import { Badge, Card, Radio } from "7k-design-system/react";
 
 import type { GitRepoViewModel } from "@/api/git-repos";

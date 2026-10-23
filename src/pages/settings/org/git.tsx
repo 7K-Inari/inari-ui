@@ -1,11 +1,9 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 
-import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
 import { listGitRepos, type GitRepoViewModel } from "@/api/git-repos";
 import { listTeams } from "@/api/tenants";
-import { useAuth } from "@/auth/auth-context";
 import { Alert, Button, Card, Skeleton } from "7k-design-system/react";
 import { useOrgCapabilities } from "@/pages/settings/components/capability-gate";
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
@@ -20,7 +18,6 @@ import { RepoTable } from "./git/repo-table";
 
 export function GitSettingsPage() {
   const { tenant } = useTenant();
-  const { token } = useAuth();
   const { canWriteSettings } = useOrgCapabilities();
   const {
     data: repos,
