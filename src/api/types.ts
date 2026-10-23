@@ -159,6 +159,8 @@ export interface ResourceInstanceSummary {
 
 export interface ResourceInstanceDetail extends ResourceInstanceSummary {
   spec: Record<string, unknown>;
+  commitSha: string | null;
+  prUrl: string | null;
 }
 
 export interface UpgradeDiff {

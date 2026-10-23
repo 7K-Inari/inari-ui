@@ -2,6 +2,7 @@ import * as React from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 
 import { getCatalogItem } from "@/api/catalog";
+import { listGitRepos } from "@/api/git-repos";
 import {
   deleteResource,
   getResource,
@@ -21,6 +22,7 @@ import { InstanceActionButtons } from "@/ext/slots";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
 import { HealthBadge } from "@/pages/resources/resource-list";
+import { GitOpsRepoCard } from "@/pages/resources/gitops-repo-card";
 import { UpgradeCard } from "@/pages/resources/upgrade-flow";
 import { LoadingState } from "@/components/loading";
 
@@ -275,6 +277,7 @@ function DeleteCard({ resource }: { resource: ResourceInstanceDetail }) {
 
 export function ResourceDetailPage() {
   const { instanceId } = useParams<{ instanceId: string }>();
+  const { tenant } = useTenant();
   const {
     data: resource,
     loading,
@@ -288,6 +291,15 @@ export function ResourceDetailPage() {
     [resource?.catalogItemId],
     { enabled: !!resource },
   );
+  const repos = useAsyncResource(
+    (token) => listGitRepos(token, tenant),
+    [tenant],
+  );
+
+  // Resolve the owning repo: instances don't carry repoId yet, so we fall
+  // back to the org default repo (the cluster's baseline binding is not yet
+  // exposed on the Cluster schema — see plan §6.8).
+  const defaultRepo = repos.data?.find((r) => r.isDefault) ?? null;
 
   if (error) {
     const notFound = error instanceof ApiError && error.status === 404;
@@ -322,6 +334,12 @@ export function ResourceDetailPage() {
       </div>
 
       <UpgradeCard resource={resource} />
+
+      <GitOpsRepoCard
+        repo={defaultRepo}
+        commitSha={resource.commitSha}
+        prUrl={resource.prUrl}
+      />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
