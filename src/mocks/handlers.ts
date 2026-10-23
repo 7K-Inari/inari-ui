@@ -167,6 +167,16 @@ import {
   updateNotificationEndpointMock,
 } from "@/mocks/fixtures/m6";
 import type { NotificationEndpointInput } from "@/mocks/fixtures/m6";
+import {
+  findGitRepo,
+  gitRepoRefCounts,
+  gitReposFor,
+  registerGitRepoMock,
+  unregisterGitRepoMock,
+  updateGitRepoMock,
+  type RegisterGitRepoBody,
+  type UpdateGitRepoBody,
+} from "@/mocks/fixtures/git-repos";
 import type { OidcClientInput } from "@/api/identity";
 import type { OidcProviderInput } from "@/api/idp";
 import type {
@@ -1361,6 +1371,72 @@ export const handlers = [
       return humaError(404, "git connection not found");
     }
     return new HttpResponse(null, { status: 204 });
+  }),
+
+  // ---- M1.W2: GitOps repo registry (Feature A) ----
+  http.get(`${BASE}/git-repos`, ({ params }) => {
+    return HttpResponse.json({ repos: gitReposFor(params.org as string) });
+  }),
+
+  http.post(`${BASE}/git-repos`, async ({ params, request }) => {
+    const body = (await request.json()) as RegisterGitRepoBody;
+    if (!body.name || !body.repo) {
+      return humaError(422, "validation failed (name, repo are required)");
+    }
+    if (body.scope === "team" && !body.teamId) {
+      return humaError(422, "validation failed (teamId is required for team scope)");
+    }
+    const row = registerGitRepoMock(params.org as string, body);
+    return HttpResponse.json({ repo: row }, { status: 201 });
+  }),
+
+  http.get(`${BASE}/git-repos/:id`, ({ params }) => {
+    const row = findGitRepo(params.org as string, params.id as string);
+    if (!row) return humaError(404, "git repo not found");
+    return HttpResponse.json({
+      repo: row,
+      gitProviderStatus: {
+        state: "ok",
+        authModel: "platform_app",
+        checkedAt: new Date().toISOString(),
+      },
+    });
+  }),
+
+  http.patch(`${BASE}/git-repos/:id`, async ({ params, request }) => {
+    const body = (await request.json()) as UpdateGitRepoBody;
+    if (body.isDefault === false) {
+      return humaError(422, "isDefault=false is rejected; promote another repo instead");
+    }
+    const row = updateGitRepoMock(params.org as string, params.id as string, body);
+    if (!row) return humaError(404, "git repo not found");
+    return HttpResponse.json({ repo: row });
+  }),
+
+  http.delete(`${BASE}/git-repos/:id`, ({ params, request }) => {
+    const org = params.org as string;
+    const id = params.id as string;
+    const row = findGitRepo(org, id);
+    if (!row) return humaError(404, "git repo not found");
+    const url = new URL(request.url);
+    const force = url.searchParams.get("force") === "true";
+    const mode = url.searchParams.get("mode");
+    if (row.isDefault && !force) {
+      return humaError(409, "cannot unregister the default repo");
+    }
+    const refs = gitRepoRefCounts(id);
+    const totalRefs = refs.instances + refs.addons + refs.clusters;
+    if (totalRefs > 0 && !force) {
+      return humaError(
+        409,
+        `repo in use by ${totalRefs} workload(s) (instances=${refs.instances} addons=${refs.addons} clusters=${refs.clusters})`,
+      );
+    }
+    if (force && mode !== "orphan" && mode !== "teardown") {
+      return humaError(422, "mode is required with force=true (orphan|teardown)");
+    }
+    unregisterGitRepoMock(org, id);
+    return HttpResponse.json({ unregistered: true, mode: mode ?? undefined });
   }),
 
   // ---- M6.W2: org profile (proposed PATCH route) ----
