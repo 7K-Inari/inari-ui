@@ -121,6 +121,7 @@ export interface CreateDeployRequest {
   clusterId: string;
   name: string;
   spec: Record<string, unknown>;
+  repoId?: string;
 }
 
 export interface Deploy {
