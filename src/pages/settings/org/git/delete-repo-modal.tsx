@@ -12,7 +12,7 @@ export interface DeleteRepoModalProps {
   onDeleted: () => void;
 }
 
-type DeleteVariant = "blocked" | "orphan" | "teardown";
+type DeleteVariant = "orphan" | "teardown";
 
 export function DeleteRepoModal({ repo, onClose, onDeleted }: DeleteRepoModalProps) {
   const { token } = useAuth();
