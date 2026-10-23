@@ -8,7 +8,7 @@
 - **Surface**: Product dashboard (DESIGN.md §5–7 rules)
 - **DS breakpoints**: 1440px (all boards are 1440×900)
 
-> **Component usage**: Boards use `Shell`, `Topbar`, `Sidebar`, `Settings Sidebar` from the local Inari Console library; `Input`, `Select`, `Radio`, `Toggle`, `button/primary`, `badge/default` (with Tone variants: accent, neutral, warning, success), `alert/default`, `modal/default` from the 7K DS shared library; DS icon components (`GitBranch`, `GitFork`, `FolderGit2`, `Copy`, `KeyRound`, etc.). Elements that have no DS component equivalent (repo option cards, table structure, org defaults card, GitOps repo card) are raw shapes styled to match DS token specs.
+> **Component usage**: Boards use `Shell`, `Topbar`, `Sidebar`, `Settings Sidebar` from the local Inari Console library; `Input`, `Select`, `Radio`, `Toggle`, `button/primary` (with Variant/Size variants), `badge/default` (with Tone variants), `alert/default`, `modal/default` from the 7K DS shared library; DS icon components. Button variant mapping: `glow-accent` for primary CTAs (SAVE, REGISTER, NEXT, NEW GITOPS REPO), `secondary` for cancel/dismiss, `ghost` for tertiary actions, `danger` for destructive (DELETE, TEARDOWN), `primary` for retry, `accent` for template actions. Elements that have no DS component equivalent (repo option cards, table structure, org defaults card, GitOps repo card) are raw shapes styled to match DS token specs.
 
 ---
 
