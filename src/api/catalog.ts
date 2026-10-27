@@ -38,6 +38,7 @@ function mapVersion(v: ServerCatalogItemVersion): CatalogVersion {
   return {
     version: v.version,
     channel: v.channel ?? "stable",
+    ...(v.schema ? { schema: v.schema as Record<string, unknown> } : {}),
   };
 }
 

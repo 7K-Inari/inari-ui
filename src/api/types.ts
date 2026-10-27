@@ -85,6 +85,9 @@ export interface CatalogItemSummary {
 export interface CatalogVersion {
   version: string;
   channel: string;
+  // values.schema.json for this version (Feature C decision 4: addon values
+  // editors validate against it client-side). Absent = lenient allow.
+  schema?: Record<string, unknown>;
 }
 
 export interface UiHints {

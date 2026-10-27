@@ -6,6 +6,7 @@ const ROUTES: Array<{ name: string; path: string }> = [
   { name: "overview", path: "/acme/overview" },
   { name: "catalog", path: "/acme/catalog" },
   { name: "clusters", path: "/acme/clusters" },
+  { name: "cluster-addons", path: "/acme/clusters/cl-kind-dev/addons" },
   { name: "approvals", path: "/acme/approvals" },
   { name: "audit-log", path: "/acme/audit-log" },
   { name: "deploys", path: "/acme/deploys" },

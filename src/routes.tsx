@@ -28,6 +28,9 @@ const ClusterDetailPage = React.lazy(() =>
 const ClusterListPage = React.lazy(() =>
   import("@/pages/clusters/cluster-list").then((m) => ({ default: m.ClusterListPage })),
 );
+const ClusterAddonsPage = React.lazy(() =>
+  import("@/pages/clusters/cluster-addons").then((m) => ({ default: m.ClusterAddonsPage })),
+);
 const RegisterWizardPage = React.lazy(() =>
   import("@/pages/clusters/register-wizard").then((m) => ({ default: m.RegisterWizardPage })),
 );
@@ -217,6 +220,7 @@ export function AppRoutes() {
           <Route path="clusters" element={<ClusterListPage />} />
           <Route path="clusters/new" element={<RegisterWizardPage />} />
           <Route path="clusters/:clusterId" element={<ClusterDetailPage />} />
+          <Route path="clusters/:clusterId/addons" element={<ClusterAddonsPage />} />
           <Route path="fleet" element={<FleetOverviewPage />} />
           <Route path="fleet/clustersets/:clusterSetId" element={<ClusterSetDetailPage />} />
           <Route path="fleet/rollouts/:rolloutId" element={<RolloutDetailPage />} />
