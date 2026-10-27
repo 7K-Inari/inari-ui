@@ -177,6 +177,15 @@ import {
   type RegisterGitRepoBody,
   type UpdateGitRepoBody,
 } from "@/mocks/fixtures/git-repos";
+import {
+  addonsForCluster,
+  adoptAddonMock,
+  enablePruneMock,
+  findAddon,
+  updateAddonMock,
+  type AdoptAddonBody,
+  type UpdateAddonBody,
+} from "@/mocks/fixtures/addons";
 import type { OidcClientInput } from "@/api/identity";
 import type { OidcProviderInput } from "@/api/idp";
 import type {
@@ -1437,6 +1446,86 @@ export const handlers = [
     }
     unregisterGitRepoMock(org, id);
     return HttpResponse.json({ unregistered: true, mode: mode ?? undefined });
+  }),
+
+  // ---- M3.W2: cluster addons (Feature C) ----
+  http.get(`${BASE}/clusters/:id/addons`, ({ params }) => {
+    const org = params.org as string;
+    const clusterId = params.id as string;
+    const cluster = findCluster(clusterId);
+    if (!cluster) return humaError(404, "cluster not found");
+    return HttpResponse.json({
+      addons: addonsForCluster(org, clusterId, cluster.labels),
+    });
+  }),
+
+  http.post(`${BASE}/clusters/:id/addons/:catalogItem/adopt`, async ({ params, request }) => {
+    const org = params.org as string;
+    const body = (await request.json()) as AdoptAddonBody;
+    if (
+      body.deployMode !== undefined &&
+      body.deployMode !== "application" &&
+      body.deployMode !== "applicationset"
+    ) {
+      return humaError(422, "validation failed (deployMode must be application|applicationset)");
+    }
+    if (body.deployMode === "applicationset") {
+      const selector = body.clusterSelector ?? {};
+      // Server matches only active/degraded clusters (decision 8 semantics).
+      const matches = listForTenant(org).filter(
+        (c) =>
+          (c.status === "connected" || c.status === "degraded") &&
+          Object.entries(selector).every(([k, v]) => c.labels[k] === v),
+      );
+      if (matches.length === 0) {
+        return humaError(422, "cluster selector matches no active clusters");
+      }
+    }
+    // Default repo = the org's baseline (isDefault) repo; PR URL vs commit SHA
+    // follows the target repo's commit policy.
+    const repo =
+      findGitRepo(org, body.repoId ?? "") ??
+      gitReposFor(org).find((r) => r.isDefault) ??
+      null;
+    if (!repo) return humaError(409, "no git repo configured for the org");
+    const row = adoptAddonMock(
+      org,
+      params.id as string,
+      params.catalogItem as string,
+      body,
+      repo.id,
+      repo.commitPolicy === "pull_request",
+    );
+    if (row === "not_found") return humaError(404, "addon not found on this cluster");
+    if (row === "already_managed") return humaError(409, "addon is already managed");
+    return HttpResponse.json({
+      addon: row,
+      commitSha: row.commitSha,
+      prUrl: row.prUrl,
+    });
+  }),
+
+  http.patch(`${BASE}/addons/:id`, async ({ params, request }) => {
+    const org = params.org as string;
+    const body = (await request.json()) as UpdateAddonBody;
+    if (body.chartVersion === undefined && body.values === undefined) {
+      return humaError(422, "validation failed (at least one of chartVersion, values)");
+    }
+    const existing = findAddon(org, params.id as string);
+    if (!existing) return humaError(404, "addon not found");
+    if (existing.state === "discovered") return humaError(409, "addon is not managed");
+    const repo = findGitRepo(org, existing.repoId ?? "");
+    const row = updateAddonMock(org, existing.id, body, repo?.commitPolicy === "pull_request");
+    if (!row) return humaError(404, "addon not found");
+    return HttpResponse.json({ addon: row, commitSha: row.commitSha, prUrl: row.prUrl });
+  }),
+
+  http.post(`${BASE}/addons/:id/enable-prune`, ({ params }) => {
+    const org = params.org as string;
+    const row = enablePruneMock(org, params.id as string);
+    if (row === null) return humaError(404, "addon not found");
+    if (row === "conflict") return humaError(409, "prune already enabled or addon not managed");
+    return HttpResponse.json({ addon: row });
   }),
 
   // ---- M6.W2: org profile (proposed PATCH route) ----
