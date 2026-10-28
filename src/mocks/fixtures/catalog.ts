@@ -127,11 +127,52 @@ const crossplaneItem: ItemView = {
   versions: null,
 };
 
+// ---- M3.W2 (Feature C): platform addon packages referenced by the cluster
+// addons fixtures. Each carries a values.schema.json so the addon editors can
+// validate values client-side (decision 4).
+
+const platformAddonItem = (
+  id: string,
+  name: string,
+  versions: string[],
+  schema?: unknown,
+): ItemView => ({
+  id,
+  name,
+  displayName: name,
+  description: `Platform addon: ${name}.`,
+  source: "platform",
+  category: "platform",
+  approvalPolicy: "auto",
+  pinnedVersion: versions[0],
+  createdAt: iso(now - 45 * 86_400_000),
+  versions: versions.map((v, i) => version(id, v, "stable", i === 0 ? schema : undefined)),
+});
+
+const externalSecretsItem = platformAddonItem(
+  "cat-external-secrets",
+  "external-secrets",
+  ["0.10.4", "0.9.20"],
+  {
+    type: "object",
+    properties: { installCRDs: { type: "boolean", default: true } },
+  },
+);
+const istioItem = platformAddonItem("cat-istio", "istio", ["1.23.2", "1.22.3"]);
+const monitoringItem = platformAddonItem("cat-monitoring-stack", "monitoring-stack", ["65.3.1"]);
+const metricsServerItem = platformAddonItem("cat-metrics-server", "metrics-server", ["3.12.1"]);
+const ingressNginxItem = platformAddonItem("cat-ingress-nginx", "ingress-nginx", ["4.11.3"]);
+
 export const catalogItems: ItemView[] = [
   postgresItem,
   certManagerItem,
   keycloakRealmItem,
   crossplaneItem,
+  externalSecretsItem,
+  istioItem,
+  monitoringItem,
+  metricsServerItem,
+  ingressNginxItem,
 ];
 
 const DEPLOY_PHASES: DeployPhase[] = ["pending", "rendering", "committing", "syncing", "healthy"];

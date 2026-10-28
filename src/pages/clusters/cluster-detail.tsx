@@ -395,6 +395,12 @@ export function ClusterDetailPage() {
         actions={
           <>
             <ClusterStatusBadge status={cluster.status} />
+            <Link
+              to={tenantLink(tenant, `clusters/${cluster.id}/addons`)}
+              className="btn btn-secondary btn-sm"
+            >
+              Addons
+            </Link>
             {Object.entries(cluster.labels).map(([k, v]) => (
               <span key={k} className="tag">
                 {k}={v}

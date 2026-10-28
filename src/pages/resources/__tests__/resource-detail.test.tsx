@@ -5,6 +5,7 @@ import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest
 
 import { mockControl } from "@/mocks/fixtures";
 import { mockCatalogControl } from "@/mocks/fixtures/catalog";
+import { gitReposMockControl } from "@/mocks/fixtures/git-repos";
 import { mockServer } from "@/mocks/server";
 import { ResourceDetailPage } from "@/pages/resources/resource-detail";
 
@@ -21,6 +22,7 @@ afterEach(() => {
   mockServer.resetHandlers();
   mockControl.reset();
   mockCatalogControl.reset();
+  gitReposMockControl.reset();
 });
 afterAll(() => mockServer.close());
 
@@ -44,6 +46,14 @@ describe("ResourceDetailPage", () => {
     // InstanceView has no composed-resources or ArgoCD deep link in the contract.
     expect(screen.queryByText(/Composed resources/)).not.toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "Open in ArgoCD" })).not.toBeInTheDocument();
+  });
+
+  it("shows the GitOps repo card with commit and PR links", async () => {
+    renderPage();
+    expect(await screen.findByText("GitOps Repository")).toBeInTheDocument();
+    expect(screen.getByText("baseline")).toBeInTheDocument();
+    expect(screen.getByText("acme/acme-inari-state")).toBeInTheDocument();
+    expect(screen.getByText(/Direct/)).toBeInTheDocument();
   });
 
   it("shows an empty actions menu when no extensions contribute actions", async () => {

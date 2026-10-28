@@ -79,6 +79,8 @@ export async function getResource(
   return {
     ...base,
     spec: (res.instance.spec ?? {}) as Record<string, unknown>,
+    commitSha: res.instance.commitSha ?? null,
+    prUrl: res.instance.prUrl ?? null,
   };
 }
 

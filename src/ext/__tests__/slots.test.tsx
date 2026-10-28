@@ -72,6 +72,8 @@ const instance: ResourceInstanceDetail = {
   createdAt: "",
   updatedAt: "",
   spec: {},
+  commitSha: null,
+  prUrl: null,
 };
 
 function ClusterTabsProbe() {

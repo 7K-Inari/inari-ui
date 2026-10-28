@@ -85,6 +85,9 @@ export interface CatalogItemSummary {
 export interface CatalogVersion {
   version: string;
   channel: string;
+  // values.schema.json for this version (Feature C decision 4: addon values
+  // editors validate against it client-side). Absent = lenient allow.
+  schema?: Record<string, unknown>;
 }
 
 export interface UiHints {
@@ -121,6 +124,7 @@ export interface CreateDeployRequest {
   clusterId: string;
   name: string;
   spec: Record<string, unknown>;
+  repoId?: string;
 }
 
 export interface Deploy {
@@ -158,6 +162,8 @@ export interface ResourceInstanceSummary {
 
 export interface ResourceInstanceDetail extends ResourceInstanceSummary {
   spec: Record<string, unknown>;
+  commitSha: string | null;
+  prUrl: string | null;
 }
 
 export interface UpgradeDiff {

@@ -167,6 +167,25 @@ import {
   updateNotificationEndpointMock,
 } from "@/mocks/fixtures/m6";
 import type { NotificationEndpointInput } from "@/mocks/fixtures/m6";
+import {
+  findGitRepo,
+  gitRepoRefCounts,
+  gitReposFor,
+  registerGitRepoMock,
+  unregisterGitRepoMock,
+  updateGitRepoMock,
+  type RegisterGitRepoBody,
+  type UpdateGitRepoBody,
+} from "@/mocks/fixtures/git-repos";
+import {
+  addonsForCluster,
+  adoptAddonMock,
+  enablePruneMock,
+  findAddon,
+  updateAddonMock,
+  type AdoptAddonBody,
+  type UpdateAddonBody,
+} from "@/mocks/fixtures/addons";
 import type { OidcClientInput } from "@/api/identity";
 import type { OidcProviderInput } from "@/api/idp";
 import type {
@@ -1361,6 +1380,152 @@ export const handlers = [
       return humaError(404, "git connection not found");
     }
     return new HttpResponse(null, { status: 204 });
+  }),
+
+  // ---- M1.W2: GitOps repo registry (Feature A) ----
+  http.get(`${BASE}/git-repos`, ({ params }) => {
+    return HttpResponse.json({ repos: gitReposFor(params.org as string) });
+  }),
+
+  http.post(`${BASE}/git-repos`, async ({ params, request }) => {
+    const body = (await request.json()) as RegisterGitRepoBody;
+    if (!body.name || !body.repo) {
+      return humaError(422, "validation failed (name, repo are required)");
+    }
+    if (body.scope === "team" && !body.teamId) {
+      return humaError(422, "validation failed (teamId is required for team scope)");
+    }
+    const row = registerGitRepoMock(params.org as string, body);
+    return HttpResponse.json({ repo: row }, { status: 201 });
+  }),
+
+  http.get(`${BASE}/git-repos/:id`, ({ params }) => {
+    const row = findGitRepo(params.org as string, params.id as string);
+    if (!row) return humaError(404, "git repo not found");
+    return HttpResponse.json({
+      repo: row,
+      gitProviderStatus: {
+        state: "ok",
+        authModel: "platform_app",
+        checkedAt: new Date().toISOString(),
+      },
+    });
+  }),
+
+  http.patch(`${BASE}/git-repos/:id`, async ({ params, request }) => {
+    const body = (await request.json()) as UpdateGitRepoBody;
+    if (body.isDefault === false) {
+      return humaError(422, "isDefault=false is rejected; promote another repo instead");
+    }
+    const row = updateGitRepoMock(params.org as string, params.id as string, body);
+    if (!row) return humaError(404, "git repo not found");
+    return HttpResponse.json({ repo: row });
+  }),
+
+  http.delete(`${BASE}/git-repos/:id`, ({ params, request }) => {
+    const org = params.org as string;
+    const id = params.id as string;
+    const row = findGitRepo(org, id);
+    if (!row) return humaError(404, "git repo not found");
+    const url = new URL(request.url);
+    const force = url.searchParams.get("force") === "true";
+    const mode = url.searchParams.get("mode");
+    if (row.isDefault && !force) {
+      return humaError(409, "cannot unregister the default repo");
+    }
+    const refs = gitRepoRefCounts(id);
+    const totalRefs = refs.instances + refs.addons + refs.clusters;
+    if (totalRefs > 0 && !force) {
+      return humaError(
+        409,
+        `repo in use by ${totalRefs} workload(s) (instances=${refs.instances} addons=${refs.addons} clusters=${refs.clusters})`,
+      );
+    }
+    if (force && mode !== "orphan" && mode !== "teardown") {
+      return humaError(422, "mode is required with force=true (orphan|teardown)");
+    }
+    unregisterGitRepoMock(org, id);
+    return HttpResponse.json({ unregistered: true, mode: mode ?? undefined });
+  }),
+
+  // ---- M3.W2: cluster addons (Feature C) ----
+  http.get(`${BASE}/clusters/:id/addons`, ({ params }) => {
+    const org = params.org as string;
+    const clusterId = params.id as string;
+    const cluster = findCluster(clusterId);
+    if (!cluster) return humaError(404, "cluster not found");
+    return HttpResponse.json({
+      addons: addonsForCluster(org, clusterId, cluster.labels),
+    });
+  }),
+
+  http.post(`${BASE}/clusters/:id/addons/:catalogItem/adopt`, async ({ params, request }) => {
+    const org = params.org as string;
+    const body = (await request.json()) as AdoptAddonBody;
+    if (
+      body.deployMode !== undefined &&
+      body.deployMode !== "application" &&
+      body.deployMode !== "applicationset"
+    ) {
+      return humaError(422, "validation failed (deployMode must be application|applicationset)");
+    }
+    if (body.deployMode === "applicationset") {
+      const selector = body.clusterSelector ?? {};
+      // Server matches only active/degraded clusters (decision 8 semantics).
+      const matches = listForTenant(org).filter(
+        (c) =>
+          (c.status === "connected" || c.status === "degraded") &&
+          Object.entries(selector).every(([k, v]) => c.labels[k] === v),
+      );
+      if (matches.length === 0) {
+        return humaError(422, "cluster selector matches no active clusters");
+      }
+    }
+    // Default repo = the org's baseline (isDefault) repo; PR URL vs commit SHA
+    // follows the target repo's commit policy.
+    const repo =
+      findGitRepo(org, body.repoId ?? "") ??
+      gitReposFor(org).find((r) => r.isDefault) ??
+      null;
+    if (!repo) return humaError(409, "no git repo configured for the org");
+    const row = adoptAddonMock(
+      org,
+      params.id as string,
+      params.catalogItem as string,
+      body,
+      repo.id,
+      repo.commitPolicy === "pull_request",
+    );
+    if (row === "not_found") return humaError(404, "addon not found on this cluster");
+    if (row === "already_managed") return humaError(409, "addon is already managed");
+    return HttpResponse.json({
+      addon: row,
+      commitSha: row.commitSha,
+      prUrl: row.prUrl,
+    });
+  }),
+
+  http.patch(`${BASE}/addons/:id`, async ({ params, request }) => {
+    const org = params.org as string;
+    const body = (await request.json()) as UpdateAddonBody;
+    if (body.chartVersion === undefined && body.values === undefined) {
+      return humaError(422, "validation failed (at least one of chartVersion, values)");
+    }
+    const existing = findAddon(org, params.id as string);
+    if (!existing) return humaError(404, "addon not found");
+    if (existing.state === "discovered") return humaError(409, "addon is not managed");
+    const repo = findGitRepo(org, existing.repoId ?? "");
+    const row = updateAddonMock(org, existing.id, body, repo?.commitPolicy === "pull_request");
+    if (!row) return humaError(404, "addon not found");
+    return HttpResponse.json({ addon: row, commitSha: row.commitSha, prUrl: row.prUrl });
+  }),
+
+  http.post(`${BASE}/addons/:id/enable-prune`, ({ params }) => {
+    const org = params.org as string;
+    const row = enablePruneMock(org, params.id as string);
+    if (row === null) return humaError(404, "addon not found");
+    if (row === "conflict") return humaError(409, "prune already enabled or addon not managed");
+    return HttpResponse.json({ addon: row });
   }),
 
   // ---- M6.W2: org profile (proposed PATCH route) ----

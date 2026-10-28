@@ -6,7 +6,9 @@ import { getCatalogItem } from "@/api/catalog";
 import { listClusters } from "@/api/clusters";
 import { ApiError } from "@/api/client";
 import { createDeploy, getDeploy } from "@/api/deploys";
+import { listGitRepos } from "@/api/git-repos";
 import { useAsyncResource } from "@/api/hooks";
+import { listTeams } from "@/api/tenants";
 import type { Deploy } from "@/api/types";
 import { useAuth } from "@/auth/auth-context";
 import { Alert, Badge, Button, Card, Input, Spinner } from "7k-design-system/react";
@@ -16,6 +18,7 @@ import { Stepper } from "@/components/stepper";
 import { PolicyDenialNotice } from "@/components/policy-denial";
 import { SchemaForm, type SchemaFormHandle } from "@/components/schema-form/schema-form";
 import { applyHintsToSchema, hintsToUiSchema } from "@/components/schema-form/ui-hints";
+import { RepoPicker } from "@/pages/settings/org/git/repo-picker";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
 
@@ -98,10 +101,13 @@ export function DeployWizardPage() {
 
   const item = useAsyncResource((token) => getCatalogItem(token, itemId!), [itemId]);
   const clusters = useAsyncResource((token) => listClusters(token, tenant), [tenant]);
+  const repos = useAsyncResource((token) => listGitRepos(token, tenant), [tenant]);
+  const teams = useAsyncResource((token) => listTeams(token, tenant), [tenant]);
 
   const [step, setStep] = React.useState(0);
   const [name, setName] = React.useState("");
   const [clusterId, setClusterId] = React.useState("");
+  const [repoId, setRepoId] = React.useState("");
   const [nameError, setNameError] = React.useState<string | null>(null);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
   const [policyDenial, setPolicyDenial] = React.useState<{
@@ -122,6 +128,14 @@ export function DeployWizardPage() {
     () => (item.data ? hintsToUiSchema(item.data.uiHints) : {}),
     [item.data],
   );
+
+  // Preselect the default repo once repos load.
+  React.useEffect(() => {
+    if (repos.data && !repoId) {
+      const def = repos.data.find((r) => r.isDefault);
+      if (def) setRepoId(def.id);
+    }
+  }, [repos.data, repoId]);
 
   if (item.error) {
     return <Alert variant="danger">Failed to load catalog item: {item.error.message}</Alert>;
@@ -169,6 +183,7 @@ export function DeployWizardPage() {
         clusterId,
         name,
         spec: formData,
+        repoId: repoId || undefined,
       });
       setDeployId(deploy.id);
       setStep(2);
@@ -228,6 +243,14 @@ export function DeployWizardPage() {
                 ))}
               </select>
             </div>
+            {repos.data && repos.data.length > 0 && (
+              <RepoPicker
+                repos={repos.data}
+                teams={(teams.data ?? []).map((t) => ({ id: t.id, displayName: t.displayName }))}
+                selectedId={repoId}
+                onSelect={setRepoId}
+              />
+            )}
             <SchemaForm
               ref={formRef}
               schema={schema}

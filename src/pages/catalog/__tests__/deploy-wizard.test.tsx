@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { mockControl } from "@/mocks/fixtures";
+import { gitReposMockControl } from "@/mocks/fixtures/git-repos";
 import { mockServer } from "@/mocks/server";
 import { DeployWizardPage } from "@/pages/catalog/deploy-wizard";
 
@@ -19,6 +20,7 @@ beforeAll(() => mockServer.listen({ onUnhandledFrame: "error" }));
 afterEach(() => {
   mockServer.resetHandlers();
   mockControl.reset();
+  gitReposMockControl.reset();
 });
 afterAll(() => mockServer.close());
 
@@ -144,6 +146,58 @@ describe("DeployWizardPage", () => {
       "/acme/deploys/ri-orders-db-2",
     );
   }, 15000);
+
+  it("preselects the default repo and submits repoId", async () => {
+    const user = userEvent.setup();
+    let submittedBody: unknown = null;
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.post("*/api/v1/tenants/acme/deploys", async ({ request }) => {
+        submittedBody = await request.json();
+        return HttpResponse.json(
+          {
+            deploy: {
+              InstanceID: "dep-test",
+              Version: "1.4.0",
+              Status: "deploying",
+              CommitSHA: "",
+              PRURL: "",
+              ApprovalID: "",
+            },
+          },
+          { status: 201 },
+        );
+      }),
+      http.get("*/api/v1/tenants/acme/instances/dep-test", () =>
+        HttpResponse.json({
+          instance: {
+            id: "ri-orders-db-2",
+            orgId: "acme",
+            clusterId: "cl-eks-prod",
+            catalogItemId: "cat-postgresql-aws",
+            version: "1.4.0",
+            resourceRef: { name: "orders-db-2" },
+            health: "healthy",
+            state: "healthy",
+            statusMessage: "",
+            createdAt: new Date().toISOString(),
+          },
+        }),
+      ),
+    );
+
+    renderWizard();
+    await fillConfigure(user);
+    // Default repo (baseline) should be preselected.
+    expect(screen.getByRole("radio", { name: /baseline/i })).toBeChecked();
+    // Switch to team-beta.
+    await user.click(screen.getByRole("radio", { name: /team-beta-gitops/i }));
+    await user.click(screen.getByRole("button", { name: "Next" }));
+    await user.click(screen.getByRole("button", { name: "Deploy" }));
+    await waitFor(() => expect(submittedBody).not.toBeNull());
+    const body = submittedBody as { repoId?: string };
+    expect(body.repoId).toBe("repo-team-beta");
+  });
 
   it("shows policy denial reason and remediation when OPA blocks the deploy", async () => {
     const user = userEvent.setup();
