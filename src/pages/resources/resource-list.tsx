@@ -130,56 +130,56 @@ export function ResourceListPage() {
       <PlatformResourcesSection />
 
       <section className="space-y-3" aria-label="Deployed instances">
-      <h2 className="mono-label">Deployed instances</h2>
-      <div className="flex gap-1" role="group" aria-label="Filter by health">
-        {HEALTH_FILTERS.map((f) => (
-          <Button
-            key={f.value}
-            variant={healthFilter === f.value ? "secondary" : "ghost"}
-            size="sm"
-            onClick={() => setHealthFilter(f.value)}
-          >
-            {f.label}
-          </Button>
-        ))}
-      </div>
+        <h2 className="mono-label">Deployed instances</h2>
+        <div className="flex gap-1" role="group" aria-label="Filter by health">
+          {HEALTH_FILTERS.map((f) => (
+            <Button
+              key={f.value}
+              variant={healthFilter === f.value ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setHealthFilter(f.value)}
+            >
+              {f.label}
+            </Button>
+          ))}
+        </div>
 
-      {error && (
-        <Card>
-          <div className="card-body">
-            Failed to load resources: {error.message}
-          </div>
-        </Card>
-      )}
+        {error && (
+          <Card>
+            <div className="card-body">
+              Failed to load resources: {error.message}
+            </div>
+          </Card>
+        )}
 
-      {actionError && <p className="text-sm u-danger">{actionError}</p>}
+        {actionError && <p className="text-sm u-danger">{actionError}</p>}
 
-      {!error && loading && !resources && (
-        <LoadingState label="Loading resources…" />
-      )}
+        {!error && loading && !resources && (
+          <LoadingState label="Loading resources…" />
+        )}
 
-      {!error && resources && visible.length === 0 && (
-        <Card>
-          <div className="card-body">
-            <p className="text-sm u-muted">
-              {resources.length === 0
-                ? "No resources yet. Deploy something from the catalog to see it here."
-                : "No resources match this filter."}
-            </p>
-            {resources.length === 0 && (
-              <Link to={tenantLink(tenant, "catalog")} className="btn btn-secondary">Browse catalog</Link>
-            )}
-          </div>
-        </Card>
-      )}
+        {!error && resources && visible.length === 0 && (
+          <Card>
+            <div className="card-body">
+              <p className="text-sm u-muted">
+                {resources.length === 0
+                  ? "No resources yet. Deploy something from the catalog to see it here."
+                  : "No resources match this filter."}
+              </p>
+              {resources.length === 0 && (
+                <Link to={tenantLink(tenant, "catalog")} className="btn btn-secondary">Browse catalog</Link>
+              )}
+            </div>
+          </Card>
+        )}
 
-      {visible.length > 0 && (
-        <DataTable<ResourceInstanceSummary>
-          columns={columns}
-          rows={visible}
-          rowKey="id"
-        />
-      )}
+        {visible.length > 0 && (
+          <DataTable<ResourceInstanceSummary>
+            columns={columns}
+            rows={visible}
+            rowKey="id"
+          />
+        )}
       </section>
     </div>
   );
