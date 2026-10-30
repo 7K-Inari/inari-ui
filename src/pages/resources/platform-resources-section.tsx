@@ -109,7 +109,7 @@ export function PlatformResourcesSection() {
           DNSEndpoints, KRO tenantnamespace instances, plus cert-manager ClusterIssuers and ArgoCD
           AppProjects committed as native manifests. The backing addons — cert-manager,
           ExternalDNS, ArgoCD — are installed and managed from a cluster's{" "}
-          <Link to={tenantLink(tenant, "clusters")} className="u-accent">
+          <Link to={tenantLink(tenant, "clusters")} className="u-accent inline-block -my-1 py-1">
             Addons page
           </Link>
           .
