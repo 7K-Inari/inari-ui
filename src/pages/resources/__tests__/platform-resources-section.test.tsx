@@ -55,18 +55,22 @@ describe("PlatformResourcesSection", () => {
   it("wires the section to the cluster addons management surface", async () => {
     renderSection();
     const section = await screen.findByRole("region", { name: "Platform resources" });
-    const link = await within(section).findByRole("link", { name: "external-dns addon" });
-    expect(link).toHaveAttribute("href", "/acme/clusters");
+    // Section-level pointer (design: dedicated ADDONS PAGE → link, no
+    // mid-sentence link in the description).
+    const sectionLink = await within(section).findByRole("link", { name: "Addons page →" });
+    expect(sectionLink).toHaveAttribute("href", "/acme/clusters");
+    expect(
+      within(section).getByText(/native cert-manager ClusterIssuers, ExternalDNS DNSEndpoints/i),
+    ).toBeInTheDocument();
+    // Row-level hint for the addon-backed kind.
+    const rowLink = await within(section).findByRole("link", { name: "external-dns addon" });
+    expect(rowLink).toHaveAttribute("href", "/acme/clusters");
     // KRO instances and hub-provisioned rows have no addon surface.
     expect(within(section).getByText("KRO tenantnamespace")).toBeInTheDocument();
     expect(within(section).getAllByText("Platform hub").length).toBe(2);
-    // Section-level pointer to the addons page (cert-manager/ExternalDNS/ArgoCD).
-    expect(
-      within(section).getByRole("link", { name: "Addons page" }),
-    ).toHaveAttribute("href", "/acme/clusters");
   });
 
-  it("falls back to the raw kind for kinds outside the known set", async () => {
+  it("falls back to the raw kind and dashes for kinds outside the known set", async () => {
     mockServer.use(
       http.get("*/api/v1/tenants/:org/platform-resources", () =>
         HttpResponse.json({
@@ -77,7 +81,7 @@ describe("PlatformResourcesSection", () => {
               kind: "future-kind",
               name: "future-thing",
               status: "ready",
-              detail: "a kind the UI does not know yet",
+              // no detail — design renders an em dash for empty cells
               updatedAt: new Date().toISOString(),
             },
           ],
@@ -87,19 +91,39 @@ describe("PlatformResourcesSection", () => {
     renderSection();
     const section = await screen.findByRole("region", { name: "Platform resources" });
     expect(await within(section).findByText("future-kind")).toBeInTheDocument();
-    expect(within(section).getByText("—")).toBeInTheDocument();
+    // Detail and Managed by both degrade to "—".
+    expect(within(section).getAllByText("—").length).toBe(2);
   });
 
-  it("shows an empty state when the tenant has no platform resources", async () => {
+  it("shows the designed empty state without a CTA", async () => {
     mockServer.use(
       http.get("*/api/v1/tenants/:org/platform-resources", () =>
         HttpResponse.json({ resources: [] }),
       ),
     );
     renderSection();
+    const section = await screen.findByRole("region", { name: "Platform resources" });
+    expect(await within(section).findByText("No platform resources yet")).toBeInTheDocument();
     expect(
-      await screen.findByText("No platform resources for this tenant yet."),
+      within(section).getByText(/Resources appear here as the platform renders them/i),
     ).toBeInTheDocument();
+    // Design: no CTA on the empty card (nothing to browse).
+    expect(within(section).queryByRole("link", { name: /browse/i })).not.toBeInTheDocument();
+  });
+
+  it("shows the error card without a retry button", async () => {
+    mockServer.use(
+      http.get("*/api/v1/tenants/:org/platform-resources", () =>
+        HttpResponse.json({ title: "Error", status: 500, detail: "timeout" }, { status: 500 }),
+      ),
+    );
+    renderSection();
+    const section = await screen.findByRole("region", { name: "Platform resources" });
+    expect(
+      await within(section).findByText(/Failed to load platform resources/),
+    ).toBeInTheDocument();
+    // Design D4: message-only error cards, no retry.
+    expect(within(section).queryByRole("button", { name: /retry/i })).not.toBeInTheDocument();
   });
 
   it("renders nothing in the all-tenants view (the endpoint is tenant-scoped)", async () => {

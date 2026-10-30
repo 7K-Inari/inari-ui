@@ -52,7 +52,7 @@ describe("PlatformPage", () => {
       await screen.findByRole("heading", { name: "Tenant platform resources" }),
     ).toBeInTheDocument();
     expect(screen.queryByText(/^Reconciled by inari-operator:/)).not.toBeInTheDocument();
-    const link = screen.getByRole("link", { name: "Resources view" });
+    const link = screen.getByRole("link", { name: "Resources view →" });
     expect(link).toHaveAttribute("href", "/acme/deploys");
   });
 });

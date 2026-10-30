@@ -130,6 +130,7 @@ export function ResourceListPage() {
       <PlatformResourcesSection />
 
       <section className="space-y-3" aria-label="Deployed instances">
+      <h2 className="mono-label">Deployed instances</h2>
       <div className="flex gap-1" role="group" aria-label="Filter by health">
         {HEALTH_FILTERS.map((f) => (
           <Button

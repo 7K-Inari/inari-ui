@@ -88,6 +88,14 @@ describe("ResourceListPage", () => {
       within(section).getByRole("link", { name: "external-dns addon" }),
     ).toHaveAttribute("href", "/acme/clusters");
   });
+
+  it("labels the deployed instances section", async () => {
+    renderPage();
+    const section = await screen.findByRole("region", { name: "Deployed instances" });
+    expect(
+      await within(section).findByRole("heading", { name: "Deployed instances" }),
+    ).toBeInTheDocument();
+  });
 });
 
 describe("row delete", () => {

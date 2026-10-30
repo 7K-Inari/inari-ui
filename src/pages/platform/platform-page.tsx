@@ -71,17 +71,19 @@ export function PlatformPage() {
       </section>
 
       <section className="space-y-3" aria-label="Tenant platform resources">
-        <h2 className="text-lg font-semibold tracking-tight">Tenant platform resources</h2>
         <Card>
-          <div className="card-body">
+          <div className="card-body space-y-2">
+            <div className="flex items-baseline justify-between gap-4">
+              <h2 className="text-base font-medium">Tenant platform resources</h2>
+              <Link to={tenantLink(tenant, "deploys")} className="mono-label u-accent inline-block -my-1 py-1">
+                Resources view →
+              </Link>
+            </div>
             <p className="text-sm u-muted">
               Native cert-manager ClusterIssuers, ExternalDNS DNSEndpoints, ArgoCD AppProjects,
               and KRO tenant namespaces — rendered into this tenant's GitOps state repos and
-              synced by ArgoCD — now live in the{" "}
-              <Link to={tenantLink(tenant, "deploys")} className="u-accent inline-block -my-1 py-1">
-                Resources view
-              </Link>
-              . The backing addons are managed from each cluster's Addons page.
+              synced by ArgoCD — live in the Resources view. The backing addons are managed from
+              each cluster's Addons page.
             </p>
           </div>
         </Card>
