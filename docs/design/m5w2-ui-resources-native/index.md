@@ -20,21 +20,21 @@ All boards are in the existing `Inari Console` file — no new per-task file was
 
 | # | Board | Board ID | State | What changed |
 |---|-------|----------|-------|--------------|
-| 1 | `resources` | `f86a119d-5cf8-800f-8008-d5e3083a9aa7` | REVIEW | New PLATFORM RESOURCES section inserted above the existing deployed-instances table; page description added; DEPLOYED INSTANCES section label added; board height 896→1000 |
-| 2 | `resources--platform-loading` (new) | `38ccdc29-f197-8029-8008-de7f40b642e2` | REVIEW | Full page; platform section in loading state (skeleton rows) |
-| 3 | `resources--platform-empty` (new) | `38ccdc29-f197-8029-8008-de7f45bf49cb` | REVIEW | Full page; platform section in empty state |
-| 4 | `resources--platform-error` (new) | `38ccdc29-f197-8029-8008-de7f4ac48235` | REVIEW | Full page; platform section in error state |
-| 5 | `resources--loading` | `f86a119d-5cf8-800f-8008-d5e3083a9aae` | REVIEW | Rebuilt: populated platform section + deployed instances in loading state (was stale single-section page) |
-| 6 | `resources--empty` | `f86a119d-5cf8-800f-8008-d5e3083a9aaf` | REVIEW | Rebuilt: populated platform section + deployed instances empty card with Browse catalog CTA |
-| 7 | `resources--error` | `f86a119d-5cf8-800f-8008-d5e3083a9ab0` | REVIEW | Rebuilt: populated platform section + deployed instances error card |
-| 8 | `platform` (page `screens / govern`, id `e8f72436-db5f-8060-8008-d5df6d595198`) | `f86a119d-5cf8-800f-8008-d5e2017c1143` | REVIEW | Module stats row and 9 module cards replaced by 3 PLATFORM CLUSTER APPS cards + tenant-platform-resources pointer card; page description added |
+| 1 | `resources` | `f86a119d-5cf8-800f-8008-d5e3083a9aa7` | FINAL | New PLATFORM RESOURCES section inserted above the existing deployed-instances table; page description added; DEPLOYED INSTANCES section label added; board height 896→1000 |
+| 2 | `resources--platform-loading` (new) | `38ccdc29-f197-8029-8008-de7f40b642e2` | FINAL | Full page; platform section in loading state (skeleton rows) |
+| 3 | `resources--platform-empty` (new) | `38ccdc29-f197-8029-8008-de7f45bf49cb` | FINAL | Full page; platform section in empty state |
+| 4 | `resources--platform-error` (new) | `38ccdc29-f197-8029-8008-de7f4ac48235` | FINAL | Full page; platform section in error state |
+| 5 | `resources--loading` | `f86a119d-5cf8-800f-8008-d5e3083a9aae` | FINAL | Rebuilt: populated platform section + deployed instances in loading state (was stale single-section page) |
+| 6 | `resources--empty` | `f86a119d-5cf8-800f-8008-d5e3083a9aaf` | FINAL | Rebuilt: populated platform section + deployed instances empty card with Browse catalog CTA |
+| 7 | `resources--error` | `f86a119d-5cf8-800f-8008-d5e3083a9ab0` | FINAL | Rebuilt: populated platform section + deployed instances error card |
+| 8 | `platform` (page `screens / govern`, id `e8f72436-db5f-8060-8008-d5df6d595198`) | `f86a119d-5cf8-800f-8008-d5e2017c1143` | FINAL | Module stats row and 9 module cards replaced by 3 PLATFORM CLUSTER APPS cards + tenant-platform-resources pointer card; page description added |
 
 Non-board artifacts touched:
 - **Page `index` → `SCREEN INDEX` board** (`f86a119d-5cf8-800f-8008-d5e61443babc`, page id `e8f72436-db5f-8060-8008-d5df6d56539d`): operate line updated to 25 boards.
 - **Page `Read me`** (id `01748e06-6db4-80d1-8008-cceea297ad60`): M5W2 entry appended (rework summary + badge dark-tone gap note).
 - **DS library**: none (gap G1 recorded instead of forking).
 
-Board state markers: all 8 touched boards carry the file's standard REVIEW marker — a 40×16 pill `#FFB300` named `state-marker` 8px above the board's top-right corner (board.x+1392, board.y−8) plus a 9px Geist Mono black `REVIEW` label. Pills are the only page-level orphans by convention; every screen's content lives inside its board (verified: 0 non-marker orphans on both touched pages).
+Board state markers: all 8 touched boards carry the file's standard FINAL marker — a 40×16 pill `#00E676` named `state-marker` 8px above the board's top-right corner (board.x+1392, board.y−8) plus a 9px Geist Mono black `FINAL` label (marked FINAL on user approval, 2026-10-30). Pills are the only page-level orphans by convention; every screen's content lives inside its board (verified: 0 non-marker orphans on both touched pages).
 
 Cluster Addons boards (`cluster-addons*`, M3W2) were audited for the wiring (row-level "external-dns addon" link target + section-level "Addons page" link) and intentionally left untouched.
 
