@@ -75,7 +75,7 @@ export function PlatformPage() {
           <div className="card-body space-y-2">
             <div className="flex items-baseline justify-between gap-4">
               <h2 className="text-base font-medium">Tenant platform resources</h2>
-              <Link to={tenantLink(tenant, "deploys")} className="mono-label u-accent inline-block -my-1 py-1">
+              <Link to={tenantLink(tenant, "deploys")} className="mono-label u-accent inline-block -my-1.5 py-1.5">
                 Resources view →
               </Link>
             </div>
