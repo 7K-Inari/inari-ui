@@ -34,7 +34,7 @@ Non-board artifacts touched:
 - **Page `Read me`** (id `01748e06-6db4-80d1-8008-cceea297ad60`): M5W2 entry appended (rework summary + badge dark-tone gap note).
 - **DS library**: none (gap G1 recorded instead of forking).
 
-Board state markers: all 8 touched boards carry a physical `state-marker / REVIEW` square (12×12, #FFB300, 20px above the board's top-left corner; convention documented on the file's Read me page).
+Board state markers: all 8 touched boards carry the file's standard REVIEW marker — a 40×16 pill `#FFB300` named `state-marker` 8px above the board's top-right corner (board.x+1392, board.y−8) plus a 9px Geist Mono black `REVIEW` label. Pills are the only page-level orphans by convention; every screen's content lives inside its board (verified: 0 non-marker orphans on both touched pages).
 
 Cluster Addons boards (`cluster-addons*`, M3W2) were audited for the wiring (row-level "external-dns addon" link target + section-level "Addons page" link) and intentionally left untouched.
 
@@ -99,10 +99,10 @@ Badge width = text width + 17px (8+8 horizontal padding + 1 stroke); width is fi
 
 | State | Board | Spec |
 |-------|-------|------|
-| Platform loading | `resources--platform-loading` | Card 1150×322 (same geometry as populated); 5 skeleton bars 640×20, fill #1C1C22, radius 4, at row centers (y=328+56k) |
-| Platform empty | `resources--platform-empty` | Card 1150×168; title `No platform resources yet` Geist 16/400 #FAFAFB (306,304); body Geist 13/400 #82828A (306,336): "Resources appear here as the platform renders them into this tenant's GitOps state repos — DNS endpoints, tenant namespaces, and Keycloak realms/clients." No CTA (nothing to browse). |
-| Platform error | `resources--platform-error` | Card 1150×96; `Failed to load platform resources: timeout` Geist 13/400 #FF5C7A (306,296). No retry button — matches file convention (see decision D4). |
-| Instances loading / empty / error | `resources--loading` / `-empty` / `-error` | Same page with populated platform section; deployed section shows skeleton card + `Loading resources…`, empty card + `Browse catalog` CTA (→ catalog), or `Failed to load resources: timeout` error card (1150×96/174/276, same card style) |
+| Platform loading | `resources--platform-loading` | Board 1440×1000 (skeleton footprint mirrors the populated table). Card 1150×322 (same geometry as populated); 5 skeleton bars 640×20, fill #1C1C22, radius 4, at row centers (y=328+56k); deployed block at the same y as the main board (label 614, filter row 648, table 720) |
+| Platform empty | `resources--platform-empty` | Board 1440×896 — sections flow 24px apart (no pinned gap): card 1150×168 (268–436); title `No platform resources yet` Geist 16/400 #FAFAFB (306,304); body Geist 13/400 #82828A (306,336): "Resources appear here as the platform renders them into this tenant's GitOps state repos — DNS endpoints, tenant namespaces, and Keycloak realms/clients." No CTA (nothing to browse). Deployed label y=460, filter row y=494, instances table y=566–842 |
+| Platform error | `resources--platform-error` | Board 1440×896, same flowing layout: card 1150×96 (268–364); `Failed to load platform resources: timeout` Geist 13/400 #FF5C7A (306,296). No retry button — matches file convention (see decision D4). Deployed label y=388, filter row y=422, instances table y=494–770 |
+| Instances loading / empty / error | `resources--loading` / `-empty` / `-error` | Same page with populated platform section; deployed section shows skeleton card + `Loading resources…`, empty card + `Browse catalog` CTA (→ catalog), or `Failed to load resources: timeout` error card (1150×96/174/276, same card style). Heights: `--loading` 1440×1000 (skeleton footprint matches the table), `--empty`/`--error` 1440×896 with the deployed block following the platform table 24px below |
 | All tenants | — (no board) | Section is not rendered at all when the tenant context is All tenants (API is tenant-scoped). No placeholder. |
 | Unknown kind | row 5 of `resources` | Raw kind string, neutral badge, `—` managed-by, status badge falls back to neutral for unrecognized status strings |
 
