@@ -8,6 +8,7 @@ import { ApiError } from "@/api/client";
 import { useAuth } from "@/auth/auth-context";
 import type { ResourceHealth, ResourceInstanceSummary } from "@/api/types";
 import { Badge, Button, Card, DataTable, type DataTableColumn } from "7k-design-system/react";
+import { PlatformResourcesSection } from "@/pages/resources/platform-resources-section";
 import { useTenant } from "@/tenant/tenant-context";
 import { ALL_TENANTS, tenantLink } from "@/tenant/tenant-link";
 import { LoadingState } from "@/components/loading";
@@ -121,10 +122,14 @@ export function ResourceListPage() {
       <div>
         <h1 className="page-header-title">Resources</h1>
         <p className="text-sm u-muted">
-          All deployed instances across clusters and cloud accounts in this scope.
+          Platform resources synced from the tenant GitOps state repos, and all deployed instances
+          across clusters and cloud accounts in this scope.
         </p>
       </div>
 
+      <PlatformResourcesSection />
+
+      <section className="space-y-3" aria-label="Deployed instances">
       <div className="flex gap-1" role="group" aria-label="Filter by health">
         {HEALTH_FILTERS.map((f) => (
           <Button
@@ -174,6 +179,7 @@ export function ResourceListPage() {
           rowKey="id"
         />
       )}
+      </section>
     </div>
   );
 }

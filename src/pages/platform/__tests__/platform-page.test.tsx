@@ -46,17 +46,13 @@ describe("PlatformPage", () => {
     expect(screen.queryByText("cert-manager")).not.toBeInTheDocument();
   });
 
-  it("renders tenant platform resources with kind and status badges", async () => {
+  it("points tenant platform resources at the Resources view", async () => {
     renderPage();
     expect(
       await screen.findByRole("heading", { name: "Tenant platform resources" }),
     ).toBeInTheDocument();
-    expect(screen.getByText(/^Reconciled by inari-operator:/)).toBeInTheDocument();
-    expect(await screen.findByText("acme.apps.inari.dev")).toBeInTheDocument();
-    expect(screen.getByText("tenant-acme")).toBeInTheDocument();
-    expect(screen.getByText("DNS zone")).toBeInTheDocument();
-    expect(screen.getByText("Namespace")).toBeInTheDocument();
-    expect(screen.getAllByText("Ready").length).toBeGreaterThan(0);
-    expect(screen.getByText("Reconciling")).toBeInTheDocument();
+    expect(screen.queryByText(/^Reconciled by inari-operator:/)).not.toBeInTheDocument();
+    const link = screen.getByRole("link", { name: "Resources view" });
+    expect(link).toHaveAttribute("href", "/acme/deploys");
   });
 });
