@@ -34,6 +34,8 @@ Non-board artifacts touched:
 - **Page `Read me`** (id `01748e06-6db4-80d1-8008-cceea297ad60`): M5W2 entry appended (rework summary + badge dark-tone gap note).
 - **DS library**: none (gap G1 recorded instead of forking).
 
+Board state markers: all 8 touched boards carry a physical `state-marker / REVIEW` square (12×12, #FFB300, 20px above the board's top-left corner; convention documented on the file's Read me page).
+
 Cluster Addons boards (`cluster-addons*`, M3W2) were audited for the wiring (row-level "external-dns addon" link target + section-level "Addons page" link) and intentionally left untouched.
 
 ---
