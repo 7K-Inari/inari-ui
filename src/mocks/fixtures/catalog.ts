@@ -98,7 +98,7 @@ const keycloakRealmItem: ItemView = {
   id: "cat-keycloak-realm",
   name: "keycloak-realm",
   displayName: "Keycloak Realm",
-  description: "Platform-scoped tenant Keycloak realm reconciled by inari-operator.",
+  description: "Platform-scoped tenant Keycloak realm managed via a provider-keycloak TenantRealm claim.",
   source: "platform",
   category: "security",
   approvalPolicy: "platform-admin",

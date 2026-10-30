@@ -26,7 +26,7 @@ export function PlatformPage() {
       </div>
 
       <section className="space-y-3" aria-label="Platform cluster apps">
-        <h2 className="text-lg font-semibold tracking-tight">Platform cluster apps</h2>
+        <h2 className="mono-label">Platform cluster apps</h2>
         {apps.error && (
           <Card>
             <div className="card-body">
