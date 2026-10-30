@@ -95,6 +95,43 @@ describe("PlatformResourcesSection", () => {
     expect(within(section).getAllByText("—").length).toBe(2);
   });
 
+  it("falls back to a neutral badge with the raw label for unrecognized statuses", async () => {
+    mockServer.use(
+      http.get("*/api/v1/tenants/:org/platform-resources", () =>
+        HttpResponse.json({
+          resources: [
+            {
+              id: "pr-weird",
+              tenant: "acme",
+              kind: "dns-zone",
+              name: "weird-status",
+              status: "degraded",
+              detail: "",
+              updatedAt: new Date().toISOString(),
+            },
+          ],
+        }),
+      ),
+    );
+    renderSection();
+    const section = await screen.findByRole("region", { name: "Platform resources" });
+    // Raw status string rendered, not mapped to a known tone.
+    expect(await within(section).findByText("degraded")).toBeInTheDocument();
+    expect(within(section).queryByText("Ready")).not.toBeInTheDocument();
+  });
+
+  it("renders the empty state when the API returns resources: null", async () => {
+    // Go marshals a nil slice as null; the adapter normalizes to [].
+    mockServer.use(
+      http.get("*/api/v1/tenants/:org/platform-resources", () =>
+        HttpResponse.json({ resources: null }),
+      ),
+    );
+    renderSection();
+    const section = await screen.findByRole("region", { name: "Platform resources" });
+    expect(await within(section).findByText("No platform resources yet")).toBeInTheDocument();
+  });
+
   it("shows the designed empty state without a CTA", async () => {
     mockServer.use(
       http.get("*/api/v1/tenants/:org/platform-resources", () =>
