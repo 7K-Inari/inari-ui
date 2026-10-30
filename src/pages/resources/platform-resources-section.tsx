@@ -36,7 +36,7 @@ function ManagementHint({
       // addons page is their install/upgrade/values surface. Rows carry no
       // cluster field, so the link targets the clusters list (design D2/G3).
       return (
-        <Link to={tenantLink(tenant, "clusters")} className="table-link">
+        <Link to={tenantLink(tenant, "clusters")} className="table-link inline-block -my-1 py-1">
           {management.addon} addon
         </Link>
       );
@@ -122,7 +122,10 @@ export function PlatformResourcesSection() {
     <section className="space-y-3" aria-label="Platform resources">
       <div className="flex items-baseline justify-between gap-4">
         <h2 className="mono-label">Platform resources</h2>
-        <Link to={tenantLink(tenant, "clusters")} className="mono-label u-accent">
+        <Link
+          to={tenantLink(tenant, "clusters")}
+          className="mono-label u-accent inline-block -my-1 py-1"
+        >
           Addons page →
         </Link>
       </div>
