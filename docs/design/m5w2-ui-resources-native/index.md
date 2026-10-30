@@ -12,6 +12,12 @@
 
 > **Component usage**: All boards use the local `Inari / Shell` component (Topbar+Sidebar). Badges are DS `badge / default` instances (Tone neutral/success/warning/danger, Theme dark) with per-instance dark-status color overrides (see DS-gap G1). Cards, tables, skeletons, section labels are raw shapes styled from DS tokens, matching the existing Resources/Addons boards (no DS `table` component equivalent in use on this file's screens).
 
+> **Design review (2026-10-30): GO** — all 8 boards, the SCREEN INDEX, and the Read me page verified against Penpot (badges are true DS `badge / default` variant instances; colors resolve to the DS palette; no off-palette values; states coverage confirmed via export_shape). Two Penpot-side defects were found and fixed during review (Penpot is canonical; recorded here for traceability):
+> 1. `resources--platform-empty` and `resources--platform-error`: page chrome (`rs OPERATE`, `rs Resources`) had been left above the board's top edge (board-relative y −74/−50 and −146/−122) after the round-2 board moves, so the breadcrumb/title were outside the board (and rendered on top of the neighboring board). Repositioned to board-relative y 80/104 to match the other six boards; re-exported and verified.
+> 2. Two stale REVIEW-marker leftovers removed from the `screens / operate` page root (a 12×12 #FFB300 square near `resources--platform-loading` and an orphaned "REVIEW" label at the page origin). Page root now holds only boards + FINAL marker pills/labels, per the Read me convention.
+>
+> No spec changes resulted from the review; all layout/badge/state specs below are as designed and verified in Penpot.
+
 ---
 
 ## Board manifest (TOUCHED ARTIFACTS)
