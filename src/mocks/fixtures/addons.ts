@@ -103,6 +103,67 @@ function seedState(): AddonsMockState {
     createdAt: iso(now - 10 * 86_400_000),
     updatedAt: iso(now - 86_400_000),
   };
+  // Operator-sunset Phase 1: ExternalDNS and ArgoCD as first-class addons.
+  const managedExternalDns: MockAddon = {
+    id: "addon-external-dns",
+    orgId: "acme",
+    clusterId: "cl-kind-dev",
+    catalogItem: "cat-external-dns",
+    state: "managed",
+    deployMode: "application",
+    repoId: "repo-baseline",
+    repoPath: "addons/external-dns",
+    source: {
+      kind: "helm",
+      helm: {
+        repoUrl: "https://kubernetes-sigs.github.io/external-dns/",
+        chart: "external-dns",
+        version: "1.15.0",
+      },
+    },
+    chartVersion: "1.15.0",
+    values: { policy: "upsert-only" },
+    argocdApp: "inari-addon-addon-external-dns",
+    health: "Healthy",
+    sync: "Synced",
+    commitSha: "d4e5f60718293a4b5c6d7e8f9012345678a1b2c3",
+    pruneEnabled: false,
+    namespace: "external-dns",
+    availableVersions: ["1.15.2", "1.15.0"],
+    createdAt: iso(now - 12 * 86_400_000),
+    updatedAt: iso(now - 12 * 86_400_000),
+  };
+  // Fleet-wide ArgoCD via ApplicationSet.
+  const fleetArgocd: MockAddon = {
+    id: "addon-argocd",
+    orgId: "acme",
+    clusterId: "*",
+    catalogItem: "cat-argocd",
+    state: "managed",
+    deployMode: "applicationset",
+    repoId: "repo-baseline",
+    repoPath: "addons/argocd",
+    source: {
+      kind: "helm",
+      helm: {
+        repoUrl: "https://argoproj.github.io/argo-helm",
+        chart: "argo-cd",
+        version: "7.5.2",
+      },
+    },
+    chartVersion: "7.5.2",
+    values: { server: { replicas: 2 } },
+    argocdApp: "inari-addonset-addon-argocd",
+    health: "Healthy",
+    sync: "Synced",
+    commitSha: "e5f60718293a4b5c6d7e8f9012345678a1b2c3d4",
+    pruneEnabled: false,
+    namespace: "argocd",
+    clusterSelector: { env: "dev" },
+    availableVersions: ["7.6.12", "7.5.2"],
+    createdAt: iso(now - 9 * 86_400_000),
+    updatedAt: iso(now - 9 * 86_400_000),
+  };
   const failedIstio: MockAddon = {
     id: "addon-istio",
     orgId: "acme",
@@ -216,6 +277,8 @@ function seedState(): AddonsMockState {
       acme: [
         managedCertManager,
         managedExternalSecrets,
+        managedExternalDns,
+        fleetArgocd,
         failedIstio,
         fleetMonitoring,
         discoveredMetricsServer,

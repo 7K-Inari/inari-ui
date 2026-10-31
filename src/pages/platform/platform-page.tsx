@@ -1,28 +1,11 @@
+import { Link } from "react-router-dom";
 import { listCatalogItems } from "@/api/catalog";
 import { useAsyncResource } from "@/api/hooks";
-import type { PlatformResourceKind, PlatformResourceStatus } from "@/api/platform";
-import { listTenantPlatformResources } from "@/api/platform";
 import { Badge } from "7k-design-system/react";
 import { Card } from "7k-design-system/react";
-import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
+import { tenantLink } from "@/tenant/tenant-link";
 import { LoadingState } from "@/components/loading";
-
-const KIND_LABELS: Record<PlatformResourceKind, string> = {
-  "keycloak-realm": "Keycloak realm",
-  "keycloak-client": "Keycloak client",
-  "dns-zone": "DNS zone",
-  "tenant-namespace": "Namespace",
-};
-
-const RESOURCE_STATUS: Record<
-  PlatformResourceStatus,
-  { label: string; variant: "success" | "warning" | "danger" }
-> = {
-  ready: { label: "Ready", variant: "success" },
-  reconciling: { label: "Reconciling", variant: "warning" },
-  failed: { label: "Failed", variant: "danger" },
-};
 
 export function PlatformPage() {
   const { tenant } = useTenant();
@@ -31,24 +14,19 @@ export function PlatformPage() {
     (token) => listCatalogItems(token, tenant, { source: "platform" }),
     [tenant],
   );
-  const resources = useAsyncResource(
-    (token) => listTenantPlatformResources(token, tenant),
-    [tenant],
-    { refetchIntervalMs: 15_000 },
-  );
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="page-header-title">Platform</h1>
         <p className="text-sm u-muted">
-          Apps running on the platform cluster and the platform resources reconciled for this
+          Apps running on the platform cluster and the platform resources rendered for this
           tenant.
         </p>
       </div>
 
       <section className="space-y-3" aria-label="Platform cluster apps">
-        <h2 className="text-lg font-semibold tracking-tight">Platform cluster apps</h2>
+        <h2 className="mono-label">Platform cluster apps</h2>
         {apps.error && (
           <Card>
             <div className="card-body">
@@ -93,71 +71,22 @@ export function PlatformPage() {
       </section>
 
       <section className="space-y-3" aria-label="Tenant platform resources">
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight">Tenant platform resources</h2>
-          <p className="text-sm u-muted">
-            Reconciled by inari-operator: Keycloak realm and clients, DNS zone, and tenant
-            namespaces.
-          </p>
-        </div>
-        {resources.error && (
-          <Card>
-            <div className="card-body">
-              Failed to load platform resources: {resources.error.message}
+        <Card>
+          <div className="card-body space-y-2">
+            <div className="flex items-baseline justify-between gap-4">
+              <h2 className="text-base font-medium">Tenant platform resources</h2>
+              <Link to={tenantLink(tenant, "deploys")} className="mono-label u-accent inline-block -my-1.5 py-1.5">
+                Resources view →
+              </Link>
             </div>
-          </Card>
-        )}
-        {!resources.error && resources.loading && !resources.data && (
-          <LoadingState label="Loading platform resources…" />
-        )}
-        {!resources.error && resources.data && resources.data.length === 0 && (
-          <Card>
-            <div className="card-body">
-              No platform resources for this tenant yet.
-            </div>
-          </Card>
-        )}
-        {resources.data && resources.data.length > 0 && (
-          <div className="overflow-hidden rounded-lg border">
-            <table className="w-full text-sm">
-              <thead className="u-raised/50 text-left text-xs u-muted">
-                <tr>
-                  <th className="px-4 py-2 font-medium">Kind</th>
-                  <th className="px-4 py-2 font-medium">Name</th>
-                  <th className="px-4 py-2 font-medium">Status</th>
-                  <th className="px-4 py-2 font-medium">Detail</th>
-                  <th className="px-4 py-2 font-medium">Updated</th>
-                </tr>
-              </thead>
-              <tbody>
-                {resources.data.map((r) => {
-                  // Contract types kind/status as plain strings; fall back to
-                  // the raw value for anything outside the known sets.
-                  const kind = r.kind as PlatformResourceKind;
-                  const status = RESOURCE_STATUS[r.status as PlatformResourceStatus] ?? {
-                    label: r.status,
-                    variant: "secondary" as const,
-                  };
-                  return (
-                    <tr key={r.id} className="border-t hover:u-raised/30">
-                      <td className="px-4 py-2">
-                        <Badge variant="neutral">{KIND_LABELS[kind] ?? r.kind}</Badge>
-                      </td>
-                      <td className="px-4 py-2 font-medium">{r.name}</td>
-                      <td className="px-4 py-2">
-                        <Badge variant={status.variant}>{status.label}</Badge>
-                      </td>
-                      <td className="px-4 py-2 u-muted">{r.detail}</td>
-                      <td className="px-4 py-2 u-muted">
-                        {formatRelative(r.updatedAt)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <p className="text-sm u-muted">
+              Native cert-manager ClusterIssuers, ExternalDNS DNSEndpoints, ArgoCD AppProjects,
+              and KRO tenant namespaces — rendered into this tenant's GitOps state repos and
+              synced by ArgoCD — live in the Resources view. The backing addons are managed from
+              each cluster's Addons page.
+            </p>
           </div>
-        )}
+        </Card>
       </section>
     </div>
   );

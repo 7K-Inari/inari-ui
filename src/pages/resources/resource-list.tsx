@@ -8,6 +8,7 @@ import { ApiError } from "@/api/client";
 import { useAuth } from "@/auth/auth-context";
 import type { ResourceHealth, ResourceInstanceSummary } from "@/api/types";
 import { Badge, Button, Card, DataTable, type DataTableColumn } from "7k-design-system/react";
+import { PlatformResourcesSection } from "@/pages/resources/platform-resources-section";
 import { useTenant } from "@/tenant/tenant-context";
 import { ALL_TENANTS, tenantLink } from "@/tenant/tenant-link";
 import { LoadingState } from "@/components/loading";
@@ -121,59 +122,65 @@ export function ResourceListPage() {
       <div>
         <h1 className="page-header-title">Resources</h1>
         <p className="text-sm u-muted">
-          All deployed instances across clusters and cloud accounts in this scope.
+          Platform resources synced from the tenant GitOps state repos, and all deployed instances
+          across clusters and cloud accounts in this scope.
         </p>
       </div>
 
-      <div className="flex gap-1" role="group" aria-label="Filter by health">
-        {HEALTH_FILTERS.map((f) => (
-          <Button
-            key={f.value}
-            variant={healthFilter === f.value ? "secondary" : "ghost"}
-            size="sm"
-            onClick={() => setHealthFilter(f.value)}
-          >
-            {f.label}
-          </Button>
-        ))}
-      </div>
+      <PlatformResourcesSection />
 
-      {error && (
-        <Card>
-          <div className="card-body">
-            Failed to load resources: {error.message}
-          </div>
-        </Card>
-      )}
+      <section className="space-y-3" aria-label="Deployed instances">
+        <h2 className="mono-label">Deployed instances</h2>
+        <div className="flex gap-1" role="group" aria-label="Filter by health">
+          {HEALTH_FILTERS.map((f) => (
+            <Button
+              key={f.value}
+              variant={healthFilter === f.value ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setHealthFilter(f.value)}
+            >
+              {f.label}
+            </Button>
+          ))}
+        </div>
 
-      {actionError && <p className="text-sm u-danger">{actionError}</p>}
+        {error && (
+          <Card>
+            <div className="card-body">
+              Failed to load resources: {error.message}
+            </div>
+          </Card>
+        )}
 
-      {!error && loading && !resources && (
-        <LoadingState label="Loading resources…" />
-      )}
+        {actionError && <p className="text-sm u-danger">{actionError}</p>}
 
-      {!error && resources && visible.length === 0 && (
-        <Card>
-          <div className="card-body">
-            <p className="text-sm u-muted">
-              {resources.length === 0
-                ? "No resources yet. Deploy something from the catalog to see it here."
-                : "No resources match this filter."}
-            </p>
-            {resources.length === 0 && (
-              <Link to={tenantLink(tenant, "catalog")} className="btn btn-secondary">Browse catalog</Link>
-            )}
-          </div>
-        </Card>
-      )}
+        {!error && loading && !resources && (
+          <LoadingState label="Loading resources…" />
+        )}
 
-      {visible.length > 0 && (
-        <DataTable<ResourceInstanceSummary>
-          columns={columns}
-          rows={visible}
-          rowKey="id"
-        />
-      )}
+        {!error && resources && visible.length === 0 && (
+          <Card>
+            <div className="card-body">
+              <p className="text-sm u-muted">
+                {resources.length === 0
+                  ? "No resources yet. Deploy something from the catalog to see it here."
+                  : "No resources match this filter."}
+              </p>
+              {resources.length === 0 && (
+                <Link to={tenantLink(tenant, "catalog")} className="btn btn-secondary">Browse catalog</Link>
+              )}
+            </div>
+          </Card>
+        )}
+
+        {visible.length > 0 && (
+          <DataTable<ResourceInstanceSummary>
+            columns={columns}
+            rows={visible}
+            rowKey="id"
+          />
+        )}
+      </section>
     </div>
   );
 }

@@ -98,7 +98,7 @@ const keycloakRealmItem: ItemView = {
   id: "cat-keycloak-realm",
   name: "keycloak-realm",
   displayName: "Keycloak Realm",
-  description: "Platform-scoped tenant Keycloak realm reconciled by inari-operator.",
+  description: "Platform-scoped tenant Keycloak realm managed via a provider-keycloak TenantRealm claim.",
   source: "platform",
   category: "security",
   approvalPolicy: "platform-admin",
@@ -158,6 +158,43 @@ const externalSecretsItem = platformAddonItem(
     properties: { installCRDs: { type: "boolean", default: true } },
   },
 );
+// Operator-sunset Phase 1 addons track: the remaining first-class supported
+// addons (cert-manager's item already exists above). Schemas mirror the
+// vendored values.schema.json the catalog packages carry (decision 4).
+const externalDnsItem = platformAddonItem(
+  "cat-external-dns",
+  "external-dns",
+  ["1.15.2", "1.15.0"],
+  {
+    type: "object",
+    properties: {
+      provider: {
+        type: "object",
+        properties: { name: { type: "string" } },
+      },
+      policy: { type: "string", enum: ["sync", "upsert-only"] },
+      registry: { type: "string", enum: ["txt", "aws-sd", "dynamodb", "noop"] },
+      serviceMonitor: {
+        type: "object",
+        properties: { enabled: { type: "boolean" } },
+      },
+    },
+  },
+);
+const argocdItem = platformAddonItem("cat-argocd", "argocd", ["7.6.12", "7.5.2"], {
+  type: "object",
+  properties: {
+    server: {
+      type: "object",
+      properties: {
+        replicas: { type: "integer", minimum: 1 },
+        ingress: { type: "object", properties: { enabled: { type: "boolean" } } },
+      },
+    },
+    "redis-ha": { type: "object", properties: { enabled: { type: "boolean" } } },
+    dex: { type: "object", properties: { enabled: { type: "boolean" } } },
+  },
+});
 const istioItem = platformAddonItem("cat-istio", "istio", ["1.23.2", "1.22.3"]);
 const monitoringItem = platformAddonItem("cat-monitoring-stack", "monitoring-stack", ["65.3.1"]);
 const metricsServerItem = platformAddonItem("cat-metrics-server", "metrics-server", ["3.12.1"]);
@@ -169,6 +206,8 @@ export const catalogItems: ItemView[] = [
   keycloakRealmItem,
   crossplaneItem,
   externalSecretsItem,
+  externalDnsItem,
+  argocdItem,
   istioItem,
   monitoringItem,
   metricsServerItem,

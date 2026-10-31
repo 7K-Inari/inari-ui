@@ -78,6 +78,24 @@ describe("ResourceListPage", () => {
     const link = await screen.findByRole("link", { name: "orders-db" });
     expect(link).toHaveAttribute("href", "/acme/deploys/ri-orders-db");
   });
+
+  it("surfaces platform resources from the tenant state repos", async () => {
+    renderPage();
+    const section = await screen.findByRole("region", { name: "Platform resources" });
+    expect(await within(section).findByText("DNSEndpoint")).toBeInTheDocument();
+    expect(within(section).getByText("Tenant namespace")).toBeInTheDocument();
+    expect(
+      within(section).getByRole("link", { name: "external-dns addon" }),
+    ).toHaveAttribute("href", "/acme/clusters");
+  });
+
+  it("labels the deployed instances section", async () => {
+    renderPage();
+    const section = await screen.findByRole("region", { name: "Deployed instances" });
+    expect(
+      await within(section).findByRole("heading", { name: "Deployed instances" }),
+    ).toBeInTheDocument();
+  });
 });
 
 describe("row delete", () => {
