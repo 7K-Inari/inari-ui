@@ -2,15 +2,14 @@ import { apiFetch } from "@/api/client";
 import type { components } from "@/api/__generated__/schema";
 import { resolveTenant } from "@/tenant/current";
 
-// Platform resources (M5 operator sunset Phase 1): with the server-side
-// render cutover (platform_resources.gitops_render flag), these rows are
-// backed by native resources rendered into GitOps state repos via the
-// source-agnostic renderer — a native ExternalDNS DNSEndpoint for the DNS
-// row, a KRO tenantnamespace instance for the namespace row, and
-// provider-keycloak TenantRealm/TenantClient claims for the Keycloak rows —
-// replacing the inari-operator facade CRDs (platform.inari.io). The row
-// vocabulary itself is unchanged: the new rendered GVRs fold status onto
-// the same rows (contract pinned with W2-2).
+// Platform resources (M5/operator sunset): these rows are backed by native
+// resources rendered into GitOps state repos via the source-agnostic
+// renderer — a native ExternalDNS DNSEndpoint for the DNS row, a KRO
+// tenantnamespace instance for the namespace row, and provider-keycloak
+// TenantRealm/TenantClient claims for the Keycloak rows — replacing the
+// retired inari-operator facade CRDs (platform.inari.io, removed in
+// Phase 4; ADR-0017). The row vocabulary itself is unchanged: the rendered
+// GVRs fold status onto the same rows (contract pinned with W2-2).
 //
 // cert-manager ClusterIssuers and ArgoCD AppProjects are committed to the
 // state repos as native manifests but are not tracked as rows; the backing
