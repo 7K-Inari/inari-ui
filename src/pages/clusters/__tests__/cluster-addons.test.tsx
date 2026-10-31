@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { render, screen, waitFor, within, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
@@ -168,6 +168,88 @@ describe("ClusterAddonsPage", () => {
     expect(await screen.findByText(/must be boolean/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /save changes/i })).toBeDisabled();
   });
+
+  // Operator-sunset Phase 1: the three first-class supported addons
+  // (cert-manager, ExternalDNS, ArgoCD) all wire version + values editing
+  // through the same drawer, validated against each version's vendored
+  // values schema (decision 4).
+  it.each([
+    {
+      addonId: "addon-cert-manager",
+      item: "cat-cert-manager",
+      fromVersion: "1.15.0",
+      toVersion: "1.16.1",
+      valuesYaml: "enableHA: false",
+    },
+    {
+      addonId: "addon-external-dns",
+      item: "cat-external-dns",
+      fromVersion: "1.15.0",
+      toVersion: "1.15.2",
+      valuesYaml: "policy: sync",
+    },
+    {
+      addonId: "addon-argocd",
+      item: "cat-argocd",
+      fromVersion: "7.5.2",
+      toVersion: "7.6.12",
+      valuesYaml: "server:\n  replicas: 3",
+    },
+  ])(
+    "edits version and values for supported addon $item",
+    async ({ addonId, item, fromVersion, toVersion, valuesYaml }) => {
+      const user = userEvent.setup();
+      renderPage();
+      const row = (await screen.findByText(item)).closest("tr")!;
+      expect(within(row).getByText(fromVersion)).toBeInTheDocument();
+      await user.click(within(row).getByRole("button", { name: /^edit$/i }));
+
+      const versionSelect = await screen.findByLabelText(/^version$/i);
+      await user.selectOptions(versionSelect, toVersion);
+      const editor = await screen.findByLabelText(/values \(yaml\)/i);
+      fireEvent.change(editor, { target: { value: valuesYaml } });
+      await user.click(screen.getByRole("button", { name: /save changes/i }));
+
+      await waitFor(() => {
+        const updated = addonsMockControl
+          .getState()
+          .addons.acme.find((a) => a.id === addonId)!;
+        expect(updated.chartVersion).toBe(toVersion);
+      });
+      expect(await screen.findByText(/change committed/i)).toBeInTheDocument();
+      await waitFor(() => {
+        const r = screen.getByText(item).closest("tr")!;
+        expect(within(r).getByText(toVersion)).toBeInTheDocument();
+      });
+    },
+  );
+
+  it.each([
+    {
+      item: "cat-external-dns",
+      valuesYaml: "policy: delete-everything",
+      errorText: /must be equal to one of the allowed values/i,
+    },
+    {
+      item: "cat-argocd",
+      valuesYaml: "server:\n  replicas: 0",
+      errorText: /must be >= 1/i,
+    },
+  ])(
+    "blocks saving $item when values violate the vendored values schema",
+    async ({ item, valuesYaml, errorText }) => {
+      const user = userEvent.setup();
+      renderPage();
+      const row = (await screen.findByText(item)).closest("tr")!;
+      await user.click(within(row).getByRole("button", { name: /^edit$/i }));
+
+      const editor = await screen.findByLabelText(/values \(yaml\)/i);
+      fireEvent.change(editor, { target: { value: valuesYaml } });
+
+      expect(await screen.findByText(errorText)).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /save changes/i })).toBeDisabled();
+    },
+  );
 
   it("adopts a discovered addon (this cluster via Application)", async () => {
     let adoptBody: unknown = null;

@@ -30,7 +30,9 @@ describe("addons api", () => {
     const { managed, discovered } = partitionAddons(addons);
 
     expect(managed.map((a) => a.catalogItem).sort()).toEqual([
+      "cat-argocd", // fleet row (clusterId "*", selector env=dev matches)
       "cat-cert-manager",
+      "cat-external-dns",
       "cat-external-secrets",
       "cat-istio",
       "cat-monitoring-stack", // fleet row (clusterId "*", selector env=dev matches)
