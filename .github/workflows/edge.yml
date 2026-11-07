@@ -92,8 +92,7 @@ jobs:
           EDGE: ${{ needs.version.outputs.edge }}
         run: |
           for tag in "edge" "${EDGE}"; do
-            oras push "${IMAGE}:${tag}" \
-              inari-ui-bundle.tar.gz:application/vnd.inari.ui.bundle.v1.tar+gzip
+            scripts/push-oci-bundle.sh "${IMAGE}:${tag}"
           done
 
   prerelease:

@@ -47,8 +47,7 @@ jobs:
         run: |
           major_minor="${VERSION%.*}"
           for tag in "${VERSION}" "${major_minor}" "latest"; do
-            out="$(oras push "${IMAGE}:${tag}" \
-              inari-ui-bundle.tar.gz:application/vnd.inari.ui.bundle.v1.tar+gzip)"
+            out="$(scripts/push-oci-bundle.sh "${IMAGE}:${tag}")"
             echo "${out}"
             if [ "${tag}" = "${VERSION}" ]; then
               echo "digest=$(echo "${out}" | grep -oE 'sha256:[a-f0-9]{64}' | tail -1)" >> "$GITHUB_OUTPUT"
