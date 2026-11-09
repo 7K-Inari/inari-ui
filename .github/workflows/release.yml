@@ -61,7 +61,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
       - uses: oras-project/setup-oras@5e2f2482b30b0cb3e14e67f89a80c88c659a7c63 # v2
-      - uses: mikefarah/yq@a4330671f17776618660a419ab2531e4f4dc48b6 # v4.54.2
+      - uses: mikefarah/yq@f2944b823f84906a127dbd29e4c2a3e60c4e550e # v4.54.3
 
       - name: assert pin is a released server version
         run: |
