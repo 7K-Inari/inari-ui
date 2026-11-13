@@ -1,5 +1,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
+import * as ReactDOMClient from "react-dom/client";
+import * as ReactRouterDOM from "react-router-dom";
 import * as zod from "zod";
 import * as UiPluginSDK from "@7k-inari/ui-plugin-sdk";
 import { init, type ModuleFederation } from "@module-federation/runtime";
@@ -27,6 +29,16 @@ export function getHostRuntime(): ModuleFederation {
         version: ReactDOM.version,
         scope: "default",
         lib: () => ReactDOM,
+        shareConfig: { singleton: true, requiredVersion: false },
+      },
+      "react-dom/client": {
+        scope: "default",
+        lib: () => ReactDOMClient,
+        shareConfig: { singleton: true, requiredVersion: false },
+      },
+      "react-router-dom": {
+        scope: "default",
+        lib: () => ReactRouterDOM,
         shareConfig: { singleton: true, requiredVersion: false },
       },
       zod: {
