@@ -17,6 +17,7 @@ describe("extension host runtime", () => {
     const options = init.mock.calls[0][0];
     expect(Object.keys(options.shared).sort()).toEqual([
       "react",
+      "react/jsx-runtime",
       "react-dom",
       "react-dom/client",
       "react-router-dom",

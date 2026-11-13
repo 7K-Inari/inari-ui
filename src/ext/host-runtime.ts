@@ -1,4 +1,5 @@
 import * as React from "react";
+import * as ReactJSXRuntime from "react/jsx-runtime";
 import * as ReactDOM from "react-dom";
 import * as ReactDOMClient from "react-dom/client";
 import * as ReactRouterDOM from "react-router-dom";
@@ -23,6 +24,12 @@ export function getHostRuntime(): ModuleFederation {
         version: React.version,
         scope: "default",
         lib: () => React,
+        shareConfig: { singleton: true, requiredVersion: false },
+      },
+      "react/jsx-runtime": {
+        version: React.version,
+        scope: "default",
+        lib: () => ReactJSXRuntime,
         shareConfig: { singleton: true, requiredVersion: false },
       },
       "react-dom": {
