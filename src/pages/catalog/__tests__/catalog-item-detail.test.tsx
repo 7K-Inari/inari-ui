@@ -22,11 +22,12 @@ afterEach(() => {
 });
 afterAll(() => mockServer.close());
 
-function renderPage(itemId = "cat-postgresql-aws") {
+function renderPage(itemId = "core/postgresql-aws") {
   return render(
     <MemoryRouter initialEntries={[`/acme/catalog/${itemId}`]}>
       <Routes>
         <Route path="/:tenant/catalog/:itemId" element={<CatalogItemDetailPage />} />
+        <Route path="/:tenant/catalog/:source/:name" element={<CatalogItemDetailPage />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -41,7 +42,18 @@ describe("CatalogItemDetailPage", () => {
     expect(screen.getAllByText("1.3.0").length).toBeGreaterThan(0);
     expect(screen.getByLabelText(/PostgreSQL engine version/)).toBeInTheDocument();
     expect(screen.getByText(/Schema preview/)).toBeInTheDocument();
+    expect(screen.getByText("core")).toBeInTheDocument();
+    expect(screen.getByText("reviewed")).toBeInTheDocument();
+    expect(screen.getByTestId("artifact-digest")).toHaveTextContent("sha256:52cc");
     expect(screen.queryByText(/Approval required/)).not.toBeInTheDocument();
+  });
+
+  it("marks an unsigned experimental source as development-only", async () => {
+    renderPage("community/postgresql-aws");
+    expect(await screen.findByRole("heading", { name: "PostgreSQL on AWS" })).toBeInTheDocument();
+    expect(screen.getByText("community")).toBeInTheDocument();
+    expect(screen.getByText("experimental")).toBeInTheDocument();
+    expect(screen.getByText("Unsigned — development only")).toBeInTheDocument();
   });
 
   it("deploy CTA carries tenant and pinned version", async () => {
@@ -52,7 +64,7 @@ describe("CatalogItemDetailPage", () => {
     const cta = screen.getByRole("link", { name: "Deploy" });
     expect(cta).toHaveAttribute(
       "href",
-      "/acme/catalog/cat-postgresql-aws/deploy?version=1.3.0",
+      "/acme/catalog/core/postgresql-aws/deploy?version=1.3.0",
     );
   });
 

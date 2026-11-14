@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { CheckCircle2, Circle, Loader2, XCircle } from "lucide-react";
 
 import { ApiError } from "@/api/client";
+import { itemRouteID } from "@/api/identity";
 import { useAsyncResource } from "@/api/hooks";
 import { listGitConnections } from "@/api/git-connections";
 import {
@@ -16,6 +17,7 @@ import {
 } from "@/api/templates";
 import { useAuth } from "@/auth/auth-context";
 import { SchemaForm, type SchemaFormHandle } from "@/components/schema-form/schema-form";
+import { SourceBadge } from "@/components/catalog/source-badge";
 import { FallbackBlockedError } from "@/components/templates/fallback-blocked-error";
 import {
   RunIdentityBadge,
@@ -192,7 +194,8 @@ function ScaffoldStatus({ scaffoldId }: { scaffoldId: string }) {
 export function ScaffoldWizardPage() {
   const { tenant } = useTenant();
   const { token } = useAuth();
-  const { templateId } = useParams<{ templateId: string }>();
+  const { templateId: legacyTemplateId, source, name: routeName } = useParams<{ templateId?: string; source?: string; name?: string }>();
+  const templateId = itemRouteID({ itemId: legacyTemplateId, source, name: routeName });
 
   const template = useAsyncResource(
     (t) => getTemplate(t, tenant, templateId!),
@@ -249,7 +252,7 @@ export function ScaffoldWizardPage() {
     setSubmitError(null);
     setFallbackBlock(null);
     try {
-      const created = await createScaffoldRun(token, tenant, tpl.name, {
+      const created = await createScaffoldRun(token, tenant, tpl.id, {
         displayName: name,
         values: formData,
       });
@@ -279,6 +282,10 @@ export function ScaffoldWizardPage() {
         </p>
       </div>
       <Stepper steps={STEPS} current={step} />
+      <div className="mb-4">
+        <SourceBadge sourceId={tpl.sourceId} trustTier={tpl.trustTier} unsigned={tpl.unsigned} />
+        {tpl.artifactDigest && <p className="mono-caption mt-1">Digest: {tpl.artifactDigest}</p>}
+      </div>
 
       {step === 0 && (
         <Card>

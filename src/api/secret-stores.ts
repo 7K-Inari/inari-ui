@@ -1,5 +1,5 @@
 import { apiFetch } from "@/api/client";
-import type { components } from "@/api/__generated__/schema";
+import type { components, operations } from "@/api/__generated__/schema";
 import { resolveTenant } from "@/tenant/current";
 
 // ESO SecretStore registry (design §3.2), typed from the generated OpenAPI
@@ -12,10 +12,15 @@ export type SecretStoreProvider = components["schemas"]["SecretStoreProvider"];
 export type SecretStoreTargets = components["schemas"]["SecretStoreTargets"];
 export type SecretStoreCondition = components["schemas"]["SecretStoreCondition"];
 export type SecretStoreStatus = components["schemas"]["SecretStoreStatus"];
-export type CreateSecretStoreInput = components["schemas"]["CreateInputBody1"];
-export type UpdateSecretStoreInput = components["schemas"]["UpdateInputBody1"];
+export type CreateSecretStoreInput = NonNullable<
+  operations["createSecretStore"]["requestBody"]
+>["content"]["application/json"];
+export type UpdateSecretStoreInput = NonNullable<
+  operations["updateSecretStore"]["requestBody"]
+>["content"]["application/json"];
 
-type ListOutputBody = components["schemas"]["ListOutputBody4"];
+type ListOutputBody =
+  operations["listSecretStores"]["responses"][200]["content"]["application/json"];
 type StoreOutputBody = components["schemas"]["StoreOutputBody"];
 type StatusOutputBody = components["schemas"]["StatusOutputBody"];
 

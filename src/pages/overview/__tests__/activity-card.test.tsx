@@ -35,7 +35,7 @@ function serverInstance(id: string, name: string, updatedAt: string) {
   return {
     id,
     orgId: "acme",
-    catalogItemId: "cat-postgresql-aws",
+    catalogItemId: "core/postgresql-aws",
     version: "1.0.0",
     clusterId: "cl-1",
     resourceRef: { kind: "RDSInstance", name, namespace: "default" },

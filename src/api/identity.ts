@@ -135,3 +135,45 @@ export async function putClientScopes(
   );
   return res.client;
 }
+
+export interface CanonicalItemID {
+  source: string;
+  name: string;
+}
+
+// External trusted-source identity is exactly <source>/<package>. Internal
+// component:/discovered: IDs remain single-path-segment identifiers.
+export function parseCanonicalItemID(id: string): CanonicalItemID | null {
+  const parts = id.split("/");
+  if (parts.length !== 2 || !parts[0] || !parts[1] || id.includes(":")) return null;
+  return { source: parts[0], name: parts[1] };
+}
+
+export function canonicalItemPath(id: string): string {
+  const canonical = parseCanonicalItemID(id);
+  if (!canonical) return `/catalog/${encodeURIComponent(id)}`;
+  return `/catalog/${encodeURIComponent(canonical.source)}/${encodeURIComponent(canonical.name)}`;
+}
+
+export function canonicalTemplatePath(id: string): string {
+  const canonical = parseCanonicalItemID(id);
+  if (!canonical) return `/templates/${encodeURIComponent(id)}`;
+  return `/templates/${encodeURIComponent(canonical.source)}/${encodeURIComponent(canonical.name)}`;
+}
+
+export function canonicalAddonAdoptPath(clusterId: string, id: string): string {
+  const canonical = parseCanonicalItemID(id);
+  const base = `/clusters/${encodeURIComponent(clusterId)}/addons`;
+  if (!canonical) return `${base}/${encodeURIComponent(id)}/adopt`;
+  return `${base}/${encodeURIComponent(canonical.source)}/${encodeURIComponent(canonical.name)}/adopt`;
+}
+
+export function itemRouteID(params: {
+  itemId?: string;
+  source?: string;
+  name?: string;
+}): string {
+  if (params.itemId) return params.itemId;
+  if (params.source && params.name) return `${params.source}/${params.name}`;
+  return "";
+}

@@ -51,6 +51,10 @@ function renderWizard(templateId: string) {
           element={<ScaffoldWizardPage />}
         />
         <Route
+          path="/:tenant/templates/:source/:name/scaffold"
+          element={<ScaffoldWizardPage />}
+        />
+        <Route
           path="/:tenant/settings/org/git-connections"
           element={<p>git connections page</p>}
         />
@@ -139,7 +143,7 @@ describe("template scope badges", () => {
 
 describe("scaffold wizard identity preview", () => {
   it("shows the platform App identity for platform-scope templates", async () => {
-    renderWizard("web-service");
+    renderWizard("core/web-service");
     expect(
       await screen.findByText(/platform App/),
     ).toBeInTheDocument();
@@ -147,7 +151,7 @@ describe("scaffold wizard identity preview", () => {
   });
 
   it("shows the connected git login for user-scope templates", async () => {
-    renderWizard("personal-site");
+    renderWizard("community/personal-site");
     expect(
       await screen.findByText(/will commit as/),
     ).toBeInTheDocument();
@@ -157,7 +161,7 @@ describe("scaffold wizard identity preview", () => {
 
   it("warns with a deep link to git connections when no account is connected", async () => {
     currentTenant = "globex";
-    renderWizard("personal-site");
+    renderWizard("community/personal-site");
     expect(
       await screen.findByText("No personal git connection"),
     ).toBeInTheDocument();
@@ -172,7 +176,7 @@ describe("scaffold run identity and fallback", () => {
     const user = userEvent.setup();
     currentTenant = "globex";
     m4MockControl.setFallbackPolicy("block");
-    renderWizard("personal-site");
+    renderWizard("community/personal-site");
     await reachReviewStep(user);
     await user.click(screen.getByRole("button", { name: "Scaffold" }));
 
@@ -192,7 +196,7 @@ describe("scaffold run identity and fallback", () => {
 
   it("shows the user commit identity on the status step", async () => {
     const user = userEvent.setup();
-    renderWizard("personal-site");
+    renderWizard("community/personal-site");
     await reachReviewStep(user);
     await user.click(screen.getByRole("button", { name: "Scaffold" }));
 
@@ -204,7 +208,7 @@ describe("scaffold run identity and fallback", () => {
   it("shows the audited platform App fallback notice when fallback is used", async () => {
     const user = userEvent.setup();
     currentTenant = "globex";
-    renderWizard("personal-site");
+    renderWizard("community/personal-site");
     await reachReviewStep(user);
     await user.click(screen.getByRole("button", { name: "Scaffold" }));
 
@@ -218,7 +222,7 @@ describe("scaffold run identity and fallback", () => {
     const user = userEvent.setup();
     currentTenant = "globex";
     m4MockControl.failScaffoldRuns();
-    renderWizard("personal-site");
+    renderWizard("community/personal-site");
     await reachReviewStep(user);
     await user.click(screen.getByRole("button", { name: "Scaffold" }));
 
@@ -233,7 +237,7 @@ describe("scaffold run identity and fallback", () => {
 
   it("never renders token material in the identity UI", async () => {
     const user = userEvent.setup();
-    renderWizard("personal-site");
+    renderWizard("community/personal-site");
     await reachReviewStep(user);
     await user.click(screen.getByRole("button", { name: "Scaffold" }));
     await screen.findByText("Commits as");

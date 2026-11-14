@@ -34,6 +34,7 @@ afterAll(() => mockServer.close());
 function runView(overrides: Partial<RunView> = {}): RunView {
   return {
     id: "run-1",
+    templateId: "core/web-service",
     templateName: "web-service",
     version: "1.4.0",
     displayName: "payments-api",
@@ -185,7 +186,7 @@ describe("templates api (canonical endpoints)", () => {
   });
 
   it("gets a template with a typed schema via GET /templates/{name}", async () => {
-    const template = await getTemplate("tok", "acme", "web-service");
+    const template = await getTemplate("tok", "acme", "core/web-service");
     expect(template.displayName).toBe("Web Service");
     expect(template.schema.type).toBe("object");
   });
@@ -194,17 +195,17 @@ describe("templates api (canonical endpoints)", () => {
     let seenBody: unknown = null;
     let seenPath = "";
     mockServer.use(
-      http.post("*/api/v1/tenants/:org/templates/:name/runs", async ({ params, request }) => {
-        seenPath = `${params.org}/${params.name}`;
+      http.post("*/api/v1/tenants/:org/templates/:source/:name/runs", async ({ params, request }) => {
+        seenPath = `${params.org}/${params.source}/${params.name}`;
         seenBody = await request.json();
         return HttpResponse.json({ run: runView() });
       }),
     );
-    const run = await createScaffoldRun("tok", "acme", "web-service", {
+    const run = await createScaffoldRun("tok", "acme", "core/web-service", {
       displayName: "payments-api",
       values: { description: "Payments API", port: 8080 },
     });
-    expect(seenPath).toBe("acme/web-service");
+    expect(seenPath).toBe("acme/core/web-service");
     expect(seenBody).toEqual({
       displayName: "payments-api",
       values: { description: "Payments API", port: 8080 },

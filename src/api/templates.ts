@@ -1,5 +1,6 @@
 import type { components } from "@/api/__generated__/schema";
 import { apiFetch } from "@/api/client";
+import { canonicalTemplatePath } from "@/api/identity";
 import type {
   CommitIdentity,
   TemplateFallbackPolicy,
@@ -73,6 +74,10 @@ export interface TemplateSummaryViewModel {
   name: string;
   displayName: string;
   description: string;
+  sourceId?: string;
+  trustTier?: "official" | "reviewed" | "experimental";
+  unsigned?: boolean;
+  artifactDigest?: string;
   tags: string[];
   version: string;
   scope: TemplateScope;
@@ -98,7 +103,12 @@ export interface ScaffoldOutputs {
 
 export interface ScaffoldRunViewModel {
   id: string;
+  templateId: string;
   templateName: string;
+  sourceId?: string;
+  trustTier?: "official" | "reviewed" | "experimental";
+  unsigned?: boolean;
+  artifactDigest?: string;
   version: string;
   displayName: string;
   phase: string;
@@ -127,6 +137,10 @@ function mapTemplateSummary(t: ServerTemplateSummary): TemplateSummaryViewModel 
     name: t.name,
     displayName: t.displayName,
     description: t.description,
+    sourceId: t.sourceId ?? undefined,
+    trustTier: t.trustTier as "official" | "reviewed" | "experimental" | undefined,
+    unsigned: t.unsigned === true,
+    artifactDigest: t.artifactDigest ?? undefined,
     tags: t.tags ?? [],
     version: t.version,
     scope: mapScope((t as ServerTemplateSummary & WireTemplateScopeField).scope),
@@ -151,7 +165,12 @@ export function mapRunView(run: RunView): ScaffoldRunViewModel {
     failed || run.phase === "completed" || run.phase === "cancelled";
   return {
     id: run.id,
+    templateId: run.templateId ?? "",
     templateName: run.templateName,
+    sourceId: run.sourceId ?? undefined,
+    trustTier: run.trustTier as "official" | "reviewed" | "experimental" | undefined,
+    unsigned: run.unsigned === true,
+    artifactDigest: run.artifactDigest ?? undefined,
     version: run.version,
     displayName: run.displayName,
     phase: run.phase,
@@ -195,7 +214,7 @@ export async function getTemplate(
   name: string,
 ): Promise<TemplateDetailViewModel> {
   const res = await apiFetch<GetTemplateOutputBody>(
-    `/tenants/${encodeURIComponent(resolveTenant(tenant))}/templates/${encodeURIComponent(name)}`,
+    `/tenants/${encodeURIComponent(resolveTenant(tenant))}${canonicalTemplatePath(name)}`,
     { token },
   );
   const t: ServerTemplateDetail = res.template;
@@ -218,7 +237,7 @@ export async function createScaffoldRun(
     ...(input.version !== undefined ? { version: input.version } : {}),
   };
   const res = await apiFetch<CreateRunOutputBody>(
-    `/tenants/${encodeURIComponent(resolveTenant(tenant))}/templates/${encodeURIComponent(templateName)}/runs`,
+    `/tenants/${encodeURIComponent(resolveTenant(tenant))}${canonicalTemplatePath(templateName)}/runs`,
     { token, method: "POST", body },
   );
   return mapRunView(res.run);

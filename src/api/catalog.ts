@@ -1,4 +1,5 @@
 import { apiFetch } from "@/api/client";
+import { canonicalItemPath } from "@/api/identity";
 import type { components } from "@/api/__generated__/schema";
 import type {
   CatalogItemDetail,
@@ -6,6 +7,7 @@ import type {
   CatalogSort,
   CatalogSource,
   CatalogVersion,
+  TrustTier,
   UiHints,
 } from "@/api/types";
 import { resolveTenant } from "@/tenant/current";
@@ -37,7 +39,12 @@ function wireScope(i: ServerCatalogItem): "user" | "platform" | undefined {
 function mapVersion(v: ServerCatalogItemVersion): CatalogVersion {
   return {
     version: v.version,
+    packageVersion: v.packageVersion ?? v.version,
     channel: v.channel ?? "stable",
+    artifactRef: v.artifactRef ?? "",
+    artifactDigest: v.artifactDigest ?? "",
+    chartRef: v.chartRef ?? "",
+    chartDigest: v.chartDigest ?? "",
     ...(v.schema ? { schema: v.schema as Record<string, unknown> } : {}),
   };
 }
@@ -54,6 +61,9 @@ function mapItem(i: ServerCatalogItem): CatalogItemSummary {
     displayName: i.displayName || i.name,
     description: i.description ?? "",
     source: i.source as CatalogSource,
+    sourceId: i.sourceId ?? undefined,
+    trustTier: i.trustTier as TrustTier | undefined,
+    unsigned: i.unsigned === true,
     category: i.category ?? "",
     createdAt: i.createdAt ?? null,
     latestVersion: latest?.version ?? null,
@@ -83,6 +93,8 @@ function mapItemDetail(i: ServerCatalogItem): CatalogItemDetail {
 export interface CatalogFilters {
   q?: string;
   source?: CatalogSource;
+  sourceId?: string;
+  trustTier?: "official" | "reviewed" | "experimental";
   category?: string;
   cluster?: string;
   sort?: CatalogSort;
@@ -99,6 +111,8 @@ function catalogQuery(filters: CatalogFilters): string {
   const p = new URLSearchParams();
   if (filters.q) p.set("q", filters.q);
   if (filters.source) p.set("source", filters.source);
+  if (filters.sourceId) p.set("sourceId", filters.sourceId);
+  if (filters.trustTier) p.set("trustTier", filters.trustTier);
   if (filters.category) p.set("category", filters.category);
   if (filters.cluster) p.set("cluster", filters.cluster);
   if (filters.sort && filters.sort !== "name") p.set("sort", filters.sort);
@@ -126,7 +140,7 @@ export async function getCatalogItem(
   tenant?: string,
 ): Promise<CatalogItemDetail> {
   const res = await apiFetch<CatalogItemResponse>(
-    `${tenantPath(resolveTenant(tenant))}/catalog/${encodeURIComponent(id)}`,
+    `${tenantPath(resolveTenant(tenant))}${canonicalItemPath(id)}`,
     { token },
   );
   return mapItemDetail(res.item);

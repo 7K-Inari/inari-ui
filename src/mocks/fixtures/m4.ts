@@ -186,8 +186,11 @@ export const selfExtensionPermissions = [
 
 const templates: WireTemplateDetail[] = [
   {
-    id: "web-service",
+    id: "core/web-service",
     name: "web-service",
+    sourceId: "core",
+    trustTier: "reviewed",
+    artifactDigest: "sha256:52ccaee6d4dd272e54bfccda77738b42e1edf0e4a20c27e23f0b6c15d01aef79",
     displayName: "Web Service",
     description:
       "Golden-path web service: repo, CI pipeline, catalog entry, and tenant RBAC in one flow.",
@@ -205,8 +208,12 @@ const templates: WireTemplateDetail[] = [
     },
   },
   {
-    id: "personal-site",
+    id: "community/personal-site",
     name: "personal-site",
+    sourceId: "community",
+    trustTier: "experimental",
+    unsigned: true,
+    artifactDigest: "sha256:52ccaee6d4dd272e54bfccda77738b42e1edf0e4a20c27e23f0b6c15d01aef79",
     displayName: "Personal Site",
     description:
       "User-scope template: commits with the runner's personal git identity.",
@@ -229,6 +236,10 @@ export function listTemplateMocks(): WireTemplateSummary[] {
     name: t.name,
     displayName: t.displayName,
     description: t.description,
+    sourceId: t.sourceId,
+    trustTier: t.trustTier,
+    unsigned: t.unsigned,
+    artifactDigest: t.artifactDigest,
     tags: t.tags,
     version: t.version,
     ...(t.scope ? { scope: t.scope } : {}),
@@ -236,7 +247,7 @@ export function listTemplateMocks(): WireTemplateSummary[] {
 }
 
 export function findTemplateMock(name: string): WireTemplateDetail | undefined {
-  const t = templates.find((tpl) => tpl.name === name);
+  const t = templates.find((tpl) => tpl.id === name);
   return t ? { ...t } : undefined;
 }
 
@@ -305,9 +316,14 @@ export function createScaffoldRunMock(
   const now = new Date().toISOString();
   const run: WireRunView = {
     id: `scaf-${Math.random().toString(36).slice(2, 10)}`,
-    templateName,
+    templateId: template?.id ?? templateName,
+    templateName: template?.name ?? templateName,
+    sourceId: template?.sourceId,
+    trustTier: template?.trustTier,
+    unsigned: template?.unsigned,
+    artifactDigest: template?.artifactDigest,
     version: template?.version ?? "0.0.0",
-    displayName: body.displayName ?? templateName,
+    displayName: body.displayName ?? template?.name ?? templateName,
     phase: "pending",
     steps: RUN_STEP_NAMES.map(
       (name): ServerStepView => ({ name, state: "pending", attempts: 0 }),

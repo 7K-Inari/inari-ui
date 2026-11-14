@@ -2,11 +2,13 @@ import * as React from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { getCatalogItem } from "@/api/catalog";
+import { itemRouteID } from "@/api/identity";
 import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
 import { Alert, Card, Skeleton } from "7k-design-system/react";
 
 import { PageHeader } from "@/components/page-header";
+import { SourceBadge } from "@/components/catalog/source-badge";
 import { SchemaForm } from "@/components/schema-form/schema-form";
 import { TemplateScopeBadge } from "@/components/templates/template-scope-badge";
 import { applyHintsToSchema, hintsToUiSchema } from "@/components/schema-form/ui-hints";
@@ -15,7 +17,8 @@ import { tenantLink } from "@/tenant/tenant-link";
 
 export function CatalogItemDetailPage() {
   const { tenant } = useTenant();
-  const { itemId } = useParams<{ itemId: string }>();
+  const { itemId: legacyItemId, source, name } = useParams<{ itemId?: string; source?: string; name?: string }>();
+  const itemId = itemRouteID({ itemId: legacyItemId, source, name });
   const [version, setVersion] = React.useState<string | null>(null);
 
   const { data: item, loading, error } = useAsyncResource(
@@ -24,6 +27,7 @@ export function CatalogItemDetailPage() {
   );
 
   const pinned = version ?? item?.latestVersion ?? "";
+  const selectedVersion = item?.versions.find((v) => v.version === pinned);
   const schema = React.useMemo(
     () => (item ? applyHintsToSchema(item.schema, item.uiHints) : null),
     [item],
@@ -70,10 +74,13 @@ export function CatalogItemDetailPage() {
         }
       />
       <div className="catalog-detail-tags">
-        <span className="tag">{item.source}</span>
+        <SourceBadge source={item.source} sourceId={item.sourceId} trustTier={item.trustTier} unsigned={item.unsigned} />
         {item.scope && <TemplateScopeBadge scope={item.scope} />}
         {item.approvalPolicy !== "auto" && <span className="badge badge-warning">Approval required</span>}
       </div>
+      {selectedVersion?.artifactDigest && (
+        <p className="mono-caption" data-testid="artifact-digest">Digest: {selectedVersion.artifactDigest}</p>
+      )}
 
       <div className="catalog-detail-grid">
         <Card>

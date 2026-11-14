@@ -1,4 +1,5 @@
 import { apiFetch } from "@/api/client";
+import { canonicalAddonAdoptPath } from "@/api/identity";
 import { resolveTenant } from "@/tenant/current";
 
 // Cluster addons (Feature C, M3W2): the console lists discovered + managed
@@ -210,7 +211,7 @@ export async function adoptAddon(
   tenant?: string,
 ): Promise<AddonMutationResult> {
   const res = await apiFetch<WireAddonMutationOutputBody>(
-    `${tenantPath(resolveTenant(tenant))}/clusters/${encodeURIComponent(clusterId)}/addons/${encodeURIComponent(catalogItem)}/adopt`,
+    `${tenantPath(resolveTenant(tenant))}${canonicalAddonAdoptPath(clusterId, catalogItem)}`,
     { token, method: "POST", body },
   );
   return toMutationResult(res);
