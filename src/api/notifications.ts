@@ -1,5 +1,5 @@
 import { apiFetch } from "@/api/client";
-import type { components } from "@/api/__generated__/schema";
+import type { components, operations } from "@/api/__generated__/schema";
 import { resolveTenant } from "@/tenant/current";
 
 // Notifications (plan §5.2): per-tenant opt-in Slack/webhook endpoints
@@ -13,7 +13,8 @@ export type NotificationDelivery =
   components["schemas"]["NotificationDelivery"];
 
 type EndpointOutputBody = components["schemas"]["EndpointOutputBody"];
-type ListOutputBody = components["schemas"]["ListOutputBody3"];
+type ListOutputBody =
+  operations["listNotificationEndpoints"]["responses"][200]["content"]["application/json"];
 type TestOutputBody = components["schemas"]["TestOutputBody"];
 
 export type EndpointKind = "slack" | "webhook";

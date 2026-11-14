@@ -215,6 +215,8 @@ export function AppRoutes() {
           <Route path="catalog" element={<CatalogBrowsePage />} />
           <Route path="catalog/:itemId" element={<CatalogItemDetailPage />} />
           <Route path="catalog/:itemId/deploy" element={<DeployWizardPage />} />
+          <Route path="catalog/:source/:name" element={<CatalogItemDetailPage />} />
+          <Route path="catalog/:source/:name/deploy" element={<DeployWizardPage />} />
           <Route path="deploys" element={<ResourceListPage />} />
           <Route path="deploys/:instanceId" element={<ResourceDetailPage />} />
           <Route path="clusters" element={<ClusterListPage />} />
@@ -233,6 +235,7 @@ export function AppRoutes() {
           <Route path="tenant-zones/:zoneId" element={<ZoneDetailPage />} />
           <Route path="templates" element={<TemplateListPage />} />
           <Route path="templates/:templateId/scaffold" element={<ScaffoldWizardPage />} />
+          <Route path="templates/:source/:name/scaffold" element={<ScaffoldWizardPage />} />
           <Route path="approvals" element={<ApprovalsPage />} />
           <Route path="audit-log" element={<AuditLogPage />} />
           <Route path="access" element={<Navigate to="members" replace />} />

@@ -6,10 +6,11 @@ import { listCatalogItems } from "@/api/catalog";
 import type { CatalogFilters } from "@/api/catalog";
 import { listClusters } from "@/api/clusters";
 import { useAsyncResource } from "@/api/hooks";
-import type { CatalogItemSummary, CatalogSort, CatalogSource } from "@/api/types";
+import type { CatalogItemSummary, CatalogSort } from "@/api/types";
 import { Alert, Card, Skeleton } from "7k-design-system/react";
 
 import { FilterBar } from "@/components/filter-bar";
+import { SourceBadge } from "@/components/catalog/source-badge";
 import { PageHeader } from "@/components/page-header";
 import { TemplateScopeBadge } from "@/components/templates/template-scope-badge";
 import { CatalogCardSlots } from "@/ext/slots";
@@ -17,25 +18,10 @@ import { formatRelative } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
 
-// Source is not machine state — neutral tag styling everywhere (design §2).
-const SOURCE_LABEL: Record<CatalogSource, string> = {
-  curated: "Curated",
-  discovered: "Discovered",
-  platform: "Platform",
-  template: "Template",
-};
-
-// Unknown/future sources must never crash the page (the catalog is a
-// projection of the server; new sources land there first).
-function sourceLabel(source: string) {
-  return SOURCE_LABEL[source as CatalogSource] ?? "Unknown";
-}
-
 type CatalogViewMode = "grid" | "list";
 
 const PAGE_SIZE = 24;
 const SORTS: CatalogSort[] = ["name", "name-desc", "newest", "oldest"];
-const SOURCES: CatalogSource[] = ["curated", "discovered", "platform", "template"];
 
 // Filter/sort/view state lives in the URL so filtered views are shareable
 // and survive navigation.
@@ -46,7 +32,7 @@ function readParams(params: URLSearchParams) {
   const page = Number(params.get("page") ?? "0");
   return {
     q: params.get("q") ?? "",
-    source: (SOURCES.includes(source as CatalogSource) ? source : "all") as CatalogSource | "all",
+    source: source || "all",
     category: params.get("category") ?? "",
     cluster: params.get("cluster") ?? "",
     sort: (SORTS.includes(sort as CatalogSort) ? sort : "name") as CatalogSort,
@@ -62,7 +48,7 @@ export function CatalogBrowsePage() {
 
   const filters: CatalogFilters = {
     q: state.q || undefined,
-    source: state.source === "all" ? undefined : state.source,
+    sourceId: state.source === "all" ? undefined : state.source,
     category: state.category || undefined,
     cluster: state.cluster || undefined,
     sort: state.sort,
@@ -87,6 +73,14 @@ export function CatalogBrowsePage() {
     }
     return [...set].sort();
   }, [facets.data]);
+
+  const sourceOptions = React.useMemo(() => {
+    const set = new Set<string>();
+    for (const item of facets.data?.items ?? []) {
+      if (item.sourceId) set.add(item.sourceId);
+    }
+    return [...set].sort();
+  }, [facets.data?.items]);
 
   // Stable identity: the filter bar's debounce effect depends on onChange,
   // so an unstable callback would reset the debounce on every parent render.
@@ -124,7 +118,7 @@ export function CatalogBrowsePage() {
           param: "source",
           items: [
             { value: "all", label: "All sources" },
-            ...SOURCES.map((src) => ({ value: src, label: sourceLabel(src) })),
+            ...sourceOptions.map((sourceId) => ({ value: sourceId, label: sourceId })),
           ],
         }}
         selects={[
@@ -227,7 +221,7 @@ export function CatalogBrowsePage() {
                   <div className="mono-caption">{item.description}</div>
                 </td>
                 <td>
-                  <span className="tag">{sourceLabel(item.source)}</span>{" "}
+                  <SourceBadge source={item.source} sourceId={item.sourceId} trustTier={item.trustTier} unsigned={item.unsigned} />{" "}
                   {item.scope && <TemplateScopeBadge scope={item.scope} />}
                 </td>
                 <td className="mono">{item.category || "—"}</td>
@@ -275,7 +269,7 @@ function CatalogCard({ item, tenant }: { item: CatalogItemSummary; tenant: strin
         <Link to={tenantLink(tenant, `catalog/${item.id}`)} className="table-link catalog-card-title">
           {item.displayName}
         </Link>
-        <span className="tag">{sourceLabel(item.source)}</span>
+        <SourceBadge source={item.source} sourceId={item.sourceId} trustTier={item.trustTier} unsigned={item.unsigned} />
       </div>
       <div className="card-body catalog-card-body">
         <p className="catalog-card-desc">{item.description}</p>

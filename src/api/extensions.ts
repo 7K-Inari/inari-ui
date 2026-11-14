@@ -1,5 +1,5 @@
 import { apiFetch } from "@/api/client";
-import type { components } from "@/api/__generated__/schema";
+import type { components, operations } from "@/api/__generated__/schema";
 import { resolveTenant } from "@/tenant/current";
 
 // UI extension registry (§5.8): remotes are manifest-driven; remoteEntry.js is
@@ -15,7 +15,8 @@ type WireListUiExtensionsResponse = components["schemas"]["ListUiOutputBody"];
 type WireUiExtensionResponse = components["schemas"]["UiExtensionOutputBody"];
 type WireRegisterUiExtensionInput = components["schemas"]["RegisterUiInputBody"];
 type WireExtension = components["schemas"]["Extension"];
-type WireListExtensionsResponse = components["schemas"]["ListOutputBody5"];
+type WireListExtensionsResponse =
+  operations["listExtensions"]["responses"][200]["content"]["application/json"];
 type WireRotateIdentityResponse = components["schemas"]["RotateIdentityOutputBody"];
 
 // One-time gateway identity secret returned by identity rotation (ADR-0008).

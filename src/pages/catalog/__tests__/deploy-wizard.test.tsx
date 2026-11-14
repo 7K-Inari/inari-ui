@@ -27,10 +27,11 @@ afterAll(() => mockServer.close());
 function renderWizard() {
   return render(
     <MemoryRouter
-      initialEntries={["/acme/catalog/cat-postgresql-aws/deploy?version=1.4.0"]}
+      initialEntries={["/acme/catalog/core/postgresql-aws/deploy?version=1.4.0"]}
     >
       <Routes>
         <Route path="/:tenant/catalog/:itemId/deploy" element={<DeployWizardPage />} />
+        <Route path="/:tenant/catalog/:source/:name/deploy" element={<DeployWizardPage />} />
       </Routes>
     </MemoryRouter>,
   );
@@ -93,7 +94,7 @@ describe("DeployWizardPage", () => {
             id: "ri-orders-db-2",
             orgId: "acme",
             clusterId: "cl-eks-prod",
-            catalogItemId: "cat-postgresql-aws",
+            catalogItemId: "core/postgresql-aws",
             version: "1.4.0",
             resourceRef: { name: "orders-db-2" },
             health: "healthy",
@@ -126,7 +127,7 @@ describe("DeployWizardPage", () => {
       spec: Record<string, unknown>;
     };
     expect(body).toMatchObject({
-      itemId: "cat-postgresql-aws",
+      itemId: "core/postgresql-aws",
       version: "1.4.0",
       clusterId: "cl-eks-prod",
       name: "orders-db-2",
@@ -174,7 +175,7 @@ describe("DeployWizardPage", () => {
             id: "ri-orders-db-2",
             orgId: "acme",
             clusterId: "cl-eks-prod",
-            catalogItemId: "cat-postgresql-aws",
+            catalogItemId: "core/postgresql-aws",
             version: "1.4.0",
             resourceRef: { name: "orders-db-2" },
             health: "healthy",

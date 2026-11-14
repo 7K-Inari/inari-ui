@@ -40,10 +40,11 @@ function renderPage(entry?: string) {
 describe("CatalogBrowsePage", () => {
   it("lists all catalog items with source", async () => {
     renderPage();
-    expect(await screen.findByText("PostgreSQL on AWS")).toBeInTheDocument();
+    expect(await screen.findAllByText("PostgreSQL on AWS")).toHaveLength(2);
     expect(screen.getByText("cert-manager")).toBeInTheDocument();
     expect(screen.getByText("Keycloak Realm")).toBeInTheDocument();
-    expect(screen.getAllByText("Curated").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("core").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("community").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Discovered").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Platform").length).toBeGreaterThan(0);
   });
@@ -51,8 +52,8 @@ describe("CatalogBrowsePage", () => {
   it("filters by source", async () => {
     const user = userEvent.setup();
     renderPage();
-    await screen.findByText("PostgreSQL on AWS");
-    await user.click(screen.getByRole("button", { name: "Curated" }));
+    await screen.findAllByText("PostgreSQL on AWS");
+    await user.click(screen.getByRole("button", { name: "core" }));
     await waitFor(() => {
       expect(screen.getByText("PostgreSQL on AWS")).toBeInTheDocument();
       expect(screen.queryByText("Keycloak Realm")).not.toBeInTheDocument();
@@ -63,7 +64,7 @@ describe("CatalogBrowsePage", () => {
   it("filters by free-text search (debounced)", async () => {
     const user = userEvent.setup();
     renderPage();
-    await screen.findByText("PostgreSQL on AWS");
+    await screen.findAllByText("PostgreSQL on AWS");
     await user.type(screen.getByLabelText("Search catalog"), "keycloak");
     await waitFor(
       () => {
@@ -77,7 +78,7 @@ describe("CatalogBrowsePage", () => {
   it("filters by category", async () => {
     const user = userEvent.setup();
     renderPage();
-    await screen.findByText("PostgreSQL on AWS");
+    await screen.findAllByText("PostgreSQL on AWS");
     await user.selectOptions(screen.getByLabelText("Filter by category"), "security");
     await waitFor(() => {
       expect(screen.getByText("Keycloak Realm")).toBeInTheDocument();
@@ -88,7 +89,7 @@ describe("CatalogBrowsePage", () => {
   it("sorts by name descending", async () => {
     const user = userEvent.setup();
     renderPage();
-    await screen.findByText("PostgreSQL on AWS");
+    await screen.findAllByText("PostgreSQL on AWS");
     await user.selectOptions(screen.getByLabelText("Sort catalog"), "name-desc");
     await waitFor(() => {
       const links = screen
@@ -101,9 +102,9 @@ describe("CatalogBrowsePage", () => {
   });
 
   it("reflects filters in the URL and restores them on load", async () => {
-    renderPage("/acme/catalog?source=platform&sort=newest&view=list");
-    expect(await screen.findByText("Keycloak Realm")).toBeInTheDocument();
-    expect(screen.queryByText("PostgreSQL on AWS")).not.toBeInTheDocument();
+    renderPage("/acme/catalog?source=core&sort=newest&view=list");
+    expect(await screen.findByText("PostgreSQL on AWS")).toBeInTheDocument();
+    expect(screen.queryByText("Keycloak Realm")).not.toBeInTheDocument();
     // List view renders a table.
     expect(screen.getByRole("table")).toBeInTheDocument();
     expect(screen.getByLabelText("Sort catalog")).toHaveValue("newest");
@@ -112,7 +113,7 @@ describe("CatalogBrowsePage", () => {
   it("toggles between grid and list views", async () => {
     const user = userEvent.setup();
     renderPage();
-    await screen.findByText("PostgreSQL on AWS");
+    await screen.findAllByText("PostgreSQL on AWS");
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
     await user.click(screen.getByLabelText("List view"));
     expect(await screen.findByRole("table")).toBeInTheDocument();
@@ -123,10 +124,10 @@ describe("CatalogBrowsePage", () => {
 
   it("clears all filters", async () => {
     const user = userEvent.setup();
-    renderPage("/acme/catalog?source=platform&q=realm");
-    await screen.findByText("Keycloak Realm");
+    renderPage("/acme/catalog?source=community&q=postgresql");
+    await screen.findByText("PostgreSQL on AWS");
     await user.click(screen.getByRole("button", { name: /Clear filters/ }));
-    expect(await screen.findByText("PostgreSQL on AWS")).toBeInTheDocument();
+    expect(await screen.findAllByText("PostgreSQL on AWS")).toHaveLength(2);
     expect(screen.getByText("cert-manager")).toBeInTheDocument();
   });
 
@@ -169,15 +170,25 @@ describe("CatalogBrowsePage", () => {
     expect(screen.getByText(/Discovered capabilities have no category/)).toBeInTheDocument();
   });
 
-  it("links items to detail pages carrying tenant context", async () => {
+  it("distinguishes duplicate package names by source, trust, and canonical deep link", async () => {
     renderPage();
-    const link = await screen.findByRole("link", { name: /PostgreSQL on AWS/ });
-    expect(link).toHaveAttribute("href", "/acme/catalog/cat-postgresql-aws");
+    const links = await screen.findAllByRole("link", { name: "PostgreSQL on AWS" });
+    expect(links).toHaveLength(2);
+    expect(links.map((link) => link.getAttribute("href"))).toEqual(
+      expect.arrayContaining([
+        "/acme/catalog/community/postgresql-aws",
+        "/acme/catalog/core/postgresql-aws",
+      ]),
+    );
+    expect(screen.getAllByText("community").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("core").length).toBeGreaterThan(0);
+    expect(screen.getByText("Unsigned — development only")).toBeInTheDocument();
+    expect(screen.getByText("v2.0.0")).toBeInTheDocument();
   });
 
   it("shows latest version and channel per item", async () => {
     renderPage();
-    await screen.findByText("PostgreSQL on AWS");
+    await screen.findAllByText("PostgreSQL on AWS");
     expect(screen.getByText("v1.4.0")).toBeInTheDocument();
     expect(screen.getByText("v1.15.0")).toBeInTheDocument();
     expect(screen.getAllByText("stable").length).toBeGreaterThan(0);

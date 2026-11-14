@@ -327,9 +327,17 @@ describe("AllTenantsHome", () => {
       await act(async () => {
         await vi.advanceTimersByTimeAsync(1_000);
       });
-      expect(tenantCalls).toBe(2);
-      expect(approvalCalls).toBe(2);
-      expect(clusterCalls).toBe(2);
+      // Under full-suite CPU contention, the interval tick and the React
+      // effect that starts the refetch can need separate timer/microtask
+      // flushes. Wait for that scheduled work instead of assuming one flush.
+      await vi.waitFor(
+        () => {
+          expect(tenantCalls).toBe(2);
+          expect(approvalCalls).toBe(2);
+          expect(clusterCalls).toBe(2);
+        },
+        { timeout: 2_000, interval: 10 },
+      );
     } finally {
       vi.useRealTimers();
     }

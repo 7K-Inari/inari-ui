@@ -59,19 +59,48 @@ function version(itemId: string, version: string, channel: string, schema?: unkn
 }
 
 const postgresItem: ItemView = {
-  id: "cat-postgresql-aws",
+  id: "core/postgresql-aws",
   name: "postgresql-aws",
   displayName: "PostgreSQL on AWS",
   description: "Managed PostgreSQL via Crossplane RDS with backups and optional HA.",
   source: "curated",
+  sourceId: "core",
+  trustTier: "reviewed",
   category: "database",
   approvalPolicy: "auto",
   pinnedVersion: "1.4.0",
   createdAt: iso(now - 120 * 86_400_000),
   versions: [
-    version("cat-postgresql-aws", "1.4.0", "stable", postgresSchema, postgresUiHints),
-    version("cat-postgresql-aws", "1.3.0", "stable"),
-    version("cat-postgresql-aws", "1.2.1", "stable"),
+    {
+      ...version("core/postgresql-aws", "1.4.0", "stable", postgresSchema, postgresUiHints),
+      packageVersion: "1.4.0",
+      artifactRef: "ghcr.io/7k-inari/catalog/postgresql-aws@sha256:52ccaee6d4dd272e54bfccda77738b42e1edf0e4a20c27e23f0b6c15d01aef79",
+      artifactDigest: "sha256:52ccaee6d4dd272e54bfccda77738b42e1edf0e4a20c27e23f0b6c15d01aef79",
+    },
+    version("core/postgresql-aws", "1.3.0", "stable"),
+    version("core/postgresql-aws", "1.2.1", "stable"),
+  ],
+};
+
+const communityPostgresItem: ItemView = {
+  id: "community/postgresql-aws",
+  name: "postgresql-aws",
+  displayName: "PostgreSQL on AWS",
+  description: "Community PostgreSQL via Crossplane RDS.",
+  source: "curated",
+  sourceId: "community",
+  trustTier: "experimental",
+  unsigned: true,
+  category: "database",
+  approvalPolicy: "auto",
+  createdAt: iso(now - 15 * 86_400_000),
+  versions: [
+    {
+      ...version("community/postgresql-aws", "2.0.0", "incubating", postgresSchema, postgresUiHints),
+      packageVersion: "2.0.0",
+      artifactRef: "ghcr.io/7k-hiroba/aws/catalog/postgresql-aws@sha256:52ccaee6d4dd272e54bfccda77738b42e1edf0e4a20c27e23f0b6c15d01aef79",
+      artifactDigest: "sha256:52ccaee6d4dd272e54bfccda77738b42e1edf0e4a20c27e23f0b6c15d01aef79",
+    },
   ],
 };
 
@@ -202,6 +231,7 @@ const ingressNginxItem = platformAddonItem("cat-ingress-nginx", "ingress-nginx",
 
 export const catalogItems: ItemView[] = [
   postgresItem,
+  communityPostgresItem,
   certManagerItem,
   keycloakRealmItem,
   crossplaneItem,
@@ -244,7 +274,7 @@ const seedResources: InstanceView[] = [
   instance({
     id: "ri-orders-db",
     orgId: "acme",
-    catalogItemId: "cat-postgresql-aws",
+    catalogItemId: "core/postgresql-aws",
     version: "1.3.0",
     latestVersion: "1.4.0",
     newVersionAvailable: true,
@@ -260,7 +290,7 @@ const seedResources: InstanceView[] = [
   instance({
     id: "ri-payments-db",
     orgId: "acme",
-    catalogItemId: "cat-postgresql-aws",
+    catalogItemId: "core/postgresql-aws",
     version: "1.4.0",
     clusterId: "cl-kind-dev",
     resourceRef: { kind: "RDSInstance", name: "payments-db", namespace: "payments" },
@@ -310,6 +340,8 @@ export const mockCatalogControl = {
 export function listCatalogItemsFiltered(filters: {
   q?: string | null;
   source?: string | null;
+  sourceId?: string | null;
+  trustTier?: string | null;
   category?: string | null;
   sort?: string | null;
   limit?: number | null;
@@ -318,6 +350,8 @@ export function listCatalogItemsFiltered(filters: {
   let items = catalogItems.filter(
     (i) =>
       (!filters.source || i.source === filters.source) &&
+      (!filters.sourceId || i.sourceId === filters.sourceId) &&
+      (!filters.trustTier || i.trustTier === filters.trustTier) &&
       (!filters.category || i.category === filters.category) &&
       (!filters.q ||
         `${i.name} ${i.displayName} ${i.description ?? ""}`

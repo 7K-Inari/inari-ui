@@ -207,6 +207,48 @@ type GitConfigInputBody = components["schemas"]["GitConfigInputBody"];
 // ({cluster}, {clusters}, {items}, {instances}, {deploy}, ...).
 const BASE = "*/api/v1/tenants/:org";
 
+async function adoptAddonResponse(org: string, clusterId: string, catalogItem: string, request: Request) {
+  const body = (await request.json()) as AdoptAddonBody;
+  if (
+    body.deployMode !== undefined &&
+    body.deployMode !== "application" &&
+    body.deployMode !== "applicationset"
+  ) {
+    return humaError(422, "validation failed (deployMode must be application|applicationset)");
+  }
+  if (body.deployMode === "applicationset") {
+    const selector = body.clusterSelector ?? {};
+    const matches = listForTenant(org).filter(
+      (c) =>
+        (c.status === "connected" || c.status === "degraded") &&
+        Object.entries(selector).every(([k, v]) => c.labels[k] === v),
+    );
+    if (matches.length === 0) {
+      return humaError(422, "cluster selector matches no active clusters");
+    }
+  }
+  const repo =
+    findGitRepo(org, body.repoId ?? "") ??
+    gitReposFor(org).find((r) => r.isDefault) ??
+    null;
+  if (!repo) return humaError(409, "no git repo configured for the org");
+  const row = adoptAddonMock(
+    org,
+    clusterId,
+    catalogItem,
+    body,
+    repo.id,
+    repo.commitPolicy === "pull_request",
+  );
+  if (row === "not_found") return humaError(404, "addon not found on this cluster");
+  if (row === "already_managed") return humaError(409, "addon is already managed");
+  return HttpResponse.json({
+    addon: row,
+    commitSha: row.commitSha,
+    prUrl: row.prUrl,
+  });
+}
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 function toServerCluster(c: ClusterSummary | ClusterDetail) {
@@ -438,6 +480,8 @@ export const handlers = [
     const { items, total } = listCatalogItemsFiltered({
       q: url.searchParams.get("q"),
       source: url.searchParams.get("source"),
+      sourceId: url.searchParams.get("sourceId"),
+      trustTier: url.searchParams.get("trustTier"),
       category: url.searchParams.get("category"),
       sort: url.searchParams.get("sort"),
       limit: Number(url.searchParams.get("limit") ?? "0"),
@@ -448,6 +492,11 @@ export const handlers = [
 
   http.get(`${BASE}/catalog/:item`, ({ params }) => {
     const item = findCatalogItem(params.item as string);
+    if (!item) return humaError(404, "catalog item not found");
+    return HttpResponse.json({ item: toServerItem(item) });
+  }),
+  http.get(`${BASE}/catalog/:source/:name`, ({ params }) => {
+    const item = findCatalogItem(`${params.source}/${params.name}`);
     if (!item) return humaError(404, "catalog item not found");
     return HttpResponse.json({ item: toServerItem(item) });
   }),
@@ -1049,6 +1098,11 @@ export const handlers = [
     if (!template) return humaError(404, "template not found");
     return HttpResponse.json({ template });
   }),
+  http.get(`${BASE}/templates/:source/:name`, ({ params }) => {
+    const template = findTemplateMock(`${params.source}/${params.name}`);
+    if (!template) return humaError(404, "template not found");
+    return HttpResponse.json({ template });
+  }),
 
   http.post(`${BASE}/templates/:name/runs`, async ({ params, request }) => {
     const body = (await request.json()) as {
@@ -1093,6 +1147,56 @@ export const handlers = [
     }
     const run = createScaffoldRunMock(
       params.name as string,
+      {
+        values: body.values,
+        ...(body.displayName !== undefined ? { displayName: body.displayName } : {}),
+        ...(body.version !== undefined ? { version: body.version } : {}),
+      },
+      identity,
+    );
+    return HttpResponse.json({ run }, { status: 200 });
+  }),
+
+  http.post(`${BASE}/templates/:source/:name/runs`, async ({ params, request }) => {
+    const body = (await request.json()) as {
+      displayName?: string;
+      values?: Record<string, unknown>;
+      version?: string;
+    };
+    const template = findTemplateMock(`${params.source}/${params.name}`);
+    if (!template) {
+      return humaError(404, "unknown template");
+    }
+    if (body.values === undefined || typeof body.values !== "object") {
+      return humaError(422, "values are required");
+    }
+    if (body.displayName && !/^[a-z0-9][a-z0-9-]*$/.test(body.displayName)) {
+      return humaError(422, "displayName must be lowercase alphanumeric with dashes");
+    }
+    const identity: WireRunIdentity = {};
+    if (template.scope === "user") {
+      const connection = gitConnectionsFor(params.org as string)[0];
+      if (connection) {
+        identity.commitIdentity = {
+          kind: "user",
+          provider: connection.provider,
+          login: connection.providerLogin,
+        };
+      } else if (scaffoldMockControl().fallbackPolicy === "block") {
+        return humaError(
+          409,
+          "template requires a personal git connection and the tenant fallback policy blocks the platform App identity",
+        );
+      } else {
+        identity.commitIdentity = { kind: "platform_app" };
+        identity.usedFallback = true;
+        identity.fallbackPolicy = "platform_app";
+      }
+    } else {
+      identity.commitIdentity = { kind: "platform_app" };
+    }
+    const run = createScaffoldRunMock(
+      `${params.source}/${params.name}`,
       {
         values: body.values,
         ...(body.displayName !== undefined ? { displayName: body.displayName } : {}),
@@ -1460,49 +1564,11 @@ export const handlers = [
   }),
 
   http.post(`${BASE}/clusters/:id/addons/:catalogItem/adopt`, async ({ params, request }) => {
-    const org = params.org as string;
-    const body = (await request.json()) as AdoptAddonBody;
-    if (
-      body.deployMode !== undefined &&
-      body.deployMode !== "application" &&
-      body.deployMode !== "applicationset"
-    ) {
-      return humaError(422, "validation failed (deployMode must be application|applicationset)");
-    }
-    if (body.deployMode === "applicationset") {
-      const selector = body.clusterSelector ?? {};
-      // Server matches only active/degraded clusters (decision 8 semantics).
-      const matches = listForTenant(org).filter(
-        (c) =>
-          (c.status === "connected" || c.status === "degraded") &&
-          Object.entries(selector).every(([k, v]) => c.labels[k] === v),
-      );
-      if (matches.length === 0) {
-        return humaError(422, "cluster selector matches no active clusters");
-      }
-    }
-    // Default repo = the org's baseline (isDefault) repo; PR URL vs commit SHA
-    // follows the target repo's commit policy.
-    const repo =
-      findGitRepo(org, body.repoId ?? "") ??
-      gitReposFor(org).find((r) => r.isDefault) ??
-      null;
-    if (!repo) return humaError(409, "no git repo configured for the org");
-    const row = adoptAddonMock(
-      org,
-      params.id as string,
-      params.catalogItem as string,
-      body,
-      repo.id,
-      repo.commitPolicy === "pull_request",
-    );
-    if (row === "not_found") return humaError(404, "addon not found on this cluster");
-    if (row === "already_managed") return humaError(409, "addon is already managed");
-    return HttpResponse.json({
-      addon: row,
-      commitSha: row.commitSha,
-      prUrl: row.prUrl,
-    });
+    return adoptAddonResponse(params.org as string, params.id as string, params.catalogItem as string, request);
+  }),
+
+  http.post(`${BASE}/clusters/:id/addons/:source/:name/adopt`, async ({ params, request }) => {
+    return adoptAddonResponse(params.org as string, params.id as string, `${params.source}/${params.name}`, request);
   }),
 
   http.patch(`${BASE}/addons/:id`, async ({ params, request }) => {

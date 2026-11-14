@@ -141,9 +141,9 @@ describe("rollback", () => {
   it("hides the rollback card when no older version exists", async () => {
     const { http, HttpResponse } = await import("msw");
     const { findCatalogItem } = await import("@/mocks/fixtures/catalog");
-    const item = findCatalogItem("cat-postgresql-aws")!;
+    const item = findCatalogItem("core/postgresql-aws")!;
     mockServer.use(
-      http.get("*/api/v1/tenants/acme/catalog/:item", () =>
+      http.get("*/api/v1/tenants/acme/catalog/:source/:name", () =>
         HttpResponse.json({
           item: { ...item, versions: (item.versions ?? []).filter((v) => v.version === "1.4.0") },
         }),

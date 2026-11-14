@@ -43,6 +43,7 @@ export interface Capability {
 }
 
 export type CatalogSource = "curated" | "discovered" | "platform" | "template";
+export type TrustTier = "official" | "reviewed" | "experimental";
 
 // Template identity scope (W6): "user" templates commit as the runner's
 // per-user git social login; "platform" templates commit as the platform
@@ -73,6 +74,9 @@ export interface CatalogItemSummary {
   displayName: string;
   description: string;
   source: CatalogSource;
+  sourceId?: string;
+  trustTier?: TrustTier;
+  unsigned?: boolean;
   // Package category facet; empty for uncategorized and discovered items.
   category: string;
   createdAt: string | null;
@@ -84,7 +88,12 @@ export interface CatalogItemSummary {
 
 export interface CatalogVersion {
   version: string;
+  packageVersion?: string;
   channel: string;
+  artifactRef?: string;
+  artifactDigest?: string;
+  chartRef?: string;
+  chartDigest?: string;
   // values.schema.json for this version (Feature C decision 4: addon values
   // editors validate against it client-side). Absent = lenient allow.
   schema?: Record<string, unknown>;

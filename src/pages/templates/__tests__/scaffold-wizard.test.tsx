@@ -36,10 +36,14 @@ function renderList() {
 
 function renderWizard() {
   return render(
-    <MemoryRouter initialEntries={["/acme/templates/web-service/scaffold"]}>
+    <MemoryRouter initialEntries={["/acme/templates/core/web-service/scaffold"]}>
       <Routes>
         <Route
           path="/:tenant/templates/:templateId/scaffold"
+          element={<ScaffoldWizardPage />}
+        />
+        <Route
+          path="/:tenant/templates/:source/:name/scaffold"
           element={<ScaffoldWizardPage />}
         />
         <Route
@@ -56,9 +60,12 @@ describe("TemplateListPage", () => {
     renderList();
     expect(await screen.findByText("Web Service")).toBeInTheDocument();
     expect(screen.getByText("golden-path")).toBeInTheDocument();
+    expect(screen.getByText("core")).toBeInTheDocument();
+    expect(screen.getByText("community")).toBeInTheDocument();
+    expect(screen.getByText("Unsigned — development only")).toBeInTheDocument();
     expect(
       screen.getAllByRole("link", { name: "Scaffold" })[0],
-    ).toHaveAttribute("href", "/acme/templates/web-service/scaffold");
+    ).toHaveAttribute("href", "/acme/templates/core/web-service/scaffold");
   });
 });
 
@@ -69,6 +76,9 @@ describe("ScaffoldWizardPage", () => {
 
     // Configure: tenant context is bound automatically.
     expect(await screen.findByText("tenant-acme")).toBeInTheDocument();
+    expect(screen.getByText("core")).toBeInTheDocument();
+    expect(screen.getByText("reviewed")).toBeInTheDocument();
+    expect(screen.getByText(/Digest: sha256:52cc/)).toBeInTheDocument();
     await user.type(screen.getByLabelText("Service name"), "payments-api");
     await user.type(screen.getByLabelText(/Description/), "Payments API service");
     await user.type(screen.getByLabelText(/Port/), "8080");
@@ -146,7 +156,7 @@ describe("ScaffoldWizardPage", () => {
   it("surfaces a server error when run creation is rejected (422)", async () => {
     const user = userEvent.setup();
     mockServer.use(
-      http.post("*/api/v1/tenants/:org/templates/:name/runs", () =>
+      http.post("*/api/v1/tenants/:org/templates/:source/:name/runs", () =>
         HttpResponse.json(
           { title: "Error", status: 422, detail: "values failed schema validation" },
           { status: 422 },

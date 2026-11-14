@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/api/v1/admin/catalog/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List catalog source health and last-good snapshots (platform engineer) */
+        get: operations["listCatalogSources"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/catalog/sync": {
         parameters: {
             query?: never;
@@ -13,7 +30,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Sync curated packages from the catalog registry (platform engineer) */
+        /** Sync trusted catalog sources independently (platform engineer) */
         post: operations["syncCatalog"];
         delete?: never;
         options?: never;
@@ -32,6 +49,57 @@ export interface paths {
         /** Set per-tenant/cluster visibility rules (platform engineer) */
         put: operations["setCatalogVisibility"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/catalog/{source}/{name}/visibility": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set visibility for a source-qualified item (platform engineer) */
+        put: operations["setSourceCatalogVisibility"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/templates/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List template source health and last-good snapshots (platform engineer) */
+        get: operations["listTemplateSources"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/templates/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sync trusted template sources independently (platform engineer) */
+        post: operations["syncTemplates"];
         delete?: never;
         options?: never;
         head?: never;
@@ -177,6 +245,41 @@ export interface paths {
         head?: never;
         /** Update the tenant profile (org admin only) */
         patch: operations["updateTenant"];
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/addons/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Orphan an addon: stop managing it (row removed; git files and the ArgoCD app keep running) */
+        delete: operations["deleteAddon"];
+        options?: never;
+        head?: never;
+        /** Update a managed addon's chart version and/or values (commit per repo policy) */
+        patch: operations["updateAddon"];
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/addons/{id}/enable-prune": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Explicitly enable prune on an adopted addon (audit-logged, one-directional) */
+        post: operations["enableAddonPrune"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/tenants/{org}/agent-channels": {
@@ -469,6 +572,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenants/{org}/catalog-visibility/{source}/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set org visibility for a source-qualified item */
+        put: operations["setSourceCatalogOrgVisibility"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenants/{org}/catalog/{item}": {
         parameters: {
             query?: never;
@@ -499,6 +619,41 @@ export interface paths {
         post?: never;
         /** Remove the tenant's version pin */
         delete: operations["unpinCatalogVersion"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/catalog/{source}/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a source-qualified catalog item */
+        get: operations["getSourceCatalogItem"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/catalog/{source}/{name}/pin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Pin a source-qualified catalog item version */
+        put: operations["pinSourceCatalogVersion"];
+        post?: never;
+        /** Remove a source-qualified version pin */
+        delete: operations["unpinSourceCatalogVersion"];
         options?: never;
         head?: never;
         patch?: never;
@@ -662,6 +817,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenants/{org}/clusters/{cluster}/addons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List discovered + managed addons for a cluster (team-filtered, with available versions) */
+        get: operations["listClusterAddons"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/clusters/{cluster}/addons/{catalogItem}/adopt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Adopt a (discovered or declared) addon into GitOps management */
+        post: operations["adoptAddon"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/clusters/{cluster}/addons/{source}/{name}/adopt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Adopt a source-qualified catalog package into GitOps management */
+        post: operations["adoptSourceAddon"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenants/{org}/clusters/{id}": {
         parameters: {
             query?: never;
@@ -811,6 +1017,23 @@ export interface paths {
         get: operations["getClusterKubeconfig"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/clusters/{id}/rebind-baseline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Rebind a cluster to a different baseline repo (Feature A) */
+        post: operations["rebindClusterBaseline"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1193,6 +1416,60 @@ export interface paths {
         get: operations["gitConnectionCallback"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/git-repos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List the org's registered GitOps repos (team-filtered) */
+        get: operations["listGitRepos"];
+        put?: never;
+        /** Register an existing git repo (validates the GitHub App is installed) */
+        post: operations["registerGitRepo"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/git-repos/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Repo detail + provider health probe */
+        get: operations["getGitRepo"];
+        put?: never;
+        post?: never;
+        /** Unregister a repo (guarded; force with mode=orphan|teardown) */
+        delete: operations["unregisterGitRepo"];
+        options?: never;
+        head?: never;
+        /** Update repo policy/branch/team or promote to the org default */
+        patch: operations["updateGitRepo"];
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/git-repos/{id}/webhook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** (Re)provision the repo's webhook (rotates the secret) */
+        post: operations["ensureGitRepoWebhook"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2214,6 +2491,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenants/{org}/templates/{source}/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a source-qualified software template */
+        get: operations["getSourceTemplate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/templates/{source}/{name}/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create a run for a source-qualified template */
+        post: operations["createSourceScaffoldRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenants/{org}/zones": {
         parameters: {
             query?: never;
@@ -2283,6 +2594,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/webhooks/git/{provider}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Git provider webhook ingress (per-repo HMAC-authenticated) */
+        post: operations["gitWebhookIngress"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2318,6 +2646,66 @@ export interface components {
             readonly $schema?: string;
             /** @description Keycloak user id */
             subject: string;
+        };
+        AddonView: {
+            argocdApp?: string;
+            availableVersions?: string[] | null;
+            catalogItem: string;
+            chartVersion?: string;
+            clusterId: string;
+            clusterSelector?: {
+                [key: string]: string;
+            };
+            commitSha?: string;
+            /** Format: date-time */
+            createdAt: string;
+            deployMode: string;
+            discoveredMeta?: unknown;
+            health?: string;
+            id: string;
+            namespace?: string;
+            orgId: string;
+            prUrl?: string;
+            pruneEnabled: boolean;
+            repoId?: string;
+            repoPath?: string;
+            source: components["schemas"]["SourceDescriptor"];
+            state: string;
+            sync?: string;
+            /** Format: date-time */
+            updatedAt: string;
+            values?: unknown;
+        };
+        AdoptInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/AdoptInputBody.json
+             */
+            readonly $schema?: string;
+            /** @description fleet label query (applicationset mode); empty = all org clusters */
+            clusterSelector?: {
+                [key: string]: string;
+            };
+            /** @enum {string} */
+            deployMode?: "application" | "applicationset";
+            namespace?: string;
+            /** @description tenant_git_repos row id; empty = the cluster's bound baseline */
+            repoId?: string;
+            values?: unknown;
+            /** @description catalog version (= chart version); empty = effective pin/latest stable */
+            version?: string;
+        };
+        AdoptOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/AdoptOutputBody.json
+             */
+            readonly $schema?: string;
+            addon: components["schemas"]["ClusterAddon"];
+            commitSha?: string;
+            prUrl?: string;
         };
         AgentChannel: {
             channel: string;
@@ -2371,6 +2759,7 @@ export interface components {
             orgId: string;
             ownerTeam?: string;
             reason?: string;
+            repoId?: string;
             requester: string;
             spec: unknown;
             state: string;
@@ -2543,9 +2932,14 @@ export interface components {
             name: string;
         };
         CatalogItemVersion: {
+            artifactDigest?: string;
+            artifactRef?: string;
             channel: string;
+            chartDigest?: string;
+            chartRef?: string;
             id: string;
             itemId: string;
+            packageVersion?: string;
             payload?: unknown;
             schema?: unknown;
             uiHints?: unknown;
@@ -2614,6 +3008,34 @@ export interface components {
             proxyUrl?: string;
             tunnelAvailable: boolean;
             tunnelUnavailableReason?: string;
+        };
+        ClusterAddon: {
+            argocdApp?: string;
+            catalogItem: string;
+            chartVersion?: string;
+            clusterId: string;
+            clusterSelector?: {
+                [key: string]: string;
+            };
+            commitSha?: string;
+            /** Format: date-time */
+            createdAt: string;
+            deployMode: string;
+            discoveredMeta?: unknown;
+            health?: string;
+            id: string;
+            namespace?: string;
+            orgId: string;
+            prUrl?: string;
+            pruneEnabled: boolean;
+            repoId?: string;
+            repoPath?: string;
+            source: components["schemas"]["SourceDescriptor"];
+            state: string;
+            sync?: string;
+            /** Format: date-time */
+            updatedAt: string;
+            values?: unknown;
         };
         ClusterOutputBody: {
             /**
@@ -3002,6 +3424,7 @@ export interface components {
             name?: string;
             namespace?: string;
             ownerTeam?: string;
+            repoId?: string;
             spec: unknown;
             version?: string;
         };
@@ -3313,6 +3736,13 @@ export interface components {
             installationId?: number;
             state: string;
         };
+        HelmSource: {
+            chart: string;
+            digest?: string;
+            repoUrl: string;
+            valuesRef?: string;
+            version: string;
+        };
         IdPClaimMapping: {
             email?: string;
             groups?: string;
@@ -3347,6 +3777,7 @@ export interface components {
             items: components["schemas"]["ApprovalRequest"][] | null;
         };
         InstanceView: {
+            artifactDigest?: string;
             catalogItemId: string;
             clusterId: string;
             commitSha?: string;
@@ -3362,6 +3793,7 @@ export interface components {
             orgId: string;
             ownerTeam: string;
             prUrl?: string;
+            repoId?: string;
             resourceRef: components["schemas"]["ResourceRef"];
             spec: unknown;
             state: string;
@@ -3398,7 +3830,18 @@ export interface components {
             orgId?: string;
             pinnedVersion?: string;
             source: string;
+            sourceId?: string;
+            trustTier?: string;
+            unsigned?: boolean;
             versions?: components["schemas"]["CatalogItemVersion"][] | null;
+        };
+        KROSource: {
+            instance?: unknown;
+            rgdRef: string;
+        };
+        KustomizeSource: {
+            overlays?: string[] | null;
+            path: string;
         };
         ListAccountsOutputBody: {
             /**
@@ -3408,6 +3851,15 @@ export interface components {
              */
             readonly $schema?: string;
             accounts: components["schemas"]["CloudAccount"][] | null;
+        };
+        ListAddonsOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/ListAddonsOutputBody.json
+             */
+            readonly $schema?: string;
+            addons: components["schemas"]["AddonView"][] | null;
         };
         ListAuditUIOutputBody: {
             /**
@@ -3599,7 +4051,7 @@ export interface components {
              * @example https://example.com/schemas/ListOutputBody3.json
              */
             readonly $schema?: string;
-            endpoints: components["schemas"]["NotificationEndpoint"][] | null;
+            repos: components["schemas"]["TenantGitRepo"][] | null;
         };
         ListOutputBody4: {
             /**
@@ -3608,13 +4060,22 @@ export interface components {
              * @example https://example.com/schemas/ListOutputBody4.json
              */
             readonly $schema?: string;
-            stores: components["schemas"]["SecretStore"][] | null;
+            endpoints: components["schemas"]["NotificationEndpoint"][] | null;
         };
         ListOutputBody5: {
             /**
              * Format: uri
              * @description A URL to the JSON Schema for this object.
              * @example https://example.com/schemas/ListOutputBody5.json
+             */
+            readonly $schema?: string;
+            stores: components["schemas"]["SecretStore"][] | null;
+        };
+        ListOutputBody6: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/ListOutputBody6.json
              */
             readonly $schema?: string;
             extensions: components["schemas"]["Extension"][] | null;
@@ -3726,6 +4187,12 @@ export interface components {
              */
             readonly $schema?: string;
             zones: components["schemas"]["TenantZone"][] | null;
+        };
+        ManifestSource: {
+            inline?: unknown;
+            params?: {
+                [key: string]: string;
+            };
         };
         MemberView: {
             displayName: string;
@@ -4007,6 +4474,25 @@ export interface components {
             mappings: components["schemas"]["RbacMapping"][] | null;
             roles: components["schemas"]["RbacClusterRole"][] | null;
         };
+        RebindBaselineInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/RebindBaselineInputBody.json
+             */
+            readonly $schema?: string;
+            repoId: string;
+        };
+        ReceiveOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/ReceiveOutputBody.json
+             */
+            readonly $schema?: string;
+            accepted: boolean;
+            eventType?: string;
+        };
         ReconcileOutputBody: {
             /**
              * Format: uri
@@ -4026,6 +4512,30 @@ export interface components {
              * @example https://example.com/schemas/RegisterInputBody.json
              */
             readonly $schema?: string;
+            baseBranch?: string;
+            /** @enum {string} */
+            commitPolicy?: "direct" | "pull_request";
+            isDefault?: boolean;
+            name: string;
+            /**
+             * @description only github is active in this phase
+             * @enum {string}
+             */
+            provider?: "github";
+            /** @description owner/name of the existing repo */
+            repo: string;
+            /** @enum {string} */
+            scope?: "platform" | "team";
+            /** @description owning team (team scope only) */
+            teamId?: string;
+        };
+        RegisterInputBody1: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/RegisterInputBody1.json
+             */
+            readonly $schema?: string;
             /** @description 12-digit AWS account ID */
             accountId: string;
             externalId?: string;
@@ -4037,11 +4547,11 @@ export interface components {
             /** @description tenant (default) | platform */
             runContext?: string;
         };
-        RegisterInputBody1: {
+        RegisterInputBody2: {
             /**
              * Format: uri
              * @description A URL to the JSON Schema for this object.
-             * @example https://example.com/schemas/RegisterInputBody1.json
+             * @example https://example.com/schemas/RegisterInputBody2.json
              */
             readonly $schema?: string;
             /** @description expected sha256 (hex) of the plugin artifact */
@@ -4083,6 +4593,21 @@ export interface components {
             id: string;
             /** Format: date-time */
             usedAt?: string;
+        };
+        RepoOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/RepoOutputBody.json
+             */
+            readonly $schema?: string;
+            gitProviderStatus?: components["schemas"]["GitProviderStatus"];
+            repo: components["schemas"]["TenantGitRepo"];
+            /**
+             * @description webhook registration state: provisioned (provider hook live), unprovisioned (reconcile sweeper retries; repair via POST .../git-repos/{id}/webhook), disabled (provisioning not configured)
+             * @enum {string}
+             */
+            webhookStatus: "provisioned" | "unprovisioned" | "disabled";
         };
         RequestExemptionInputBody: {
             /**
@@ -4199,6 +4724,7 @@ export interface components {
              * @example https://example.com/schemas/RollbackInputBody.json
              */
             readonly $schema?: string;
+            repoId?: string;
             toVersion: string;
         };
         RollbackInputBody1: {
@@ -4298,6 +4824,7 @@ export interface components {
             secret: string;
         };
         RunView: {
+            artifactDigest?: string;
             /** Format: date-time */
             createdAt: string;
             createdBy: string;
@@ -4306,8 +4833,12 @@ export interface components {
             id: string;
             outputs?: unknown;
             phase: string;
+            sourceId?: string;
             steps: components["schemas"]["StepView"][] | null;
+            templateId: string;
             templateName: string;
+            trustTier?: string;
+            unsigned?: boolean;
             /** Format: date-time */
             updatedAt: string;
             version: string;
@@ -4318,6 +4849,7 @@ export interface components {
             repoUrl: string | null;
         };
         ScaffoldView: {
+            artifactDigest?: string;
             /** Format: date-time */
             createdAt: string;
             id: string;
@@ -4325,9 +4857,12 @@ export interface components {
             name: string;
             outputs: components["schemas"]["ScaffoldOutputs"];
             phase: string;
+            sourceId?: string;
             templateId: string;
             templateName: string;
             tenant: string;
+            trustTier?: string;
+            unsigned?: boolean;
         };
         SecretRef: {
             name: string;
@@ -4438,6 +4973,85 @@ export interface components {
             readonly $schema?: string;
             value: boolean;
         };
+        SourceAdoptInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/SourceAdoptInputBody.json
+             */
+            readonly $schema?: string;
+            /** @description fleet label query (applicationset mode); empty = all org clusters */
+            clusterSelector?: {
+                [key: string]: string;
+            };
+            /** @enum {string} */
+            deployMode?: "application" | "applicationset";
+            namespace?: string;
+            /** @description tenant_git_repos row id; empty = the cluster's bound baseline */
+            repoId?: string;
+            values?: unknown;
+            /** @description catalog version (= chart version); empty = effective pin/latest stable */
+            version?: string;
+        };
+        SourceCreateRunInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/SourceCreateRunInputBody.json
+             */
+            readonly $schema?: string;
+            displayName?: string;
+            values: {
+                [key: string]: unknown;
+            };
+            /** @description Template version; defaults to the tenant's effective version */
+            version?: string;
+        };
+        SourceDescriptor: {
+            crossplane?: components["schemas"]["XPSource"];
+            helm?: components["schemas"]["HelmSource"];
+            kind: string;
+            kro?: components["schemas"]["KROSource"];
+            kustomize?: components["schemas"]["KustomizeSource"];
+            manifests?: components["schemas"]["ManifestSource"];
+        };
+        SourceListOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/SourceListOutputBody.json
+             */
+            readonly $schema?: string;
+            sources: components["schemas"]["TrustedSourceStatus"][] | null;
+        };
+        SourceOrgVisibilityInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/SourceOrgVisibilityInputBody.json
+             */
+            readonly $schema?: string;
+            /** @description false hides the item for this org; true shows it (subject to platform rules) */
+            visible: boolean;
+        };
+        SourcePinInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/SourcePinInputBody.json
+             */
+            readonly $schema?: string;
+            version: string;
+        };
+        SourceVisibilityInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/SourceVisibilityInputBody.json
+             */
+            readonly $schema?: string;
+            rules: components["schemas"]["Item"][] | null;
+        };
         StatusOutputBody: {
             /**
              * Format: uri
@@ -4470,6 +5084,7 @@ export interface components {
              * @example https://example.com/schemas/SyncOutputBody.json
              */
             readonly $schema?: string;
+            sources: components["schemas"]["TrustedSourceStatus"][] | null;
             /** Format: int64 */
             synced: number;
         };
@@ -4515,21 +5130,31 @@ export interface components {
             team: string;
         };
         TemplateDetail: {
+            artifactDigest?: string;
             description: string;
             displayName: string;
             id: string;
+            kind?: string;
             name: string;
             schema?: unknown;
+            sourceId?: string;
             tags?: string[] | null;
+            trustTier?: string;
             uiSchema?: unknown;
+            unsigned?: boolean;
             version: string;
         };
         TemplateSummary: {
+            artifactDigest?: string;
             description: string;
             displayName: string;
             id: string;
+            kind?: string;
             name: string;
+            sourceId?: string;
             tags?: string[] | null;
+            trustTier?: string;
+            unsigned?: boolean;
             version: string;
         };
         TenantCapabilities: {
@@ -4560,6 +5185,24 @@ export interface components {
             repo: string;
             scaffoldGitOrg?: string;
             userTemplateFallback?: string;
+        };
+        TenantGitRepo: {
+            baseBranch: string;
+            commitPolicy: string;
+            /** Format: date-time */
+            createdAt: string;
+            githubApp?: components["schemas"]["GitHubAppConfig"];
+            id: string;
+            isDefault: boolean;
+            name: string;
+            orgId: string;
+            provider: string;
+            repo: string;
+            scope: string;
+            teamId?: string;
+            /** Format: date-time */
+            updatedAt: string;
+            webhookUrl?: string;
         };
         TenantOutputBody: {
             /**
@@ -4630,6 +5273,25 @@ export interface components {
             /** @description Plaintext bootstrap token, returned once */
             token: string;
         };
+        TrustedSourceStatus: {
+            /** Format: int64 */
+            generation: number;
+            /** Format: int64 */
+            itemCount: number;
+            kind: string;
+            /** Format: date-time */
+            lastAttemptAt?: string;
+            lastError?: string;
+            lastErrorCode?: string;
+            lastGoodIndexDigest?: string;
+            lastGoodIndexRef?: string;
+            /** Format: date-time */
+            lastSuccessAt?: string;
+            /** Format: int64 */
+            snapshotAgeSeconds: number;
+            sourceId: string;
+            state: string;
+        };
         UiAuditEvent: {
             action: string;
             actor: string;
@@ -4673,6 +5335,26 @@ export interface components {
             kind: string;
             name: string;
         };
+        UnregisterOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/UnregisterOutputBody.json
+             */
+            readonly $schema?: string;
+            mode?: string;
+            unregistered: boolean;
+        };
+        UpdateAddonInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/UpdateAddonInputBody.json
+             */
+            readonly $schema?: string;
+            chartVersion?: string;
+            values?: unknown;
+        };
         UpdateBrokeredIdPInputBody: {
             /**
              * Format: uri
@@ -4715,17 +5397,32 @@ export interface components {
              * @example https://example.com/schemas/UpdateInputBody.json
              */
             readonly $schema?: string;
-            enabled?: boolean;
-            events?: string[] | null;
+            baseBranch?: string;
+            /** @enum {string} */
+            commitPolicy?: "direct" | "pull_request";
+            /** @description true promotes (demoting the old default); false is rejected */
+            isDefault?: boolean;
             name?: string;
-            secret?: string;
-            url?: string;
+            teamId?: string;
         };
         UpdateInputBody1: {
             /**
              * Format: uri
              * @description A URL to the JSON Schema for this object.
              * @example https://example.com/schemas/UpdateInputBody1.json
+             */
+            readonly $schema?: string;
+            enabled?: boolean;
+            events?: string[] | null;
+            name?: string;
+            secret?: string;
+            url?: string;
+        };
+        UpdateInputBody2: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/UpdateInputBody2.json
              */
             readonly $schema?: string;
             provider?: components["schemas"]["SecretStoreProvider"];
@@ -4738,6 +5435,7 @@ export interface components {
              * @example https://example.com/schemas/UpdateInstanceInputBody.json
              */
             readonly $schema?: string;
+            repoId?: string;
             spec: unknown;
         };
         UpdatePolicyInputBody: {
@@ -4780,6 +5478,7 @@ export interface components {
              * @example https://example.com/schemas/UpgradeInputBody.json
              */
             readonly $schema?: string;
+            repoId?: string;
             toVersion: string;
         };
         VaultProvider: {
@@ -4796,6 +5495,19 @@ export interface components {
             readonly $schema?: string;
             rules: components["schemas"]["Item"][] | null;
         };
+        WebhookOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/WebhookOutputBody.json
+             */
+            readonly $schema?: string;
+            hookUrl?: string;
+            provisioned: boolean;
+        };
+        XPSource: {
+            manifests?: unknown;
+        };
     };
     responses: never;
     parameters: never;
@@ -4805,6 +5517,35 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    listCatalogSources: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourceListOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     syncCatalog: {
         parameters: {
             query?: never;
@@ -4855,6 +5596,100 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    setSourceCatalogVisibility: {
+        parameters: {
+            query?: {
+                cluster?: string;
+            };
+            header?: never;
+            path: {
+                source: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SourceVisibilityInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listTemplateSources: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SourceListOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    syncTemplates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SyncOutputBody"];
+                };
             };
             /** @description Error */
             default: {
@@ -5261,6 +6096,104 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TenantOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteAddon: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    updateAddon: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateAddonInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdoptOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    enableAddonPrune: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdoptOutputBody"];
                 };
             };
             /** @description Error */
@@ -5800,8 +6733,12 @@ export interface operations {
                 cluster?: string;
                 /** @description Free-text search over name, display name, and description */
                 q?: string;
-                /** @description Filter by item source */
+                /** @description Filter by item kind */
                 source?: "curated" | "discovered" | "platform" | "template";
+                /** @description Filter by server-assigned source ID */
+                sourceId?: string;
+                /** @description Filter by source trust tier */
+                trustTier?: "official" | "reviewed" | "experimental";
                 /** @description Filter by package category (discovered projections have no category) */
                 category?: string;
                 /** @description Sort order (whitelisted server-side) */
@@ -5883,6 +6820,43 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["OrgVisibilityInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    setSourceCatalogOrgVisibility: {
+        parameters: {
+            query?: {
+                cluster?: string;
+            };
+            header?: never;
+            path: {
+                org: string;
+                source: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SourceOrgVisibilityInputBody"];
             };
         };
         responses: {
@@ -6004,6 +6978,111 @@ export interface operations {
             };
         };
     };
+    getSourceCatalogItem: {
+        parameters: {
+            query?: {
+                cluster?: string;
+            };
+            header?: never;
+            path: {
+                org: string;
+                source: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    pinSourceCatalogVersion: {
+        parameters: {
+            query?: {
+                cluster?: string;
+            };
+            header?: never;
+            path: {
+                org: string;
+                source: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SourcePinInputBody"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    unpinSourceCatalogVersion: {
+        parameters: {
+            query?: {
+                cluster?: string;
+            };
+            header?: never;
+            path: {
+                org: string;
+                source: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     listCloudAccounts: {
         parameters: {
             query?: never;
@@ -6047,7 +7126,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RegisterInputBody"];
+                "application/json": components["schemas"]["RegisterInputBody1"];
             };
         };
         responses: {
@@ -6465,6 +7544,113 @@ export interface operations {
             };
         };
     };
+    listClusterAddons: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                cluster: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListAddonsOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    adoptAddon: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                cluster: string;
+                catalogItem: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AdoptInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdoptOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    adoptSourceAddon: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                cluster: string;
+                source: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SourceAdoptInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AdoptOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     getCluster: {
         parameters: {
             query?: never;
@@ -6816,6 +8002,42 @@ export interface operations {
                 };
                 content: {
                     "application/json": string;
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    rebindClusterBaseline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RebindBaselineInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClusterOutputBody"];
                 };
             };
             /** @description Error */
@@ -7238,7 +8460,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ListOutputBody5"];
+                    "application/json": components["schemas"]["ListOutputBody6"];
                 };
             };
             /** @description Error */
@@ -7263,7 +8485,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["RegisterInputBody1"];
+                "application/json": components["schemas"]["RegisterInputBody2"];
             };
         };
         responses: {
@@ -7798,6 +9020,208 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AuthorizeURLBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listGitRepos: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListOutputBody3"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    registerGitRepo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RegisterInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RepoOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getGitRepo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RepoOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    unregisterGitRepo: {
+        parameters: {
+            query?: {
+                force?: boolean;
+                /** @description required with force=true */
+                mode?: "orphan" | "teardown";
+            };
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnregisterOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    updateGitRepo: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RepoOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    ensureGitRepoWebhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WebhookOutputBody"];
                 };
             };
             /** @description Error */
@@ -8765,7 +10189,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ListOutputBody3"];
+                    "application/json": components["schemas"]["ListOutputBody4"];
                 };
             };
             /** @description Error */
@@ -8858,7 +10282,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UpdateInputBody"];
+                "application/json": components["schemas"]["UpdateInputBody1"];
             };
         };
         responses: {
@@ -10174,7 +11598,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ListOutputBody4"];
+                    "application/json": components["schemas"]["ListOutputBody5"];
                 };
             };
             /** @description Error */
@@ -10297,7 +11721,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UpdateInputBody1"];
+                "application/json": components["schemas"]["UpdateInputBody2"];
             };
         };
         responses: {
@@ -10692,6 +12116,76 @@ export interface operations {
             };
         };
     };
+    getSourceTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                source: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetTemplateOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    createSourceScaffoldRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                source: string;
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SourceCreateRunInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateRunOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     listTenantZones: {
         parameters: {
             query?: never;
@@ -10841,6 +12335,46 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    gitWebhookIngress: {
+        parameters: {
+            query?: never;
+            header?: {
+                "X-Hub-Signature-256"?: string;
+                "X-GitHub-Event"?: string;
+                "X-Gitlab-Token"?: string;
+                "X-Gitlab-Event"?: string;
+            };
+            path: {
+                provider: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": string;
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReceiveOutputBody"];
+                };
             };
             /** @description Error */
             default: {

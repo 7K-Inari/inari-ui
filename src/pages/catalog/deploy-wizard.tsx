@@ -3,6 +3,7 @@ import { Link, useParams, useSearchParams } from "react-router-dom";
 import { CheckCircle2 } from "lucide-react";
 
 import { getCatalogItem } from "@/api/catalog";
+import { itemRouteID } from "@/api/identity";
 import { listClusters } from "@/api/clusters";
 import { ApiError } from "@/api/client";
 import { createDeploy, getDeploy } from "@/api/deploys";
@@ -14,6 +15,7 @@ import { useAuth } from "@/auth/auth-context";
 import { Alert, Badge, Button, Card, Input, Spinner } from "7k-design-system/react";
 
 import { PageHeader } from "@/components/page-header";
+import { SourceBadge } from "@/components/catalog/source-badge";
 import { Stepper } from "@/components/stepper";
 import { PolicyDenialNotice } from "@/components/policy-denial";
 import { SchemaForm, type SchemaFormHandle } from "@/components/schema-form/schema-form";
@@ -95,7 +97,8 @@ function InstanceLink({ deploy }: { deploy: Deploy }) {
 export function DeployWizardPage() {
   const { tenant } = useTenant();
   const { token } = useAuth();
-  const { itemId } = useParams<{ itemId: string }>();
+  const { itemId: legacyItemId, source, name: routeName } = useParams<{ itemId?: string; source?: string; name?: string }>();
+  const itemId = itemRouteID({ itemId: legacyItemId, source, name: routeName });
   const [searchParams] = useSearchParams();
   const version = searchParams.get("version") ?? "";
 
@@ -150,6 +153,7 @@ export function DeployWizardPage() {
   const itemData = item.data;
 
   const pinned = version || itemData.latestVersion || "";
+  const selectedVersion = itemData.versions.find((v) => v.version === pinned);
 
   const next = () => {
     if (!name) {
@@ -210,6 +214,10 @@ export function DeployWizardPage() {
         lede={`Version ${pinned}`}
       />
       <Stepper steps={STEPS} current={step} />
+      <div className="mb-4">
+        <SourceBadge source={itemData.source} sourceId={itemData.sourceId} trustTier={itemData.trustTier} unsigned={itemData.unsigned} />
+        {selectedVersion?.artifactDigest && <p className="mono-caption mt-1">Digest: {selectedVersion.artifactDigest}</p>}
+      </div>
 
       {step === 0 && (
         <Card>

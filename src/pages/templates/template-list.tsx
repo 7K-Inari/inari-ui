@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { listTemplates } from "@/api/templates";
 import { useAsyncResource } from "@/api/hooks";
 import { TemplateScopeBadge } from "@/components/templates/template-scope-badge";
+import { SourceBadge } from "@/components/catalog/source-badge";
 import { Badge } from "7k-design-system/react";
 import { Card } from "7k-design-system/react";
 import { useTenant } from "@/tenant/tenant-context";
@@ -54,6 +55,7 @@ export function TemplateListPage() {
             </div>
             <div className="card-body flex flex-1 flex-col">
               <div className="flex flex-wrap gap-1">
+                <SourceBadge sourceId={template.sourceId} trustTier={template.trustTier} unsigned={template.unsigned} />
                 <TemplateScopeBadge scope={template.scope} />
                 {template.tags.map((tag) => (
                   <Badge key={tag} variant="neutral">
@@ -63,7 +65,7 @@ export function TemplateListPage() {
               </div>
               <div className="mt-auto flex justify-end pt-3">
                 <Link
-                  to={tenantLink(tenant, `templates/${template.name}/scaffold`)}
+                  to={tenantLink(tenant, `templates/${template.id}/scaffold`)}
                   className="btn btn-primary btn-sm"
                 >
                   Scaffold

@@ -94,6 +94,23 @@ describe("addons api", () => {
     expect(res.prUrl).toBeNull();
   });
 
+  it("uses source/name path segments when adopting a trusted-source package", async () => {
+    let seenPath = "";
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.post("*/api/v1/tenants/:org/clusters/:id/addons/:source/:name/adopt", ({ params }) => {
+        seenPath = `${params.org}/${params.id}/${params.source}/${params.name}`;
+        return HttpResponse.json({ detail: "admission denied" }, { status: 422 });
+      }),
+    );
+    const err = await adoptAddon("tok", "cl-kind-dev", "core/metrics-server", {}, "acme").catch(
+      (e) => e,
+    );
+    expect(seenPath).toBe("acme/cl-kind-dev/core/metrics-server");
+    expect(err).toBeInstanceOf(ApiError);
+    expect((err as ApiError).status).toBe(422);
+  });
+
   it("adopts fleet-wide into a PR-policy repo (pull_request → prUrl, selector passed through)", async () => {
     const res = await adoptAddon(
       "tok",

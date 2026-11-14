@@ -27,6 +27,8 @@ async function captureQuery(): Promise<string> {
   await listCatalogItems("tok", "acme", {
     q: "post gre",
     source: "curated",
+    sourceId: "core",
+    trustTier: "reviewed",
     category: "database",
     cluster: "cl-eks-prod",
     sort: "newest",
@@ -41,6 +43,8 @@ describe("catalog api", () => {
     const params = new URLSearchParams(await captureQuery());
     expect(params.get("q")).toBe("post gre");
     expect(params.get("source")).toBe("curated");
+    expect(params.get("sourceId")).toBe("core");
+    expect(params.get("trustTier")).toBe("reviewed");
     expect(params.get("category")).toBe("database");
     expect(params.get("cluster")).toBe("cl-eks-prod");
     expect(params.get("sort")).toBe("newest");
@@ -62,7 +66,7 @@ describe("catalog api", () => {
   });
 
   it("returns items with category and the server total", async () => {
-    const res = await listCatalogItems("tok", "acme", { source: "curated" });
+    const res = await listCatalogItems("tok", "acme", { sourceId: "core" });
     expect(res.total).toBe(1);
     expect(res.items).toHaveLength(1);
     expect(res.items[0].category).toBe("database");
