@@ -3831,6 +3831,7 @@ export interface components {
             pinnedVersion?: string;
             source: string;
             sourceId?: string;
+            sourceState?: string;
             trustTier?: string;
             unsigned?: boolean;
             versions?: components["schemas"]["CatalogItemVersion"][] | null;
@@ -5136,8 +5137,10 @@ export interface components {
             id: string;
             kind?: string;
             name: string;
+            packageVersion?: string;
             schema?: unknown;
             sourceId?: string;
+            sourceState?: string;
             tags?: string[] | null;
             trustTier?: string;
             uiSchema?: unknown;
@@ -5151,7 +5154,9 @@ export interface components {
             id: string;
             kind?: string;
             name: string;
+            packageVersion?: string;
             sourceId?: string;
+            sourceState?: string;
             tags?: string[] | null;
             trustTier?: string;
             unsigned?: boolean;
@@ -5276,6 +5281,7 @@ export interface components {
         TrustedSourceStatus: {
             /** Format: int64 */
             generation: number;
+            indexRef?: string;
             /** Format: int64 */
             itemCount: number;
             kind: string;
@@ -5291,6 +5297,8 @@ export interface components {
             snapshotAgeSeconds: number;
             sourceId: string;
             state: string;
+            trustTier?: string;
+            unsigned?: boolean;
         };
         UiAuditEvent: {
             action: string;

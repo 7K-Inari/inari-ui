@@ -55,7 +55,7 @@ export function TemplateListPage() {
             </div>
             <div className="card-body flex flex-1 flex-col">
               <div className="flex flex-wrap gap-1">
-                <SourceBadge sourceId={template.sourceId} trustTier={template.trustTier} unsigned={template.unsigned} />
+                <SourceBadge sourceId={template.sourceId} trustTier={template.trustTier} unsigned={template.unsigned} sourceState={template.sourceState} />
                 <TemplateScopeBadge scope={template.scope} />
                 {template.tags.map((tag) => (
                   <Badge key={tag} variant="neutral">

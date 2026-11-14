@@ -77,6 +77,7 @@ export interface CatalogItemSummary {
   sourceId?: string;
   trustTier?: TrustTier;
   unsigned?: boolean;
+  sourceState?: string;
   // Package category facet; empty for uncategorized and discovered items.
   category: string;
   createdAt: string | null;
