@@ -1694,6 +1694,8 @@ components:
           type: string
         Version:
           type: string
+        artifactDigest:
+          type: string
       required:
         - InstanceID
         - Version

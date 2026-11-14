@@ -3444,6 +3444,7 @@ export interface components {
             PRURL: string;
             Status: string;
             Version: string;
+            artifactDigest?: string;
         };
         DiffOutputBody: {
             /**
