@@ -1,4 +1,4 @@
-import { parseExtensionManifest, type InariExtension } from "@7k-inari/ui-plugin-sdk";
+import { extensionContainerName, parseExtensionManifest, type InariExtension } from "@7k-inari/ui-plugin-sdk";
 
 import { API_BASE_URL } from "@/api/client";
 import type { UiExtensionRemoteViewModel } from "@/api/extensions";
@@ -131,7 +131,7 @@ export const loadExtension: ExtensionLoader = async (remote) => {
   // identifiers: a remote registered as "inari-ext-argocd" exposes its
   // container global as "inari_ext_argocd". entryGlobalName bridges the
   // registry name (dashes) to the container global (underscores).
-  const entryGlobalName = remote.name.replace(/[^a-zA-Z0-9_$]/g, "_");
+  const entryGlobalName = extensionContainerName(remote.name);
   runtime.registerRemotes([{ name: remote.name, entry: entryUrl, entryGlobalName }]);
   let mod: RemoteExtensionModule | InariExtension | null;
   try {
