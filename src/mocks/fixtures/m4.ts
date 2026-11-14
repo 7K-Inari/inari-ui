@@ -190,6 +190,8 @@ const templates: WireTemplateDetail[] = [
     name: "web-service",
     sourceId: "core",
     trustTier: "reviewed",
+    sourceState: "stale",
+    packageVersion: "1.4.0-build.5",
     artifactDigest: "sha256:52ccaee6d4dd272e54bfccda77738b42e1edf0e4a20c27e23f0b6c15d01aef79",
     displayName: "Web Service",
     description:
@@ -239,6 +241,8 @@ export function listTemplateMocks(): WireTemplateSummary[] {
     sourceId: t.sourceId,
     trustTier: t.trustTier,
     unsigned: t.unsigned,
+    sourceState: t.sourceState,
+    packageVersion: t.packageVersion,
     artifactDigest: t.artifactDigest,
     tags: t.tags,
     version: t.version,

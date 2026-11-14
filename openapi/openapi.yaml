@@ -2476,6 +2476,8 @@ components:
           type: string
         sourceId:
           type: string
+        sourceState:
+          type: string
         trustTier:
           type: string
         unsigned:
@@ -5304,8 +5306,12 @@ components:
           type: string
         name:
           type: string
+        packageVersion:
+          type: string
         schema: {}
         sourceId:
+          type: string
+        sourceState:
           type: string
         tags:
           items:
@@ -5342,7 +5348,11 @@ components:
           type: string
         name:
           type: string
+        packageVersion:
+          type: string
         sourceId:
+          type: string
+        sourceState:
           type: string
         tags:
           items:
@@ -5636,6 +5646,8 @@ components:
         generation:
           format: int64
           type: integer
+        indexRef:
+          type: string
         itemCount:
           format: int64
           type: integer
@@ -5662,6 +5674,10 @@ components:
           type: string
         state:
           type: string
+        trustTier:
+          type: string
+        unsigned:
+          type: boolean
       required:
         - kind
         - sourceId
