@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.1.1](https://github.com/7K-Inari/inari-ui/compare/v2.1.0...v2.1.1) (2026-11-14)
+
+
+### Bug Fixes
+
+* **ext:** pin stable UI plugin SDK ([#192](https://github.com/7K-Inari/inari-ui/issues/192)) ([f22acc1](https://github.com/7K-Inari/inari-ui/commit/f22acc1e7404083ffcae55027367f5668c341d7a))
+
 ## [2.1.0](https://github.com/7K-Inari/inari-ui/compare/v2.0.0...v2.1.0) (2026-11-14)
 
 
