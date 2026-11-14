@@ -77,6 +77,8 @@ export interface TemplateSummaryViewModel {
   sourceId?: string;
   trustTier?: "official" | "reviewed" | "experimental";
   unsigned?: boolean;
+  sourceState?: string;
+  packageVersion?: string;
   artifactDigest?: string;
   tags: string[];
   version: string;
@@ -140,6 +142,8 @@ function mapTemplateSummary(t: ServerTemplateSummary): TemplateSummaryViewModel 
     sourceId: t.sourceId ?? undefined,
     trustTier: t.trustTier as "official" | "reviewed" | "experimental" | undefined,
     unsigned: t.unsigned === true,
+    sourceState: t.sourceState ?? undefined,
+    packageVersion: t.packageVersion ?? undefined,
     artifactDigest: t.artifactDigest ?? undefined,
     tags: t.tags ?? [],
     version: t.version,

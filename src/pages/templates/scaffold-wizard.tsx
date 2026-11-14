@@ -283,7 +283,7 @@ export function ScaffoldWizardPage() {
       </div>
       <Stepper steps={STEPS} current={step} />
       <div className="mb-4">
-        <SourceBadge sourceId={tpl.sourceId} trustTier={tpl.trustTier} unsigned={tpl.unsigned} />
+        <SourceBadge sourceId={tpl.sourceId} trustTier={tpl.trustTier} unsigned={tpl.unsigned} sourceState={tpl.sourceState} />
         {tpl.artifactDigest && <p className="mono-caption mt-1">Digest: {tpl.artifactDigest}</p>}
       </div>
 
@@ -352,6 +352,12 @@ export function ScaffoldWizardPage() {
               <dd>{name}</dd>
               <dt className="u-muted">Template</dt>
               <dd>{tpl.displayName}</dd>
+              {tpl.packageVersion && (
+                <>
+                  <dt className="u-muted">Package version</dt>
+                  <dd>{tpl.packageVersion}</dd>
+                </>
+              )}
               <dt className="u-muted">Tenant</dt>
               <dd>{tenant}</dd>
               <dt className="u-muted">Namespace</dt>

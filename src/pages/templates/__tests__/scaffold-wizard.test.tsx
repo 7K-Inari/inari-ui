@@ -63,6 +63,7 @@ describe("TemplateListPage", () => {
     expect(screen.getByText("core")).toBeInTheDocument();
     expect(screen.getByText("community")).toBeInTheDocument();
     expect(screen.getByText("Unsigned — development only")).toBeInTheDocument();
+    expect(screen.getByText("Stale source")).toBeInTheDocument();
     expect(
       screen.getAllByRole("link", { name: "Scaffold" })[0],
     ).toHaveAttribute("href", "/acme/templates/core/web-service/scaffold");
@@ -87,6 +88,9 @@ describe("ScaffoldWizardPage", () => {
     // Review.
     expect(await screen.findByRole("heading", { name: "Review" })).toBeInTheDocument();
     expect(screen.getByText("payments-api")).toBeInTheDocument();
+    expect(screen.getByText("Package version")).toBeInTheDocument();
+    expect(screen.getByText("1.4.0-build.5")).toBeInTheDocument();
+    expect(screen.getByText("Stale source")).toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "Scaffold" }));
 
     // Status: run completes and exposes all three outputs.
