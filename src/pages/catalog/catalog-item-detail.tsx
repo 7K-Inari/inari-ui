@@ -74,7 +74,7 @@ export function CatalogItemDetailPage() {
         }
       />
       <div className="catalog-detail-tags">
-        <SourceBadge source={item.source} sourceId={item.sourceId} trustTier={item.trustTier} unsigned={item.unsigned} />
+        <SourceBadge source={item.source} sourceId={item.sourceId} trustTier={item.trustTier} unsigned={item.unsigned} sourceState={item.sourceState} />
         {item.scope && <TemplateScopeBadge scope={item.scope} />}
         {item.approvalPolicy !== "auto" && <span className="badge badge-warning">Approval required</span>}
       </div>

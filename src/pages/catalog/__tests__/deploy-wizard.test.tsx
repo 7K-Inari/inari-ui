@@ -67,6 +67,16 @@ describe("DeployWizardPage", () => {
     expect(screen.getByRole("heading", { name: "Configure" })).toBeInTheDocument();
   });
 
+  it("shows the selected package version and stale source in review", async () => {
+    const user = userEvent.setup();
+    renderWizard();
+    await fillConfigure(user);
+    await user.click(screen.getByRole("button", { name: "Next" }));
+    expect(await screen.findByText("Package version")).toBeInTheDocument();
+    expect(screen.getByText("1.4.0-build.5")).toBeInTheDocument();
+    expect(screen.getByText("Stale source")).toBeInTheDocument();
+  });
+
   it("walks configure → review → submit → live status to healthy", async () => {
     const user = userEvent.setup();
     let submittedBody: unknown = null;

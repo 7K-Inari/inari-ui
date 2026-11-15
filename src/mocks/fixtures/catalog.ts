@@ -66,6 +66,7 @@ const postgresItem: ItemView = {
   source: "curated",
   sourceId: "core",
   trustTier: "reviewed",
+  sourceState: "stale",
   category: "database",
   approvalPolicy: "auto",
   pinnedVersion: "1.4.0",
@@ -73,7 +74,7 @@ const postgresItem: ItemView = {
   versions: [
     {
       ...version("core/postgresql-aws", "1.4.0", "stable", postgresSchema, postgresUiHints),
-      packageVersion: "1.4.0",
+      packageVersion: "1.4.0-build.5",
       artifactRef: "ghcr.io/7k-inari/catalog/postgresql-aws@sha256:52ccaee6d4dd272e54bfccda77738b42e1edf0e4a20c27e23f0b6c15d01aef79",
       artifactDigest: "sha256:52ccaee6d4dd272e54bfccda77738b42e1edf0e4a20c27e23f0b6c15d01aef79",
     },

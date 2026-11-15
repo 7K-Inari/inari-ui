@@ -39,7 +39,7 @@ function wireScope(i: ServerCatalogItem): "user" | "platform" | undefined {
 function mapVersion(v: ServerCatalogItemVersion): CatalogVersion {
   return {
     version: v.version,
-    packageVersion: v.packageVersion ?? v.version,
+    packageVersion: v.packageVersion ?? undefined,
     channel: v.channel ?? "stable",
     artifactRef: v.artifactRef ?? "",
     artifactDigest: v.artifactDigest ?? "",
@@ -64,6 +64,7 @@ function mapItem(i: ServerCatalogItem): CatalogItemSummary {
     sourceId: i.sourceId ?? undefined,
     trustTier: i.trustTier as TrustTier | undefined,
     unsigned: i.unsigned === true,
+    sourceState: i.sourceState ?? undefined,
     category: i.category ?? "",
     createdAt: i.createdAt ?? null,
     latestVersion: latest?.version ?? null,

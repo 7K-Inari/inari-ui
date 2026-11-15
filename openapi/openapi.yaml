@@ -470,6 +470,20 @@ components:
         - vaultUrl
         - authSecretRef
       type: object
+    Binding:
+      additionalProperties: false
+      properties:
+        baseBranch:
+          type: string
+        baselineRepoId:
+          type: string
+        clusterId:
+          type: string
+        commitPolicy:
+          type: string
+        renderer:
+          type: string
+      type: object
     BrokeredIdP:
       additionalProperties: false
       properties:
@@ -1170,6 +1184,33 @@ components:
           format: uri
           readOnly: true
           type: string
+        capability:
+          minLength: 1
+          type: string
+        config: {}
+        isDefault:
+          type: boolean
+        name:
+          maxLength: 100
+          minLength: 1
+          type: string
+        resourceRef:
+          $ref: "#/components/schemas/TargetResourceRef"
+      required:
+        - name
+        - resourceRef
+        - capability
+      type: object
+    CreateInputBody1:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreateInputBody1.json
+          format: uri
+          readOnly: true
+          type: string
         enabled:
           type: boolean
         events:
@@ -1193,13 +1234,13 @@ components:
         - kind
         - url
       type: object
-    CreateInputBody1:
+    CreateInputBody2:
       additionalProperties: false
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
           examples:
-            - https://example.com/schemas/CreateInputBody1.json
+            - https://example.com/schemas/CreateInputBody2.json
           format: uri
           readOnly: true
           type: string
@@ -1554,6 +1595,21 @@ components:
         approvalId:
           type: string
       type: object
+    DeleteOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/DeleteOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        deleted:
+          type: boolean
+      required:
+        - deleted
+      type: object
     DeleteTenantInputBody:
       additionalProperties: false
       properties:
@@ -1693,6 +1749,8 @@ components:
         Status:
           type: string
         Version:
+          type: string
+        artifactDigest:
           type: string
       required:
         - InstanceID
@@ -2253,6 +2311,64 @@ components:
         - authModel
         - checkedAt
       type: object
+    Grant:
+      additionalProperties: false
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        createdBy:
+          type: string
+        relation:
+          type: string
+        targetId:
+          type: string
+        teamId:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+        - targetId
+        - teamId
+        - relation
+        - createdAt
+        - updatedAt
+      type: object
+    GrantInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/GrantInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        relation:
+          enum:
+            - view
+            - use
+            - provision
+          type: string
+      required:
+        - relation
+      type: object
+    GrantOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/GrantOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        grant:
+          $ref: "#/components/schemas/Grant"
+      required:
+        - grant
+      type: object
     HelmSource:
       additionalProperties: false
       properties:
@@ -2475,6 +2591,8 @@ components:
         source:
           type: string
         sourceId:
+          type: string
+        sourceState:
           type: string
         trustTier:
           type: string
@@ -2976,6 +3094,25 @@ components:
           format: uri
           readOnly: true
           type: string
+        targets:
+          items:
+            $ref: "#/components/schemas/Target"
+          type:
+            - array
+            - "null"
+      required:
+        - targets
+      type: object
+    ListOutputBody5:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListOutputBody5.json
+          format: uri
+          readOnly: true
+          type: string
         endpoints:
           items:
             $ref: "#/components/schemas/NotificationEndpoint"
@@ -2985,13 +3122,13 @@ components:
       required:
         - endpoints
       type: object
-    ListOutputBody5:
+    ListOutputBody6:
       additionalProperties: false
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
           examples:
-            - https://example.com/schemas/ListOutputBody5.json
+            - https://example.com/schemas/ListOutputBody6.json
           format: uri
           readOnly: true
           type: string
@@ -3004,13 +3141,13 @@ components:
       required:
         - stores
       type: object
-    ListOutputBody6:
+    ListOutputBody7:
       additionalProperties: false
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
           examples:
-            - https://example.com/schemas/ListOutputBody6.json
+            - https://example.com/schemas/ListOutputBody7.json
           format: uri
           readOnly: true
           type: string
@@ -3717,6 +3854,37 @@ components:
       required:
         - provider
       type: object
+    ProviderDescriptor:
+      additionalProperties: false
+      properties:
+        actions:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        capability:
+          type: string
+        configSchema: {}
+        resourceKinds:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        selectionSchema: {}
+        supportsDefault:
+          type: boolean
+        uiSchema: {}
+      required:
+        - capability
+        - resourceKinds
+        - actions
+        - configSchema
+        - selectionSchema
+        - uiSchema
+        - supportsDefault
+      type: object
     ProviderInfo:
       additionalProperties: false
       properties:
@@ -3729,6 +3897,25 @@ components:
       required:
         - id
         - enabled
+      type: object
+    ProvidersOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ProvidersOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        providers:
+          items:
+            $ref: "#/components/schemas/ProviderDescriptor"
+          type:
+            - array
+            - "null"
+      required:
+        - providers
       type: object
     PutClientScopesInputBody:
       additionalProperties: false
@@ -3925,6 +4112,23 @@ components:
         - groups
         - roles
         - mappings
+      type: object
+    Readiness:
+      additionalProperties: false
+      properties:
+        observedAt:
+          format: date-time
+          type: string
+        reasons:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        state:
+          type: string
+      required:
+        - state
       type: object
     RebindBaselineInputBody:
       additionalProperties: false
@@ -5183,6 +5387,94 @@ components:
         - synced
         - sources
       type: object
+    Target:
+      additionalProperties: false
+      properties:
+        binding:
+          $ref: "#/components/schemas/Binding"
+        capabilities:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        config: {}
+        createdAt:
+          format: date-time
+          type: string
+        effectiveActions:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        enabled:
+          type: boolean
+        grants:
+          items:
+            $ref: "#/components/schemas/Grant"
+          type:
+            - array
+            - "null"
+        id:
+          type: string
+        isDefault:
+          type: boolean
+        name:
+          type: string
+        orgId:
+          type: string
+        readiness:
+          $ref: "#/components/schemas/Readiness"
+        resourceRef:
+          $ref: "#/components/schemas/TargetResourceRef"
+        revision:
+          format: int64
+          type: integer
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+        - id
+        - orgId
+        - name
+        - resourceRef
+        - capabilities
+        - config
+        - enabled
+        - isDefault
+        - revision
+        - binding
+        - readiness
+        - createdAt
+        - updatedAt
+      type: object
+    TargetOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/TargetOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        target:
+          $ref: "#/components/schemas/Target"
+      required:
+        - target
+      type: object
+    TargetResourceRef:
+      additionalProperties: false
+      properties:
+        id:
+          type: string
+        kind:
+          type: string
+      required:
+        - kind
+        - id
+      type: object
     TargetsOutputBody:
       additionalProperties: false
       properties:
@@ -5304,8 +5596,12 @@ components:
           type: string
         name:
           type: string
+        packageVersion:
+          type: string
         schema: {}
         sourceId:
+          type: string
+        sourceState:
           type: string
         tags:
           items:
@@ -5342,7 +5638,11 @@ components:
           type: string
         name:
           type: string
+        packageVersion:
+          type: string
         sourceId:
+          type: string
+        sourceState:
           type: string
         tags:
           items:
@@ -5636,6 +5936,8 @@ components:
         generation:
           format: int64
           type: integer
+        indexRef:
+          type: string
         itemCount:
           format: int64
           type: integer
@@ -5662,6 +5964,10 @@ components:
           type: string
         state:
           type: string
+        trustTier:
+          type: string
+        unsigned:
+          type: boolean
       required:
         - kind
         - sourceId
@@ -5914,6 +6220,30 @@ components:
           format: uri
           readOnly: true
           type: string
+        config: {}
+        enabled:
+          type: boolean
+        isDefault:
+          type: boolean
+        name:
+          type: string
+        revision:
+          format: int64
+          minimum: 1
+          type: integer
+      required:
+        - revision
+      type: object
+    UpdateInputBody2:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/UpdateInputBody2.json
+          format: uri
+          readOnly: true
+          type: string
         enabled:
           type: boolean
         events:
@@ -5929,13 +6259,13 @@ components:
         url:
           type: string
       type: object
-    UpdateInputBody2:
+    UpdateInputBody3:
       additionalProperties: false
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
           examples:
-            - https://example.com/schemas/UpdateInputBody2.json
+            - https://example.com/schemas/UpdateInputBody3.json
           format: uri
           readOnly: true
           type: string
@@ -8910,7 +9240,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListOutputBody6"
+                $ref: "#/components/schemas/ListOutputBody7"
           description: OK
         default:
           content:
@@ -10508,7 +10838,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListOutputBody4"
+                $ref: "#/components/schemas/ListOutputBody5"
           description: OK
         default:
           content:
@@ -10531,7 +10861,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateInputBody"
+              $ref: "#/components/schemas/CreateInputBody1"
         required: true
       responses:
         "200":
@@ -10621,7 +10951,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateInputBody1"
+              $ref: "#/components/schemas/UpdateInputBody2"
         required: true
       responses:
         "200":
@@ -11222,6 +11552,284 @@ paths:
       security:
         - bearer: []
       summary: Declarative bulk set of team→role mappings, applied atomically (tenant.rbac.manage)
+  /api/v1/tenants/{org}/resource-target-providers:
+    get:
+      operationId: listResourceTargetProviders
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ProvidersOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: List resource target provider config and UI schemas
+  /api/v1/tenants/{org}/resource-targets:
+    get:
+      operationId: listResourceTargets
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: capability
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: action
+          schema:
+            enum:
+              - view
+              - use
+              - provision
+            type: string
+        - explode: false
+          in: query
+          name: resourceKind
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: resourceId
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: includeUnavailable
+          schema:
+            type: boolean
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ListOutputBody4"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: List caller-entitled shared resource targets
+    post:
+      operationId: registerResourceTarget
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TargetOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Adopt an existing inventory resource as a shared target
+  /api/v1/tenants/{org}/resource-targets/{id}:
+    delete:
+      operationId: deleteResourceTarget
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Delete a target overlay without deleting its resource
+    get:
+      operationId: getResourceTarget
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TargetOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Get a caller-visible resource target
+    patch:
+      operationId: updateResourceTarget
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateInputBody1"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TargetOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Update target policy with optimistic concurrency
+  /api/v1/tenants/{org}/resource-targets/{id}/grants/{teamId}:
+    delete:
+      operationId: revokeResourceTargetGrant
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: teamId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DeleteOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Revoke a team's target grant
+    put:
+      operationId: setResourceTargetGrant
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: teamId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GrantInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GrantOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Set a team's view, use, or provision grant
   /api/v1/tenants/{org}/roles:
     get:
       operationId: listRoles
@@ -11781,7 +12389,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/ListOutputBody5"
+                $ref: "#/components/schemas/ListOutputBody6"
           description: OK
         default:
           content:
@@ -11804,7 +12412,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/CreateInputBody1"
+              $ref: "#/components/schemas/CreateInputBody2"
         required: true
       responses:
         "200":
@@ -11894,7 +12502,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/UpdateInputBody2"
+              $ref: "#/components/schemas/UpdateInputBody3"
         required: true
       responses:
         "200":

@@ -215,7 +215,7 @@ export function DeployWizardPage() {
       />
       <Stepper steps={STEPS} current={step} />
       <div className="mb-4">
-        <SourceBadge source={itemData.source} sourceId={itemData.sourceId} trustTier={itemData.trustTier} unsigned={itemData.unsigned} />
+        <SourceBadge source={itemData.source} sourceId={itemData.sourceId} trustTier={itemData.trustTier} unsigned={itemData.unsigned} sourceState={itemData.sourceState} />
         {selectedVersion?.artifactDigest && <p className="mono-caption mt-1">Digest: {selectedVersion.artifactDigest}</p>}
       </div>
 
@@ -292,6 +292,12 @@ export function DeployWizardPage() {
               <dd>{itemData.displayName}</dd>
               <dt>Version</dt>
               <dd>{pinned}</dd>
+              {selectedVersion?.packageVersion && (
+                <>
+                  <dt>Package version</dt>
+                  <dd>{selectedVersion.packageVersion}</dd>
+                </>
+              )}
               <dt>Target cluster</dt>
               <dd>{clusterName}</dd>
             </dl>

@@ -221,7 +221,7 @@ export function CatalogBrowsePage() {
                   <div className="mono-caption">{item.description}</div>
                 </td>
                 <td>
-                  <SourceBadge source={item.source} sourceId={item.sourceId} trustTier={item.trustTier} unsigned={item.unsigned} />{" "}
+                  <SourceBadge source={item.source} sourceId={item.sourceId} trustTier={item.trustTier} unsigned={item.unsigned} sourceState={item.sourceState} />{" "}
                   {item.scope && <TemplateScopeBadge scope={item.scope} />}
                 </td>
                 <td className="mono">{item.category || "—"}</td>
@@ -269,7 +269,7 @@ function CatalogCard({ item, tenant }: { item: CatalogItemSummary; tenant: strin
         <Link to={tenantLink(tenant, `catalog/${item.id}`)} className="table-link catalog-card-title">
           {item.displayName}
         </Link>
-        <SourceBadge source={item.source} sourceId={item.sourceId} trustTier={item.trustTier} unsigned={item.unsigned} />
+        <SourceBadge source={item.source} sourceId={item.sourceId} trustTier={item.trustTier} unsigned={item.unsigned} sourceState={item.sourceState} />
       </div>
       <div className="card-body catalog-card-body">
         <p className="catalog-card-desc">{item.description}</p>
