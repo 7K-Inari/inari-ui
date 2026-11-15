@@ -2073,6 +2073,78 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenants/{org}/resource-target-providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List resource target provider config and UI schemas */
+        get: operations["listResourceTargetProviders"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/resource-targets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List caller-entitled shared resource targets */
+        get: operations["listResourceTargets"];
+        put?: never;
+        /** Adopt an existing inventory resource as a shared target */
+        post: operations["registerResourceTarget"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/resource-targets/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get a caller-visible resource target */
+        get: operations["getResourceTarget"];
+        put?: never;
+        post?: never;
+        /** Delete a target overlay without deleting its resource */
+        delete: operations["deleteResourceTarget"];
+        options?: never;
+        head?: never;
+        /** Update target policy with optimistic concurrency */
+        patch: operations["updateResourceTarget"];
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/resource-targets/{id}/grants/{teamId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set a team's view, use, or provision grant */
+        put: operations["setResourceTargetGrant"];
+        post?: never;
+        /** Revoke a team's target grant */
+        delete: operations["revokeResourceTargetGrant"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenants/{org}/roles": {
         parameters: {
             query?: never;
@@ -2835,6 +2907,13 @@ export interface components {
             tenantId?: string;
             vaultUrl: string;
         };
+        Binding: {
+            baseBranch?: string;
+            baselineRepoId?: string;
+            clusterId?: string;
+            commitPolicy?: string;
+            renderer?: string;
+        };
         BrokeredIdP: {
             alias: string;
             claimMapping: components["schemas"]["IdPClaimMapping"];
@@ -3167,6 +3246,19 @@ export interface components {
              * @example https://example.com/schemas/CreateInputBody.json
              */
             readonly $schema?: string;
+            capability: string;
+            config?: unknown;
+            isDefault?: boolean;
+            name: string;
+            resourceRef: components["schemas"]["TargetResourceRef"];
+        };
+        CreateInputBody1: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/CreateInputBody1.json
+             */
+            readonly $schema?: string;
             enabled?: boolean;
             /** @description Empty = all events */
             events?: string[] | null;
@@ -3176,11 +3268,11 @@ export interface components {
             secret?: string;
             url: string;
         };
-        CreateInputBody1: {
+        CreateInputBody2: {
             /**
              * Format: uri
              * @description A URL to the JSON Schema for this object.
-             * @example https://example.com/schemas/CreateInputBody1.json
+             * @example https://example.com/schemas/CreateInputBody2.json
              */
             readonly $schema?: string;
             name: string;
@@ -3373,6 +3465,15 @@ export interface components {
              */
             readonly $schema?: string;
             approvalId?: string;
+        };
+        DeleteOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/DeleteOutputBody.json
+             */
+            readonly $schema?: string;
+            deleted: boolean;
         };
         DeleteTenantInputBody: {
             /**
@@ -3737,6 +3838,35 @@ export interface components {
             installationId?: number;
             state: string;
         };
+        Grant: {
+            /** Format: date-time */
+            createdAt: string;
+            createdBy?: string;
+            relation: string;
+            targetId: string;
+            teamId: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        GrantInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/GrantInputBody.json
+             */
+            readonly $schema?: string;
+            /** @enum {string} */
+            relation: "view" | "use" | "provision";
+        };
+        GrantOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/GrantOutputBody.json
+             */
+            readonly $schema?: string;
+            grant: components["schemas"]["Grant"];
+        };
         HelmSource: {
             chart: string;
             digest?: string;
@@ -4062,7 +4192,7 @@ export interface components {
              * @example https://example.com/schemas/ListOutputBody4.json
              */
             readonly $schema?: string;
-            endpoints: components["schemas"]["NotificationEndpoint"][] | null;
+            targets: components["schemas"]["Target"][] | null;
         };
         ListOutputBody5: {
             /**
@@ -4071,13 +4201,22 @@ export interface components {
              * @example https://example.com/schemas/ListOutputBody5.json
              */
             readonly $schema?: string;
-            stores: components["schemas"]["SecretStore"][] | null;
+            endpoints: components["schemas"]["NotificationEndpoint"][] | null;
         };
         ListOutputBody6: {
             /**
              * Format: uri
              * @description A URL to the JSON Schema for this object.
              * @example https://example.com/schemas/ListOutputBody6.json
+             */
+            readonly $schema?: string;
+            stores: components["schemas"]["SecretStore"][] | null;
+        };
+        ListOutputBody7: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/ListOutputBody7.json
              */
             readonly $schema?: string;
             extensions: components["schemas"]["Extension"][] | null;
@@ -4389,10 +4528,28 @@ export interface components {
             readonly $schema?: string;
             provider: components["schemas"]["BrokeredIdP"];
         };
+        ProviderDescriptor: {
+            actions: string[] | null;
+            capability: string;
+            configSchema: unknown;
+            resourceKinds: string[] | null;
+            selectionSchema: unknown;
+            supportsDefault: boolean;
+            uiSchema: unknown;
+        };
         ProviderInfo: {
             apiBase?: string;
             enabled: boolean;
             id: string;
+        };
+        ProvidersOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/ProvidersOutputBody.json
+             */
+            readonly $schema?: string;
+            providers: components["schemas"]["ProviderDescriptor"][] | null;
         };
         PutClientScopesInputBody: {
             /**
@@ -4475,6 +4632,12 @@ export interface components {
             groups: components["schemas"]["RbacGroup"][] | null;
             mappings: components["schemas"]["RbacMapping"][] | null;
             roles: components["schemas"]["RbacClusterRole"][] | null;
+        };
+        Readiness: {
+            /** Format: date-time */
+            observedAt?: string;
+            reasons?: string[] | null;
+            state: string;
         };
         RebindBaselineInputBody: {
             /**
@@ -5090,6 +5253,39 @@ export interface components {
             /** Format: int64 */
             synced: number;
         };
+        Target: {
+            binding: components["schemas"]["Binding"];
+            capabilities: string[] | null;
+            config: unknown;
+            /** Format: date-time */
+            createdAt: string;
+            effectiveActions?: string[] | null;
+            enabled: boolean;
+            grants?: components["schemas"]["Grant"][] | null;
+            id: string;
+            isDefault: boolean;
+            name: string;
+            orgId: string;
+            readiness: components["schemas"]["Readiness"];
+            resourceRef: components["schemas"]["TargetResourceRef"];
+            /** Format: int64 */
+            revision: number;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        TargetOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/TargetOutputBody.json
+             */
+            readonly $schema?: string;
+            target: components["schemas"]["Target"];
+        };
+        TargetResourceRef: {
+            id: string;
+            kind: string;
+        };
         TargetsOutputBody: {
             /**
              * Format: uri
@@ -5421,17 +5617,31 @@ export interface components {
              * @example https://example.com/schemas/UpdateInputBody1.json
              */
             readonly $schema?: string;
+            config?: unknown;
             enabled?: boolean;
-            events?: string[] | null;
+            isDefault?: boolean;
             name?: string;
-            secret?: string;
-            url?: string;
+            /** Format: int64 */
+            revision: number;
         };
         UpdateInputBody2: {
             /**
              * Format: uri
              * @description A URL to the JSON Schema for this object.
              * @example https://example.com/schemas/UpdateInputBody2.json
+             */
+            readonly $schema?: string;
+            enabled?: boolean;
+            events?: string[] | null;
+            name?: string;
+            secret?: string;
+            url?: string;
+        };
+        UpdateInputBody3: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/UpdateInputBody3.json
              */
             readonly $schema?: string;
             provider?: components["schemas"]["SecretStoreProvider"];
@@ -8469,7 +8679,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ListOutputBody6"];
+                    "application/json": components["schemas"]["ListOutputBody7"];
                 };
             };
             /** @description Error */
@@ -10198,7 +10408,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ListOutputBody4"];
+                    "application/json": components["schemas"]["ListOutputBody5"];
                 };
             };
             /** @description Error */
@@ -10223,7 +10433,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CreateInputBody"];
+                "application/json": components["schemas"]["CreateInputBody1"];
             };
         };
         responses: {
@@ -10291,7 +10501,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UpdateInputBody1"];
+                "application/json": components["schemas"]["UpdateInputBody2"];
             };
         };
         responses: {
@@ -10998,6 +11208,279 @@ export interface operations {
             };
         };
     };
+    listResourceTargetProviders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProvidersOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listResourceTargets: {
+        parameters: {
+            query?: {
+                capability?: string;
+                action?: "view" | "use" | "provision";
+                resourceKind?: string;
+                resourceId?: string;
+                includeUnavailable?: boolean;
+            };
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ListOutputBody4"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    registerResourceTarget: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TargetOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getResourceTarget: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TargetOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    deleteResourceTarget: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeleteOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    updateResourceTarget: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateInputBody1"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TargetOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    setResourceTargetGrant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+                teamId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GrantInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GrantOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    revokeResourceTargetGrant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+                teamId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeleteOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     listRoles: {
         parameters: {
             query?: never;
@@ -11607,7 +12090,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ListOutputBody5"];
+                    "application/json": components["schemas"]["ListOutputBody6"];
                 };
             };
             /** @description Error */
@@ -11632,7 +12115,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["CreateInputBody1"];
+                "application/json": components["schemas"]["CreateInputBody2"];
             };
         };
         responses: {
@@ -11730,7 +12213,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["UpdateInputBody2"];
+                "application/json": components["schemas"]["UpdateInputBody3"];
             };
         };
         responses: {

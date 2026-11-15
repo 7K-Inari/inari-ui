@@ -152,10 +152,35 @@ describe("mapRunView", () => {
 });
 
 describe("templates api (canonical endpoints)", () => {
-  it("lists templates via GET /templates with normalized tags", async () => {
+  it("lists templates via GET /templates with normalized tags and trusted-source metadata", async () => {
     const templates = await listTemplates("tok", "acme");
     expect(templates[0].name).toBe("web-service");
     expect(templates[0].tags).toContain("golden-path");
+    expect(templates[0].sourceState).toBe("stale");
+    expect(templates[0].version).toBe("1.4.0");
+    expect(templates[0].packageVersion).toBe("1.4.0-build.5");
+  });
+
+  it("does not infer a missing template package version from its deploy version", async () => {
+    mockServer.use(
+      http.get("*/api/v1/tenants/:org/templates", () =>
+        HttpResponse.json({
+          templates: [
+            {
+              id: "core/web-service",
+              name: "web-service",
+              displayName: "Web Service",
+              description: "A web service.",
+              version: "2.0.0",
+            },
+          ],
+        }),
+      ),
+    );
+
+    const templates = await listTemplates("tok", "acme");
+    expect(templates[0].version).toBe("2.0.0");
+    expect(templates[0].packageVersion).toBeUndefined();
   });
 
   it("defaults template scope to platform when the wire omits it", async () => {

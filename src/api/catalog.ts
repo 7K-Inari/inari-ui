@@ -39,7 +39,7 @@ function wireScope(i: ServerCatalogItem): "user" | "platform" | undefined {
 function mapVersion(v: ServerCatalogItemVersion): CatalogVersion {
   return {
     version: v.version,
-    packageVersion: v.packageVersion ?? v.version,
+    packageVersion: v.packageVersion ?? undefined,
     channel: v.channel ?? "stable",
     artifactRef: v.artifactRef ?? "",
     artifactDigest: v.artifactDigest ?? "",

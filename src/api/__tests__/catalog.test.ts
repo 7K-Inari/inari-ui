@@ -1,6 +1,6 @@
 import { afterAll, afterEach, beforeAll, describe, expect, it } from "vitest";
 
-import { listCatalogItems } from "@/api/catalog";
+import { getCatalogItem, listCatalogItems } from "@/api/catalog";
 import { mockControl } from "@/mocks/fixtures";
 import { mockServer } from "@/mocks/server";
 import { setCurrentTenant } from "@/tenant/current";
@@ -71,5 +71,48 @@ describe("catalog api", () => {
     expect(res.items).toHaveLength(1);
     expect(res.items[0].category).toBe("database");
     expect(res.items[0].createdAt).toBeTruthy();
+  });
+
+  it("maps source health without inferring package versions from deploy versions", async () => {
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.get("*/api/v1/tenants/:org/catalog/:source/:name", () =>
+        HttpResponse.json({
+          item: {
+            id: "core/postgresql-aws",
+            name: "postgresql-aws",
+            displayName: "PostgreSQL",
+            source: "curated",
+            sourceId: "core",
+            sourceState: "stale",
+            approvalPolicy: "auto",
+            versions: [
+              {
+                id: "version-1",
+                itemId: "core/postgresql-aws",
+                version: "1.4.0",
+                packageVersion: "1.4.0-build.5",
+                channel: "stable",
+              },
+              {
+                id: "version-2",
+                itemId: "core/postgresql-aws",
+                version: "1.3.0",
+                channel: "stable",
+              },
+            ],
+          },
+        }),
+      ),
+    );
+
+    const item = await getCatalogItem("tok", "core/postgresql-aws", "acme");
+    expect(item.sourceState).toBe("stale");
+    expect(item.versions[0]).toMatchObject({
+      version: "1.4.0",
+      packageVersion: "1.4.0-build.5",
+    });
+    expect(item.versions[1].version).toBe("1.3.0");
+    expect(item.versions[1].packageVersion).toBeUndefined();
   });
 });
