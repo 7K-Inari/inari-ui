@@ -4870,6 +4870,8 @@ export interface components {
             monitoringTargets: components["schemas"]["Target"][] | null;
             plan: components["schemas"]["Plan"];
             providers: components["schemas"]["ProviderDescriptor"][] | null;
+            schema?: unknown;
+            uiHints?: unknown;
         };
         PreflightOutputBody: {
             /**

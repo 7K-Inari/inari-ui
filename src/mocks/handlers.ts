@@ -206,6 +206,32 @@ type GitConfigInputBody = components["schemas"]["GitConfigInputBody"];
 // path (/api/v1/tenants/{org}/...) and wrapped response envelopes
 // ({cluster}, {clusters}, {items}, {instances}, {deploy}, ...).
 const BASE = "*/api/v1/tenants/:org";
+const mockDeploymentPlans = new Map<string, components["schemas"]["Plan"]>();
+
+function mockPlan(org: string, body: components["schemas"]["PlanRequest"]): components["schemas"]["Plan"] {
+  const source = body.source ?? { kind: "catalog" };
+  const now = "2026-11-15T21:42:00Z";
+  return {
+    id: `dp-${body.idempotencyKey || "preflight"}`, orgId: org, orgSlug: org, operation: body.operation,
+    source, deployment: body.deployment,
+    app: { itemId: source.itemId, version: source.version || "1.4.0", digest: source.digest || "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef" },
+    observability: { mode: "none" }, planFingerprint: body.planFingerprint || "sha256:plan", state: "preflight",
+    gate: { companionRendering: false, deployedVerification: false, reason: "sibling_8f8c472a_phase_3_unconfirmed" },
+    createdAt: now, updatedAt: now,
+  };
+}
+
+function mockPreflight(org: string, body: components["schemas"]["PlanRequest"]): components["schemas"]["Preflight"] {
+  const item = body.source?.itemId ? findCatalogItem(body.source.itemId) : undefined;
+  const version = item?.versions?.find((candidate) => candidate.version === body.source?.version) ?? item?.versions?.[0];
+  return {
+    plan: mockPlan(org, body), schema: version?.schema ?? {}, uiHints: version?.uiHints, compatiblePacks: [], monitoringTargets: [], providers: [],
+    deploymentTargets: listForTenant(org).map((cluster) => ({
+      id: `rt-${cluster.id}`, orgId: org, name: cluster.name, resourceRef: { kind: "cluster", id: cluster.id }, capabilities: ["deployment.cluster"],
+      config: {}, enabled: true, isDefault: false, revision: 1, binding: {}, readiness: { state: "ready" }, createdAt: cluster.createdAt, updatedAt: cluster.createdAt,
+    })),
+  };
+}
 
 async function adoptAddonResponse(org: string, clusterId: string, catalogItem: string, request: Request) {
   const body = (await request.json()) as AdoptAddonBody;
@@ -501,6 +527,45 @@ export const handlers = [
     return HttpResponse.json({ item: toServerItem(item) });
   }),
 
+  // ---- normalized deployment plans ----
+  http.post(`${BASE}/deployment-plans/preflight`, async ({ params, request }) => {
+    const body = (await request.json()) as components["schemas"]["PlanRequest"];
+    return HttpResponse.json({ preflight: mockPreflight(params.org as string, body) });
+  }),
+  http.post(`${BASE}/deployment-plans`, async ({ params, request }) => {
+    const body = (await request.json()) as components["schemas"]["PlanRequest"];
+    if (!body.idempotencyKey) return humaError(400, "idempotencyKey is required");
+    if (body.deployment.name === "policy-denied") {
+      return HttpResponse.json({ title: "Error", status: 422, detail: "denied by policy inari.storage/max-size: storage.size 500Gi exceeds tenant quota of 100Gi", remediation: "Reduce spec.storage.size to 100Gi or less, or request a quota increase via Approvals." }, { status: 422 });
+    }
+    const plan = mockPlan(params.org as string, body);
+    plan.state = "submitted";
+    plan.appInstanceId = body.instanceId || "app-1";
+    if (plan.source.kind === "template") plan.scaffoldRunId = "run-1";
+    mockDeploymentPlans.set(plan.id, plan);
+    return HttpResponse.json({ plan });
+  }),
+  http.get(`${BASE}/deployment-plans/:id`, ({ params }) => {
+    const plan = mockDeploymentPlans.get(params.id as string);
+    if (!plan) return humaError(404, "deployment plan not found");
+    return HttpResponse.json({ plan });
+  }),
+  http.get(`${BASE}/instances/:id/observability`, ({ params }) => {
+    const id = params.id as string;
+    if (id.startsWith("ri-observability-")) {
+      const state = id.slice("ri-observability-".length);
+      const ready = state === "ready";
+      return HttpResponse.json({ observability: { mode: "provision", available: true, companion: {
+        id: "oc-1", planId: "dp-1", appInstanceId: id, appRevision: "1.4.0@sha256:abc", appSourceDigest: "sha256:abc", capabilityDigest: "sha256:cap",
+        generation: 3, targetId: "rt-mon", targetRevision: 7, targetClusterId: "cluster-mon", targetSelection: {},
+        pack: { itemId: "hiroba/observability-pack", version: "0.2.0", digest: "sha256:pack", renderContract: "inari.observability-pack/v2" },
+        state, links: ready ? [{ title: "Service overview", uid: "payments-api-overview", url: "https://grafana.team.example/d/payments-api-overview/overview?var-namespace=payments" }] : [],
+        createdAt: "2026-11-15T21:42:00Z", updatedAt: "2026-11-15T21:42:00Z",
+      } } });
+    }
+    return HttpResponse.json({ observability: { mode: "none", available: false, reason: "This exact app version has no signed observability metadata." } });
+  }),
+
   // ---- deploys ----
   http.post(`${BASE}/deploys`, async ({ request }) => {
     const body = (await request.json()) as CreateDeployRequest;
@@ -541,6 +606,10 @@ export const handlers = [
   }),
 
   http.get(`${BASE}/instances/:id`, ({ params }) => {
+    if ((params.id as string).startsWith("ri-observability-")) {
+      const base = findResource("ri-orders-db");
+      if (base) return HttpResponse.json({ instance: toServerInstance({ ...base, id: params.id as string }) });
+    }
     // Deploy progression drives instance health (the wizard polls this).
     const deploy = pollDeployMock(params.id as string);
     if (deploy) {
