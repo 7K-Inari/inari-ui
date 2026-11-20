@@ -4766,8 +4766,10 @@ export interface components {
             app: components["schemas"]["ArtifactPin"];
             appClusterId?: string;
             appInstanceId?: string;
+            approvalId?: string;
             capability?: components["schemas"]["ObservabilityCapability"];
             capabilityDigest?: string;
+            commitSha?: string;
             companion?: components["schemas"]["Companion"];
             /** Format: date-time */
             createdAt: string;
@@ -4781,6 +4783,7 @@ export interface components {
             orgId: string;
             orgSlug: string;
             planFingerprint: string;
+            prUrl?: string;
             renderIntent?: components["schemas"]["RenderIntent"];
             scaffoldRunId?: string;
             source: components["schemas"]["Source"];
