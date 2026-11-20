@@ -1,5 +1,21 @@
 # Changelog
 
+## [2.2.0](https://github.com/7K-Inari/inari-ui/compare/v2.1.1...v2.2.0) (2026-11-20)
+
+
+### Features
+
+* consume deploy artifact digest contract ([d59224e](https://github.com/7K-Inari/inari-ui/commit/d59224e6e5699a98fb3b1fb6ccf63e735ddc6794))
+* **extensions:** preflight UI contract compatibility ([8808531](https://github.com/7K-Inari/inari-ui/commit/880853106dfa68aadf25ffbeeb5c319988b16b36))
+* **extensions:** preflight UI contract compatibility ([72cfe46](https://github.com/7K-Inari/inari-ui/commit/72cfe46031aaca2b4b0bf4a80da4ddcb0729d7f6))
+
+
+### Bug Fixes
+
+* refresh merged trusted source contract ([72c6bde](https://github.com/7K-Inari/inari-ui/commit/72c6bdec55283423855ed73434d0b8f75d9e2ceb))
+* show source health and package versions ([a8f6cb7](https://github.com/7K-Inari/inari-ui/commit/a8f6cb7f7fffa2daf344f6fbd13c60ce99516eb3))
+* show trusted source health and package versions ([c640977](https://github.com/7K-Inari/inari-ui/commit/c640977a66188eb62af54b5a65846133c9393d8f))
+
 ## [2.1.1](https://github.com/7K-Inari/inari-ui/compare/v2.1.0...v2.1.1) (2026-11-14)
 
 
