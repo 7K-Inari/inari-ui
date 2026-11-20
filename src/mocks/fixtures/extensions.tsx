@@ -54,6 +54,23 @@ export const argocdExtension: InariExtension = createExtension({
   ],
 });
 
+export const contractRemote: UiExtensionRemoteViewModel = {
+  name: "contract-fixture",
+  version: "0.1.0",
+  title: "Contract fixture",
+  remoteEntryUrl: "http://127.0.0.1:8080/remoteEntry.js",
+  contracts: { ui: { hostApi: "inari.ui.v1", sdk: ">=0.1.8 <2.0.0" } },
+  slots: [
+    { kind: "nav-item", name: "contract-nav" },
+    { kind: "catalog-card", name: "contract-card" },
+    { kind: "cluster-tab", name: "contract-tab" },
+    { kind: "instance-action", name: "contract-action" },
+    { kind: "form-widget", name: "contract-picker" },
+    { kind: "page", name: "contract-page" },
+  ],
+  enabled: true,
+};
+
 export type ServerExtension = components["schemas"]["Extension"];
 
 export const argocdRemote: UiExtensionRemoteViewModel = {

@@ -41,6 +41,7 @@ export interface UiExtensionRemoteViewModel {
   title?: string;
   description?: string;
   remoteEntryUrl: string;
+  contracts?: components["schemas"]["Contracts"];
   slots: UiExtensionSlotViewModel[];
   // Extension RBAC verb: `extensions, invoke, <name>` (§5.8). Absent means the
   // extension is invokable by anyone who can see the tenant.
@@ -55,6 +56,7 @@ function toRemoteViewModel(w: WireUiExtensionRemote): UiExtensionRemoteViewModel
     title: w.title,
     description: w.description,
     remoteEntryUrl: w.remoteEntryUrl,
+    contracts: w.contracts,
     slots: (w.slots ?? []).map((s) => ({ kind: s.kind as SlotKind, name: s.name })),
     requiredPermission: w.requiredPermission,
     enabled: w.enabled,
@@ -71,6 +73,8 @@ export interface BackendExtensionViewModel {
   kind: string;
   state: string;
   healthy: boolean;
+  degradedReason?: string;
+  degradedDetail?: string;
 }
 
 function toBackendViewModel(e: WireExtension): BackendExtensionViewModel {
@@ -81,6 +85,8 @@ function toBackendViewModel(e: WireExtension): BackendExtensionViewModel {
     kind: e.kind,
     state: e.state,
     healthy: e.state === "ready",
+    degradedReason: e.degradedReason,
+    degradedDetail: e.degradedDetail,
   };
 }
 

@@ -2,7 +2,7 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import type { UiExtensionRemoteViewModel } from "@/api/extensions";
-import { ExtensionLoadError } from "@/ext/load-extension";
+import { ExtensionCompatibilityError, ExtensionLoadError } from "@/ext/load-extension";
 import { ExtensionsProvider, useExtensions, useSlots } from "@/ext/registry";
 import { argocdExtension, argocdRemote } from "@/mocks/fixtures/extensions";
 
@@ -82,6 +82,27 @@ describe("ExtensionsProvider", () => {
     expect(screen.getByTestId("error")).toHaveTextContent(entryUrl);
     expect(screen.getByTestId("error-url")).toHaveTextContent(entryUrl);
     expect(screen.getByTestId("error-status")).toHaveTextContent("502");
+  });
+
+  it("marks a compatibility failure incompatible and never exposes slots", async () => {
+    const incompatibleLoader = () => Promise.reject(new ExtensionCompatibilityError(
+      "https://ext.example.com/remoteEntry.js",
+      {
+        status: "incompatible",
+        reason: "contract_unsupported",
+        required: { hostApis: ["inari.ui.v1"], sdkRange: ">=0.1.8 <2.0.0" },
+        actual: { remote: { hostApi: "inari.ui.v2", sdk: ">=0.1.8 <2.0.0" } },
+      },
+    ));
+    render(
+      <ExtensionsProvider initialRemotes={[argocdRemote]} loader={incompatibleLoader}>
+        <Probe />
+      </ExtensionsProvider>,
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId("entries")).toHaveTextContent("inari-ext-argocd:incompatible"),
+    );
+    expect(screen.getByTestId("tabs")).toHaveTextContent("");
   });
 
   it("skips disabled remotes", async () => {

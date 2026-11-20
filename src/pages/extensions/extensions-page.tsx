@@ -23,6 +23,7 @@ const STATE_VARIANT: Record<ExtensionLoadState, "neutral" | "success" | "danger"
   loading: "neutral",
   ready: "success",
   failed: "danger",
+  incompatible: "danger",
 };
 
 function AddRemoteForm({ onAdded }: { onAdded: () => void }) {
@@ -194,8 +195,16 @@ export function ExtensionsPage() {
                           HTTP {entry.errorStatus}
                         </Badge>
                       )}
+                      {entry.compatibility && (
+                        <p className="mt-1 text-xs u-danger">
+                          Required: {entry.compatibility.required.hostApis.join(", ")}; SDK {entry.compatibility.required.sdkRange}
+                        </p>
+                      )}
                       {entry.error && (
                         <p className="mt-1 text-xs u-danger">{entry.error}</p>
+                      )}
+                      {entry.warning && (
+                        <p className="mt-1 text-xs u-muted">{entry.warning}</p>
                       )}
                     </td>
                     <td className="py-2 text-right">
@@ -265,6 +274,12 @@ export function ExtensionsPage() {
                       <Badge variant={ext.healthy ? "success" : "danger"}>
                         {ext.healthy ? "healthy" : "unhealthy"}
                       </Badge>
+                      {ext.degradedReason && (
+                        <Badge variant="neutral" className="ml-1">{ext.degradedReason}</Badge>
+                      )}
+                      {ext.degradedDetail && (
+                        <p className="mt-1 text-xs u-danger">{ext.degradedDetail}</p>
+                      )}
                     </td>
                     <td className="py-2 text-right">
                       <Button

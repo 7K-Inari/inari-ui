@@ -34,6 +34,46 @@ describe("extensions api", () => {
     }
   });
 
+  it("maps UI and backend contract metadata", async () => {
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.get("*/api/v1/tenants/:org/extensions/ui", () =>
+        HttpResponse.json({
+          extensions: [{
+            name: "contract-ext",
+            version: "1.0.0",
+            remoteEntryUrl: "/remote.js",
+            contracts: { ui: { hostApi: "inari.ui.v1", sdk: ">=0.1.8 <2.0.0" } },
+            slots: [],
+            enabled: true,
+          }],
+        }),
+      ),
+      http.get("*/api/v1/tenants/:org/extensions", () =>
+        HttpResponse.json({
+          extensions: [{
+            id: "ext-1",
+            name: "degraded-ext",
+            version: "1.0.0",
+            kind: "backend",
+            endpoint: "https://ext.example.com",
+            checksum: "sha256:abc",
+            state: "degraded",
+            degradedReason: "contract_unsupported",
+            degradedDetail: "plugin reports inari.plugin.v2",
+            createdAt: "2026-01-01T00:00:00Z",
+            updatedAt: "2026-01-01T00:00:00Z",
+          }],
+        }),
+      ),
+    );
+    const [remote] = await listUiExtensions("tok", "acme");
+    expect(remote.contracts).toEqual({ ui: { hostApi: "inari.ui.v1", sdk: ">=0.1.8 <2.0.0" } });
+    const [backend] = await listBackendExtensions("tok", "acme");
+    expect(backend.degradedReason).toBe("contract_unsupported");
+    expect(backend.degradedDetail).toBe("plugin reports inari.plugin.v2");
+  });
+
   it("registers a UI extension remote", async () => {
     const remote = await addUiExtension("tok", "acme", {
       name: "inari-ext-test",

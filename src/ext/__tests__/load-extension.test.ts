@@ -2,11 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
   checkRemoteEntryHealth,
+  ExtensionCompatibilityError,
   ExtensionLoadError,
   loadExtension,
   resolveRemoteEntryUrl,
 } from "@/ext/load-extension";
 import { argocdExtension, argocdRemote } from "@/mocks/fixtures/extensions";
+import { UI_HOST_API_V1, UI_PLUGIN_SDK_RANGE } from "@7k-inari/ui-plugin-sdk";
 
 describe("resolveRemoteEntryUrl", () => {
   it("keeps absolute URLs as-is", () => {
@@ -125,6 +127,74 @@ describe("loadExtension remoteEntry preflight", () => {
     expect(err).toBeInstanceOf(ExtensionLoadError);
     expect((err as ExtensionLoadError).message).toContain(entryUrl);
     expect((err as ExtensionLoadError).message).toContain("script error");
+  });
+});
+
+describe("loadExtension contract preflight", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    okFetch();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const future = {
+    ...argocdExtension,
+    manifest: {
+      ...argocdExtension.manifest,
+      contracts: { ui: { hostApi: "inari.ui.v2", sdk: UI_PLUGIN_SDK_RANGE } },
+    },
+  };
+
+  it("rejects an unsupported registry declaration before downloading", async () => {
+    const err = await loadExtension({
+      ...argocdRemote,
+      contracts: { ui: { hostApi: "inari.ui.v2", sdk: UI_PLUGIN_SDK_RANGE } },
+    }).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(ExtensionCompatibilityError);
+    expect((err as ExtensionCompatibilityError).reason).toBe("contract_unsupported");
+    expect(registerRemotes).not.toHaveBeenCalled();
+  });
+
+  it("rejects an unsupported remote before exposing slots", async () => {
+    loadRemote.mockResolvedValue(future);
+    const err = await loadExtension(argocdRemote).catch((e: unknown) => e);
+    expect(err).toBeInstanceOf(ExtensionCompatibilityError);
+    expect((err as ExtensionCompatibilityError).reason).toBe("contract_unsupported");
+  });
+
+  it("distinguishes registry and remote declaration mismatch", async () => {
+    loadRemote.mockResolvedValue(future);
+    const err = await loadExtension({
+      ...argocdRemote,
+      contracts: { ui: { hostApi: UI_HOST_API_V1, sdk: UI_PLUGIN_SDK_RANGE } },
+    }).catch((e: unknown) => e);
+    expect((err as ExtensionCompatibilityError).reason).toBe("declaration_mismatch");
+  });
+
+  it("requires both declarations when enforcement is enabled", async () => {
+    const err = await loadExtension(argocdRemote, { requireContracts: true }).catch((e: unknown) => e);
+    expect((err as ExtensionCompatibilityError).reason).toBe("contract_required");
+    expect(registerRemotes).not.toHaveBeenCalled();
+  });
+
+  it("classifies malformed remote SDK ranges", async () => {
+    loadRemote.mockResolvedValue({
+      ...argocdExtension,
+      manifest: {
+        ...argocdExtension.manifest,
+        contracts: { ui: { hostApi: UI_HOST_API_V1, sdk: "not-a-range" } },
+      },
+    });
+    const err = await loadExtension(argocdRemote).catch((e: unknown) => e);
+    expect((err as ExtensionCompatibilityError).reason).toBe("contract_malformed");
+  });
+
+  it("allows legacy absence during the optional phase", async () => {
+    loadRemote.mockResolvedValue(argocdExtension);
+    await expect(loadExtension(argocdRemote)).resolves.toBe(argocdExtension);
   });
 });
 

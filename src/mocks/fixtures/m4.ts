@@ -4,6 +4,7 @@ import type { AgentChannel } from "@/api/fleet";
 import {
   argocdBackendExtension,
   argocdRemote,
+  contractRemote,
   type ServerExtension,
 } from "@/mocks/fixtures/extensions";
 
@@ -148,6 +149,18 @@ export const m4MockControl = {
 };
 
 export function listUiExtensionMocks(): UiExtensionRemoteViewModel[] {
+  if (import.meta.env.VITE_COMPAT_FIXTURE === "true") {
+    const incompatible = window.location.search.includes("incompatible");
+    return [{
+      ...contractRemote,
+      contracts: {
+        ui: {
+          hostApi: incompatible ? "inari.ui.v2" : "inari.ui.v1",
+          sdk: ">=0.1.8 <2.0.0",
+        },
+      },
+    }];
+  }
   return state.uiExtensions.map((e) => ({ ...e }));
 }
 

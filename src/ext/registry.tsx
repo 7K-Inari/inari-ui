@@ -1,5 +1,5 @@
 import * as React from "react";
-import type { AnySlotContribution, InariExtension } from "@7k-inari/ui-plugin-sdk";
+import type { AnySlotContribution, InariExtension, UICompatibilityResult } from "@7k-inari/ui-plugin-sdk";
 
 import {
   listUiExtensions,
@@ -7,11 +7,11 @@ import {
   type UiExtensionRemoteViewModel,
 } from "@/api/extensions";
 import { useAuth } from "@/auth/auth-context";
-import { ExtensionLoadError, loadExtension, type ExtensionLoader } from "@/ext/load-extension";
+import { ExtensionCompatibilityError, ExtensionLoadError, loadExtension, type ExtensionLoader } from "@/ext/load-extension";
 import { filterAllowedExtensions, getSelfExtensionPermissions } from "@/ext/rbac";
 import { useTenant } from "@/tenant/tenant-context";
 
-export type ExtensionLoadState = "loading" | "ready" | "failed";
+export type ExtensionLoadState = "loading" | "ready" | "failed" | "incompatible";
 
 export interface ExtensionEntry {
   remote: UiExtensionRemoteViewModel;
@@ -22,6 +22,8 @@ export interface ExtensionEntry {
   // and HTTP status so a dead/stale remote is identifiable from the UI.
   errorUrl?: string;
   errorStatus?: number;
+  compatibility?: UICompatibilityResult;
+  warning?: string;
 }
 
 export interface SlotBinding {
@@ -93,20 +95,42 @@ export function ExtensionsProvider({
           let update: ExtensionEntry;
           try {
             const extension = await loader(remote);
-            update = { remote, state: "ready", extension };
+            update = {
+              remote,
+              state: "ready",
+              extension,
+              warning: !remote.contracts?.ui || !extension.manifest.contracts?.ui
+                ? "Legacy extension contract metadata is deprecated."
+                : undefined,
+            };
           } catch (err) {
             console.error(
               `[inari] failed to load extension ${remote.name} (${remote.remoteEntryUrl}):`,
               err,
             );
             const loadErr = err instanceof ExtensionLoadError ? err : undefined;
-            update = {
-              remote,
-              state: "failed",
-              error: err instanceof Error ? err.message : "load failed",
-              errorUrl: loadErr?.entryUrl,
-              errorStatus: loadErr?.status,
-            };
+            if (err instanceof ExtensionCompatibilityError) {
+              update = {
+                remote,
+                state: "incompatible",
+                error: err.message,
+                errorUrl: err.entryUrl,
+                compatibility: {
+                  status: "incompatible",
+                  reason: err.reason,
+                  required: err.required,
+                  actual: err.actual,
+                },
+              };
+            } else {
+              update = {
+                remote,
+                state: "failed",
+                error: err instanceof Error ? err.message : "load failed",
+                errorUrl: loadErr?.entryUrl,
+                errorStatus: loadErr?.status,
+              };
+            }
           }
           if (cancelled) return;
           setEntries((prev) =>
