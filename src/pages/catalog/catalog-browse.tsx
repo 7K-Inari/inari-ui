@@ -106,7 +106,7 @@ export function CatalogBrowsePage() {
 
   return (
     <div>
-      <PageHeader breadcrumb="Deliver / Catalog" title="Catalog" actions={<Link className="btn btn-secondary btn-accent-outline w-full sm:w-auto" to={tenantLink(tenant, "catalog/deploy-chart")}>Deploy OCI chart</Link>} />
+      <PageHeader breadcrumb="Deliver / Catalog" title="Catalog" stackActionsOnMobile actions={<Link className="btn btn-secondary btn-accent-outline w-full sm:w-auto" to={tenantLink(tenant, "catalog/deploy-chart")}>Deploy OCI chart</Link>} />
 
       <FilterBar
         searchParam="q"
