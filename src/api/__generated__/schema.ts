@@ -4,6 +4,40 @@
  */
 
 export interface paths {
+    "/healthz": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Liveness probe */
+        get: operations["getHealth"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/readyz": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Readiness probe */
+        get: operations["getReady"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/catalog/sources": {
         parameters: {
             query?: never;
@@ -132,6 +166,23 @@ export interface paths {
         };
         /** Platform-level permissions of the authenticated caller */
         get: operations["getMyPermissions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/meta/contracts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get supported extension contracts */
+        get: operations["getMetaContracts"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2687,6 +2738,11 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        HealthStatus: {
+            /** @enum {string} */
+            status: "ok";
+            version?: string;
+        };
         AWSSMProvider: {
             authSecretRef: components["schemas"]["SecretRef"];
             region: string;
@@ -3167,6 +3223,21 @@ export interface components {
             provider: string;
             providerLogin: string;
             scopes: string;
+        };
+        ContractMetadata: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/ContractMetadata.json
+             */
+            readonly $schema?: string;
+            pluginContracts: string[] | null;
+            serverVersion: string;
+            uiHostApis: string[] | null;
+        };
+        Contracts: {
+            backend?: string[] | null;
+            ui?: components["schemas"]["UIContract"];
         };
         CreateBrokeredIdPInputBody: {
             /**
@@ -3682,8 +3753,11 @@ export interface components {
         Extension: {
             checksum: string;
             clientId?: string;
+            contracts?: components["schemas"]["Contracts"];
             /** Format: date-time */
             createdAt: string;
+            degradedDetail?: string;
+            degradedReason?: string;
             endpoint: string;
             id: string;
             kind: string;
@@ -4737,6 +4811,7 @@ export interface components {
              */
             readonly $schema?: string;
             checksum?: string;
+            contracts?: components["schemas"]["Contracts"];
             description?: string;
             enabled?: boolean;
             name: string;
@@ -5497,6 +5572,10 @@ export interface components {
             trustTier?: string;
             unsigned?: boolean;
         };
+        UIContract: {
+            hostApi: string;
+            sdk: string;
+        };
         UiAuditEvent: {
             action: string;
             actor: string;
@@ -5527,6 +5606,7 @@ export interface components {
             extension: components["schemas"]["UiExtensionRemote"];
         };
         UiExtensionRemote: {
+            contracts?: components["schemas"]["Contracts"];
             description?: string;
             enabled: boolean;
             name: string;
@@ -5736,6 +5816,55 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getHealth: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Service is alive. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthStatus"];
+                };
+            };
+        };
+    };
+    getReady: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Service is ready. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthStatus"];
+                };
+            };
+            /** @description Service is not ready. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthStatus"];
+                };
+            };
+        };
+    };
     listCatalogSources: {
         parameters: {
             query?: never;
@@ -5969,6 +6098,36 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["MyPermissionsOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getMetaContracts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    "Cache-Control"?: string;
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContractMetadata"];
                 };
             };
             /** @description Error */
@@ -8711,6 +8870,8 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    Deprecation?: string;
+                    Warning?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -8777,6 +8938,8 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    Deprecation?: string;
+                    Warning?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -8839,6 +9002,8 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    Deprecation?: string;
+                    Warning?: string;
                     [name: string]: unknown;
                 };
                 content: {
@@ -8999,6 +9164,8 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    Deprecation?: string;
+                    Warning?: string;
                     [name: string]: unknown;
                 };
                 content: {

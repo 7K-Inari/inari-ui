@@ -44,7 +44,10 @@ const postgresSchema: Record<string, unknown> = {
 
 const postgresUiHints: Record<string, unknown> = {
   engine: { label: "PostgreSQL engine version", order: ["engine", "storageGi", "highAvailability", "instanceClass", "backupSchedule"] },
-  backupSchedule: { widget: "textarea", description: "Cron expression, e.g. 0 2 * * *" },
+  backupSchedule: {
+    widget: import.meta.env.VITE_COMPAT_FIXTURE === "true" ? "contract-picker" : "textarea",
+    description: "Cron expression, e.g. 0 2 * * *",
+  },
 };
 
 function version(itemId: string, version: string, channel: string, schema?: unknown, uiHints?: unknown): CatalogItemVersion {

@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
 import { ExtensionsProvider } from "@/ext/registry";
+import { ExtensionCompatibilityError, type ExtensionLoader } from "@/ext/load-extension";
 import { m4MockControl } from "@/mocks/fixtures/m4";
 import { mockServer } from "@/mocks/server";
 import { ExtensionsPage } from "@/pages/extensions/extensions-page";
@@ -31,10 +32,10 @@ const stubLoader = () =>
     slots: [],
   });
 
-function renderPage() {
+function renderPage(loader: ExtensionLoader = stubLoader) {
   return render(
     <MemoryRouter>
-      <ExtensionsProvider loader={stubLoader}>
+      <ExtensionsProvider loader={loader}>
         <ExtensionsPage />
       </ExtensionsProvider>
     </MemoryRouter>,
@@ -50,6 +51,44 @@ describe("ExtensionsPage", () => {
     // "ready" appears both as the load-state badge and the backend registry
     // state column.
     expect((await screen.findAllByText("ready")).length).toBeGreaterThan(0);
+  });
+
+  it("shows incompatible requirements and typed backend degraded reason", async () => {
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.get("*/api/v1/tenants/:org/extensions", () =>
+        HttpResponse.json({
+          extensions: [{
+            id: "ext-degraded",
+            name: "degraded-ext",
+            version: "1.0.0",
+            kind: "backend",
+            endpoint: "https://ext.example.com",
+            checksum: "sha256:abc",
+            state: "degraded",
+            degradedReason: "contract_unsupported",
+            degradedDetail: "plugin reports inari.plugin.v2",
+            createdAt: "2026-01-01T00:00:00Z",
+            updatedAt: "2026-01-01T00:00:00Z",
+          }],
+        }),
+      ),
+    );
+    const incompatibleLoader: ExtensionLoader = () => Promise.reject(new ExtensionCompatibilityError(
+      "https://ext.example.com/remoteEntry.js",
+      {
+        status: "incompatible",
+        reason: "contract_unsupported",
+        required: { hostApis: ["inari.ui.v1"], sdkRange: ">=0.1.8 <2.0.0" },
+        actual: { remote: { hostApi: "inari.ui.v2", sdk: ">=2.0.0" } },
+      },
+    ));
+    renderPage(incompatibleLoader);
+    expect(await screen.findByText("incompatible")).toBeInTheDocument();
+    expect(screen.getAllByText(/inari.ui.v1/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/>=0.1.8 <2.0.0/).length).toBeGreaterThan(0);
+    expect(screen.getByText("contract_unsupported")).toBeInTheDocument();
+    expect(screen.getByText(/plugin reports inari.plugin.v2/)).toBeInTheDocument();
   });
 
   it("lists backend extensions with health", async () => {

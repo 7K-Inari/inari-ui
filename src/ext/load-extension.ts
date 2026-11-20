@@ -1,10 +1,24 @@
-import { extensionContainerName, parseExtensionManifest, type InariExtension } from "@7k-inari/ui-plugin-sdk";
+import {
+  evaluateUICompatibility,
+  extensionContainerName,
+  parseExtensionManifest,
+  type UICompatibilityResult,
+  type UICompatibilityReason,
+  type InariExtension,
+} from "@7k-inari/ui-plugin-sdk";
 
 import { API_BASE_URL } from "@/api/client";
 import type { UiExtensionRemoteViewModel } from "@/api/extensions";
 import { getHostRuntime } from "@/ext/host-runtime";
 
-export type ExtensionLoader = (remote: UiExtensionRemoteViewModel) => Promise<InariExtension>;
+export interface LoadExtensionOptions {
+  requireContracts?: boolean;
+}
+
+export type ExtensionLoader = (
+  remote: UiExtensionRemoteViewModel,
+  options?: LoadExtensionOptions,
+) => Promise<InariExtension>;
 
 // The registry returns a server-relative remoteEntryUrl (served by the
 // control plane itself); Module Federation needs an absolute URL so chunk
@@ -38,6 +52,24 @@ export class ExtensionLoadError extends Error {
     this.entryUrl = entryUrl;
     this.status = options?.status;
     this.detail = options?.detail;
+  }
+}
+
+export class ExtensionCompatibilityError extends ExtensionLoadError {
+  reason: UICompatibilityReason;
+  required: UICompatibilityResult["required"];
+  actual: UICompatibilityResult["actual"];
+
+  constructor(entryUrl: string, result: UICompatibilityResult) {
+    const reason = result.reason ?? "contract_unsupported";
+    super(
+      entryUrl,
+      `Incompatible extension (${reason}): required host APIs [${result.required.hostApis.join(", ")}] and SDK range ${result.required.sdkRange}; actual ${JSON.stringify(result.actual)}`,
+    );
+    this.name = "ExtensionCompatibilityError";
+    this.reason = reason;
+    this.required = result.required;
+    this.actual = result.actual;
   }
 }
 
@@ -119,8 +151,15 @@ export async function checkRemoteEntryHealth(
 // SDK contract. Any failure (network, invalid manifest, remote crash) throws;
 // callers (registry) catch and mark the extension failed so the shell is never
 // broken by a bad remote.
-export const loadExtension: ExtensionLoader = async (remote) => {
+export const loadExtension: ExtensionLoader = async (remote, options = {}) => {
   const entryUrl = resolveRemoteEntryUrl(remote.remoteEntryUrl);
+  const registryCompatibility = evaluateUICompatibility({
+    registry: remote.contracts?.ui,
+    requireContracts: options.requireContracts,
+  });
+  if (registryCompatibility.status === "incompatible") {
+    throw new ExtensionCompatibilityError(entryUrl, registryCompatibility);
+  }
   const health = await checkRemoteEntryHealth(remote.remoteEntryUrl);
   if (health.status === "unhealthy") throw health.error;
   if (health.status === "unverifiable") {
@@ -157,6 +196,17 @@ export const loadExtension: ExtensionLoader = async (remote) => {
       : ((mod as RemoteExtensionModule).default as InariExtension);
   if (!extension || !extension.manifest || !Array.isArray(extension.slots)) {
     throw new Error(`remote ${remote.name} did not expose an InariExtension`);
+  }
+  const compatibility = evaluateUICompatibility({
+    registry: remote.contracts?.ui,
+    remote: extension.manifest.contracts?.ui,
+    requireContracts: options.requireContracts,
+  });
+  if (compatibility.status === "incompatible") {
+    throw new ExtensionCompatibilityError(entryUrl, compatibility);
+  }
+  if (compatibility.status === "legacy") {
+    console.warn(`[inari] extension ${remote.name} uses deprecated missing contract metadata`);
   }
   parseExtensionManifest(extension.manifest);
   return extension;
