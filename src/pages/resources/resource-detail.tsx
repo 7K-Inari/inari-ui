@@ -24,6 +24,7 @@ import { tenantLink } from "@/tenant/tenant-link";
 import { HealthBadge } from "@/pages/resources/resource-list";
 import { GitOpsRepoCard } from "@/pages/resources/gitops-repo-card";
 import { UpgradeCard } from "@/pages/resources/upgrade-flow";
+import { VerificationCard } from "@/components/verification/verification-card";
 import { LoadingState } from "@/components/loading";
 
 function ActionsMenu({ resource }: { resource: ResourceInstanceDetail }) {
@@ -334,6 +335,8 @@ export function ResourceDetailPage() {
       </div>
 
       <UpgradeCard resource={resource} />
+
+      <VerificationCard key={resource.id} resource={resource} />
 
       <GitOpsRepoCard
         repo={defaultRepo}

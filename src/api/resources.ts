@@ -78,6 +78,8 @@ export async function getResource(
   const base = mapInstance(res.instance);
   return {
     ...base,
+    uid: res.instance.uid,
+    artifactDigest: res.instance.artifactDigest ?? "",
     spec: (res.instance.spec ?? {}) as Record<string, unknown>,
     commitSha: res.instance.commitSha ?? null,
     prUrl: res.instance.prUrl ?? null,

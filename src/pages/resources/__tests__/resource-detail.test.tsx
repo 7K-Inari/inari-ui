@@ -48,6 +48,59 @@ describe("ResourceDetailPage", () => {
     expect(screen.queryByRole("link", { name: "Open in ArgoCD" })).not.toBeInTheDocument();
   });
 
+  it("shows the verification gate without policy or fabricated links", async () => {
+    renderPage();
+    expect(await screen.findByText("Environment verification")).toBeInTheDocument();
+    expect(await screen.findByText(/Workflow rendering and deployed runs are stopped/)).toBeInTheDocument();
+    expect(screen.getByText(/No verification policy is configured/)).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Open logs/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Open artifacts/ })).not.toBeInTheDocument();
+  });
+
+  it("requests a fresh server-derived spec digest on policy preview", async () => {
+    const user = userEvent.setup();
+    const { http, HttpResponse } = await import("msw");
+    const captured: { policy?: { binding?: { specDigest?: string } } } = {};
+    mockServer.use(http.post("*/api/v1/tenants/acme/instances/:id/verification/preview", async ({ request }) => {
+      captured.policy = await request.json() as NonNullable<typeof captured.policy>;
+      return HttpResponse.json({ policy: captured.policy, gate: { renderAvailable: false, deployedVerification: false }, sideEffectsPerformed: 0 });
+    }));
+    renderPage();
+    await user.click(await screen.findByRole("button", { name: "Configure verification" }));
+    await user.type(screen.getByLabelText("Platform suite grant ID"), "vsg-1");
+    await user.type(screen.getByLabelText("Exact suite digest"), "sha256:suite");
+    await user.click(screen.getByRole("button", { name: "Preview policy" }));
+    expect(await screen.findByText(/Preview completed with zero side effects/)).toBeInTheDocument();
+    expect(captured.policy?.binding?.specDigest).toBe("");
+  });
+
+  it("keeps failed verification separate and renders no run links", async () => {
+    const { http, HttpResponse } = await import("msw");
+    const policy = {
+      policyRevision: 1, enabled: true,
+      binding: { appItemId: "hiroba/example", appVersion: "1.3.0", appArtifactDigest: "sha256:app", specDigest: "sha256:spec", suiteGrantId: "vsg-1", suiteDigest: "sha256:suite", profile: "stage", parameterContract: "inari.smoke.params.v1" },
+      triggers: { onRevisionChange: { enabled: true }, onSync: { enabled: false }, manual: { enabled: true }, cron: { enabled: false } },
+      timeout: "10m", concurrency: { maxActive: 1, maxPending: 1, queuedRevisionPolicy: "latestOnly" },
+      retention: { workflowTTLSeconds: 3600, successfulHistory: 3, failedHistory: 3, resultDays: 30 },
+      addonAbsent: "block", failureAction: "pausePromotion",
+    };
+    const run = {
+      runId: "vr-failed", runKey: "sha256:key", orgId: "org:acme", instanceId: "ri-orders-db", instanceUid: "uid",
+      appRevision: "sha256:revision", appArtifactDigest: "sha256:app", suiteDigest: "sha256:suite", profile: "stage",
+      trigger: { kind: "manual", profile: "stage", requestKey: "req" }, triggerFingerprint: "sha256:trigger",
+      status: "failed", reasonCode: "workflow_failed", policyRevision: 1, grantRevision: 1, latestAttempt: 1,
+      createdAt: "2026-11-21T01:00:00Z", updatedAt: "2026-11-21T01:00:00Z",
+    };
+    mockServer.use(http.get("*/api/v1/tenants/acme/instances/:id/verification", () => HttpResponse.json({
+      gate: { renderAvailable: false, deployedVerification: false, reason: "sibling_8f8c472a_phase_3_unconfirmed" }, policy, runs: [run],
+    })));
+    renderPage();
+    expect(await screen.findByText("workflow_failed", undefined, { timeout: 5000 })).toBeInTheDocument();
+    expect(screen.getByText(/No automatic rollback was performed/)).toBeInTheDocument();
+    expect(screen.getByText(/No current Workflow log or artifact links/)).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Open logs/ })).not.toBeInTheDocument();
+  });
+
   it("shows the GitOps repo card with commit and PR links", async () => {
     renderPage();
     expect(await screen.findByText("GitOps Repository")).toBeInTheDocument();

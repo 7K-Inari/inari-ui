@@ -384,6 +384,17 @@ function toServerDeployResult(d: Deploy) {
   };
 }
 
+function verificationPolicyMock() {
+  return {
+    policyRevision: 1, enabled: true,
+    binding: { appItemId: "hiroba/example", appVersion: "1.0.0", appArtifactDigest: "sha256:app", specDigest: "sha256:spec", suiteGrantId: "vsg-1", suiteDigest: "sha256:suite", profile: "stage", parameterContract: "inari.smoke.params.v1" },
+    triggers: { onRevisionChange: { enabled: true }, onSync: { enabled: false }, manual: { enabled: true }, cron: { enabled: false } },
+    timeout: "10m", concurrency: { maxActive: 1, maxPending: 1, queuedRevisionPolicy: "latestOnly" },
+    retention: { workflowTTLSeconds: 3600, successfulHistory: 3, failedHistory: 3, resultDays: 30 },
+    addonAbsent: "block", failureAction: "pausePromotion",
+  };
+}
+
 function humaError(status: number, detail: string) {
   return HttpResponse.json({ title: "Error", status, detail }, { status });
 }
@@ -532,6 +543,33 @@ export const handlers = [
   }),
 
   // ---- instances (resources) ----
+  http.get(`${BASE}/instances/:id/verification`, () => HttpResponse.json({
+    gate: { renderAvailable: false, deployedVerification: false, reason: "sibling_8f8c472a_phase_3_unconfirmed" },
+    runs: [],
+  })),
+  http.post(`${BASE}/instances/:id/verification/preview`, async ({ request }) => {
+    const policy = await request.json();
+    return HttpResponse.json({ policy, gate: { renderAvailable: false, deployedVerification: false, reason: "sibling_8f8c472a_phase_3_unconfirmed" }, sideEffectsPerformed: 0 });
+  }),
+  http.put(`${BASE}/instances/:id/verification`, async ({ request }) => {
+    const policy = await request.json() as Record<string, unknown>;
+    return HttpResponse.json({ ...policy, id: "vp-mock", current: true });
+  }),
+  http.delete(`${BASE}/instances/:id/verification`, async () => HttpResponse.json({ ...verificationPolicyMock(), enabled: false, id: "vp-mock", current: true })),
+  http.post(`${BASE}/instances/:id/verification/runs`, async ({ request }) => {
+    const body = await request.json() as { dryRun?: boolean };
+    if (body.dryRun) return HttpResponse.json({ preview: { policy: verificationPolicyMock(), gate: { renderAvailable: false, deployedVerification: false }, sideEffectsPerformed: 0 } });
+    return humaError(409, "external_gate_closed");
+  }),
+  http.get(`${BASE}/instances/:id/verification/runs`, () => HttpResponse.json({ runs: [] })),
+  http.get(`${BASE}/instances/:id/verification/runs/:runId`, ({ params }) => HttpResponse.json({
+    runId: params.runId, runKey: "sha256:key", orgId: "org:acme", instanceId: params.id, instanceUid: "uid",
+    appRevision: "sha256:revision", appArtifactDigest: "sha256:app", suiteDigest: "sha256:suite", profile: "stage",
+    trigger: { kind: "manual", profile: "stage", requestKey: "req" }, triggerFingerprint: "sha256:trigger",
+    status: "failed", reasonCode: "workflow_failed", policyRevision: 1, grantRevision: 1, latestAttempt: 1,
+    createdAt: "2026-11-21T01:00:00Z", updatedAt: "2026-11-21T01:00:00Z",
+  })),
+
   http.get(`${BASE}/instances`, ({ params }) => {
     return HttpResponse.json({
       instances: listResourcesForTenant(params.org as string).map(
