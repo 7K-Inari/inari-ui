@@ -171,6 +171,8 @@ export interface ResourceInstanceSummary {
 }
 
 export interface ResourceInstanceDetail extends ResourceInstanceSummary {
+  uid?: string;
+  artifactDigest?: string;
   spec: Record<string, unknown>;
   commitSha: string | null;
   prUrl: string | null;

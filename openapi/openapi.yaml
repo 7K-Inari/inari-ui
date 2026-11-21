@@ -1,15 +1,5 @@
 components:
   schemas:
-    HealthStatus:
-      type: object
-      required: [status]
-      properties:
-        status:
-          type: string
-          enum: [ok]
-        version:
-          type: string
-      additionalProperties: false
     AWSSMProvider:
       additionalProperties: false
       properties:
@@ -26,10 +16,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/AccessInfoOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/AccessInfoOutputBody.json
         accessInfo:
           $ref: "#/components/schemas/ClusterAccessInfo"
       required:
@@ -40,10 +31,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/AccountOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/AccountOutputBody.json
         account:
           $ref: "#/components/schemas/CloudAccount"
       required:
@@ -54,10 +46,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/AddMemberInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/AddMemberInputBody.json
         subject:
           description: Keycloak user id
           minLength: 1
@@ -73,8 +66,9 @@ components:
         availableVersions:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         catalogItem:
           type: string
         chartVersion:
@@ -136,10 +130,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/AdoptInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/AdoptInputBody.json
         clusterSelector:
           additionalProperties:
             type: string
@@ -167,10 +162,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/AdoptOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/AdoptOutputBody.json
         addon:
           $ref: "#/components/schemas/ClusterAddon"
         commitSha:
@@ -229,20 +225,23 @@ components:
         approverGroups:
           items:
             $ref: "#/components/schemas/ApproverGroup"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         autoApprove:
           items:
             $ref: "#/components/schemas/AutoApproveRule"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         defaultPolicy:
           type: string
         thresholds:
           items:
             $ref: "#/components/schemas/ApprovalThreshold"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - defaultPolicy
         - approvalTtl
@@ -252,10 +251,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ApprovalOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ApprovalOutputBody.json
         approval:
           $ref: "#/components/schemas/ApprovalRequest"
       required:
@@ -342,21 +342,65 @@ components:
         subjects:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - name
         - subjects
+      type: object
+    ArtifactDescriptor:
+      additionalProperties: false
+      properties:
+        app:
+          type: string
+        compatibility:
+          $ref: "#/components/schemas/Compatibility"
+        component:
+          type: string
+        digest:
+          type: string
+        lanes:
+          items:
+            $ref: "#/components/schemas/Lane"
+          type:
+            - array
+            - "null"
+        mediaType:
+          type: string
+        packageVersion:
+          type: string
+        producer:
+          $ref: "#/components/schemas/Producer"
+        ref:
+          type: string
+        releaseTag:
+          type: string
+        runtime:
+          $ref: "#/components/schemas/RuntimeEvidence"
+        sourceSha:
+          type: string
+      required:
+        - ref
+        - digest
+        - mediaType
+        - sourceSha
+        - releaseTag
+        - packageVersion
+        - component
+        - producer
+        - lanes
       type: object
     AssignPackInputBody:
       additionalProperties: false
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/AssignPackInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/AssignPackInputBody.json
         targetId:
           type: string
         targetType:
@@ -371,10 +415,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/AssignPackOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/AssignPackOutputBody.json
         assignment:
           $ref: "#/components/schemas/PolicyAssignment"
       required:
@@ -415,10 +460,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/AuthorizeInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/AuthorizeInputBody.json
         apiBase:
           description: GHE/self-hosted API base (must be allowlisted); empty = github.com
           type: string
@@ -428,10 +474,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/AuthorizeURLBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/AuthorizeURLBody.json
         authorizeUrl:
           type: string
       required:
@@ -443,8 +490,9 @@ components:
         itemIds:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         kind:
           type: string
       required:
@@ -493,8 +541,9 @@ components:
         domainHints:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         issuerUrl:
           type: string
       required:
@@ -510,10 +559,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/BrokeredIdPOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/BrokeredIdPOutputBody.json
         provider:
           $ref: "#/components/schemas/BrokeredIdP"
       required:
@@ -524,15 +574,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/BulkAssignPolicyInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/BulkAssignPolicyInputBody.json
         clusterSetIds:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         packId:
           type: string
       required:
@@ -544,15 +596,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/BulkDecideInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/BulkDecideInputBody.json
         approvalIds:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         approve:
           type: boolean
         reason:
@@ -579,15 +633,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/BulkPinCatalogInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/BulkPinCatalogInputBody.json
         itemIds:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         version:
           type: string
       required:
@@ -599,10 +655,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/BulkQueryInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/BulkQueryInputBody.json
         labelSelector:
           additionalProperties:
             type: string
@@ -615,15 +672,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/BulkResultsOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/BulkResultsOutputBody.json
         results:
           items:
             $ref: "#/components/schemas/BulkItemResult"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - results
       type: object
@@ -712,10 +771,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ChannelOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ChannelOutputBody.json
         channel:
           $ref: "#/components/schemas/AgentChannel"
       required:
@@ -910,10 +970,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ClusterOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ClusterOutputBody.json
         cluster:
           $ref: "#/components/schemas/Cluster"
       required:
@@ -947,32 +1008,77 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ClusterSetOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ClusterSetOutputBody.json
         clusterSet:
           $ref: "#/components/schemas/ClusterSet"
       required:
         - clusterSet
+      type: object
+    Compatibility:
+      additionalProperties: false
+      properties:
+        browser:
+          type: string
+        completedAt:
+          type: string
+        matrix:
+          additionalProperties:
+            type: string
+          type: object
+        result:
+          type: string
+        slots:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+      required:
+        - matrix
+        - result
+        - completedAt
+        - browser
+        - slots
+      type: object
+    ConcurrencyConfig:
+      additionalProperties: false
+      properties:
+        maxActive:
+          format: int64
+          type: integer
+        maxPending:
+          format: int64
+          type: integer
+        queuedRevisionPolicy:
+          type: string
+      required:
+        - maxActive
+        - maxPending
+        - queuedRevisionPolicy
       type: object
     ConfigOutputBody:
       additionalProperties: false
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ConfigOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ConfigOutputBody.json
         config:
           $ref: "#/components/schemas/ApprovalConfig"
         orgId:
           type: string
         updatedAt:
           format: date-time
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
       required:
         - config
         - orgId
@@ -1012,22 +1118,25 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ContractMetadata.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ContractMetadata.json
         pluginContracts:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         serverVersion:
           type: string
         uiHostApis:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - pluginContracts
         - uiHostApis
@@ -1039,8 +1148,9 @@ components:
         backend:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         ui:
           $ref: "#/components/schemas/UIContract"
       type: object
@@ -1049,10 +1159,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreateBrokeredIdPInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/CreateBrokeredIdPInputBody.json
         alias:
           description: URL-safe IdP alias (KC alias becomes org-<org>-<alias>)
           maxLength: 63
@@ -1072,8 +1183,9 @@ components:
           description: Org email domains used for home-IdP discovery
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         issuerUrl:
           description: OIDC issuer URL (https); discovered via the discovery endpoint
           minLength: 1
@@ -1089,10 +1201,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreateClusterInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/CreateClusterInputBody.json
         labels:
           additionalProperties:
             type: string
@@ -1109,10 +1222,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreateClusterSetInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/CreateClusterSetInputBody.json
         labelSelector:
           additionalProperties:
             type: string
@@ -1128,15 +1242,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreateIdentityClientInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/CreateIdentityClientInputBody.json
         audiences:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         name:
           description: URL-safe client name (clientId becomes org-<org>-<name>)
           maxLength: 63
@@ -1146,13 +1262,15 @@ components:
         redirectUris:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         scopes:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         type:
           description: service = confidential client-credentials; public = browser/native with redirect URIs
           enum:
@@ -1168,10 +1286,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreateIdentityClientOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/CreateIdentityClientOutputBody.json
         client:
           $ref: "#/components/schemas/IdentityClient"
         secret:
@@ -1185,10 +1304,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreateInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/CreateInputBody.json
         capability:
           minLength: 1
           type: string
@@ -1211,18 +1331,20 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreateInputBody1.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/CreateInputBody1.json
         enabled:
           type: boolean
         events:
           description: Empty = all events
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         kind:
           description: slack | webhook
           type: string
@@ -1242,10 +1364,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreateInputBody2.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/CreateInputBody2.json
         name:
           type: string
         provider:
@@ -1265,10 +1388,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreatePackInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/CreatePackInputBody.json
         engine:
           description: kyverno | cel-vap
           type: string
@@ -1291,10 +1415,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreatePolicyInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/CreatePolicyInputBody.json
         engine:
           description: rego
           type: string
@@ -1317,10 +1442,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreateRoleInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/CreateRoleInputBody.json
         description:
           maxLength: 500
           type: string
@@ -1337,8 +1463,9 @@ components:
           description: Permission-catalog slugs (GET permissions/catalog)
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - name
         - permissions
@@ -1348,10 +1475,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreateRolloutInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/CreateRolloutInputBody.json
         desiredVersion:
           type: string
         kind:
@@ -1362,8 +1490,9 @@ components:
         stages:
           items:
             $ref: "#/components/schemas/RolloutStage"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         targetRef:
           type: string
       required:
@@ -1378,10 +1507,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreateRunInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/CreateRunInputBody.json
         displayName:
           type: string
         values:
@@ -1398,10 +1528,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreateRunOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/CreateRunOutputBody.json
         run:
           $ref: "#/components/schemas/RunView"
       required:
@@ -1412,10 +1543,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreateScaffoldInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/CreateScaffoldInputBody.json
         name:
           description: Component name; becomes the run display name
           type: string
@@ -1436,10 +1568,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreateScaffoldOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/CreateScaffoldOutputBody.json
         scaffold:
           $ref: "#/components/schemas/ScaffoldView"
       required:
@@ -1450,10 +1583,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreateTeamInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/CreateTeamInputBody.json
         name:
           description: URL-safe team name
           maxLength: 63
@@ -1471,10 +1605,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/CreateTenantInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/CreateTenantInputBody.json
         displayName:
           maxLength: 200
           minLength: 1
@@ -1489,15 +1624,37 @@ components:
         - slug
         - displayName
       type: object
+    CronConfig:
+      additionalProperties: false
+      properties:
+        enabled:
+          type: boolean
+        scheduleSetId:
+          type: string
+        schedules:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        startingDeadlineSeconds:
+          format: int64
+          type: integer
+        timezone:
+          type: string
+      required:
+        - enabled
+      type: object
     DecideExemptionInputBody:
       additionalProperties: false
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/DecideExemptionInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/DecideExemptionInputBody.json
         approve:
           type: boolean
       required:
@@ -1508,10 +1665,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/DecideInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/DecideInputBody.json
         approve:
           type: boolean
         reason:
@@ -1524,10 +1682,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/DecideOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/DecideOutputBody.json
         approval:
           $ref: "#/components/schemas/ApprovalRequest"
       required:
@@ -1538,10 +1697,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/DecommissionInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/DecommissionInputBody.json
         force:
           description: Drain even when non-Inari-managed resources exist (§10 override)
           type: boolean
@@ -1551,17 +1711,19 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/DecommissionOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/DecommissionOutputBody.json
         cluster:
           $ref: "#/components/schemas/Cluster"
         drainedInstanceIds:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - cluster
         - drainedInstanceIds
@@ -1571,10 +1733,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/DecommissionOutputBody1.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/DecommissionOutputBody1.json
         approvalId:
           type: string
       type: object
@@ -1583,10 +1746,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/DeleteOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/DeleteOutputBody.json
         deleted:
           type: boolean
       required:
@@ -1597,10 +1761,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/DeleteTenantInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/DeleteTenantInputBody.json
         force:
           description: Revoke non-terminal clusters and delete despite dependencies
           type: boolean
@@ -1613,10 +1778,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/DeleteTenantOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/DeleteTenantOutputBody.json
         approvalId:
           type: string
         status:
@@ -1630,15 +1796,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/DeletionDependenciesOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/DeletionDependenciesOutputBody.json
         blockers:
           items:
             $ref: "#/components/schemas/Dependency"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - blockers
       type: object
@@ -1664,10 +1832,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/DeployInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/DeployInputBody.json
         channel:
           type: string
         clusterId:
@@ -1702,10 +1871,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/DeployOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/DeployOutputBody.json
         deploy:
           $ref: "#/components/schemas/DeployResult"
       required:
@@ -1741,10 +1911,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/DiffOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/DiffOutputBody.json
         diff:
           $ref: "#/components/schemas/DiffPreview"
       required:
@@ -1812,14 +1983,108 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/EndpointOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/EndpointOutputBody.json
         endpoint:
           $ref: "#/components/schemas/NotificationEndpoint"
       required:
         - endpoint
+      type: object
+    EnvironmentPolicy:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/EnvironmentPolicy.json
+          format: uri
+          readOnly: true
+          type: string
+        allowedFailureActions:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        allowedProfiles:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        allowedTriggers:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        createdAt:
+          format: date-time
+          type: string
+        environment:
+          type: string
+        id:
+          type: string
+        maxActive:
+          format: int64
+          type: integer
+        maxEvidenceAgeAtApproval:
+          type: string
+        maxGrantLifetimeDays:
+          format: int64
+          type: integer
+        maxPending:
+          format: int64
+          type: integer
+        maxResultDays:
+          format: int64
+          type: integer
+        maxTimeout:
+          type: string
+        maxWorkflowTTLSeconds:
+          format: int64
+          type: integer
+        minWorkflowTTLSeconds:
+          format: int64
+          type: integer
+        orgId:
+          type: string
+        policyRevision:
+          format: int64
+          type: integer
+        requiredNotificationEndpointIds:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        targetId:
+          type: string
+        targetRevision:
+          format: int64
+          type: integer
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+        - targetId
+        - targetRevision
+        - environment
+        - policyRevision
+        - maxTimeout
+        - maxActive
+        - maxPending
+        - minWorkflowTTLSeconds
+        - maxWorkflowTTLSeconds
+        - maxResultDays
+        - maxEvidenceAgeAtApproval
+        - maxGrantLifetimeDays
+        - allowedProfiles
+        - allowedTriggers
+        - allowedFailureActions
       type: object
     ErrorDetail:
       additionalProperties: false
@@ -1838,50 +2103,58 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ErrorModel.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ErrorModel.json
         detail:
           description: A human-readable explanation specific to this occurrence of the problem.
+          examples:
+            - Property foo is required but is missing.
           type: string
-          example: Property foo is required but is missing.
         errors:
           description: Optional list of individual error details
           items:
             $ref: "#/components/schemas/ErrorDetail"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         instance:
           description: A URI reference that identifies the specific occurrence of the problem.
+          examples:
+            - https://example.com/error-log/abc123
           format: uri
           type: string
-          example: https://example.com/error-log/abc123
         status:
           description: HTTP status code
+          examples:
+            - 400
           format: int64
           type: integer
-          example: 400
         title:
           description: A short, human-readable summary of the problem type. This value should not change between occurrences of the error.
+          examples:
+            - Bad Request
           type: string
-          example: Bad Request
         type:
           default: about:blank
           description: A URI reference to human-readable documentation for the error.
+          examples:
+            - https://example.com/errors/example
           format: uri
           type: string
-          example: https://example.com/errors/example
       type: object
     EvaluateInputBody:
       additionalProperties: false
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/EvaluateInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/EvaluateInputBody.json
         clusterId:
           type: string
         itemId:
@@ -1900,10 +2173,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/EvaluateOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/EvaluateOutputBody.json
         decision:
           $ref: "#/components/schemas/PolicyDecision"
       required:
@@ -1948,10 +2222,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ExemptionOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ExemptionOutputBody.json
         exemption:
           $ref: "#/components/schemas/Exemption"
       required:
@@ -2020,10 +2295,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ExtensionOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ExtensionOutputBody.json
         credentials:
           $ref: "#/components/schemas/ExtensionCredentials"
         extension:
@@ -2068,15 +2344,29 @@ components:
         - projectId
         - authSecretRef
       type: object
+    GateStatus:
+      additionalProperties: false
+      properties:
+        deployedVerification:
+          type: boolean
+        reason:
+          type: string
+        renderAvailable:
+          type: boolean
+      required:
+        - renderAvailable
+        - deployedVerification
+      type: object
     GetOutputBody:
       additionalProperties: false
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/GetOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/GetOutputBody.json
         instance:
           $ref: "#/components/schemas/InstanceView"
       required:
@@ -2087,10 +2377,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/GetOutputBody1.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/GetOutputBody1.json
         resource:
           $ref: "#/components/schemas/ResourceView"
       required:
@@ -2101,10 +2392,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/GetRBACMatrixOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/GetRBACMatrixOutputBody.json
         rbac:
           $ref: "#/components/schemas/RbacMatrix"
       required:
@@ -2115,10 +2407,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/GetRunOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/GetRunOutputBody.json
         run:
           $ref: "#/components/schemas/RunView"
       required:
@@ -2129,10 +2422,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/GetScaffoldOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/GetScaffoldOutputBody.json
         scaffold:
           $ref: "#/components/schemas/ScaffoldView"
       required:
@@ -2143,10 +2437,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/GetTemplateOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/GetTemplateOutputBody.json
         template:
           $ref: "#/components/schemas/TemplateDetail"
       required:
@@ -2157,10 +2452,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/GetZoneOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/GetZoneOutputBody.json
         steps:
           additionalProperties:
             $ref: "#/components/schemas/TenantZoneStep"
@@ -2176,10 +2472,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/GitConfigInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/GitConfigInputBody.json
         baseBranch:
           type: string
         clearGithubApp:
@@ -2208,10 +2505,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/GitConfigOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/GitConfigOutputBody.json
         config:
           $ref: "#/components/schemas/TenantGitConfig"
         gitProviderStatus:
@@ -2300,10 +2598,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/GrantInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/GrantInputBody.json
         relation:
           enum:
             - view
@@ -2318,10 +2617,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/GrantOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/GrantOutputBody.json
         grant:
           $ref: "#/components/schemas/Grant"
       required:
@@ -2359,8 +2659,9 @@ components:
         audiences:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         clientId:
           type: string
         createdAt:
@@ -2371,13 +2672,15 @@ components:
         redirectUris:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         scopes:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         status:
           type: string
         type:
@@ -2396,10 +2699,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/IdentityClientOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/IdentityClientOutputBody.json
         client:
           $ref: "#/components/schemas/IdentityClient"
       required:
@@ -2410,15 +2714,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/InboxOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/InboxOutputBody.json
         items:
           items:
             $ref: "#/components/schemas/ApprovalRequest"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - items
       type: object
@@ -2449,6 +2755,11 @@ components:
           type: string
         newVersionAvailable:
           type: boolean
+        observedRevision:
+          type: string
+        operationFinishedAt:
+          format: date-time
+          type: string
         orgId:
           type: string
         ownerTeam:
@@ -2464,7 +2775,13 @@ components:
           type: string
         statusMessage:
           type: string
+        syncOperationId:
+          type: string
+        syncOperationPhase:
+          type: string
         syncState:
+          type: string
+        uid:
           type: string
         updatedAt:
           format: date-time
@@ -2474,6 +2791,7 @@ components:
       required:
         - newVersionAvailable
         - id
+        - uid
         - orgId
         - clusterId
         - catalogItemId
@@ -2504,10 +2822,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ItemOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ItemOutputBody.json
         item:
           $ref: "#/components/schemas/ItemView"
       required:
@@ -2552,8 +2871,9 @@ components:
         versions:
           items:
             $ref: "#/components/schemas/CatalogItemVersion"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - id
         - source
@@ -2578,27 +2898,53 @@ components:
         overlays:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         path:
           type: string
       required:
         - path
+      type: object
+    Lane:
+      additionalProperties: false
+      properties:
+        jobId:
+          type: string
+        name:
+          type: string
+        required:
+          type: boolean
+        runId:
+          type: string
+        sourceSha:
+          type: string
+        status:
+          type: string
+      required:
+        - name
+        - required
+        - status
+        - runId
+        - jobId
+        - sourceSha
       type: object
     ListAccountsOutputBody:
       additionalProperties: false
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListAccountsOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListAccountsOutputBody.json
         accounts:
           items:
             $ref: "#/components/schemas/CloudAccount"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - accounts
       type: object
@@ -2607,15 +2953,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListAddonsOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListAddonsOutputBody.json
         addons:
           items:
             $ref: "#/components/schemas/AddonView"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - addons
       type: object
@@ -2624,15 +2972,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListAuditUIOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListAuditUIOutputBody.json
         events:
           items:
             $ref: "#/components/schemas/UiAuditEvent"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - events
       type: object
@@ -2641,15 +2991,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListBrokeredIdPsOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListBrokeredIdPsOutputBody.json
         providers:
           items:
             $ref: "#/components/schemas/BrokeredIdP"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - providers
       type: object
@@ -2658,15 +3010,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListCapabilitiesOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListCapabilitiesOutputBody.json
         capabilities:
           items:
             $ref: "#/components/schemas/Capability"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - capabilities
       type: object
@@ -2675,15 +3029,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListCatalogOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListCatalogOutputBody.json
         items:
           items:
             $ref: "#/components/schemas/ItemView"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         total:
           format: int64
           type: integer
@@ -2696,15 +3052,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListChannelsOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListChannelsOutputBody.json
         channels:
           items:
             $ref: "#/components/schemas/AgentChannel"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - channels
       type: object
@@ -2713,15 +3071,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListClusterSetsOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListClusterSetsOutputBody.json
         clusterSets:
           items:
             $ref: "#/components/schemas/ClusterSet"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - clusterSets
       type: object
@@ -2730,15 +3090,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListClustersOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListClustersOutputBody.json
         clusters:
           items:
             $ref: "#/components/schemas/Cluster"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - clusters
       type: object
@@ -2747,20 +3109,23 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListConnectionsOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListConnectionsOutputBody.json
         connections:
           items:
             $ref: "#/components/schemas/Connection"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         providers:
           items:
             $ref: "#/components/schemas/ProviderInfo"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - connections
         - providers
@@ -2770,15 +3135,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListDriftOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListDriftOutputBody.json
         driftEvents:
           items:
             $ref: "#/components/schemas/DriftEvent"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - driftEvents
       type: object
@@ -2787,15 +3154,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListEventsOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListEventsOutputBody.json
         events:
           items:
             $ref: "#/components/schemas/AuditEvent"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - events
       type: object
@@ -2804,15 +3173,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListExemptionsOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListExemptionsOutputBody.json
         exemptions:
           items:
             $ref: "#/components/schemas/Exemption"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - exemptions
       type: object
@@ -2821,15 +3192,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListFlagsOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListFlagsOutputBody.json
         flags:
           items:
             $ref: "#/components/schemas/FlagView"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - flags
       type: object
@@ -2838,15 +3211,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListIdentityClientsOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListIdentityClientsOutputBody.json
         clients:
           items:
             $ref: "#/components/schemas/IdentityClient"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - clients
       type: object
@@ -2855,15 +3230,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListIdentityScopesOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListIdentityScopesOutputBody.json
         scopes:
           items:
             $ref: "#/components/schemas/ServiceScopes"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - scopes
       type: object
@@ -2872,15 +3249,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListMembersOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListMembersOutputBody.json
         members:
           items:
             $ref: "#/components/schemas/MemberView"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - members
       type: object
@@ -2889,15 +3268,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListOrgMembersOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListOrgMembersOutputBody.json
         members:
           items:
             $ref: "#/components/schemas/OrgMemberView"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - members
       type: object
@@ -2906,15 +3287,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListOrgVisibilityOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListOrgVisibilityOutputBody.json
         items:
           items:
             $ref: "#/components/schemas/OrgVisibilityEntry"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - items
       type: object
@@ -2923,15 +3306,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListOutputBody.json
         approvals:
           items:
             $ref: "#/components/schemas/ApprovalRequest"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - approvals
       type: object
@@ -2940,15 +3325,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListOutputBody1.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListOutputBody1.json
         instances:
           items:
             $ref: "#/components/schemas/InstanceView"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - instances
       type: object
@@ -2957,15 +3344,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListOutputBody2.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListOutputBody2.json
         resources:
           items:
             $ref: "#/components/schemas/ResourceView"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - resources
       type: object
@@ -2974,15 +3363,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListOutputBody3.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListOutputBody3.json
         repos:
           items:
             $ref: "#/components/schemas/TenantGitRepo"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - repos
       type: object
@@ -2991,15 +3382,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListOutputBody4.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListOutputBody4.json
         targets:
           items:
             $ref: "#/components/schemas/Target"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - targets
       type: object
@@ -3008,15 +3401,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListOutputBody5.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListOutputBody5.json
         endpoints:
           items:
             $ref: "#/components/schemas/NotificationEndpoint"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - endpoints
       type: object
@@ -3025,15 +3420,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListOutputBody6.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListOutputBody6.json
         stores:
           items:
             $ref: "#/components/schemas/SecretStore"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - stores
       type: object
@@ -3042,15 +3439,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListOutputBody7.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListOutputBody7.json
         extensions:
           items:
             $ref: "#/components/schemas/Extension"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - extensions
       type: object
@@ -3059,15 +3458,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListPackAssignmentsOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListPackAssignmentsOutputBody.json
         assignments:
           items:
             $ref: "#/components/schemas/PolicyAssignment"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - assignments
       type: object
@@ -3076,15 +3477,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListPacksOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListPacksOutputBody.json
         packs:
           items:
             $ref: "#/components/schemas/PolicyPack"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - packs
       type: object
@@ -3093,15 +3496,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListPlatformAdminsOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListPlatformAdminsOutputBody.json
         admins:
           items:
             $ref: "#/components/schemas/PlatformAdminView"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - admins
       type: object
@@ -3110,15 +3515,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListPoliciesOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListPoliciesOutputBody.json
         policies:
           items:
             $ref: "#/components/schemas/Policy"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - policies
       type: object
@@ -3127,15 +3534,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListRolesOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListRolesOutputBody.json
         roles:
           items:
             $ref: "#/components/schemas/Role"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - roles
       type: object
@@ -3144,15 +3553,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListRolloutsOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListRolloutsOutputBody.json
         rollouts:
           items:
             $ref: "#/components/schemas/Rollout"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - rollouts
       type: object
@@ -3161,15 +3572,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListTeamsOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListTeamsOutputBody.json
         teams:
           items:
             $ref: "#/components/schemas/Team"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - teams
       type: object
@@ -3178,15 +3591,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListTemplatesOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListTemplatesOutputBody.json
         templates:
           items:
             $ref: "#/components/schemas/TemplateSummary"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - templates
       type: object
@@ -3195,15 +3610,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListTenantsOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListTenantsOutputBody.json
         tenants:
           items:
             $ref: "#/components/schemas/Organization"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - tenants
       type: object
@@ -3212,15 +3629,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListTokensOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListTokensOutputBody.json
         tokens:
           items:
             $ref: "#/components/schemas/RegistrationToken"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - tokens
       type: object
@@ -3229,15 +3648,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListUiOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListUiOutputBody.json
         extensions:
           items:
             $ref: "#/components/schemas/UiExtensionRemote"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - extensions
       type: object
@@ -3246,15 +3667,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ListZonesOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ListZonesOutputBody.json
         zones:
           items:
             $ref: "#/components/schemas/TenantZone"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - zones
       type: object
@@ -3289,15 +3712,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/MembersOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/MembersOutputBody.json
         clusters:
           items:
             $ref: "#/components/schemas/Cluster"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - clusters
       type: object
@@ -3306,10 +3731,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/MyPermissionsOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/MyPermissionsOutputBody.json
         canCreateOrganizations:
           description: Caller may create tenants (platform:inari org_creator)
           type: boolean
@@ -3317,8 +3743,9 @@ components:
           additionalProperties:
             items:
               type: string
-            type: array
-            nullable: true
+            type:
+              - array
+              - "null"
           type: object
         tenants:
           additionalProperties:
@@ -3326,6 +3753,22 @@ components:
           type: object
       required:
         - canCreateOrganizations
+      type: object
+    NotificationConfig:
+      additionalProperties: false
+      properties:
+        endpointIds:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        events:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
       type: object
     NotificationDelivery:
       additionalProperties: false
@@ -3370,8 +3813,9 @@ components:
         events:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         id:
           type: string
         kind:
@@ -3402,13 +3846,15 @@ components:
         roles:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         teams:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         userId:
           type: string
       required:
@@ -3446,10 +3892,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/OrgVisibilityInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/OrgVisibilityInputBody.json
         visible:
           description: false hides the item for this org; true shows it (subject to platform rules)
           type: boolean
@@ -3485,10 +3932,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/PackOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/PackOutputBody.json
         pack:
           $ref: "#/components/schemas/PolicyPack"
       required:
@@ -3516,15 +3964,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/PermissionCatalogOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/PermissionCatalogOutputBody.json
         permissions:
           items:
             $ref: "#/components/schemas/Permission"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - permissions
       type: object
@@ -3533,10 +3983,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/PinInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/PinInputBody.json
         version:
           minLength: 1
           type: string
@@ -3618,6 +4069,37 @@ components:
         - state
         - createdAt
       type: object
+    PolicyBinding:
+      additionalProperties: false
+      properties:
+        appArtifactDigest:
+          type: string
+        appItemId:
+          type: string
+        appVersion:
+          type: string
+        desiredCommit:
+          type: string
+        parameterContract:
+          type: string
+        profile:
+          type: string
+        specDigest:
+          type: string
+        suiteDigest:
+          type: string
+        suiteGrantId:
+          type: string
+      required:
+        - appItemId
+        - appVersion
+        - appArtifactDigest
+        - specDigest
+        - suiteGrantId
+        - suiteDigest
+        - profile
+        - parameterContract
+      type: object
     PolicyDecision:
       additionalProperties: false
       properties:
@@ -3626,13 +4108,15 @@ components:
         violations:
           items:
             $ref: "#/components/schemas/PolicyViolation"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         warnings:
           items:
             $ref: "#/components/schemas/PolicyViolation"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - allow
       type: object
@@ -3641,10 +4125,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/PolicyOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/PolicyOutputBody.json
         policy:
           $ref: "#/components/schemas/Policy"
       required:
@@ -3678,6 +4163,49 @@ components:
         - manifests
         - createdAt
       type: object
+    PolicyPreview:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/PolicyPreview.json
+          format: uri
+          readOnly: true
+          type: string
+        environment:
+          $ref: "#/components/schemas/EnvironmentPolicy"
+        gate:
+          $ref: "#/components/schemas/GateStatus"
+        grant:
+          $ref: "#/components/schemas/SuiteGrant"
+        policy:
+          $ref: "#/components/schemas/VerificationPolicy"
+        sideEffectsPerformed:
+          format: int64
+          type: integer
+        suite:
+          $ref: "#/components/schemas/SuiteRelease"
+        warnings:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        wouldCreate:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+      required:
+        - policy
+        - environment
+        - grant
+        - suite
+        - gate
+        - sideEffectsPerformed
+      type: object
     PolicyViolation:
       additionalProperties: false
       properties:
@@ -3694,15 +4222,181 @@ components:
         - reason
         - remediation
       type: object
+    Producer:
+      additionalProperties: false
+      properties:
+        runAttempt:
+          format: int64
+          type: integer
+        runId:
+          type: string
+        runUri:
+          type: string
+        workflowPath:
+          type: string
+        workflowSha:
+          type: string
+      required:
+        - workflowPath
+        - workflowSha
+        - runId
+        - runAttempt
+        - runUri
+      type: object
+    PromotionDecision:
+      additionalProperties: false
+      properties:
+        allowed:
+          type: boolean
+        approvalRequired:
+          type: boolean
+        approverTeamIds:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        reasonCode:
+          type: string
+        sourceRunId:
+          type: string
+      required:
+        - allowed
+        - approvalRequired
+      type: object
+    PromotionInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/PromotionInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        repoId:
+          type: string
+        toDigest:
+          type: string
+        toVersion:
+          type: string
+      required:
+        - toVersion
+        - toDigest
+      type: object
+    PromotionOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/PromotionOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        deploy:
+          $ref: "#/components/schemas/DeployResult"
+      required:
+        - deploy
+      type: object
+    PromotionPolicy:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/PromotionPolicy.json
+          format: uri
+          readOnly: true
+          type: string
+        approverTeamIds:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        createdAt:
+          format: date-time
+          type: string
+        current:
+          type: boolean
+        id:
+          type: string
+        maxEvidenceAge:
+          type: string
+        orgId:
+          type: string
+        policyRevision:
+          format: int64
+          type: integer
+        required:
+          type: boolean
+        requiredProfile:
+          type: string
+        requiredSuiteDigest:
+          type: string
+        sourceInstanceId:
+          type: string
+        targetInstanceId:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+        - targetInstanceId
+        - sourceInstanceId
+        - required
+        - requiredSuiteDigest
+        - requiredProfile
+        - maxEvidenceAge
+        - policyRevision
+      type: object
+    PromotionPolicyOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/PromotionPolicyOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        policy:
+          $ref: "#/components/schemas/PromotionPolicy"
+      type: object
+    PromotionPreview:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/PromotionPreview.json
+          format: uri
+          readOnly: true
+          type: string
+        decision:
+          $ref: "#/components/schemas/PromotionDecision"
+        policy:
+          $ref: "#/components/schemas/PromotionPolicy"
+        targetDigest:
+          type: string
+        targetVersion:
+          type: string
+      required:
+        - decision
+        - targetVersion
+        - targetDigest
+      type: object
     ProviderCompatOutputBody:
       additionalProperties: false
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ProviderCompatOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ProviderCompatOutputBody.json
         provider:
           $ref: "#/components/schemas/BrokeredIdP"
       required:
@@ -3714,16 +4408,18 @@ components:
         actions:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         capability:
           type: string
         configSchema: {}
         resourceKinds:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         selectionSchema: {}
         supportsDefault:
           type: boolean
@@ -3755,15 +4451,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ProvidersOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ProvidersOutputBody.json
         providers:
           items:
             $ref: "#/components/schemas/ProviderDescriptor"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - providers
       type: object
@@ -3772,15 +4470,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/PutClientScopesInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/PutClientScopesInputBody.json
         scopes:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - scopes
       type: object
@@ -3789,10 +4489,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/PutMemberInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/PutMemberInputBody.json
         roleId:
           description: Org role to grant (roles.id or built-in role name)
           type: string
@@ -3804,10 +4505,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/PutProviderCompatInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/PutProviderCompatInputBody.json
         alias:
           maxLength: 63
           minLength: 1
@@ -3824,8 +4526,9 @@ components:
         domainHints:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         issuerUrl:
           minLength: 1
           type: string
@@ -3839,15 +4542,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/PutProviderDomainsInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/PutProviderDomainsInputBody.json
         domainHints:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - domainHints
       type: object
@@ -3856,16 +4561,18 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/PutRBACMappingsInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/PutRBACMappingsInputBody.json
         mappings:
           description: Declarative team→roleId set; applied atomically
           items:
             $ref: "#/components/schemas/TeamRoleMapping"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - mappings
       type: object
@@ -3874,17 +4581,45 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/PutRBACMappingsOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/PutRBACMappingsOutputBody.json
         changes:
           items:
             $ref: "#/components/schemas/TeamRoleChange"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - changes
+      type: object
+    RBACRule:
+      additionalProperties: false
+      properties:
+        apiGroups:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        resources:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        verbs:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+      required:
+        - apiGroups
+        - resources
+        - verbs
       type: object
     RbacClusterRole:
       additionalProperties: false
@@ -3932,18 +4667,21 @@ components:
         groups:
           items:
             $ref: "#/components/schemas/RbacGroup"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         mappings:
           items:
             $ref: "#/components/schemas/RbacMapping"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         roles:
           items:
             $ref: "#/components/schemas/RbacClusterRole"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - groups
         - roles
@@ -3958,8 +4696,9 @@ components:
         reasons:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         state:
           type: string
       required:
@@ -3970,10 +4709,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RebindBaselineInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/RebindBaselineInputBody.json
         repoId:
           minLength: 1
           type: string
@@ -3985,10 +4725,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ReceiveOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ReceiveOutputBody.json
         accepted:
           type: boolean
         eventType:
@@ -4001,10 +4742,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/ReconcileOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/ReconcileOutputBody.json
         clustersNotified:
           format: int64
           type: integer
@@ -4020,10 +4762,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RegisterInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/RegisterInputBody.json
         baseBranch:
           type: string
         commitPolicy:
@@ -4063,10 +4806,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RegisterInputBody1.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/RegisterInputBody1.json
         accountId:
           description: 12-digit AWS account ID
           type: string
@@ -4092,10 +4836,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RegisterInputBody2.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/RegisterInputBody2.json
         checksum:
           description: expected sha256 (hex) of the plugin artifact
           type: string
@@ -4121,10 +4866,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RegisterUiInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/RegisterUiInputBody.json
         checksum:
           type: string
         contracts:
@@ -4146,8 +4892,9 @@ components:
         slots:
           items:
             $ref: "#/components/schemas/UiSlotDescriptor"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         title:
           type: string
         version:
@@ -4185,10 +4932,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RepoOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/RepoOutputBody.json
         gitProviderStatus:
           $ref: "#/components/schemas/GitProviderStatus"
         repo:
@@ -4209,10 +4957,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RequestExemptionInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/RequestExemptionInputBody.json
         expiresAt:
           format: date-time
           type: string
@@ -4231,10 +4980,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RequestZoneInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/RequestZoneInputBody.json
         displayName:
           maxLength: 100
           minLength: 1
@@ -4272,10 +5022,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RequestZoneOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/RequestZoneOutputBody.json
         approvalId:
           type: string
         zone:
@@ -4325,15 +5076,37 @@ components:
         - detail
         - updatedAt
       type: object
+    RetentionConfig:
+      additionalProperties: false
+      properties:
+        failedHistory:
+          format: int64
+          type: integer
+        resultDays:
+          format: int64
+          type: integer
+        successfulHistory:
+          format: int64
+          type: integer
+        workflowTTLSeconds:
+          format: int64
+          type: integer
+      required:
+        - workflowTTLSeconds
+        - successfulHistory
+        - failedHistory
+        - resultDays
+      type: object
     RetryDeletionOutputBody:
       additionalProperties: false
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RetryDeletionOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/RetryDeletionOutputBody.json
         deletion:
           $ref: "#/components/schemas/TenantDeletion"
       required:
@@ -4344,10 +5117,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RetryRunOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/RetryRunOutputBody.json
         run:
           $ref: "#/components/schemas/RunView"
       required:
@@ -4374,8 +5148,9 @@ components:
         permissions:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         updatedAt:
           format: date-time
           type: string
@@ -4395,10 +5170,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RoleOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/RoleOutputBody.json
         role:
           $ref: "#/components/schemas/Role"
       required:
@@ -4409,10 +5185,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RolePatch.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/RolePatch.json
         description:
           type: string
         displayName:
@@ -4429,10 +5206,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RollbackInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/RollbackInputBody.json
         repoId:
           type: string
         toVersion:
@@ -4446,10 +5224,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RollbackInputBody1.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/RollbackInputBody1.json
         toVersion:
           type: string
       required:
@@ -4481,8 +5260,9 @@ components:
         stages:
           items:
             $ref: "#/components/schemas/RolloutStage"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         state:
           type: string
         targetRef:
@@ -4529,10 +5309,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RolloutOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/RolloutOutputBody.json
         rollout:
           $ref: "#/components/schemas/Rollout"
       required:
@@ -4548,8 +5329,9 @@ components:
         clusterSetIds:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         maxConcurrency:
           type: string
         name:
@@ -4601,10 +5383,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RotateIdentityOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/RotateIdentityOutputBody.json
         credentials:
           $ref: "#/components/schemas/ExtensionCredentials"
       required:
@@ -4615,10 +5398,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RotateProviderSecretInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/RotateProviderSecretInputBody.json
         clientSecret:
           minLength: 1
           type: string
@@ -4630,15 +5414,163 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RotateSecretOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/RotateSecretOutputBody.json
         secret:
           description: Returned exactly once; never stored server-side
           type: string
       required:
         - secret
+      type: object
+    Run:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/Run.json
+          format: uri
+          readOnly: true
+          type: string
+        appArtifactDigest:
+          type: string
+        appRevision:
+          type: string
+        createdAt:
+          format: date-time
+          type: string
+        disposition:
+          type: string
+        expiresAt:
+          format: date-time
+          type: string
+        grantRevision:
+          format: int64
+          type: integer
+        instanceId:
+          type: string
+        instanceUid:
+          type: string
+        latestAttempt:
+          format: int64
+          type: integer
+        links:
+          $ref: "#/components/schemas/RunLinks"
+        message:
+          type: string
+        orgId:
+          type: string
+        outcome: {}
+        outcomeDigest:
+          type: string
+        policyRevision:
+          format: int64
+          type: integer
+        profile:
+          type: string
+        reasonCode:
+          type: string
+        runId:
+          type: string
+        runKey:
+          type: string
+        status:
+          type: string
+        suiteDigest:
+          type: string
+        trigger:
+          $ref: "#/components/schemas/Trigger"
+        triggerFingerprint:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+        - runId
+        - runKey
+        - orgId
+        - instanceId
+        - instanceUid
+        - appRevision
+        - appArtifactDigest
+        - suiteDigest
+        - profile
+        - trigger
+        - triggerFingerprint
+        - status
+        - policyRevision
+        - grantRevision
+        - latestAttempt
+        - createdAt
+        - updatedAt
+      type: object
+    RunInputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RunInputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        dryRun:
+          type: boolean
+        idempotencyKey:
+          type: string
+      required:
+        - idempotencyKey
+      type: object
+    RunLinks:
+      additionalProperties: false
+      properties:
+        artifacts:
+          type: string
+        logs:
+          type: string
+        workflow:
+          type: string
+      required:
+        - workflow
+        - logs
+        - artifacts
+      type: object
+    RunListOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RunListOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        runs:
+          items:
+            $ref: "#/components/schemas/Run"
+          type:
+            - array
+            - "null"
+      required:
+        - runs
+      type: object
+    RunOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/RunOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        preview:
+          $ref: "#/components/schemas/PolicyPreview"
+        run:
+          $ref: "#/components/schemas/Run"
       type: object
     RunView:
       additionalProperties: false
@@ -4664,8 +5596,9 @@ components:
         steps:
           items:
             $ref: "#/components/schemas/StepView"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         templateId:
           type: string
         templateName:
@@ -4691,18 +5624,38 @@ components:
         - createdAt
         - updatedAt
       type: object
+    RuntimeEvidence:
+      additionalProperties: false
+      properties:
+        profile:
+          type: string
+        result:
+          type: string
+        suiteDigest:
+          type: string
+        target:
+          type: string
+      required:
+        - target
+        - suiteDigest
+        - profile
+        - result
+      type: object
     ScaffoldOutputs:
       additionalProperties: false
       properties:
         catalogItemId:
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
         pipelineUrl:
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
         repoUrl:
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
       required:
         - repoUrl
         - pipelineUrl
@@ -4719,8 +5672,9 @@ components:
         id:
           type: string
         message:
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
         name:
           type: string
         outputs:
@@ -4829,8 +5783,9 @@ components:
         conditions:
           items:
             $ref: "#/components/schemas/SecretStoreCondition"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         delivered:
           type: boolean
       required:
@@ -4842,8 +5797,9 @@ components:
         clusterIds:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         clusterSetRef:
           type: string
       type: object
@@ -4852,15 +5808,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/SelfPermissionsOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/SelfPermissionsOutputBody.json
         permissions:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - permissions
       type: object
@@ -4872,8 +5830,9 @@ components:
         scopes:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - audience
         - scopes
@@ -4883,10 +5842,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/SessionInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/SessionInputBody.json
         expiresInSeconds:
           description: override session TTL (capped); defaults to the token's exp claim or 8h
           format: int64
@@ -4905,10 +5865,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/SessionOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/SessionOutputBody.json
         session:
           $ref: "#/components/schemas/SessionStruct"
       required:
@@ -4919,8 +5880,9 @@ components:
       properties:
         expiresAt:
           format: date-time
-          type: string
-          nullable: true
+          type:
+            - string
+            - "null"
         extensionId:
           type: string
         state:
@@ -4935,10 +5897,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/SetChannelInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/SetChannelInputBody.json
         desiredAgentVersion:
           type: string
       required:
@@ -4949,10 +5912,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/SetClusterFlagInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/SetClusterFlagInputBody.json
         value:
           type: boolean
       required:
@@ -4963,10 +5927,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/SetFlagInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/SetFlagInputBody.json
         value:
           type: boolean
       required:
@@ -4977,10 +5942,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/SourceAdoptInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/SourceAdoptInputBody.json
         clusterSelector:
           additionalProperties:
             type: string
@@ -5008,10 +5974,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/SourceCreateRunInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/SourceCreateRunInputBody.json
         displayName:
           type: string
         values:
@@ -5046,15 +6013,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/SourceListOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/SourceListOutputBody.json
         sources:
           items:
             $ref: "#/components/schemas/TrustedSourceStatus"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - sources
       type: object
@@ -5063,10 +6032,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/SourceOrgVisibilityInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/SourceOrgVisibilityInputBody.json
         visible:
           description: false hides the item for this org; true shows it (subject to platform rules)
           type: boolean
@@ -5078,10 +6048,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/SourcePinInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/SourcePinInputBody.json
         version:
           minLength: 1
           type: string
@@ -5093,15 +6064,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/SourceVisibilityInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/SourceVisibilityInputBody.json
         rules:
           items:
             $ref: "#/components/schemas/Item"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - rules
       type: object
@@ -5110,10 +6083,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/StatusOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/StatusOutputBody.json
         status:
           $ref: "#/components/schemas/SecretStoreStatus"
       required:
@@ -5141,35 +6115,379 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/StoreOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/StoreOutputBody.json
         store:
           $ref: "#/components/schemas/SecretStore"
       required:
         - store
+      type: object
+    Suite:
+      additionalProperties: false
+      properties:
+        cleanup:
+          type: string
+        compatibleAppVersions:
+          type: string
+        dependencies:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        entrypoint:
+          type: string
+        executableProfiles:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        idempotency:
+          type: string
+        parameterContract:
+          type: string
+        profiles:
+          additionalProperties:
+            $ref: "#/components/schemas/SuiteProfile"
+          type: object
+        rbacRequirements:
+          items:
+            $ref: "#/components/schemas/RBACRule"
+          type:
+            - array
+            - "null"
+        suiteSchema:
+          type: string
+        target:
+          $ref: "#/components/schemas/SuiteTarget"
+        timeout:
+          type: string
+        workflowTemplate:
+          type: string
+      required:
+        - suiteSchema
+        - target
+        - compatibleAppVersions
+        - parameterContract
+        - dependencies
+        - timeout
+        - profiles
+        - rbacRequirements
+        - workflowTemplate
+        - entrypoint
+      type: object
+    SuiteAdapter:
+      additionalProperties: false
+      properties:
+        artifactPath:
+          type: string
+        fixtureOnly:
+          type: boolean
+        kind:
+          type: string
+        path:
+          type: string
+        readiness:
+          items:
+            additionalProperties:
+              type: string
+            type: object
+          type:
+            - array
+            - "null"
+      required:
+        - kind
+      type: object
+    SuiteAdmissionInput:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/SuiteAdmissionInput.json
+          format: uri
+          readOnly: true
+          type: string
+        descriptor:
+          $ref: "#/components/schemas/ArtifactDescriptor"
+        environment:
+          type: string
+        legacyNonProductionException:
+          type: boolean
+        profile:
+          type: string
+        sourceId:
+          type: string
+      required:
+        - sourceId
+        - descriptor
+        - environment
+        - profile
+      type: object
+    SuiteGrant:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/SuiteGrant.json
+          format: uri
+          readOnly: true
+          type: string
+        allowedRbac:
+          items:
+            $ref: "#/components/schemas/RBACRule"
+          type:
+            - array
+            - "null"
+        appItemId:
+          type: string
+        appVersionRange:
+          type: string
+        approverTeamIds:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+        argoUiBaseUrl:
+          type: string
+        changeWindow:
+          type: string
+        cleanupRequired:
+          type: boolean
+        egressPolicyRef:
+          type: string
+        environmentPolicyId:
+          type: string
+        expiresAt:
+          format: date-time
+          type: string
+        fixtureNamespace:
+          type: string
+        grantRevision:
+          format: int64
+          type: integer
+        id:
+          type: string
+        legacyNonProductionException:
+          type: boolean
+        maxActive:
+          format: int64
+          type: integer
+        maxPending:
+          format: int64
+          type: integer
+        maxResultBytes:
+          format: int64
+          type: integer
+        maxTimeout:
+          type: string
+        orgId:
+          type: string
+        parameterContract:
+          type: string
+        profile:
+          type: string
+        rbacPolicyDigest:
+          type: string
+        requirePerRunApproval:
+          type: boolean
+        revokedAt:
+          format: date-time
+          type: string
+        serviceAccountName:
+          type: string
+        serviceAccountNamespace:
+          type: string
+        sideEffects:
+          type: string
+        suiteDigest:
+          type: string
+        suiteReleaseId:
+          type: string
+      required:
+        - suiteReleaseId
+        - suiteDigest
+        - profile
+        - grantRevision
+        - parameterContract
+        - sideEffects
+        - serviceAccountName
+        - serviceAccountNamespace
+        - rbacPolicyDigest
+        - allowedRbac
+        - egressPolicyRef
+        - cleanupRequired
+        - requirePerRunApproval
+        - maxTimeout
+        - maxActive
+        - maxPending
+        - maxResultBytes
+      type: object
+    SuiteListOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/SuiteListOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        suites:
+          items:
+            $ref: "#/components/schemas/SuiteRelease"
+          type:
+            - array
+            - "null"
+      required:
+        - suites
+      type: object
+    SuitePreview:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/SuitePreview.json
+          format: uri
+          readOnly: true
+          type: string
+        gate:
+          $ref: "#/components/schemas/GateStatus"
+        release:
+          $ref: "#/components/schemas/SuiteRelease"
+        sideEffectsPerformed:
+          format: int64
+          type: integer
+        warnings:
+          items:
+            type: string
+          type:
+            - array
+            - "null"
+      required:
+        - release
+        - gate
+        - sideEffectsPerformed
+      type: object
+    SuiteProfile:
+      additionalProperties: false
+      properties:
+        approval:
+          type: string
+        changeWindow:
+          type: string
+        cleanup:
+          type: string
+        sideEffects:
+          type: string
+      required:
+        - sideEffects
+        - cleanup
+      type: object
+    SuiteRelease:
+      additionalProperties: false
+      properties:
+        admittedAt:
+          format: date-time
+          type: string
+        contentDigest:
+          type: string
+        descriptor:
+          $ref: "#/components/schemas/ArtifactDescriptor"
+        eligibility:
+          type: string
+        evidenceDigest:
+          type: string
+        evidenceFinishedAt:
+          format: date-time
+          type: string
+        id:
+          type: string
+        legacyException:
+          type: boolean
+        orgId:
+          type: string
+        sourceFingerprint:
+          type: string
+        sourceId:
+          type: string
+        suite:
+          $ref: "#/components/schemas/Suite"
+        suiteDigest:
+          type: string
+        trustTier:
+          type: string
+        unsigned:
+          type: boolean
+      required:
+        - id
+        - orgId
+        - sourceId
+        - suiteDigest
+        - sourceFingerprint
+        - contentDigest
+        - suite
+        - descriptor
+        - trustTier
+        - unsigned
+        - eligibility
+        - admittedAt
+      type: object
+    SuiteTarget:
+      additionalProperties: false
+      properties:
+        adapter:
+          $ref: "#/components/schemas/SuiteAdapter"
+        component:
+          type: string
+        id:
+          type: string
+        version:
+          type: string
+      required:
+        - id
+        - version
+        - adapter
       type: object
     SyncOutputBody:
       additionalProperties: false
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/SyncOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/SyncOutputBody.json
         sources:
           items:
             $ref: "#/components/schemas/TrustedSourceStatus"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         synced:
           format: int64
           type: integer
       required:
         - synced
         - sources
+      type: object
+    SyncTrigger:
+      additionalProperties: false
+      properties:
+        enabled:
+          type: boolean
+        mode:
+          type: string
+      required:
+        - enabled
       type: object
     Target:
       additionalProperties: false
@@ -5179,8 +6497,9 @@ components:
         capabilities:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         config: {}
         createdAt:
           format: date-time
@@ -5188,15 +6507,17 @@ components:
         effectiveActions:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         enabled:
           type: boolean
         grants:
           items:
             $ref: "#/components/schemas/Grant"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         id:
           type: string
         isDefault:
@@ -5235,10 +6556,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/TargetOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/TargetOutputBody.json
         target:
           $ref: "#/components/schemas/Target"
       required:
@@ -5260,15 +6582,17 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/TargetsOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/TargetsOutputBody.json
         targets:
           items:
             $ref: "#/components/schemas/RolloutTarget"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - targets
       type: object
@@ -5307,10 +6631,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/TeamOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/TeamOutputBody.json
         team:
           $ref: "#/components/schemas/Team"
       required:
@@ -5324,15 +6649,17 @@ components:
         newPermissions:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         newRoleId:
           type: string
         oldPermissions:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         oldRoleId:
           type: string
         teamId:
@@ -5381,8 +6708,9 @@ components:
         tags:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         trustTier:
           type: string
         uiSchema: {}
@@ -5421,8 +6749,9 @@ components:
         tags:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         trustTier:
           type: string
         unsigned:
@@ -5561,10 +6890,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/TenantOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/TenantOutputBody.json
         deletion:
           $ref: "#/components/schemas/TenantDeletion"
         organization:
@@ -5572,8 +6902,9 @@ components:
         teams:
           items:
             $ref: "#/components/schemas/Team"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - organization
         - teams
@@ -5669,10 +7000,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/TestOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/TestOutputBody.json
         delivery:
           $ref: "#/components/schemas/NotificationDelivery"
       required:
@@ -5683,10 +7015,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/TokenOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/TokenOutputBody.json
         expiresAt:
           type: string
         record:
@@ -5698,6 +7031,50 @@ components:
         - token
         - record
         - expiresAt
+      type: object
+    Trigger:
+      additionalProperties: false
+      properties:
+        kind:
+          type: string
+        operationId:
+          type: string
+        profile:
+          type: string
+        requestKey:
+          type: string
+        scheduleSetId:
+          type: string
+        scheduledAt:
+          type: string
+      required:
+        - kind
+        - profile
+      type: object
+    TriggerToggle:
+      additionalProperties: false
+      properties:
+        enabled:
+          type: boolean
+      required:
+        - enabled
+      type: object
+    Triggers:
+      additionalProperties: false
+      properties:
+        cron:
+          $ref: "#/components/schemas/CronConfig"
+        manual:
+          $ref: "#/components/schemas/TriggerToggle"
+        onRevisionChange:
+          $ref: "#/components/schemas/TriggerToggle"
+        onSync:
+          $ref: "#/components/schemas/SyncTrigger"
+      required:
+        - onRevisionChange
+        - onSync
+        - manual
+        - cron
       type: object
     TrustedSourceStatus:
       additionalProperties: false
@@ -5803,8 +7180,9 @@ components:
         slots:
           items:
             $ref: "#/components/schemas/UiSlotDescriptor"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         title:
           type: string
       required:
@@ -5816,10 +7194,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/UiExtensionOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/UiExtensionOutputBody.json
         extension:
           $ref: "#/components/schemas/UiExtensionRemote"
       required:
@@ -5843,8 +7222,9 @@ components:
         slots:
           items:
             $ref: "#/components/schemas/UiSlotDescriptor"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         title:
           type: string
         version:
@@ -5872,10 +7252,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/UnregisterOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/UnregisterOutputBody.json
         mode:
           type: string
         unregistered:
@@ -5888,10 +7269,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/UpdateAddonInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/UpdateAddonInputBody.json
         chartVersion:
           type: string
         values: {}
@@ -5901,10 +7283,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/UpdateBrokeredIdPInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/UpdateBrokeredIdPInputBody.json
         claimMapping:
           $ref: "#/components/schemas/ClaimMappingInput"
         clientId:
@@ -5924,10 +7307,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/UpdateConfigInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/UpdateConfigInputBody.json
         config:
           $ref: "#/components/schemas/ApprovalConfig"
       required:
@@ -5938,10 +7322,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/UpdateIdentityClientInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/UpdateIdentityClientInputBody.json
         audiences:
           items:
             type: string
@@ -5964,10 +7349,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/UpdateInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/UpdateInputBody.json
         baseBranch:
           type: string
         commitPolicy:
@@ -5988,10 +7374,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/UpdateInputBody1.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/UpdateInputBody1.json
         config: {}
         enabled:
           type: boolean
@@ -6011,17 +7398,19 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/UpdateInputBody2.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/UpdateInputBody2.json
         enabled:
           type: boolean
         events:
           items:
             type: string
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
         name:
           type: string
         secret:
@@ -6034,10 +7423,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/UpdateInputBody3.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/UpdateInputBody3.json
         provider:
           $ref: "#/components/schemas/SecretStoreProvider"
         targets:
@@ -6048,10 +7438,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/UpdateInstanceInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/UpdateInstanceInputBody.json
         repoId:
           type: string
         spec: {}
@@ -6063,10 +7454,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/UpdatePolicyInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/UpdatePolicyInputBody.json
         enabled:
           type: boolean
         name:
@@ -6086,10 +7478,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/UpdateTeamInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/UpdateTeamInputBody.json
         displayName:
           description: Human-friendly display name (name and Keycloak group path stay immutable)
           maxLength: 200
@@ -6102,10 +7495,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/UpdateTenantInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/UpdateTenantInputBody.json
         displayName:
           maxLength: 200
           minLength: 1
@@ -6118,10 +7512,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/UpgradeInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/UpgradeInputBody.json
         repoId:
           type: string
         toVersion:
@@ -6143,20 +7538,118 @@ components:
         - server
         - authSecretRef
       type: object
+    VerificationGrantStatusOutputBody:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/VerificationGrantStatusOutputBody.json
+          format: uri
+          readOnly: true
+          type: string
+        status:
+          type: string
+      required:
+        - status
+      type: object
+    VerificationPolicy:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/VerificationPolicy.json
+          format: uri
+          readOnly: true
+          type: string
+        addonAbsent:
+          type: string
+        binding:
+          $ref: "#/components/schemas/PolicyBinding"
+        concurrency:
+          $ref: "#/components/schemas/ConcurrencyConfig"
+        createdAt:
+          format: date-time
+          type: string
+        current:
+          type: boolean
+        enabled:
+          type: boolean
+        failureAction:
+          type: string
+        id:
+          type: string
+        instanceId:
+          type: string
+        instanceUid:
+          type: string
+        notifications:
+          $ref: "#/components/schemas/NotificationConfig"
+        orgId:
+          type: string
+        policyRevision:
+          format: int64
+          type: integer
+        retention:
+          $ref: "#/components/schemas/RetentionConfig"
+        timeout:
+          type: string
+        triggers:
+          $ref: "#/components/schemas/Triggers"
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+        - policyRevision
+        - enabled
+        - binding
+        - triggers
+        - timeout
+        - concurrency
+        - retention
+        - addonAbsent
+        - failureAction
+      type: object
+    VerificationView:
+      additionalProperties: false
+      properties:
+        $schema:
+          description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/VerificationView.json
+          format: uri
+          readOnly: true
+          type: string
+        gate:
+          $ref: "#/components/schemas/GateStatus"
+        policy:
+          $ref: "#/components/schemas/VerificationPolicy"
+        runs:
+          items:
+            $ref: "#/components/schemas/Run"
+          type:
+            - array
+            - "null"
+      required:
+        - gate
+      type: object
     VisibilityInputBody:
       additionalProperties: false
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/VisibilityInputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/VisibilityInputBody.json
         rules:
           items:
             $ref: "#/components/schemas/Item"
-          type: array
-          nullable: true
+          type:
+            - array
+            - "null"
       required:
         - rules
       type: object
@@ -6165,10 +7658,11 @@ components:
       properties:
         $schema:
           description: A URL to the JSON Schema for this object.
+          examples:
+            - https://example.com/schemas/WebhookOutputBody.json
           format: uri
           readOnly: true
           type: string
-          example: https://example.com/schemas/WebhookOutputBody.json
         hookUrl:
           type: string
         provisioned:
@@ -6187,49 +7681,10 @@ components:
       scheme: bearer
       type: http
 info:
-  title: Inari Control Plane API
+  title: inari-server
   version: 0.1.0
-  description: |
-    REST surface of the Inari control plane for console and CLI clients
-    (platform plan §4.3). Agents use the gRPC EventStream contract instead.
-    All operations are tenant-scoped.
-  license:
-    name: Apache-2.0
-    url: https://www.apache.org/licenses/LICENSE-2.0
-openapi: 3.0.3
+openapi: 3.1.0
 paths:
-  /healthz:
-    get:
-      operationId: getHealth
-      summary: Liveness probe
-      security: []
-      tags: [meta]
-      responses:
-        "200":
-          description: Service is alive.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HealthStatus"
-  /readyz:
-    get:
-      operationId: getReady
-      summary: Readiness probe
-      security: []
-      tags: [meta]
-      responses:
-        "200":
-          description: Service is ready.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HealthStatus"
-        "503":
-          description: Service is not ready.
-          content:
-            application/json:
-              schema:
-                $ref: "#/components/schemas/HealthStatus"
   /api/v1/admin/catalog/sources:
     get:
       operationId: listCatalogSources
@@ -7157,8 +8612,8 @@ paths:
           content:
             application/json:
               schema:
+                contentEncoding: base64
                 type: string
-                format: byte
           description: OK
           headers:
             Content-Type:
@@ -7882,8 +9337,8 @@ paths:
           content:
             application/json:
               schema:
+                contentEncoding: base64
                 type: string
-                format: byte
           description: OK
           headers:
             Content-Type:
@@ -8639,8 +10094,8 @@ paths:
           content:
             application/json:
               schema:
+                contentEncoding: base64
                 type: string
-                format: byte
           description: OK
           headers:
             Content-Type:
@@ -9615,7 +11070,6 @@ paths:
                 $ref: "#/components/schemas/ErrorModel"
           description: Error
       summary: OAuth callback (302 back to the UI)
-      security: []
   /api/v1/tenants/{org}/git-repos:
     get:
       operationId: listGitRepos
@@ -10511,6 +11965,143 @@ paths:
       security:
         - bearer: []
       summary: Diff preview data for an upgrade
+  /api/v1/tenants/{org}/instances/{id}/promote:
+    post:
+      operationId: promoteInstance
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PromotionInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PromotionOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Explicitly promote an exact verified application version
+  /api/v1/tenants/{org}/instances/{id}/promotion-policy:
+    get:
+      operationId: getInstancePromotionPolicy
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PromotionPolicyOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Get linked promotion verification policy
+    put:
+      operationId: putInstancePromotionPolicy
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PromotionPolicy"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PromotionPolicyOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Set linked promotion verification policy
+  /api/v1/tenants/{org}/instances/{id}/promotion/preview:
+    post:
+      operationId: previewInstancePromotion
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PromotionInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PromotionPreview"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Preview exact promotion evidence gates
   /api/v1/tenants/{org}/instances/{id}/rollback:
     post:
       operationId: rollbackInstance
@@ -10583,6 +12174,280 @@ paths:
       security:
         - bearer: []
       summary: One-click upgrade of an instance to a newer catalog version
+  /api/v1/tenants/{org}/instances/{id}/verification:
+    delete:
+      operationId: disableInstanceVerification
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationPolicy"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Disable future verification triggers
+    get:
+      operationId: getInstanceVerification
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationView"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Get instance verification policy and status
+    put:
+      operationId: putInstanceVerification
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerificationPolicy"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationPolicy"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Save a verified team policy revision
+  /api/v1/tenants/{org}/instances/{id}/verification/preview:
+    post:
+      operationId: previewInstanceVerification
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerificationPolicy"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PolicyPreview"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Preview effective verification policy without side effects
+  /api/v1/tenants/{org}/instances/{id}/verification/runs:
+    get:
+      operationId: listInstanceVerificationRuns
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - explode: false
+          in: query
+          name: limit
+          schema:
+            default: 50
+            format: int64
+            maximum: 200
+            minimum: 1
+            type: integer
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunListOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: List verification run history
+    post:
+      operationId: createInstanceVerificationRun
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RunInputBody"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RunOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Dry-run or request an exact manual verification run
+  /api/v1/tenants/{org}/instances/{id}/verification/runs/{runId}:
+    get:
+      operationId: getInstanceVerificationRun
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: runId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Run"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Get verification run details
+  /api/v1/tenants/{org}/instances/{id}/verification/runs/{runId}/retry:
+    post:
+      operationId: retryInstanceVerificationRun
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: runId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Run"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Retry a failed verification attempt after revalidation
   /api/v1/tenants/{org}/members:
     get:
       operationId: listOrgMembers
@@ -12800,6 +14665,259 @@ paths:
       security:
         - bearer: []
       summary: Create a run for a source-qualified template
+  /api/v1/tenants/{org}/verification-environments/{id}/grants:
+    post:
+      operationId: createVerificationGrant
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SuiteGrant"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuiteGrant"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Create or revise exact suite grant
+  /api/v1/tenants/{org}/verification-environments/{id}/grants/preview:
+    post:
+      operationId: previewVerificationGrant
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SuiteGrant"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuitePreview"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Preview exact suite digest and profile grant
+  /api/v1/tenants/{org}/verification-environments/{targetId}:
+    get:
+      operationId: getVerificationEnvironment
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: targetId
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvironmentPolicy"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Get target verification environment policy
+    put:
+      operationId: putVerificationEnvironment
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: targetId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EnvironmentPolicy"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/EnvironmentPolicy"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Set target verification environment policy
+  /api/v1/tenants/{org}/verification-grants/{id}:
+    delete:
+      operationId: revokeVerificationGrant
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VerificationGrantStatusOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Revoke new runs and evidence for a suite grant
+  /api/v1/tenants/{org}/verification-suites:
+    get:
+      operationId: listVerificationSuites
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuiteListOutputBody"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: List admitted suite releases
+    post:
+      operationId: createVerificationSuite
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SuiteAdmissionInput"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuitePreview"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Import an exact verified suite release
+  /api/v1/tenants/{org}/verification-suites/preview:
+    post:
+      operationId: previewVerificationSuite
+      parameters:
+        - in: path
+          name: org
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SuiteAdmissionInput"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SuitePreview"
+          description: OK
+        default:
+          content:
+            application/problem+json:
+              schema:
+                $ref: "#/components/schemas/ErrorModel"
+          description: Error
+      security:
+        - bearer: []
+      summary: Cryptographically preview a platform suite release
   /api/v1/tenants/{org}/zones:
     get:
       operationId: listTenantZones
@@ -12972,6 +15090,7 @@ paths:
         content:
           application/json:
             schema:
+              contentMediaType: application/octet-stream
               format: binary
               type: string
         required: true
@@ -12989,6 +15108,3 @@ paths:
                 $ref: "#/components/schemas/ErrorModel"
           description: Error
       summary: Git provider webhook ingress (per-repo HMAC-authenticated)
-      security: []
-servers:
-  - url: /
