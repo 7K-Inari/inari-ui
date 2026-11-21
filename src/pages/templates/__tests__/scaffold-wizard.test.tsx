@@ -4,6 +4,7 @@ import { http, HttpResponse } from "msw";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { afterAll, afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 
+import type { components } from "@/api/__generated__/schema";
 import { m4MockControl } from "@/mocks/fixtures/m4";
 import { mockServer } from "@/mocks/server";
 import { ScaffoldWizardPage } from "@/pages/templates/scaffold-wizard";
@@ -16,6 +17,8 @@ vi.mock("@/auth/auth-context", () => ({
 vi.mock("@/tenant/tenant-context", () => ({
   useTenant: () => ({ tenant: "acme" }),
 }));
+
+type PlanRequest = components["schemas"]["PlanRequest"];
 
 beforeAll(() => mockServer.listen({ onUnhandledFrame: "error" }));
 afterEach(() => {
@@ -71,6 +74,71 @@ describe("TemplateListPage", () => {
 });
 
 describe("ScaffoldWizardPage", () => {
+  it("uses a reviewed DeploymentPlan for a deployment-capable template", async () => {
+    const submittedRequests: PlanRequest[] = [];
+    const now = "2026-11-15T21:42:00Z";
+    const digest = "sha256:ffeeddccbbaa99887766554433221100ffeeddccbbaa99887766554433221100";
+    mockServer.use(
+      http.post("*/api/v1/tenants/acme/deployment-plans/preflight", async ({ request }) => {
+        const body = await request.json() as PlanRequest;
+        const source = { ...body.source, version: "1.4.0", digest };
+        const deployment = { ...body.deployment, namespace: body.deployment.namespace || "acme--payments-api" };
+        return HttpResponse.json({
+          preflight: {
+            plan: {
+              id: "dp-template", orgId: "acme", orgSlug: "acme", operation: "deploy", state: "preflight", source, deployment,
+              app: { itemId: "core/web-service", version: "1.4.0", digest },
+              observability: { mode: "skip" }, planFingerprint: "sha256:template-review",
+              gate: { companionRendering: false, deployedVerification: false }, createdAt: now, updatedAt: now,
+              capability: {
+                apiVersion: "inari.dev/v1alpha1", kind: "Observability", app: "payments-api", folder: "payments-api",
+                datasources: { prometheus: "${DS_PROMETHEUS}" }, dashboards: [{ title: "Overview", uid: "payments-api-overview", file: "dashboards/overview.json" }],
+                rules: [{ file: "rules/service.yaml", evaluation: "local" }], targets: ["local"], severityRouting: { critical: "platform" },
+                minimumAppVersion: ">=1.3.0 <2.0.0", observabilityPack: { package: "observability-pack", versionRange: ">=0.2.0 <0.3.0" },
+              },
+            },
+            schema: { type: "object" }, uiHints: {}, deploymentTargets: [], compatiblePacks: [], monitoringTargets: [], providers: [],
+          },
+        });
+      }),
+      http.post("*/api/v1/tenants/acme/deployment-plans", async ({ request }) => {
+        const body = await request.json() as PlanRequest;
+        submittedRequests.push(body);
+        return HttpResponse.json({ plan: {
+          id: "dp-template", orgId: "acme", orgSlug: "acme", operation: "deploy", state: "submitted",
+          source: body.source, deployment: body.deployment, app: { itemId: "core/web-service", version: "1.4.0", digest },
+          observability: body.observability, planFingerprint: body.planFingerprint, scaffoldRunId: "run-observability",
+          gate: { companionRendering: false, deployedVerification: false }, createdAt: now, updatedAt: now,
+        } });
+      }),
+      http.get("*/api/v1/tenants/acme/deployment-plans/dp-template", () => {
+        const body = submittedRequests[0];
+        return HttpResponse.json({ plan: body ? {
+          id: "dp-template", orgId: "acme", orgSlug: "acme", operation: "deploy", state: "submitted",
+          source: body.source, deployment: body.deployment, app: { itemId: "core/web-service", version: "1.4.0", digest },
+          observability: body.observability, planFingerprint: body.planFingerprint,
+          gate: { companionRendering: false, deployedVerification: false }, createdAt: now, updatedAt: now,
+        } : null });
+      }),
+    );
+    const user = userEvent.setup();
+    renderWizard();
+    expect(await screen.findByText("Overview")).toBeInTheDocument();
+    await user.type(screen.getByLabelText("Service name"), "payments-api");
+    await user.type(screen.getByLabelText(/Description/), "Payments API service");
+    await user.type(screen.getByLabelText(/Port/), "8080");
+    await user.click(screen.getByRole("button", { name: "Next" }));
+    expect(await screen.findByRole("heading", { name: "Review" })).toBeInTheDocument();
+    expect(screen.getByText("TemplateManifest.Version")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Deploy application" }));
+    expect(await screen.findByText("Deployment status")).toBeInTheDocument();
+    const body = submittedRequests[0];
+    expect(body.source).toMatchObject({ kind: "template", version: "1.4.0", digest, displayName: "payments-api" });
+    expect(body.deployment).toMatchObject({ name: "payments-api", ownerTeam: "payments-api-maintainers", namespace: "acme--payments-api" });
+    expect(body.observability.mode).toBe("skip");
+    expect(body.planFingerprint).toBe("sha256:template-review");
+  });
+
   it("completes the scaffold flow end-to-end: repo + pipeline + catalog entry", async () => {
     const user = userEvent.setup();
     renderWizard();

@@ -47,6 +47,18 @@ async function fillConfigure(user: ReturnType<typeof userEvent.setup>) {
   await user.type(storage, "100");
 }
 
+function planFixture() {
+  const now = "2026-11-15T21:42:00Z";
+  return {
+    id: "dp-test", orgId: "acme", orgSlug: "acme", operation: "deploy",
+    source: { kind: "catalog", itemId: "core/postgresql-aws", version: "1.4.0" },
+    deployment: { targetId: "rt-cl-eks-prod", targetRevision: 1, name: "orders-db-2", namespace: "default", spec: {} },
+    app: { itemId: "core/postgresql-aws", version: "1.4.0", digest: "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef" },
+    observability: { mode: "none" }, planFingerprint: "sha256:plan", state: "submitted",
+    gate: { companionRendering: false, deployedVerification: false }, appInstanceId: "dep-test", createdAt: now, updatedAt: now,
+  };
+}
+
 describe("DeployWizardPage", () => {
   it("renders the schema form from the version schema and uiHints", async () => {
     renderWizard();
@@ -82,22 +94,14 @@ describe("DeployWizardPage", () => {
     let submittedBody: unknown = null;
     const { http, HttpResponse } = await import("msw");
     mockServer.use(
-      http.post("*/api/v1/tenants/acme/deploys", async ({ request }) => {
+      http.post("*/api/v1/tenants/acme/deployment-plans", async ({ request }) => {
         submittedBody = await request.json();
         return HttpResponse.json(
-          {
-            deploy: {
-              InstanceID: "dep-test",
-              Version: "1.4.0",
-              Status: "deploying",
-              CommitSHA: "",
-              PRURL: "https://github.com/acme/acme-inari-state/pull/101",
-              ApprovalID: "",
-            },
-          },
+          { plan: planFixture() },
           { status: 201 },
         );
       }),
+      http.get("*/api/v1/tenants/acme/deployment-plans/dp-test", () => HttpResponse.json({ plan: planFixture() })),
       http.get("*/api/v1/tenants/acme/instances/dep-test", () =>
         HttpResponse.json({
           instance: {
@@ -126,24 +130,17 @@ describe("DeployWizardPage", () => {
     expect(screen.getByText(/eks-prod-eu/)).toBeInTheDocument();
     expect(screen.getAllByText(/1\.4\.0/).length).toBeGreaterThan(0);
 
-    await user.click(screen.getByRole("button", { name: "Deploy" }));
+    await user.click(screen.getByRole("button", { name: "Deploy application" }));
 
     await waitFor(() => expect(submittedBody).not.toBeNull());
     const body = submittedBody as {
-      itemId: string;
-      version: string;
-      clusterId: string;
-      name: string;
-      spec: Record<string, unknown>;
+      source: { itemId: string; version: string };
+      deployment: { targetId: string; name: string; spec: Record<string, unknown> };
     };
-    expect(body).toMatchObject({
-      itemId: "core/postgresql-aws",
-      version: "1.4.0",
-      clusterId: "cl-eks-prod",
-      name: "orders-db-2",
-    });
-    expect(body.spec.instanceClass).toBe("db.t3.medium");
-    expect(body.spec.storageGi).toBe(100);
+    expect(body.source).toMatchObject({ itemId: "core/postgresql-aws", version: "1.4.0" });
+    expect(body.deployment).toMatchObject({ targetId: "rt-cl-eks-prod", name: "orders-db-2" });
+    expect(body.deployment.spec.instanceClass).toBe("db.t3.medium");
+    expect(body.deployment.spec.storageGi).toBe(100);
 
     expect(
       await screen.findByText(/Deploy healthy/, undefined, { timeout: 10000 }),
@@ -163,22 +160,14 @@ describe("DeployWizardPage", () => {
     let submittedBody: unknown = null;
     const { http, HttpResponse } = await import("msw");
     mockServer.use(
-      http.post("*/api/v1/tenants/acme/deploys", async ({ request }) => {
+      http.post("*/api/v1/tenants/acme/deployment-plans", async ({ request }) => {
         submittedBody = await request.json();
         return HttpResponse.json(
-          {
-            deploy: {
-              InstanceID: "dep-test",
-              Version: "1.4.0",
-              Status: "deploying",
-              CommitSHA: "",
-              PRURL: "",
-              ApprovalID: "",
-            },
-          },
+          { plan: planFixture() },
           { status: 201 },
         );
       }),
+      http.get("*/api/v1/tenants/acme/deployment-plans/dp-test", () => HttpResponse.json({ plan: planFixture() })),
       http.get("*/api/v1/tenants/acme/instances/dep-test", () =>
         HttpResponse.json({
           instance: {
@@ -204,10 +193,10 @@ describe("DeployWizardPage", () => {
     // Switch to team-beta.
     await user.click(screen.getByRole("radio", { name: /team-beta-gitops/i }));
     await user.click(screen.getByRole("button", { name: "Next" }));
-    await user.click(screen.getByRole("button", { name: "Deploy" }));
+    await user.click(screen.getByRole("button", { name: "Deploy application" }));
     await waitFor(() => expect(submittedBody).not.toBeNull());
-    const body = submittedBody as { repoId?: string };
-    expect(body.repoId).toBe("repo-team-beta");
+    const body = submittedBody as { deployment: { repoId?: string } };
+    expect(body.deployment.repoId).toBe("repo-team-beta");
   });
 
   it("shows policy denial reason and remediation when OPA blocks the deploy", async () => {
@@ -219,7 +208,7 @@ describe("DeployWizardPage", () => {
     await user.click(screen.getByRole("button", { name: "Next" }));
     expect(await screen.findByRole("heading", { name: "Review" })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Deploy" }));
+    await user.click(screen.getByRole("button", { name: "Deploy application" }));
 
     const alert = await screen.findByRole("alert");
     expect(alert).toHaveTextContent("Blocked by platform policy");

@@ -4,6 +4,40 @@
  */
 
 export interface paths {
+    "/healthz": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Liveness probe */
+        get: operations["getHealth"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/readyz": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Readiness probe */
+        get: operations["getReady"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/catalog/sources": {
         parameters: {
             query?: never;
@@ -1160,6 +1194,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenants/{org}/deployment-plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Revalidate and submit a normalized deployment plan */
+        post: operations["submitDeploymentPlan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/deployment-plans/preflight": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Normalize a deployment plan and list entitled targets */
+        post: operations["preflightDeploymentPlan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/deployment-plans/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get deployment plan and companion state */
+        get: operations["getDeploymentPlan"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenants/{org}/deploys": {
         parameters: {
             query?: never;
@@ -1716,6 +1801,23 @@ export interface paths {
         };
         /** Diff preview data for an upgrade */
         get: operations["instanceDiff"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/instances/{id}/observability": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get existing-instance companion readiness and verified links */
+        get: operations["getInstanceObservability"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2948,9 +3050,18 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        HealthStatus: {
+            /** @enum {string} */
+            status: "ok";
+            version?: string;
+        };
         AWSSMProvider: {
             authSecretRef: components["schemas"]["SecretRef"];
             region: string;
+        };
+        AccessCheck: {
+            state: string;
+            team: string;
         };
         AccessInfoOutputBody: {
             /**
@@ -3056,6 +3167,13 @@ export interface components {
             supported: boolean;
             upgradeAvailable: boolean;
         };
+        AppIdentity: {
+            instanceId?: string;
+            planId: string;
+            revision: string;
+            scaffoldRunId?: string;
+            sourceDigest: string;
+        };
         ApprovalConfig: {
             approvalTtl: string;
             approverGroups?: components["schemas"]["ApproverGroup"][] | null;
@@ -3121,6 +3239,16 @@ export interface components {
             releaseTag: string;
             runtime?: components["schemas"]["RuntimeEvidence"];
             sourceSha: string;
+        };
+        ArtifactPin: {
+            chartDigest?: string;
+            chartRef?: string;
+            digest: string;
+            itemId?: string;
+            packageVersion?: string;
+            ref?: string;
+            sourceId?: string;
+            version: string;
         };
         AssignPackInputBody: {
             /**
@@ -3418,6 +3546,37 @@ export interface components {
              */
             readonly $schema?: string;
             clusterSet: components["schemas"]["ClusterSet"];
+        };
+        Companion: {
+            appInstanceId?: string;
+            appRevision: string;
+            appSourceDigest: string;
+            capabilityDigest: string;
+            companionInstanceId?: string;
+            /** Format: date-time */
+            createdAt: string;
+            /** Format: int64 */
+            generation: number;
+            id: string;
+            links: components["schemas"]["Link"][] | null;
+            pack: components["schemas"]["PackPin"];
+            planId: string;
+            reason?: string;
+            scaffoldRunId?: string;
+            state: string;
+            targetClusterId: string;
+            targetId: string;
+            /** Format: int64 */
+            targetRevision: number;
+            targetSelection: unknown;
+            /** Format: date-time */
+            updatedAt: string;
+            verification?: components["schemas"]["VerificationResult"];
+        };
+        CompanionIdentity: {
+            /** Format: int64 */
+            generation: number;
+            id: string;
         };
         Compatibility: {
             browser: string;
@@ -3723,6 +3882,23 @@ export interface components {
             startingDeadlineSeconds?: number;
             timezone?: string;
         };
+        Dashboard: {
+            file: string;
+            title: string;
+            uid: string;
+        };
+        DashboardCheck: {
+            slug: string;
+            state: string;
+            title: string;
+            uid: string;
+        };
+        DatasourceCheck: {
+            logical: string;
+            name: string;
+            state: string;
+            type: string;
+        };
         DecideExemptionInputBody: {
             /**
              * Format: uri
@@ -3860,6 +4036,22 @@ export interface components {
             Status: string;
             Version: string;
             artifactDigest?: string;
+        };
+        DeploymentGateStatus: {
+            companionRendering: boolean;
+            deployedVerification: boolean;
+            reason?: string;
+        };
+        DeploymentInput: {
+            displayName?: string;
+            name?: string;
+            namespace?: string;
+            ownerTeam?: string;
+            repoId?: string;
+            spec?: unknown;
+            targetId: string;
+            /** Format: int64 */
+            targetRevision: number;
         };
         DiffOutputBody: {
             /**
@@ -4074,6 +4266,11 @@ export interface components {
             type: string;
             value: boolean;
         };
+        FolderCheck: {
+            name: string;
+            state: string;
+            uid: string;
+        };
         GCPSMProvider: {
             authSecretRef: components["schemas"]["SecretRef"];
             projectId: string;
@@ -4100,6 +4297,15 @@ export interface components {
              */
             readonly $schema?: string;
             resource: components["schemas"]["ResourceView"];
+        };
+        GetPlanOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/GetPlanOutputBody.json
+             */
+            readonly $schema?: string;
+            plan: components["schemas"]["Plan"];
         };
         GetRBACMatrixOutputBody: {
             /**
@@ -4267,6 +4473,21 @@ export interface components {
             readonly $schema?: string;
             items: components["schemas"]["ApprovalRequest"][] | null;
         };
+        InstanceObservability: {
+            available: boolean;
+            companion?: components["schemas"]["Companion"];
+            mode: string;
+            reason?: string;
+        };
+        InstanceOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/InstanceOutputBody.json
+             */
+            readonly $schema?: string;
+            observability: components["schemas"]["InstanceObservability"];
+        };
         InstanceView: {
             artifactDigest?: string;
             catalogItemId: string;
@@ -4348,6 +4569,11 @@ export interface components {
             runId: string;
             sourceSha: string;
             status: string;
+        };
+        Link: {
+            title: string;
+            uid: string;
+            url: string;
         };
         ListAccountsOutputBody: {
             /**
@@ -4769,6 +4995,29 @@ export interface components {
             orgId: string;
             url: string;
         };
+        ObservabilityCapability: {
+            apiVersion: string;
+            app: string;
+            dashboards: components["schemas"]["Dashboard"][] | null;
+            datasources: {
+                [key: string]: string;
+            };
+            folder: string;
+            kind: string;
+            linkVariables?: string[] | null;
+            minimumAppVersion: string;
+            observabilityPack: components["schemas"]["PackReference"];
+            rules: components["schemas"]["Rule"][] | null;
+            severityRouting: {
+                [key: string]: string;
+            };
+            targets: string[] | null;
+        };
+        ObservabilityInput: {
+            mode: string;
+            pack?: components["schemas"]["PackPin"];
+            target?: components["schemas"]["TargetIntent"];
+        };
         OrgMemberView: {
             displayName: string;
             email: string;
@@ -4803,6 +5052,11 @@ export interface components {
             slug: string;
             status: string;
         };
+        PackIdentity: {
+            digest: string;
+            itemId: string;
+            version: string;
+        };
         PackOutputBody: {
             /**
              * Format: uri
@@ -4811,6 +5065,21 @@ export interface components {
              */
             readonly $schema?: string;
             pack: components["schemas"]["PolicyPack"];
+        };
+        PackPin: {
+            chartDigest?: string;
+            chartRef?: string;
+            digest: string;
+            itemId?: string;
+            packageVersion?: string;
+            ref?: string;
+            renderContract: string;
+            sourceId?: string;
+            version: string;
+        };
+        PackReference: {
+            package: string;
+            versionRange: string;
         };
         Permission: {
             description: string;
@@ -4835,6 +5104,50 @@ export interface components {
              */
             readonly $schema?: string;
             version: string;
+        };
+        Plan: {
+            app: components["schemas"]["ArtifactPin"];
+            appClusterId?: string;
+            appInstanceId?: string;
+            approvalId?: string;
+            capability?: components["schemas"]["ObservabilityCapability"];
+            capabilityDigest?: string;
+            commitSha?: string;
+            companion?: components["schemas"]["Companion"];
+            /** Format: date-time */
+            createdAt: string;
+            deployment: components["schemas"]["DeploymentInput"];
+            errorCode?: string;
+            errorMessage?: string;
+            gate: components["schemas"]["DeploymentGateStatus"];
+            id: string;
+            observability: components["schemas"]["ObservabilityInput"];
+            operation: string;
+            orgId: string;
+            orgSlug: string;
+            planFingerprint: string;
+            prUrl?: string;
+            renderIntent?: components["schemas"]["RenderIntent"];
+            scaffoldRunId?: string;
+            source: components["schemas"]["Source"];
+            state: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
+        PlanRequest: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/PlanRequest.json
+             */
+            readonly $schema?: string;
+            deployment: components["schemas"]["DeploymentInput"];
+            idempotencyKey: string;
+            instanceId?: string;
+            observability: components["schemas"]["ObservabilityInput"];
+            operation: string;
+            planFingerprint?: string;
+            source?: components["schemas"]["Source"];
         };
         PlatformAdminView: {
             displayName: string;
@@ -4924,6 +5237,24 @@ export interface components {
             reason: string;
             remediation: string;
             rule: string;
+        };
+        Preflight: {
+            compatiblePacks: components["schemas"]["PackPin"][] | null;
+            deploymentTargets: components["schemas"]["Target"][] | null;
+            monitoringTargets: components["schemas"]["Target"][] | null;
+            plan: components["schemas"]["Plan"];
+            providers: components["schemas"]["ProviderDescriptor"][] | null;
+            schema?: unknown;
+            uiHints?: unknown;
+        };
+        PreflightOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/PreflightOutputBody.json
+             */
+            readonly $schema?: string;
+            preflight: components["schemas"]["Preflight"];
         };
         Producer: {
             /** Format: int64 */
@@ -5251,6 +5582,13 @@ export interface components {
             /** Format: date-time */
             usedAt?: string;
         };
+        RenderIntent: {
+            appSpec?: unknown;
+            evaluation?: string;
+            packSpec?: {
+                [key: string]: unknown;
+            };
+        };
         RepoOutputBody: {
             /**
              * Format: uri
@@ -5490,6 +5828,15 @@ export interface components {
             /** @description Returned exactly once; never stored server-side */
             secret: string;
         };
+        Rule: {
+            evaluation: string;
+            file: string;
+        };
+        RuleCheck: {
+            evaluation: string;
+            file: string;
+            state: string;
+        };
         Run: {
             /**
              * Format: uri
@@ -5527,6 +5874,13 @@ export interface components {
             triggerFingerprint: string;
             /** Format: date-time */
             updatedAt: string;
+        };
+        RunIdentity: {
+            /** Format: int64 */
+            attempt: number;
+            /** Format: date-time */
+            finishedAt: string;
+            id: string;
         };
         RunInputBody: {
             /**
@@ -5718,6 +6072,17 @@ export interface components {
             readonly $schema?: string;
             value: boolean;
         };
+        Source: {
+            admissionItemId?: string;
+            admissionVersion?: string;
+            digest?: string;
+            displayName?: string;
+            itemId?: string;
+            kind: string;
+            ref?: string;
+            sourceId?: string;
+            version?: string;
+        };
         SourceAdoptInputBody: {
             /**
              * Format: uri
@@ -5822,6 +6187,15 @@ export interface components {
             readonly $schema?: string;
             store: components["schemas"]["SecretStore"];
         };
+        SubmitOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/SubmitOutputBody.json
+             */
+            readonly $schema?: string;
+            plan: components["schemas"]["Plan"];
+        };
         Suite: {
             cleanup?: string;
             compatibleAppVersions: string;
@@ -5903,6 +6277,10 @@ export interface components {
             sideEffects: string;
             suiteDigest: string;
             suiteReleaseId: string;
+        };
+        SuiteIdentity: {
+            digest: string;
+            profile: string;
         };
         SuiteListOutputBody: {
             /**
@@ -5991,6 +6369,18 @@ export interface components {
             revision: number;
             /** Format: date-time */
             updatedAt: string;
+        };
+        TargetIdentity: {
+            clusterId: string;
+            id: string;
+            /** Format: int64 */
+            revision: number;
+        };
+        TargetIntent: {
+            id: string;
+            /** Format: int64 */
+            revision: number;
+            selection: unknown;
         };
         TargetOutputBody: {
             /**
@@ -6446,6 +6836,13 @@ export interface components {
             path?: string;
             server: string;
         };
+        VerificationChecks: {
+            access: components["schemas"]["AccessCheck"];
+            dashboards: components["schemas"]["DashboardCheck"][] | null;
+            datasources: components["schemas"]["DatasourceCheck"][] | null;
+            folder: components["schemas"]["FolderCheck"];
+            rules: components["schemas"]["RuleCheck"][] | null;
+        };
         VerificationGrantStatusOutputBody: {
             /**
              * Format: uri
@@ -6482,6 +6879,21 @@ export interface components {
             triggers: components["schemas"]["Triggers"];
             /** Format: date-time */
             updatedAt?: string;
+        };
+        VerificationResult: {
+            apiVersion: string;
+            app: components["schemas"]["AppIdentity"];
+            capabilityDigest: string;
+            checks: components["schemas"]["VerificationChecks"];
+            companion: components["schemas"]["CompanionIdentity"];
+            /** Format: date-time */
+            expiresAt: string;
+            kind: string;
+            pack: components["schemas"]["PackIdentity"];
+            result: string;
+            run: components["schemas"]["RunIdentity"];
+            suite: components["schemas"]["SuiteIdentity"];
+            target: components["schemas"]["TargetIdentity"];
         };
         VerificationView: {
             /**
@@ -6525,6 +6937,55 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getHealth: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Service is alive. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthStatus"];
+                };
+            };
+        };
+    };
+    getReady: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Service is ready. */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthStatus"];
+                };
+            };
+            /** @description Service is not ready. */
+            503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HealthStatus"];
+                };
+            };
+        };
+    };
     listCatalogSources: {
         parameters: {
             query?: never;
@@ -9310,6 +9771,108 @@ export interface operations {
             };
         };
     };
+    submitDeploymentPlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SubmitOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    preflightDeploymentPlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PreflightOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getDeploymentPlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GetPlanOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     deployCatalogItem: {
         parameters: {
             query?: never;
@@ -11034,6 +11597,38 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DiffOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getInstanceObservability: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["InstanceOutputBody"];
                 };
             };
             /** @description Error */

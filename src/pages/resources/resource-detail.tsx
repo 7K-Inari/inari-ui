@@ -26,6 +26,7 @@ import { GitOpsRepoCard } from "@/pages/resources/gitops-repo-card";
 import { UpgradeCard } from "@/pages/resources/upgrade-flow";
 import { VerificationCard } from "@/components/verification/verification-card";
 import { LoadingState } from "@/components/loading";
+import { ObservabilityResource } from "@/pages/resources/observability-resource";
 
 function ActionsMenu({ resource }: { resource: ResourceInstanceDetail }) {
   const [open, setOpen] = React.useState(false);
@@ -343,6 +344,8 @@ export function ResourceDetailPage() {
         commitSha={resource.commitSha}
         prUrl={resource.prUrl}
       />
+
+      <ObservabilityResource instanceId={resource.id} />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
