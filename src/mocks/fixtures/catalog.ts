@@ -261,6 +261,7 @@ export interface CatalogMockState {
 
 function instance(partial: Partial<InstanceView> & Pick<InstanceView, "id" | "orgId" | "catalogItemId" | "version" | "clusterId" | "resourceRef">): InstanceView {
   return {
+    uid: "2b6e4424-87a4-4f7c-b6d8-dfe2f6a894f8",
     health: "healthy",
     state: "Synced",
     ownerTeam: "",

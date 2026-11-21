@@ -1826,6 +1826,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenants/{org}/instances/{id}/promote": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Explicitly promote an exact verified application version */
+        post: operations["promoteInstance"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/instances/{id}/promotion-policy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get linked promotion verification policy */
+        get: operations["getInstancePromotionPolicy"];
+        /** Set linked promotion verification policy */
+        put: operations["putInstancePromotionPolicy"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/instances/{id}/promotion/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview exact promotion evidence gates */
+        post: operations["previewInstancePromotion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenants/{org}/instances/{id}/rollback": {
         parameters: {
             query?: never;
@@ -1854,6 +1906,94 @@ export interface paths {
         put?: never;
         /** One-click upgrade of an instance to a newer catalog version */
         post: operations["upgradeInstance"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/instances/{id}/verification": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get instance verification policy and status */
+        get: operations["getInstanceVerification"];
+        /** Save a verified team policy revision */
+        put: operations["putInstanceVerification"];
+        post?: never;
+        /** Disable future verification triggers */
+        delete: operations["disableInstanceVerification"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/instances/{id}/verification/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview effective verification policy without side effects */
+        post: operations["previewInstanceVerification"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/instances/{id}/verification/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List verification run history */
+        get: operations["listInstanceVerificationRuns"];
+        put?: never;
+        /** Dry-run or request an exact manual verification run */
+        post: operations["createInstanceVerificationRun"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/instances/{id}/verification/runs/{runId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get verification run details */
+        get: operations["getInstanceVerificationRun"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/instances/{id}/verification/runs/{runId}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retry a failed verification attempt after revalidation */
+        post: operations["retryInstanceVerificationRun"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2716,6 +2856,110 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenants/{org}/verification-environments/{id}/grants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Create or revise exact suite grant */
+        post: operations["createVerificationGrant"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/verification-environments/{id}/grants/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Preview exact suite digest and profile grant */
+        post: operations["previewVerificationGrant"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/verification-environments/{targetId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get target verification environment policy */
+        get: operations["getVerificationEnvironment"];
+        /** Set target verification environment policy */
+        put: operations["putVerificationEnvironment"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/verification-grants/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Revoke new runs and evidence for a suite grant */
+        delete: operations["revokeVerificationGrant"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/verification-suites": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List admitted suite releases */
+        get: operations["listVerificationSuites"];
+        put?: never;
+        /** Import an exact verified suite release */
+        post: operations["createVerificationSuite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenants/{org}/verification-suites/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Cryptographically preview a platform suite release */
+        post: operations["previewVerificationSuite"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/tenants/{org}/zones": {
         parameters: {
             query?: never;
@@ -2981,6 +3225,20 @@ export interface components {
         ApproverGroup: {
             name: string;
             subjects: string[] | null;
+        };
+        ArtifactDescriptor: {
+            app?: string;
+            compatibility?: components["schemas"]["Compatibility"];
+            component: string;
+            digest: string;
+            lanes: components["schemas"]["Lane"][] | null;
+            mediaType: string;
+            packageVersion: string;
+            producer: components["schemas"]["Producer"];
+            ref: string;
+            releaseTag: string;
+            runtime?: components["schemas"]["RuntimeEvidence"];
+            sourceSha: string;
         };
         ArtifactPin: {
             chartDigest?: string;
@@ -3320,6 +3578,22 @@ export interface components {
             generation: number;
             id: string;
         };
+        Compatibility: {
+            browser: string;
+            completedAt: string;
+            matrix: {
+                [key: string]: string;
+            };
+            result: string;
+            slots: string[] | null;
+        };
+        ConcurrencyConfig: {
+            /** Format: int64 */
+            maxActive: number;
+            /** Format: int64 */
+            maxPending: number;
+            queuedRevisionPolicy: string;
+        };
         ConfigOutputBody: {
             /**
              * Format: uri
@@ -3600,6 +3874,14 @@ export interface components {
             /** @description URL-safe tenant slug */
             slug: string;
         };
+        CronConfig: {
+            enabled: boolean;
+            scheduleSetId?: string;
+            schedules?: string[] | null;
+            /** Format: int64 */
+            startingDeadlineSeconds?: number;
+            timezone?: string;
+        };
         Dashboard: {
             file: string;
             title: string;
@@ -3755,6 +4037,11 @@ export interface components {
             Version: string;
             artifactDigest?: string;
         };
+        DeploymentGateStatus: {
+            companionRendering: boolean;
+            deployedVerification: boolean;
+            reason?: string;
+        };
         DeploymentInput: {
             displayName?: string;
             name?: string;
@@ -3806,6 +4093,44 @@ export interface components {
              */
             readonly $schema?: string;
             endpoint: components["schemas"]["NotificationEndpoint"];
+        };
+        EnvironmentPolicy: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/EnvironmentPolicy.json
+             */
+            readonly $schema?: string;
+            allowedFailureActions: string[] | null;
+            allowedProfiles: string[] | null;
+            allowedTriggers: string[] | null;
+            /** Format: date-time */
+            createdAt?: string;
+            environment: string;
+            id?: string;
+            /** Format: int64 */
+            maxActive: number;
+            maxEvidenceAgeAtApproval: string;
+            /** Format: int64 */
+            maxGrantLifetimeDays: number;
+            /** Format: int64 */
+            maxPending: number;
+            /** Format: int64 */
+            maxResultDays: number;
+            maxTimeout: string;
+            /** Format: int64 */
+            maxWorkflowTTLSeconds: number;
+            /** Format: int64 */
+            minWorkflowTTLSeconds: number;
+            orgId?: string;
+            /** Format: int64 */
+            policyRevision: number;
+            requiredNotificationEndpointIds?: string[] | null;
+            targetId: string;
+            /** Format: int64 */
+            targetRevision: number;
+            /** Format: date-time */
+            updatedAt?: string;
         };
         ErrorDetail: {
             /** @description Where the error occurred, e.g. 'body.items[3].tags' or 'path.thing-id' */
@@ -3951,9 +4276,9 @@ export interface components {
             projectId: string;
         };
         GateStatus: {
-            companionRendering: boolean;
             deployedVerification: boolean;
             reason?: string;
+            renderAvailable: boolean;
         };
         GetOutputBody: {
             /**
@@ -4177,6 +4502,9 @@ export interface components {
             latestVersion?: string;
             managementMode: string;
             newVersionAvailable: boolean;
+            observedRevision?: string;
+            /** Format: date-time */
+            operationFinishedAt?: string;
             orgId: string;
             ownerTeam: string;
             prUrl?: string;
@@ -4185,7 +4513,10 @@ export interface components {
             spec: unknown;
             state: string;
             statusMessage?: string;
+            syncOperationId?: string;
+            syncOperationPhase?: string;
             syncState?: string;
+            uid: string;
             /** Format: date-time */
             updatedAt: string;
             version: string;
@@ -4230,6 +4561,14 @@ export interface components {
         KustomizeSource: {
             overlays?: string[] | null;
             path: string;
+        };
+        Lane: {
+            jobId: string;
+            name: string;
+            required: boolean;
+            runId: string;
+            sourceSha: string;
+            status: string;
         };
         Link: {
             title: string;
@@ -4627,6 +4966,10 @@ export interface components {
                 [key: string]: components["schemas"]["TenantCapabilities"];
             };
         };
+        NotificationConfig: {
+            endpointIds?: string[] | null;
+            events?: string[] | null;
+        };
         NotificationDelivery: {
             /** Format: int64 */
             attempts: number;
@@ -4776,7 +5119,7 @@ export interface components {
             deployment: components["schemas"]["DeploymentInput"];
             errorCode?: string;
             errorMessage?: string;
-            gate: components["schemas"]["GateStatus"];
+            gate: components["schemas"]["DeploymentGateStatus"];
             id: string;
             observability: components["schemas"]["ObservabilityInput"];
             operation: string;
@@ -4835,6 +5178,17 @@ export interface components {
             targetId: string;
             targetType: string;
         };
+        PolicyBinding: {
+            appArtifactDigest: string;
+            appItemId: string;
+            appVersion: string;
+            desiredCommit?: string;
+            parameterContract: string;
+            profile: string;
+            specDigest: string;
+            suiteDigest: string;
+            suiteGrantId: string;
+        };
         PolicyDecision: {
             allow: boolean;
             violations?: components["schemas"]["PolicyViolation"][] | null;
@@ -4861,6 +5215,23 @@ export interface components {
             parameters?: unknown;
             version: string;
         };
+        PolicyPreview: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/PolicyPreview.json
+             */
+            readonly $schema?: string;
+            environment: components["schemas"]["EnvironmentPolicy"];
+            gate: components["schemas"]["GateStatus"];
+            grant: components["schemas"]["SuiteGrant"];
+            policy: components["schemas"]["VerificationPolicy"];
+            /** Format: int64 */
+            sideEffectsPerformed: number;
+            suite: components["schemas"]["SuiteRelease"];
+            warnings?: string[] | null;
+            wouldCreate?: string[] | null;
+        };
         PolicyViolation: {
             exempted?: boolean;
             reason: string;
@@ -4884,6 +5255,86 @@ export interface components {
              */
             readonly $schema?: string;
             preflight: components["schemas"]["Preflight"];
+        };
+        Producer: {
+            /** Format: int64 */
+            runAttempt: number;
+            runId: string;
+            runUri: string;
+            workflowPath: string;
+            workflowSha: string;
+        };
+        PromotionDecision: {
+            allowed: boolean;
+            approvalRequired: boolean;
+            approverTeamIds?: string[] | null;
+            reasonCode?: string;
+            sourceRunId?: string;
+        };
+        PromotionInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/PromotionInputBody.json
+             */
+            readonly $schema?: string;
+            repoId?: string;
+            toDigest: string;
+            toVersion: string;
+        };
+        PromotionOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/PromotionOutputBody.json
+             */
+            readonly $schema?: string;
+            deploy: components["schemas"]["DeployResult"];
+        };
+        PromotionPolicy: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/PromotionPolicy.json
+             */
+            readonly $schema?: string;
+            approverTeamIds?: string[] | null;
+            /** Format: date-time */
+            createdAt?: string;
+            current?: boolean;
+            id?: string;
+            maxEvidenceAge: string;
+            orgId?: string;
+            /** Format: int64 */
+            policyRevision: number;
+            required: boolean;
+            requiredProfile: string;
+            requiredSuiteDigest: string;
+            sourceInstanceId: string;
+            targetInstanceId: string;
+            /** Format: date-time */
+            updatedAt?: string;
+        };
+        PromotionPolicyOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/PromotionPolicyOutputBody.json
+             */
+            readonly $schema?: string;
+            policy?: components["schemas"]["PromotionPolicy"];
+        };
+        PromotionPreview: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/PromotionPreview.json
+             */
+            readonly $schema?: string;
+            decision: components["schemas"]["PromotionDecision"];
+            policy?: components["schemas"]["PromotionPolicy"];
+            targetDigest: string;
+            targetVersion: string;
         };
         ProviderCompatOutputBody: {
             /**
@@ -4978,6 +5429,11 @@ export interface components {
              */
             readonly $schema?: string;
             changes: components["schemas"]["TeamRoleChange"][] | null;
+        };
+        RBACRule: {
+            apiGroups: string[] | null;
+            resources: string[] | null;
+            verbs: string[] | null;
         };
         RbacClusterRole: {
             description: string;
@@ -5204,6 +5660,16 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
         };
+        RetentionConfig: {
+            /** Format: int64 */
+            failedHistory: number;
+            /** Format: int64 */
+            resultDays: number;
+            /** Format: int64 */
+            successfulHistory: number;
+            /** Format: int64 */
+            workflowTTLSeconds: number;
+        };
         RetryDeletionOutputBody: {
             /**
              * Format: uri
@@ -5371,12 +5837,84 @@ export interface components {
             file: string;
             state: string;
         };
+        Run: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/Run.json
+             */
+            readonly $schema?: string;
+            appArtifactDigest: string;
+            appRevision: string;
+            /** Format: date-time */
+            createdAt: string;
+            disposition?: string;
+            /** Format: date-time */
+            expiresAt?: string;
+            /** Format: int64 */
+            grantRevision: number;
+            instanceId: string;
+            instanceUid: string;
+            /** Format: int64 */
+            latestAttempt: number;
+            links?: components["schemas"]["RunLinks"];
+            message?: string;
+            orgId: string;
+            outcome?: unknown;
+            outcomeDigest?: string;
+            /** Format: int64 */
+            policyRevision: number;
+            profile: string;
+            reasonCode?: string;
+            runId: string;
+            runKey: string;
+            status: string;
+            suiteDigest: string;
+            trigger: components["schemas"]["Trigger"];
+            triggerFingerprint: string;
+            /** Format: date-time */
+            updatedAt: string;
+        };
         RunIdentity: {
             /** Format: int64 */
             attempt: number;
             /** Format: date-time */
             finishedAt: string;
             id: string;
+        };
+        RunInputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/RunInputBody.json
+             */
+            readonly $schema?: string;
+            dryRun?: boolean;
+            idempotencyKey: string;
+        };
+        RunLinks: {
+            artifacts: string;
+            logs: string;
+            workflow: string;
+        };
+        RunListOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/RunListOutputBody.json
+             */
+            readonly $schema?: string;
+            runs: components["schemas"]["Run"][] | null;
+        };
+        RunOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/RunOutputBody.json
+             */
+            readonly $schema?: string;
+            preview?: components["schemas"]["PolicyPreview"];
+            run?: components["schemas"]["Run"];
         };
         RunView: {
             artifactDigest?: string;
@@ -5397,6 +5935,12 @@ export interface components {
             /** Format: date-time */
             updatedAt: string;
             version: string;
+        };
+        RuntimeEvidence: {
+            profile: string;
+            result: string;
+            suiteDigest: string;
+            target: string;
         };
         ScaffoldOutputs: {
             catalogItemId: string | null;
@@ -5652,9 +6196,144 @@ export interface components {
             readonly $schema?: string;
             plan: components["schemas"]["Plan"];
         };
+        Suite: {
+            cleanup?: string;
+            compatibleAppVersions: string;
+            dependencies: string[] | null;
+            entrypoint: string;
+            executableProfiles?: string[] | null;
+            idempotency?: string;
+            parameterContract: string;
+            profiles: {
+                [key: string]: components["schemas"]["SuiteProfile"];
+            };
+            rbacRequirements: components["schemas"]["RBACRule"][] | null;
+            suiteSchema: string;
+            target: components["schemas"]["SuiteTarget"];
+            timeout: string;
+            workflowTemplate: string;
+        };
+        SuiteAdapter: {
+            artifactPath?: string;
+            fixtureOnly?: boolean;
+            kind: string;
+            path?: string;
+            readiness?: {
+                [key: string]: string;
+            }[] | null;
+        };
+        SuiteAdmissionInput: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/SuiteAdmissionInput.json
+             */
+            readonly $schema?: string;
+            descriptor: components["schemas"]["ArtifactDescriptor"];
+            environment: string;
+            legacyNonProductionException?: boolean;
+            profile: string;
+            sourceId: string;
+        };
+        SuiteGrant: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/SuiteGrant.json
+             */
+            readonly $schema?: string;
+            allowedRbac: components["schemas"]["RBACRule"][] | null;
+            appItemId?: string;
+            appVersionRange?: string;
+            approverTeamIds?: string[] | null;
+            argoUiBaseUrl?: string;
+            changeWindow?: string;
+            cleanupRequired: boolean;
+            egressPolicyRef: string;
+            environmentPolicyId?: string;
+            /** Format: date-time */
+            expiresAt?: string;
+            fixtureNamespace?: string;
+            /** Format: int64 */
+            grantRevision: number;
+            id?: string;
+            legacyNonProductionException?: boolean;
+            /** Format: int64 */
+            maxActive: number;
+            /** Format: int64 */
+            maxPending: number;
+            /** Format: int64 */
+            maxResultBytes: number;
+            maxTimeout: string;
+            orgId?: string;
+            parameterContract: string;
+            profile: string;
+            rbacPolicyDigest: string;
+            requirePerRunApproval: boolean;
+            /** Format: date-time */
+            revokedAt?: string;
+            serviceAccountName: string;
+            serviceAccountNamespace: string;
+            sideEffects: string;
+            suiteDigest: string;
+            suiteReleaseId: string;
+        };
         SuiteIdentity: {
             digest: string;
             profile: string;
+        };
+        SuiteListOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/SuiteListOutputBody.json
+             */
+            readonly $schema?: string;
+            suites: components["schemas"]["SuiteRelease"][] | null;
+        };
+        SuitePreview: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/SuitePreview.json
+             */
+            readonly $schema?: string;
+            gate: components["schemas"]["GateStatus"];
+            release: components["schemas"]["SuiteRelease"];
+            /** Format: int64 */
+            sideEffectsPerformed: number;
+            warnings?: string[] | null;
+        };
+        SuiteProfile: {
+            approval?: string;
+            changeWindow?: string;
+            cleanup: string;
+            sideEffects: string;
+        };
+        SuiteRelease: {
+            /** Format: date-time */
+            admittedAt: string;
+            contentDigest: string;
+            descriptor: components["schemas"]["ArtifactDescriptor"];
+            eligibility: string;
+            evidenceDigest?: string;
+            /** Format: date-time */
+            evidenceFinishedAt?: string;
+            id: string;
+            legacyException?: boolean;
+            orgId: string;
+            sourceFingerprint: string;
+            sourceId: string;
+            suite: components["schemas"]["Suite"];
+            suiteDigest: string;
+            trustTier: string;
+            unsigned: boolean;
+        };
+        SuiteTarget: {
+            adapter: components["schemas"]["SuiteAdapter"];
+            component?: string;
+            id: string;
+            version: string;
         };
         SyncOutputBody: {
             /**
@@ -5666,6 +6345,10 @@ export interface components {
             sources: components["schemas"]["TrustedSourceStatus"][] | null;
             /** Format: int64 */
             synced: number;
+        };
+        SyncTrigger: {
+            enabled: boolean;
+            mode?: string;
         };
         Target: {
             binding: components["schemas"]["Binding"];
@@ -5900,6 +6583,23 @@ export interface components {
             record: components["schemas"]["RegistrationToken"];
             /** @description Plaintext bootstrap token, returned once */
             token: string;
+        };
+        Trigger: {
+            kind: string;
+            operationId?: string;
+            profile: string;
+            requestKey?: string;
+            scheduleSetId?: string;
+            scheduledAt?: string;
+        };
+        TriggerToggle: {
+            enabled: boolean;
+        };
+        Triggers: {
+            cron: components["schemas"]["CronConfig"];
+            manual: components["schemas"]["TriggerToggle"];
+            onRevisionChange: components["schemas"]["TriggerToggle"];
+            onSync: components["schemas"]["SyncTrigger"];
         };
         TrustedSourceStatus: {
             /** Format: int64 */
@@ -6143,6 +6843,43 @@ export interface components {
             folder: components["schemas"]["FolderCheck"];
             rules: components["schemas"]["RuleCheck"][] | null;
         };
+        VerificationGrantStatusOutputBody: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/VerificationGrantStatusOutputBody.json
+             */
+            readonly $schema?: string;
+            status: string;
+        };
+        VerificationPolicy: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/VerificationPolicy.json
+             */
+            readonly $schema?: string;
+            addonAbsent: string;
+            binding: components["schemas"]["PolicyBinding"];
+            concurrency: components["schemas"]["ConcurrencyConfig"];
+            /** Format: date-time */
+            createdAt?: string;
+            current?: boolean;
+            enabled: boolean;
+            failureAction: string;
+            id?: string;
+            instanceId?: string;
+            instanceUid?: string;
+            notifications?: components["schemas"]["NotificationConfig"];
+            orgId?: string;
+            /** Format: int64 */
+            policyRevision: number;
+            retention: components["schemas"]["RetentionConfig"];
+            timeout: string;
+            triggers: components["schemas"]["Triggers"];
+            /** Format: date-time */
+            updatedAt?: string;
+        };
         VerificationResult: {
             apiVersion: string;
             app: components["schemas"]["AppIdentity"];
@@ -6157,6 +6894,17 @@ export interface components {
             run: components["schemas"]["RunIdentity"];
             suite: components["schemas"]["SuiteIdentity"];
             target: components["schemas"]["TargetIdentity"];
+        };
+        VerificationView: {
+            /**
+             * Format: uri
+             * @description A URL to the JSON Schema for this object.
+             * @example https://example.com/schemas/VerificationView.json
+             */
+            readonly $schema?: string;
+            gate: components["schemas"]["GateStatus"];
+            policy?: components["schemas"]["VerificationPolicy"];
+            runs?: components["schemas"]["Run"][] | null;
         };
         VisibilityInputBody: {
             /**
@@ -10894,6 +11642,146 @@ export interface operations {
             };
         };
     };
+    promoteInstance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PromotionInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromotionOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getInstancePromotionPolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromotionPolicyOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    putInstancePromotionPolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PromotionPolicy"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromotionPolicyOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    previewInstancePromotion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PromotionInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PromotionPreview"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
     rollbackInstance: {
         parameters: {
             query?: never;
@@ -10953,6 +11841,278 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DeployOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getInstanceVerification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationView"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    putInstanceVerification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerificationPolicy"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationPolicy"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    disableInstanceVerification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationPolicy"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    previewInstanceVerification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerificationPolicy"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PolicyPreview"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listInstanceVerificationRuns: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunListOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    createInstanceVerificationRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RunInputBody"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getInstanceVerificationRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Run"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    retryInstanceVerificationRun: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+                runId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Run"];
                 };
             };
             /** @description Error */
@@ -13339,6 +14499,279 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CreateRunOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    createVerificationGrant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SuiteGrant"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuiteGrant"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    previewVerificationGrant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SuiteGrant"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuitePreview"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    getVerificationEnvironment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                targetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnvironmentPolicy"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    putVerificationEnvironment: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                targetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EnvironmentPolicy"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EnvironmentPolicy"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    revokeVerificationGrant: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VerificationGrantStatusOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    listVerificationSuites: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuiteListOutputBody"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    createVerificationSuite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SuiteAdmissionInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuitePreview"];
+                };
+            };
+            /** @description Error */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ErrorModel"];
+                };
+            };
+        };
+    };
+    previewVerificationSuite: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                org: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SuiteAdmissionInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuitePreview"];
                 };
             };
             /** @description Error */
