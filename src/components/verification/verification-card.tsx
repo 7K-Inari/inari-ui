@@ -30,7 +30,7 @@ export function VerificationCard({ resource }: { resource: ResourceInstanceDetai
   const run = useAsyncResource(
     (authToken) => getInstanceVerificationRun(authToken, resource.tenant, resource.id, activeRunId!),
     [resource.tenant, resource.id, activeRunId],
-    { enabled: Boolean(activeRunId) },
+    { enabled: Boolean(activeRunId), refetchIntervalMs: 15_000 },
   );
   const [editing, setEditing] = React.useState(false);
   const [message, setMessage] = React.useState<string | null>(null);
@@ -64,6 +64,7 @@ export function VerificationCard({ resource }: { resource: ResourceInstanceDetai
       </div></div>
       <div className="card-body space-y-4">
         {verification.error && <Alert variant="danger">{verification.error.message}</Alert>}
+        {run.error && <Alert variant="danger">{run.error.message}</Alert>}
         {verification.data && !verification.data.gate.renderAvailable && (
           <Alert variant="info">Policy preview and saving are available. Workflow rendering and deployed runs are stopped: {verification.data.gate.reason ?? "external renderer gate is closed"}.</Alert>
         )}

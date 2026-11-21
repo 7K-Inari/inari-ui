@@ -10,22 +10,6 @@ import {
 import type { ResourceInstanceDetail } from "@/api/types";
 import { useAuth } from "@/auth/auth-context";
 
-function canonicalJSON(value: unknown): string {
-  if (Array.isArray(value)) return `[${value.map(canonicalJSON).join(",")}]`;
-  if (value && typeof value === "object") {
-    const record = value as Record<string, unknown>;
-    return `{${Object.keys(record).sort().map((key) => `${JSON.stringify(key)}:${canonicalJSON(record[key])}`).join(",")}}`;
-  }
-  return JSON.stringify(value);
-}
-
-async function specDigest(spec: Record<string, unknown>, existing?: string): Promise<string> {
-  if (existing) return existing;
-  if (!globalThis.crypto?.subtle) throw new Error("Secure browser cryptography is required to bind the exact spec digest.");
-  const digest = await globalThis.crypto.subtle.digest("SHA-256", new TextEncoder().encode(canonicalJSON(spec)));
-  return `sha256:${Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, "0")).join("")}`;
-}
-
 interface Props {
   resource: ResourceInstanceDetail;
   current?: VerificationPolicy;
@@ -55,7 +39,7 @@ export function VerificationPolicyForm({ resource, current, onSaved }: Props) {
   const [error, setError] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
 
-  const buildPolicy = async (): Promise<VerificationPolicy> => ({
+  const buildPolicy = (): VerificationPolicy => ({
     policyRevision: (current?.policyRevision ?? 0) + 1,
     enabled: true,
     instanceId: resource.id,
@@ -65,7 +49,8 @@ export function VerificationPolicyForm({ resource, current, onSaved }: Props) {
       appItemId: resource.catalogItemId,
       appVersion: resource.version,
       appArtifactDigest: resource.artifactDigest ?? binding?.appArtifactDigest ?? "",
-      specDigest: await specDigest(resource.spec, binding?.specDigest),
+      // Empty requests a fresh digest from the server's exact stored spec JSON.
+      specDigest: "",
       desiredCommit: resource.commitSha ?? "",
       suiteGrantId: grantId.trim(),
       suiteDigest: suiteDigest.trim(),
@@ -101,7 +86,7 @@ export function VerificationPolicyForm({ resource, current, onSaved }: Props) {
   const runPreview = async (): Promise<{ policy: VerificationPolicy; preview: VerificationPolicyPreview } | null> => {
     setBusy(true); setError(null);
     try {
-      const policy = await buildPolicy();
+      const policy = buildPolicy();
       const result = await previewInstanceVerification(token, resource.tenant, resource.id, policy);
       setPreview(result);
       return { policy, preview: result };

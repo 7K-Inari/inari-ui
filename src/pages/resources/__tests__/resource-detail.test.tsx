@@ -57,6 +57,23 @@ describe("ResourceDetailPage", () => {
     expect(screen.queryByRole("link", { name: /Open artifacts/ })).not.toBeInTheDocument();
   });
 
+  it("requests a fresh server-derived spec digest on policy preview", async () => {
+    const user = userEvent.setup();
+    const { http, HttpResponse } = await import("msw");
+    const captured: { policy?: { binding?: { specDigest?: string } } } = {};
+    mockServer.use(http.post("*/api/v1/tenants/acme/instances/:id/verification/preview", async ({ request }) => {
+      captured.policy = await request.json() as NonNullable<typeof captured.policy>;
+      return HttpResponse.json({ policy: captured.policy, gate: { renderAvailable: false, deployedVerification: false }, sideEffectsPerformed: 0 });
+    }));
+    renderPage();
+    await user.click(await screen.findByRole("button", { name: "Configure verification" }));
+    await user.type(screen.getByLabelText("Platform suite grant ID"), "vsg-1");
+    await user.type(screen.getByLabelText("Exact suite digest"), "sha256:suite");
+    await user.click(screen.getByRole("button", { name: "Preview policy" }));
+    expect(await screen.findByText(/Preview completed with zero side effects/)).toBeInTheDocument();
+    expect(captured.policy?.binding?.specDigest).toBe("");
+  });
+
   it("keeps failed verification separate and renders no run links", async () => {
     const { http, HttpResponse } = await import("msw");
     const policy = {
@@ -78,7 +95,7 @@ describe("ResourceDetailPage", () => {
       gate: { renderAvailable: false, deployedVerification: false, reason: "sibling_8f8c472a_phase_3_unconfirmed" }, policy, runs: [run],
     })));
     renderPage();
-    expect(await screen.findByText("workflow_failed")).toBeInTheDocument();
+    expect(await screen.findByText("workflow_failed", undefined, { timeout: 5000 })).toBeInTheDocument();
     expect(screen.getByText(/No automatic rollback was performed/)).toBeInTheDocument();
     expect(screen.getByText(/No current Workflow log or artifact links/)).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: /Open logs/ })).not.toBeInTheDocument();

@@ -336,7 +336,7 @@ export function ResourceDetailPage() {
 
       <UpgradeCard resource={resource} />
 
-      <VerificationCard resource={resource} />
+      <VerificationCard key={resource.id} resource={resource} />
 
       <GitOpsRepoCard
         repo={defaultRepo}
