@@ -75,7 +75,7 @@ export function ObservabilityPlanSection({ preflight, value, onChange, loading, 
   };
   const chooseTarget = (id: string) => {
     const target = preflight.monitoringTargets?.find((candidate) => candidate.id === id);
-    const nextSelection = defaultSelection(target, selection, plan.orgSlug, capability.folder);
+    const nextSelection = defaultSelection(target, {}, plan.orgSlug, capability.folder);
     onChange({ ...effective, mode: "provision", target: { id, revision: target?.revision ?? 0, selection: nextSelection } });
   };
   const updateSelection = (patch: Selection) => {

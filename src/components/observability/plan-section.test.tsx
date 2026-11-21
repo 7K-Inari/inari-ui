@@ -1,3 +1,4 @@
+import * as React from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { vi } from "vitest";
@@ -50,6 +51,29 @@ test("skip remains available and changes the controlled plan", async () => {
   render(<ObservabilityPlanSection preflight={fixture()} value={{ mode: "provision" }} onChange={onChange} />);
   await user.click(screen.getByLabelText(/Skip for now/));
   expect(onChange).toHaveBeenCalledWith(expect.objectContaining({ mode: "skip" }));
+});
+
+test("switching targets resets folder and datasource to the new provider selection", async () => {
+  const user = userEvent.setup();
+  const preflight = fixture();
+  const first = preflight.monitoringTargets![0];
+  preflight.monitoringTargets!.push({
+    ...first,
+    id: "rt-mon-team",
+    name: "Team monitoring",
+    config: { evaluation: "central", folderPrefixes: ["team"], datasources: [{ name: "metrics-team", type: "prometheus" }] },
+  });
+  function Controlled() {
+    const [value, setValue] = React.useState<Preflight["plan"]["observability"]>({ mode: "provision" });
+    return <ObservabilityPlanSection preflight={preflight} value={value} onChange={setValue} />;
+  }
+  render(<Controlled />);
+  await user.selectOptions(screen.getByLabelText("Monitoring target"), "rt-mon");
+  await user.selectOptions(screen.getByLabelText("Folder"), "acme-inc");
+  expect(screen.getByLabelText("Datasource")).toHaveValue("metrics-central");
+  await user.selectOptions(screen.getByLabelText("Monitoring target"), "rt-mon-team");
+  expect(screen.getByLabelText("Folder")).toHaveValue("acme-inc/payments-api");
+  expect(screen.getByLabelText("Datasource")).toHaveValue("metrics-team");
 });
 
 test("no capability and no eligible target use exact non-link states", () => {

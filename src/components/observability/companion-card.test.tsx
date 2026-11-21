@@ -19,7 +19,7 @@ function status(companionValue?: Companion): InstanceObservability {
 }
 
 test("non-ready states expose LINKS 0 and no Grafana anchors", () => {
-  for (const state of ["blocked_external_gate", "approval_pending", "waiting_for_app", "render_pending", "deploying", "verification_pending", "verification_failed", "unavailable", "cancelled"]) {
+  for (const state of ["blocked_external_gate", "approval_pending", "waiting_for_app", "render_pending", "deploying", "verification_pending", "verification_failed", "expired", "stale", "revoked", "unavailable", "cancelled"]) {
     const { unmount } = render(<CompanionCard status={status(companion(state))} />);
     screen.getByText("LINKS 0");
     expect(screen.queryByRole("link")).not.toBeInTheDocument();

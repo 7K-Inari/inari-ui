@@ -6,7 +6,7 @@ test("existing-instance links appear only for ready verified server evidence", a
   const grafanaRequests: string[] = [];
   page.on("request", (request) => { if (request.url().includes("grafana.team.example")) grafanaRequests.push(request.url()); });
 
-  for (const state of ["blocked_external_gate", "approval_pending", "waiting_for_app", "render_pending", "deploying", "verification_pending", "verification_failed", "unavailable", "cancelled"]) {
+  for (const state of ["blocked_external_gate", "approval_pending", "waiting_for_app", "render_pending", "deploying", "verification_pending", "verification_failed", "expired", "stale", "revoked", "unavailable", "cancelled"]) {
     await page.goto(`/acme/deploys/ri-observability-${state}`);
     await expect(page.getByRole("heading", { name: "Observability" })).toBeVisible();
     await expect(page.getByText("LINKS 0", { exact: true })).toBeVisible();
