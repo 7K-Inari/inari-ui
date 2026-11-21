@@ -43,6 +43,9 @@ const CatalogItemDetailPage = React.lazy(() =>
 const DeployWizardPage = React.lazy(() =>
   import("@/pages/catalog/deploy-wizard").then((m) => ({ default: m.DeployWizardPage })),
 );
+const DirectChartWizardPage = React.lazy(() =>
+  import("@/pages/catalog/direct-chart-wizard").then((m) => ({ default: m.DirectChartWizardPage })),
+);
 const ExtensionsPage = React.lazy(() =>
   import("@/pages/extensions/extensions-page").then((m) => ({ default: m.ExtensionsPage })),
 );
@@ -213,6 +216,7 @@ export function AppRoutes() {
             }
           />
           <Route path="catalog" element={<CatalogBrowsePage />} />
+          <Route path="catalog/deploy-chart" element={<DirectChartWizardPage />} />
           <Route path="catalog/:itemId" element={<CatalogItemDetailPage />} />
           <Route path="catalog/:itemId/deploy" element={<DeployWizardPage />} />
           <Route path="catalog/:source/:name" element={<CatalogItemDetailPage />} />

@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { CheckCircle2, Circle, Loader2, XCircle } from "lucide-react";
 
 import { ApiError } from "@/api/client";
+import { getDeploymentPlan, preflightDeploymentPlan, submitDeploymentPlan, type DeploymentPreflight } from "@/api/deployment-plans";
 import { itemRouteID } from "@/api/identity";
 import { useAsyncResource } from "@/api/hooks";
 import { listGitConnections } from "@/api/git-connections";
@@ -30,6 +31,9 @@ import { Input } from "7k-design-system/react";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
 import { LoadingState } from "@/components/loading";
+import { ObservabilityPlanSection } from "@/components/observability/plan-section";
+import { CompanionCard } from "@/components/observability/companion-card";
+import type { components } from "@/api/__generated__/schema";
 
 const NAME_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 const STEPS = ["Configure", "Review", "Status"] as const;
@@ -191,6 +195,15 @@ function ScaffoldStatus({ scaffoldId }: { scaffoldId: string }) {
   );
 }
 
+type ObservabilityInput = components["schemas"]["ObservabilityInput"];
+
+function TemplatePlanStatus({ planId }: { planId: string }) {
+  const { tenant } = useTenant();
+  const { data: plan } = useAsyncResource((token) => getDeploymentPlan(token, tenant, planId), [planId, tenant], { refetchIntervalMs: 1000 });
+  if (!plan) return <LoadingState label="Checking plan status…" />;
+  return <div className="space-y-4"><Badge variant="warning">{plan.state}</Badge>{plan.scaffoldRunId && <ScaffoldStatus scaffoldId={plan.scaffoldRunId} />}{plan.companion && <CompanionCard status={{ mode: plan.observability.mode, available: !!plan.capability, companion: plan.companion }} />}</div>;
+}
+
 export function ScaffoldWizardPage() {
   const { tenant } = useTenant();
   const { token } = useAuth();
@@ -211,6 +224,14 @@ export function ScaffoldWizardPage() {
   const [run, setRun] = React.useState<ScaffoldRunViewModel | null>(null);
   const [formData, setFormData] = React.useState<Record<string, unknown>>({});
   const formRef = React.useRef<SchemaFormHandle>(null);
+  const [idempotencyKey] = React.useState(() => crypto.randomUUID());
+  const [observability, setObservability] = React.useState<ObservabilityInput>({ mode: "skip" });
+  const [reviewPreflight, setReviewPreflight] = React.useState<DeploymentPreflight | null>(null);
+  const [planId, setPlanId] = React.useState<string | null>(null);
+  const initialPreflight = useAsyncResource((t) => preflightDeploymentPlan(t, tenant, {
+    operation: "deploy", source: { kind: "template", itemId: templateId! },
+    deployment: { targetId: "", targetRevision: 0, spec: {} }, observability: { mode: "provision" }, idempotencyKey,
+  }), [templateId, tenant, idempotencyKey]);
 
   const isUserScope = template.data?.scope === "user";
   const gitConnections = useAsyncResource(
@@ -233,7 +254,7 @@ export function ScaffoldWizardPage() {
   }
   const tpl = template.data;
 
-  const next = () => {
+  const next = async () => {
     if (!name) {
       setNameError("Service name is required.");
       return;
@@ -244,6 +265,20 @@ export function ScaffoldWizardPage() {
     }
     setNameError(null);
     if (!formRef.current?.validate()) return;
+    if (initialPreflight.data?.plan.capability) {
+      try {
+        const source = { ...initialPreflight.data.plan.source, displayName: name };
+        const reviewed = await preflightDeploymentPlan(token, tenant, {
+          operation: "deploy", source,
+          deployment: { targetId: "", targetRevision: 0, name, displayName: name, ownerTeam: `${name}-maintainers`, spec: formData },
+          observability, idempotencyKey,
+        });
+        setReviewPreflight(reviewed);
+      } catch (err) {
+        setSubmitError(err instanceof Error ? err.message : "Observability preflight unavailable");
+        return;
+      }
+    }
     setStep(1);
   };
 
@@ -252,11 +287,19 @@ export function ScaffoldWizardPage() {
     setSubmitError(null);
     setFallbackBlock(null);
     try {
-      const created = await createScaffoldRun(token, tenant, tpl.id, {
-        displayName: name,
-        values: formData,
-      });
-      setRun(created);
+      if (reviewPreflight) {
+        const plan = await submitDeploymentPlan(token, tenant, {
+          operation: "deploy", source: { ...reviewPreflight.plan.source, displayName: name }, deployment: reviewPreflight.plan.deployment,
+          observability: reviewPreflight.plan.observability, planFingerprint: reviewPreflight.plan.planFingerprint, idempotencyKey,
+        });
+        setPlanId(plan.id);
+      } else {
+        const created = await createScaffoldRun(token, tenant, tpl.id, {
+          displayName: name,
+          values: formData,
+        });
+        setRun(created);
+      }
       setStep(2);
     } catch (err) {
       // 409 = fallback-block: the template needs a personal git connection
@@ -327,6 +370,7 @@ export function ScaffoldWizardPage() {
               formData={formData}
               onChange={setFormData}
             />
+            {initialPreflight.data?.plan.capability && <ObservabilityPlanSection preflight={initialPreflight.data} value={observability} onChange={setObservability} loading={initialPreflight.loading} error={initialPreflight.error?.message} />}
             <div className="flex justify-end gap-2">
               <Link to={tenantLink(tenant, "templates")} className="btn btn-ghost">
                 Cancel
@@ -352,6 +396,7 @@ export function ScaffoldWizardPage() {
               <dd>{name}</dd>
               <dt className="u-muted">Template</dt>
               <dd>{tpl.displayName}</dd>
+              {reviewPreflight && <><dt className="u-muted">TemplateManifest.Version</dt><dd>{reviewPreflight.plan.app.version}</dd><dt className="u-muted">Plan fingerprint</dt><dd className="break-all">{reviewPreflight.plan.planFingerprint}</dd></>}
               {tpl.packageVersion && (
                 <>
                   <dt className="u-muted">Package version</dt>
@@ -384,13 +429,14 @@ export function ScaffoldWizardPage() {
                 Back
               </Button>
               <Button onClick={submit} disabled={submitting}>
-                {submitting ? "Starting…" : "Scaffold"}
+                {submitting ? "Starting…" : reviewPreflight?.plan.observability.mode === "provision" ? "Deploy with observability" : reviewPreflight ? "Deploy application" : "Scaffold"}
               </Button>
             </div>
           </div>
         </Card>
       )}
 
+      {step === 2 && planId && <Card><div className="card-header"><h2 className="mono-label">Deployment status</h2></div><div className="card-body"><TemplatePlanStatus planId={planId} /></div></Card>}
       {step === 2 && run && (
         <Card>
           <div className="card-header">
