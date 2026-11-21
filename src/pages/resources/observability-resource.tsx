@@ -36,9 +36,13 @@ export function ObservabilityResource({ instanceId }: { instanceId: string }) {
     setSubmitting(true);
     setError(null);
     try {
-      await submitDeploymentPlan(token, tenant, {
+      const reviewed = await preflightDeploymentPlan(token, tenant, {
         operation: "provisionExisting", instanceId, source: preflight.plan.source, deployment: preflight.plan.deployment,
-        observability: preflight.plan.observability, planFingerprint: preflight.plan.planFingerprint, idempotencyKey,
+        observability, idempotencyKey,
+      });
+      await submitDeploymentPlan(token, tenant, {
+        operation: "provisionExisting", instanceId, source: reviewed.plan.source, deployment: reviewed.plan.deployment,
+        observability: reviewed.plan.observability, planFingerprint: reviewed.plan.planFingerprint, idempotencyKey,
       });
       setPreflight(null);
       status.refetch();
