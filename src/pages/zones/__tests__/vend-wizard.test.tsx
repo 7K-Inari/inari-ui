@@ -64,6 +64,28 @@ describe("VendZoneWizardPage", () => {
     expect(screen.getByText("Starter tier only during M3.")).toBeInTheDocument();
   });
 
+  it("shows a generic feature notice and upgrade CTA when zone vending is unavailable", async () => {
+    const user = userEvent.setup();
+    renderWizard();
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.post("*/api/v1/tenants/acme/zones", () =>
+        HttpResponse.json(
+          { status: 403, detail: "zone vending is unavailable", code: "plan_limit_exceeded", limitKind: "feature", limit: "zone-vending" },
+          { status: 403 },
+        ),
+      ),
+    );
+    await user.type(screen.getByLabelText("Name"), "acme-ml");
+    await user.type(screen.getByLabelText("Slug"), "acme-ml");
+    await user.type(screen.getByLabelText("Org unit"), "acme-data");
+    await user.type(screen.getByLabelText("Management account ID"), "ma-platform-prod");
+    await user.click(screen.getByRole("button", { name: "Vend zone" }));
+    expect(await screen.findByText(/not available on your current plan/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /View upgrade options/i })).toHaveAttribute("href", "https://7kgroup.org");
+    expect(screen.queryByText(/Enterprise/)).not.toBeInTheDocument();
+  });
+
   it("vends a zone and navigates to its detail page", async () => {
     const user = userEvent.setup();
     renderWizard();

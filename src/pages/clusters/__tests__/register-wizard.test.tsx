@@ -121,6 +121,24 @@ describe("RegisterWizardPage", () => {
     expect(await screen.findByText("quota exceeded")).toBeInTheDocument();
   });
 
+  it("shows plan usage and an outbound upgrade CTA on limit errors", async () => {
+    const user = userEvent.setup();
+    renderWizard();
+    await user.type(screen.getByLabelText("Name"), "over-cap");
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.post("*/api/v1/tenants/acme/clusters", () =>
+        HttpResponse.json(
+          { status: 429, detail: "cluster limit exceeded", code: "plan_limit_exceeded", limitKind: "quota", limit: "clusters", currentUsage: 2, maxAllowed: 2, requested: 1 },
+          { status: 429 },
+        ),
+      ),
+    );
+    await user.click(screen.getByRole("button", { name: "Create registration token" }));
+    expect(await screen.findByText(/2 of 2 in use for clusters/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /View upgrade options/i })).toHaveAttribute("href", "https://7kgroup.org");
+  });
+
   it("resumes the waiting step from a deep link with ?cluster=", async () => {
     mockControl.setClusterStatus("cl-kind-dev", "pending");
     renderWizard("/acme/clusters/new?cluster=cl-kind-dev");

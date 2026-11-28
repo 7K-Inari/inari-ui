@@ -2,6 +2,7 @@ import * as React from "react";
 import { Link, useParams } from "react-router-dom";
 
 import { ApiError } from "@/api/client";
+import { ActionErrorNotice } from "@/components/limit-exceeded";
 import {
   getRollout,
   listRolloutTargets,
@@ -110,7 +111,7 @@ export function RolloutDetailPage() {
   const { tenant } = useTenant();
   const { token } = useAuth();
   const { rolloutId } = useParams<{ rolloutId: string }>();
-  const [actionError, setActionError] = React.useState<string | null>(null);
+  const [actionError, setActionError] = React.useState<unknown>(null);
 
   const [terminal, setTerminal] = React.useState(false);
   const resource = useAsyncResource<RolloutWithTargets>(
@@ -181,9 +182,7 @@ export function RolloutDetailPage() {
                   await rollbackRollout(token, tenant, data.id);
                   resource.refetch();
                 } catch (err) {
-                  setActionError(
-                    err instanceof ApiError ? err.message : "Rollback failed",
-                  );
+                  setActionError(err);
                 }
               }}
             >
@@ -192,11 +191,7 @@ export function RolloutDetailPage() {
           )}
         </div>
       </div>
-      {actionError && (
-        <p className="text-sm u-danger" role="alert">
-          {actionError}
-        </p>
-      )}
+      {actionError != null && <ActionErrorNotice error={actionError} fallback="Rollback failed" />}
 
       {data.state === "waiting-approval" && (
         <p className="text-sm u-muted">

@@ -25,6 +25,7 @@ import { PageHeader } from "@/components/page-header";
 import { SourceBadge } from "@/components/catalog/source-badge";
 import { Stepper } from "@/components/stepper";
 import { PolicyDenialNotice } from "@/components/policy-denial";
+import { ActionErrorNotice } from "@/components/limit-exceeded";
 import { CompanionCard } from "@/components/observability/companion-card";
 import { ObservabilityPlanSection } from "@/components/observability/plan-section";
 import { SchemaForm, type SchemaFormHandle } from "@/components/schema-form/schema-form";
@@ -87,7 +88,7 @@ export function DeployWizardPage() {
   const [ownerTeam, setOwnerTeam] = React.useState("");
   const [repoId, setRepoId] = React.useState("");
   const [nameError, setNameError] = React.useState<string | null>(null);
-  const [submitError, setSubmitError] = React.useState<string | null>(null);
+  const [submitError, setSubmitError] = React.useState<unknown>(null);
   const [policyDenial, setPolicyDenial] = React.useState<{ reason: string; remediation?: string } | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
   const [planId, setPlanId] = React.useState<string | null>(null);
@@ -132,7 +133,7 @@ export function DeployWizardPage() {
       setReviewPreflight(preflight);
       setStep(1);
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : "Observability preflight unavailable");
+      setSubmitError(err);
     } finally {
       setSubmitting(false);
     }
@@ -152,7 +153,7 @@ export function DeployWizardPage() {
       setStep(2);
     } catch (err) {
       if (err instanceof ApiError && err.isPolicyDenial) setPolicyDenial({ reason: err.message, remediation: err.remediation });
-      else setSubmitError(err instanceof Error ? err.message : "Failed to create deploy");
+      else setSubmitError(err);
     } finally {
       setSubmitting(false);
     }
@@ -172,7 +173,7 @@ export function DeployWizardPage() {
         {repos.data && repos.data.length > 0 && <RepoPicker repos={repos.data} teams={(teams.data ?? []).map((t) => ({ id: t.id, displayName: t.displayName }))} selectedId={repoId} onSelect={setRepoId} />}
         <SchemaForm ref={formRef} schema={schema} uiSchema={uiSchema} formData={formData} onChange={setFormData} />
         {initialPreflight.data && <ObservabilityPlanSection preflight={initialPreflight.data} value={observability} onChange={setObservability} loading={initialPreflight.loading} error={initialPreflight.error?.message} />}
-        {submitError && <Alert variant="danger">{submitError}</Alert>}
+        {submitError != null && <ActionErrorNotice error={submitError} fallback="Observability preflight unavailable" />}
         <div className="wizard-actions"><Link to={tenantLink(tenant, `catalog/${itemData.id}`)} className="btn btn-ghost">Cancel</Link><Button variant="accent" onClick={next} disabled={submitting}>{submitting ? "Checking exact app metadata…" : "Next"}</Button></div>
       </div></Card>}
 
@@ -182,7 +183,7 @@ export function DeployWizardPage() {
         {reviewPreflight.plan.observability.mode === "provision" && <Alert variant="info">Companion approval is independent of application approval.</Alert>}
         <pre className="code-block">{JSON.stringify(formData, null, 2)}</pre>
         {policyDenial && <PolicyDenialNotice reason={policyDenial.reason} remediation={policyDenial.remediation} />}
-        {submitError && <Alert variant="danger">{submitError}</Alert>}
+        {submitError != null && <ActionErrorNotice error={submitError} fallback="Failed to create deploy" />}
         <div className="wizard-actions"><Button variant="ghost" onClick={() => setStep(0)}>Back</Button><Button variant="glow-accent" onClick={submit} disabled={submitting}>{submitting ? "Submitting…" : reviewPreflight.plan.observability.mode === "provision" ? "Deploy with observability" : "Deploy application"}</Button></div>
       </div></Card>}
       {step === 2 && planId && <Card><div className="card-header"><h2 className="mono-label">Deploy status</h2></div><div className="card-body"><PlanStatus planId={planId} /></div></Card>}

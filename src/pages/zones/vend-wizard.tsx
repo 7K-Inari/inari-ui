@@ -8,6 +8,7 @@ import { Card } from "7k-design-system/react";
 import { Input } from "7k-design-system/react";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
+import { ActionErrorNotice } from "@/components/limit-exceeded";
 
 const SLUG_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 const REGIONS = ["eu-west-1", "eu-central-1", "us-east-1"] as const;
@@ -23,7 +24,7 @@ export function VendZoneWizardPage() {
   const [managementAccountId, setManagementAccountId] = React.useState("");
   const [region, setRegion] = React.useState<string>(REGIONS[0]);
   const [slugError, setSlugError] = React.useState<string | null>(null);
-  const [submitError, setSubmitError] = React.useState<string | null>(null);
+  const [submitError, setSubmitError] = React.useState<unknown>(null);
   const [submitting, setSubmitting] = React.useState(false);
 
   const submit = async (e: React.FormEvent) => {
@@ -46,7 +47,7 @@ export function VendZoneWizardPage() {
       });
       navigate(tenantLink(tenant, `tenant-zones/${zone.id}`));
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : "Failed to vend zone");
+      setSubmitError(err);
       setSubmitting(false);
     }
   };
@@ -140,7 +141,7 @@ export function VendZoneWizardPage() {
               </select>
               <p className="text-xs u-muted">Starter tier only during M3.</p>
             </div>
-            {submitError && <p className="text-sm u-danger">{submitError}</p>}
+            {submitError != null && <ActionErrorNotice error={submitError} fallback="Failed to vend zone" />}
             <div className="flex justify-end gap-2">
               <Button variant="ghost" type="button" onClick={() => navigate(-1)}>
                 Cancel

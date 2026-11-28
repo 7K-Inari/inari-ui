@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useConfirm } from "@/components/confirm";
 
-import { ApiError } from "@/api/client";
+import { ActionErrorNotice } from "@/components/limit-exceeded";
 import { useAsyncResource } from "@/api/hooks";
 import {
   createEndpoint,
@@ -72,7 +72,7 @@ function EndpointForm({
   initial: FormState;
   editing: boolean;
   busy: boolean;
-  error: string | null;
+  error: unknown;
   onSubmit: (input: EndpointInput) => void;
   onCancel: () => void;
 }) {
@@ -239,8 +239,10 @@ function EndpointForm({
             Enabled
           </label>
 
-          {(formError ?? error) && (
-            <p className="text-sm u-danger">{formError ?? error}</p>
+          {formError ? (
+            <p className="text-sm u-danger">{formError}</p>
+          ) : (
+            error != null && <ActionErrorNotice error={error} fallback="Failed to save endpoint" />
           )}
 
           <div className="flex gap-2">
@@ -282,7 +284,7 @@ function EndpointRow({
 }) {
   const { token } = useAuth();
   const [busy, setBusy] = React.useState(false);
-  const [actionError, setActionError] = React.useState<string | null>(null);
+  const [actionError, setActionError] = React.useState<unknown>(null);
 
   const run = async (fn: () => Promise<unknown>) => {
     setActionError(null);
@@ -290,9 +292,7 @@ function EndpointRow({
     try {
       await fn();
     } catch (err) {
-      setActionError(
-        err instanceof ApiError ? err.message : "Request failed",
-      );
+      setActionError(err);
     } finally {
       setBusy(false);
     }
@@ -371,9 +371,7 @@ function EndpointRow({
       </td>
       <td className="px-4 py-2 text-right">
         <div className="flex items-center justify-end gap-2">
-          {actionError && (
-            <span className="text-xs u-danger">{actionError}</span>
-          )}
+          {actionError != null && <ActionErrorNotice error={actionError} fallback="Request failed" />}
           {testResult &&
             (testResult.status === "delivered" ? (
               <span className="text-xs text-emerald-600 dark:text-emerald-400">
@@ -439,7 +437,7 @@ export function NotificationsPage() {
     null,
   );
   const [formBusy, setFormBusy] = React.useState(false);
-  const [formError, setFormError] = React.useState<string | null>(null);
+  const [formError, setFormError] = React.useState<unknown>(null);
   const [testResults, setTestResults] = React.useState<
     Record<string, NotificationDelivery>
   >({});
@@ -480,9 +478,7 @@ export function NotificationsPage() {
       closeForm();
       refetch();
     } catch (err) {
-      setFormError(
-        err instanceof ApiError ? err.message : "Failed to save endpoint",
-      );
+      setFormError(err);
     } finally {
       setFormBusy(false);
     }

@@ -1,7 +1,6 @@
 import * as React from "react";
 import { useConfirm } from "@/components/confirm";
 
-import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
 import {
   assignPolicyPack,
@@ -23,6 +22,7 @@ import {
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
 import { LoadingState } from "@/components/loading";
+import { ActionErrorNotice } from "@/components/limit-exceeded";
 
 type PolicyPack = components["schemas"]["PolicyPack"];
 type PolicyAssignment = components["schemas"]["PolicyAssignment"];
@@ -41,7 +41,8 @@ export function PolicyPacksPage() {
 
   const [showCreate, setShowCreate] = React.useState(false);
   const [assigningPackId, setAssigningPackId] = React.useState<string | null>(null);
-  const [actionError, setActionError] = React.useState<string | null>(null);
+  const [actionError, setActionError] = React.useState<unknown>(null);
+  const [actionFallback, setActionFallback] = React.useState("Request failed");
   const [assignments, setAssignments] = React.useState<PolicyAssignment[]>([]);
 
   const [name, setName] = React.useState("");
@@ -53,8 +54,10 @@ export function PolicyPacksPage() {
   const [targetType, setTargetType] = React.useState("clusterset");
   const [targetId, setTargetId] = React.useState("");
 
-  const fail = (err: unknown, fallback: string) =>
-    setActionError(err instanceof ApiError ? err.message : fallback);
+  const fail = (err: unknown, fallback: string) => {
+    setActionFallback(fallback);
+    setActionError(err);
+  };
 
   const submitCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,6 +66,7 @@ export function PolicyPacksPage() {
     try {
       parsedManifests = manifests.trim() ? JSON.parse(manifests) : [];
     } catch {
+      setActionFallback("Manifests must be valid JSON.");
       setActionError("Manifests must be valid JSON.");
       return;
     }
@@ -153,9 +157,9 @@ export function PolicyPacksPage() {
         <LoadingState label="Loading policy packs…" />
       )}
 
-      {actionError && (
+      {actionError != null && (
         <Card>
-          <div className="card-body">{actionError}</div>
+          <div className="card-body"><ActionErrorNotice error={actionError} fallback={actionFallback} /></div>
         </Card>
       )}
 
