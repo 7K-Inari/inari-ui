@@ -1,5 +1,32 @@
 # Changelog
 
+## [2.2.0](https://github.com/7K-Inari/inari-ui/compare/v2.1.1...v2.2.0) (2026-11-28)
+
+
+### Features
+
+* add deployment-time observability UX ([5e52767](https://github.com/7K-Inari/inari-ui/commit/5e52767a9885816d789568458222154fbf017b87))
+* add graceful plan limit notices ([7aedec0](https://github.com/7K-Inari/inari-ui/commit/7aedec00c13777a64a3fefb90bfbb2a15b2f155b))
+* add graceful plan limit notices ([f155692](https://github.com/7K-Inari/inari-ui/commit/f155692e33e9a29a5a0a7522418567ce67b5d865))
+* add observability plan and companion components ([fb35d2e](https://github.com/7K-Inari/inari-ui/commit/fb35d2e70f62dba18311b4f634cda82ef40337e1))
+* add verification policy and run status UI ([2efdb74](https://github.com/7K-Inari/inari-ui/commit/2efdb74c9cfafa1f1e79a545f448764267535c99))
+* consume deploy artifact digest contract ([d59224e](https://github.com/7K-Inari/inari-ui/commit/d59224e6e5699a98fb3b1fb6ccf63e735ddc6794))
+* **extensions:** preflight UI contract compatibility ([8808531](https://github.com/7K-Inari/inari-ui/commit/880853106dfa68aadf25ffbeeb5c319988b16b36))
+* **extensions:** preflight UI contract compatibility ([72cfe46](https://github.com/7K-Inari/inari-ui/commit/72cfe46031aaca2b4b0bf4a80da4ddcb0729d7f6))
+* **ui:** add verification policy and run status surfaces ([306ecfb](https://github.com/7K-Inari/inari-ui/commit/306ecfb0a00a93d58c2e708a051c6d505795a8a3))
+* wire deployment observability wizards ([f4cca44](https://github.com/7K-Inari/inari-ui/commit/f4cca44c3b14973449290fea564b970869a089d0))
+
+
+### Bug Fixes
+
+* align catalog chart action with approved design ([a520c97](https://github.com/7K-Inari/inari-ui/commit/a520c97ac41b2b7241d986fc47a82f3916f36777))
+* refresh merged trusted source contract ([72c6bde](https://github.com/7K-Inari/inari-ui/commit/72c6bdec55283423855ed73434d0b8f75d9e2ceb))
+* reset observability selection on target change ([d4e2f26](https://github.com/7K-Inari/inari-ui/commit/d4e2f26dd13e2f72b825fb2ae4580557fed8fa43))
+* review edited existing-instance observability plans ([c0c7dbe](https://github.com/7K-Inari/inari-ui/commit/c0c7dbe283ab1676d9b61916f75c39f3def602fd))
+* show source health and package versions ([a8f6cb7](https://github.com/7K-Inari/inari-ui/commit/a8f6cb7f7fffa2daf344f6fbd13c60ce99516eb3))
+* show trusted source health and package versions ([c640977](https://github.com/7K-Inari/inari-ui/commit/c640977a66188eb62af54b5a65846133c9393d8f))
+* **ui:** derive spec digest server-side and stabilize run status polling ([6b193c4](https://github.com/7K-Inari/inari-ui/commit/6b193c46374b247d1e36496a990f32030a3bc53a))
+
 ## [2.1.1](https://github.com/7K-Inari/inari-ui/compare/v2.1.0...v2.1.1) (2026-11-14)
 
 
