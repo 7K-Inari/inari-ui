@@ -1,7 +1,7 @@
 import * as React from "react";
 import { Link } from "react-router-dom";
 
-import { ApiError } from "@/api/client";
+import { ActionErrorNotice } from "@/components/limit-exceeded";
 import { useAsyncResource } from "@/api/hooks";
 import {
   getApprovalConfig,
@@ -36,7 +36,7 @@ export function ApprovalsConfigPage() {
   const [groups, setGroups] = React.useState<string[] | null>(null);
   const [rules, setRules] = React.useState<AutoApproveRule[] | null>(null);
   const [newGroup, setNewGroup] = React.useState("");
-  const [actionError, setActionError] = React.useState<string | null>(null);
+  const [actionError, setActionError] = React.useState<unknown>(null);
   const [saved, setSaved] = React.useState(false);
 
   const effectiveThresholds = thresholds ?? config?.thresholds ?? [];
@@ -79,7 +79,7 @@ export function ApprovalsConfigPage() {
       setSaved(true);
       refetch();
     } catch (err) {
-      setActionError(err instanceof ApiError ? err.message : "Failed to save approval config");
+      setActionError(err);
     }
   };
 
@@ -125,9 +125,9 @@ export function ApprovalsConfigPage() {
         <LoadingState label="Loading approval config…" />
       )}
 
-      {actionError && (
+      {actionError != null && (
         <Card>
-          <div className="card-body">{actionError}</div>
+          <div className="card-body"><ActionErrorNotice error={actionError} fallback="Failed to save approval config" /></div>
         </Card>
       )}
 

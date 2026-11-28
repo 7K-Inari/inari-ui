@@ -26,6 +26,7 @@ import {
 } from "@/pages/settings/components/capability-gate";
 import { useTenant } from "@/tenant/tenant-context";
 import { LoadingState } from "@/components/loading";
+import { ActionErrorNotice } from "@/components/limit-exceeded";
 
 // Fallback while the roles list loads: the four built-ins are seeded per
 // tenant (ADR-0013), so "viewer" always resolves.
@@ -51,7 +52,7 @@ function InviteForm({
   const [email, setEmail] = React.useState("");
   const [role, setRole] = React.useState("viewer");
   const [saving, setSaving] = React.useState(false);
-  const [actionError, setActionError] = React.useState<string | null>(null);
+  const [actionError, setActionError] = React.useState<unknown>(null);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,9 +66,7 @@ function InviteForm({
       setEmail("");
       onDone();
     } catch (err) {
-      setActionError(
-        err instanceof ApiError ? err.message : "Failed to invite member",
-      );
+      setActionError(err);
     } finally {
       setSaving(false);
     }
@@ -107,7 +106,7 @@ function InviteForm({
               ))}
             </select>
           </div>
-          {actionError && <p className="text-sm u-danger">{actionError}</p>}
+          {actionError != null && <ActionErrorNotice error={actionError} fallback="Failed to invite member" />}
           <CapabilityGate capability="manageMembers" mode="disable">
             <Button type="submit" disabled={saving || disabled}>
               {saving ? "Inviting…" : "Invite"}
@@ -327,17 +326,17 @@ function TeamMembersPanel({
   );
   const [busy, setBusy] = React.useState(false);
   const [actionError, setActionError] = React.useState<string | null>(null);
+  const [addError, setAddError] = React.useState<unknown>(null);
 
   const add = async (member: OrgMemberView) => {
     setActionError(null);
+    setAddError(null);
     setBusy(true);
     try {
       await addTeamMember(token, tenant, team.name, member.userId);
       refetch();
     } catch (err) {
-      setActionError(
-        err instanceof ApiError ? err.message : "Failed to add member",
-      );
+      setAddError(err);
     } finally {
       setBusy(false);
     }
@@ -393,6 +392,7 @@ function TeamMembersPanel({
         </ul>
       )}
       {actionError && <p className="text-sm u-danger">{actionError}</p>}
+      {addError != null && <ActionErrorNotice error={addError} fallback="Failed to add member" />}
       <UserPicker
         tenant={tenant}
         team={team.name}

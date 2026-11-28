@@ -4,6 +4,7 @@ import { Link, useParams } from "react-router-dom";
 import { CheckCircle2, Circle, Loader2, XCircle } from "lucide-react";
 
 import { ApiError } from "@/api/client";
+import { ActionErrorNotice } from "@/components/limit-exceeded";
 import { getDeploymentPlan, preflightDeploymentPlan, submitDeploymentPlan, type DeploymentPreflight } from "@/api/deployment-plans";
 import { itemRouteID } from "@/api/identity";
 import { useAsyncResource } from "@/api/hooks";
@@ -218,7 +219,7 @@ export function ScaffoldWizardPage() {
   const [step, setStep] = React.useState(0);
   const [name, setName] = React.useState("");
   const [nameError, setNameError] = React.useState<string | null>(null);
-  const [submitError, setSubmitError] = React.useState<string | null>(null);
+  const [submitError, setSubmitError] = React.useState<unknown>(null);
   const [fallbackBlock, setFallbackBlock] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
   const [run, setRun] = React.useState<ScaffoldRunViewModel | null>(null);
@@ -307,9 +308,7 @@ export function ScaffoldWizardPage() {
       if (err instanceof ApiError && err.status === 409) {
         setFallbackBlock(err.message);
       } else {
-        setSubmitError(
-          err instanceof ApiError ? err.message : "Failed to start the scaffold",
-        );
+        setSubmitError(err);
       }
     } finally {
       setSubmitting(false);
@@ -419,11 +418,7 @@ export function ScaffoldWizardPage() {
             {fallbackBlock !== null && (
               <FallbackBlockedError tenant={tenant} detail={fallbackBlock} />
             )}
-            {submitError && (
-              <p className="text-sm u-danger" role="alert">
-                {submitError}
-              </p>
-            )}
+            {submitError != null && <ActionErrorNotice error={submitError} fallback="Failed to start the scaffold" />}
             <div className="flex justify-end gap-2">
               <Button variant="ghost" onClick={() => setStep(0)}>
                 Back

@@ -1,7 +1,6 @@
 import * as React from "react";
 import { useConfirm } from "@/components/confirm";
 
-import { ApiError } from "@/api/client";
 import { useAsyncResource } from "@/api/hooks";
 import {
   deleteIdentityProvider,
@@ -28,6 +27,7 @@ import {
 import { SettingsSectionHeader } from "@/pages/settings/components/section-header";
 import { useTenant } from "@/tenant/tenant-context";
 import { LoadingState } from "@/components/loading";
+import { ActionErrorNotice } from "@/components/limit-exceeded";
 
 function schemaFor(isCreate: boolean): Record<string, unknown> {
   const required = [
@@ -113,11 +113,14 @@ export function IdpBrokeringPage() {
   const [rotating, setRotating] = React.useState(false);
   const [newSecret, setNewSecret] = React.useState("");
   const [notice, setNotice] = React.useState<string | null>(null);
-  const [actionError, setActionError] = React.useState<string | null>(null);
+  const [actionError, setActionError] = React.useState<unknown>(null);
+  const [actionFallback, setActionFallback] = React.useState("Request failed");
   const formRef = React.useRef<SchemaFormHandle>(null);
 
-  const fail = (err: unknown, fallback: string) =>
-    setActionError(err instanceof ApiError ? err.message : fallback);
+  const fail = (err: unknown, fallback: string) => {
+    setActionFallback(fallback);
+    setActionError(err);
+  };
 
   const openCreate = () => {
     setFormData({
@@ -238,10 +241,10 @@ export function IdpBrokeringPage() {
         <LoadingState label="Loading SSO provider…" />
       )}
 
-      {actionError && (
+      {actionError != null && (
         <Card>
           <div className="card-body">
-            {actionError}
+            <ActionErrorNotice error={actionError} fallback={actionFallback} />
           </div>
         </Card>
       )}

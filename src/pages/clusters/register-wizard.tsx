@@ -15,6 +15,7 @@ import { formatCountdown } from "@/lib/time";
 import { useTenant } from "@/tenant/tenant-context";
 import { tenantLink } from "@/tenant/tenant-link";
 import { ClusterStatusBadge } from "@/pages/clusters/status-badge";
+import { ActionErrorNotice } from "@/components/limit-exceeded";
 
 const NAME_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 const WAIT_TIMEOUT_MS = 10 * 60_000;
@@ -210,7 +211,7 @@ export function RegisterWizardPage() {
   const [name, setName] = React.useState("");
   const [labelsInput, setLabelsInput] = React.useState("env=dev");
   const [nameError, setNameError] = React.useState<string | null>(null);
-  const [submitError, setSubmitError] = React.useState<string | null>(null);
+  const [submitError, setSubmitError] = React.useState<unknown>(null);
   const [submitting, setSubmitting] = React.useState(false);
   const [created, setCreated] = React.useState<CreateClusterResponse | null>(null);
 
@@ -240,7 +241,7 @@ export function RegisterWizardPage() {
       setCreated(res);
       setStep(1);
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : "Failed to register cluster");
+      setSubmitError(err);
     } finally {
       setSubmitting(false);
     }
@@ -290,7 +291,7 @@ export function RegisterWizardPage() {
                   Comma-separated key=value pairs; used for fleet targeting.
                 </p>
               </div>
-              {submitError && <p className="text-sm u-danger">{submitError}</p>}
+              {submitError != null && <ActionErrorNotice error={submitError} fallback="Failed to register cluster" />}
               <div className="flex justify-end gap-2">
                 <Button variant="ghost" type="button" onClick={() => navigate(-1)}>
                   Cancel

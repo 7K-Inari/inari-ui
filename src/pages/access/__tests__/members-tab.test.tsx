@@ -67,6 +67,25 @@ describe("MembersTab", () => {
     expect(added?.roles).toEqual(["viewer"]);
   });
 
+  it("shows seat usage and an upgrade CTA when an invite is capped", async () => {
+    const user = userEvent.setup();
+    render(<MembersTab />);
+    await screen.findByText("Ada Admin");
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.put("*/api/v1/tenants/acme/members/*", () =>
+        HttpResponse.json(
+          { status: 429, detail: "developer seat limit exceeded", code: "plan_limit_exceeded", limitKind: "quota", limit: "developer-seats", currentUsage: 10, maxAllowed: 10 },
+          { status: 429 },
+        ),
+      ),
+    );
+    await user.type(screen.getByLabelText("Email"), "erin@acme.example");
+    await user.click(screen.getByRole("button", { name: "Invite" }));
+    expect(await screen.findByText(/10 of 10 in use for developer-seats/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /View upgrade options/i })).toHaveAttribute("href", "https://7kgroup.org");
+  });
+
   it("changes and removes org member roles", async () => {
     const user = userEvent.setup();
     render(<MembersTab />);

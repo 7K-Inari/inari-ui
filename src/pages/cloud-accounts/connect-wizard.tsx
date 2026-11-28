@@ -10,6 +10,7 @@ import { Button } from "7k-design-system/react";
 import { Card } from "7k-design-system/react";
 import { Input } from "7k-design-system/react";
 import { useTenant } from "@/tenant/tenant-context";
+import { ActionErrorNotice } from "@/components/limit-exceeded";
 import { tenantLink } from "@/tenant/tenant-link";
 import { CopyButton } from "@/pages/cloud-accounts/copy-button";
 
@@ -87,7 +88,7 @@ export function ConnectAccountWizardPage() {
   const [externalIdInput, setExternalIdInput] = React.useState("");
   const [accountIdError, setAccountIdError] = React.useState<string | null>(null);
   const [roleArnError, setRoleArnError] = React.useState<string | null>(null);
-  const [submitError, setSubmitError] = React.useState<string | null>(null);
+  const [submitError, setSubmitError] = React.useState<unknown>(null);
   const [submitting, setSubmitting] = React.useState(false);
   const [created, setCreated] = React.useState<CloudAccount | null>(null);
   const [validation, setValidation] = React.useState<CloudAccount | null>(null);
@@ -124,7 +125,7 @@ export function ConnectAccountWizardPage() {
       setCreated(res.account);
       setStep(1);
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : "Failed to connect account");
+      setSubmitError(err);
     } finally {
       setSubmitting(false);
     }
@@ -207,7 +208,7 @@ export function ConnectAccountWizardPage() {
                   The ExternalId condition for the AssumeRole statement in the trust policy.
                 </p>
               </div>
-              {submitError && <p className="text-sm u-danger">{submitError}</p>}
+              {submitError != null && <ActionErrorNotice error={submitError} fallback="Failed to connect account" />}
               <div className="flex justify-end gap-2">
                 <Button variant="ghost" type="button" onClick={() => navigate(-1)}>
                   Cancel

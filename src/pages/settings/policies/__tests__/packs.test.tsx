@@ -57,6 +57,27 @@ describe("PolicyPacksPage", () => {
     expect(await screen.findByText("custom-rules")).toBeInTheDocument();
   });
 
+  it("shows a generic feature notice and upgrade CTA when packs are unavailable", async () => {
+    const user = userEvent.setup();
+    renderPage();
+    await screen.findByText("baseline-security");
+    const { http, HttpResponse } = await import("msw");
+    mockServer.use(
+      http.post("*/api/v1/tenants/acme/policy-packs", () =>
+        HttpResponse.json(
+          { status: 403, detail: "policy packs are unavailable", code: "plan_limit_exceeded", limitKind: "feature", limit: "policy-packs" },
+          { status: 403 },
+        ),
+      ),
+    );
+    await user.click(screen.getByRole("button", { name: "New pack" }));
+    await user.type(screen.getByLabelText("Name"), "custom-rules");
+    await user.type(screen.getByLabelText("Version"), "0.1.0");
+    await user.click(screen.getByRole("button", { name: "Create pack" }));
+    expect(await screen.findByText(/policy-packs capability is not available on your current plan/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /View upgrade options/i })).toHaveAttribute("href", "https://7kgroup.org");
+  });
+
   it("assigns a pack and lists the assignment with a remove action", async () => {
     const user = userEvent.setup();
     renderPage();
