@@ -46,6 +46,8 @@ describe("ActionErrorNotice", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("server failed");
     expect(screen.queryByRole("link", { name: /View upgrade options/i })).not.toBeInTheDocument();
     rerender(<ActionErrorNotice error={new Error("other")} fallback="Failed" />);
-    expect(screen.getByRole("alert")).toHaveTextContent("Failed");
+    expect(screen.getByRole("alert")).toHaveTextContent("other");
+    rerender(<ActionErrorNotice error="Select a target cluster." fallback="Failed" />);
+    expect(screen.getByRole("alert")).toHaveTextContent("Select a target cluster.");
   });
 });

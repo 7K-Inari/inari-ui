@@ -60,7 +60,7 @@ export function ActionErrorNotice({ error, fallback }: { error: unknown; fallbac
   if (error instanceof ApiError && error.isLimitExceeded) {
     return <LimitExceededNotice error={error} />;
   }
-  const message = error instanceof ApiError ? error.message : fallback;
+  const message = error instanceof Error ? error.message : typeof error === "string" ? error : fallback;
   return (
     <p role="alert" className="text-sm u-danger">
       {message}
