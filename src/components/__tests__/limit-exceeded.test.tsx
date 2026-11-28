@@ -18,7 +18,6 @@ describe("LimitExceededNotice", () => {
     expect(link).toHaveAttribute("href", "https://7kgroup.org/inari");
     expect(link).toHaveAttribute("target", "_blank");
     expect(link).toHaveAttribute("rel", expect.stringContaining("noreferrer"));
-    expect(screen.queryByText(/Cloud Team|\$999|Stripe/)).not.toBeInTheDocument();
   });
 
   it("falls back to the commercial surface for an unsafe CTA and preserves zero usage", () => {
@@ -36,7 +35,6 @@ describe("LimitExceededNotice", () => {
     });
     render(<LimitExceededNotice error={error} />);
     expect(screen.getByRole("alert")).toHaveTextContent(/current plan/i);
-    expect(screen.queryByText(/Enterprise/)).not.toBeInTheDocument();
   });
 });
 

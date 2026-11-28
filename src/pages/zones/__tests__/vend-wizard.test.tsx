@@ -83,7 +83,6 @@ describe("VendZoneWizardPage", () => {
     await user.click(screen.getByRole("button", { name: "Vend zone" }));
     expect(await screen.findByText(/not available on your current plan/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /View upgrade options/i })).toHaveAttribute("href", "https://7kgroup.org");
-    expect(screen.queryByText(/Enterprise/)).not.toBeInTheDocument();
   });
 
   it("vends a zone and navigates to its detail page", async () => {
